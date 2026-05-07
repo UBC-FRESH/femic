@@ -1439,6 +1439,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d27 Validate strict row 13 from the zero-delta post-row-12 checkpoint before advancing farther through LHLB -> THLB.
     - [x] P53.1d28 Reconcile or relock strict row 13 to the reproducible zero-delta-post-row-12 result before advancing to row 14.
     - [x] P53.1d29 Repair strict LHLB seam publication so row 13 auto-publishes the official `lhlb_checkpoint` / `lhlb_curve_ready_checkpoint` restart artifacts, then resume row 14 from that seam.
+    - [x] P53.1d30 Validate strict row 14 from the official `lhlb_curve_ready_checkpoint` restart seam before advancing to row 15.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2019,6 +2020,19 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     active TSA29 instance now has a valid
     `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam with the
     required late-stage columns (`curve1`, `curve2`, `stratum`, `au`).
+  - `P53.1d30` is complete: row 14 now runs from the official
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` seam and produces
+    `293,847.203 ha` removed / `1,990,509.797 ha` remaining in `87.9 s` using
+    `8` workers.
+  - The rebuilt row-14 result is materially below both comparison baselines:
+    - versus current locked row 14 (`314,591.438 ha` removed;
+      `1,926,393.594 ha` remaining), the new run under-removes by
+      `20,744.235 ha` and stays `64,116.203 ha` high cumulatively; and
+    - versus the TSR row-14 benchmark (`321,044.000 ha` removed;
+      `1,929,780.000 ha` remaining), it under-removes by `27,196.797 ha` and
+      stays `60,729.797 ha` high cumulatively.
+  - The next bounded move is to adjudicate or relock row 14 before any row-15
+    work.
   - The next bounded move is row 14 only from
     `data/tsr/lhlb_curve_ready_checkpoint.feather`.
 - Phase 65 archival-publication follow-up is complete:

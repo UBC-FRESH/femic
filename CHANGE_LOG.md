@@ -16934,3 +16934,26 @@
 - Next bounded move:
   - run strict row 14 only from the official
     `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.
+## 2026-05-07 - Validated TSA29 strict row 14 from the official curve-ready seam
+- `#169` / `P53.1d30` bounded validation:
+  - ran only `thlb_parent_014_sites_with_low_growing_timber_potential` from
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` via the strict locked-step
+    runner;
+  - inspected
+    `runtime/logs/tsr/strict_chain/14_thlb_parent_014_sites_with_low_growing_timber_potential.json`
+    and
+    `data/tsr/strict_chain/14_thlb_parent_014_sites_with_low_growing_timber_potential.feather`;
+  - confirmed the rebuilt row executes `lu_parallel` with `8` workers and
+    lands at `293,847.203 ha` removed / `1,990,509.797 ha` remaining; and
+  - confirmed the rebuilt feather remaining area matches the JSON exactly and
+    still carries the curve-ready fields `curve1`, `curve2`, `stratum`, and
+    `au`.
+- Comparison:
+  - current locked row 14 remains `314,591.438 ha` removed /
+    `1,926,393.594 ha` remaining, so the new run under-removes by
+    `20,744.235 ha` and stays `64,116.203 ha` high cumulatively;
+  - TSR row-14 benchmark is `321,044.000 ha` removed /
+    `1,929,780.000 ha` remaining, so the new run under-removes by
+    `27,196.797 ha` and stays `60,729.797 ha` high cumulatively.
+- Next bounded move:
+  - adjudicate or relock row 14 before any row-15 execution.

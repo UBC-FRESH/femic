@@ -1457,3 +1457,41 @@
   - Next bounded move:
     - run strict row 14 only from the official
       `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.
+- 2026-05-07: Ran strict TSA29 row 14 from the official curve-ready restart
+  seam and stopped there.
+  - Command surface:
+    - saved-script call to `run_tsr_thlb_locked_parent_step(...)` with
+      `parent_step_id = thlb_parent_014_sites_with_low_growing_timber_potential`
+      and `checkpoint_path = data/tsr/lhlb_curve_ready_checkpoint.feather`.
+  - Inspected outputs:
+    - JSON:
+      `runtime/logs/tsr/strict_chain/14_thlb_parent_014_sites_with_low_growing_timber_potential.json`
+    - feather:
+      `data/tsr/strict_chain/14_thlb_parent_014_sites_with_low_growing_timber_potential.feather`
+    - execution mode: `lu_parallel`
+    - workers: `8`
+    - runtime: `87.852 s`
+    - removed: `293,847.203 ha`
+    - remaining: `1,990,509.797 ha`
+    - rebuilt feather remaining area matches the JSON exactly and retains the
+      curve-ready restart fields `curve1`, `curve2`, `stratum`, and `au`.
+  - Comparison:
+    - current locked row-14 values:
+      - locked marginal: `314,591.438 ha`
+      - locked cumulative: `1,926,393.594 ha`
+    - TSR row-14 benchmark:
+      - benchmark marginal: `321,044.000 ha`
+      - benchmark cumulative: `1,929,780.000 ha`
+    - current rerun deltas:
+      - versus locked row 14: `-20,744.235 ha` marginal,
+        `+64,116.203 ha` cumulative
+      - versus TSR row 14: `-27,196.797 ha` marginal,
+        `+60,729.797 ha` cumulative
+  - Interpretation:
+    - the repaired official curve-ready seam is executable and stable enough
+      to carry row 14; but
+    - the live row-14 result does not reproduce the currently locked row-14
+      value and is still materially high against TSR, so row 14 now becomes
+      the active adjudication boundary rather than row 15.
+  - Next bounded move:
+    - reconcile or relock row 14 before advancing to row 15.
