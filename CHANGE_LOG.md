@@ -16906,3 +16906,31 @@
   - rerun strict row 12 once from the relocked row-11 checkpoint so the active
     TSA29 instance actually materializes the official restart seam before row
     14 resumes from it.
+## 2026-05-07 - Closed the TSA29 live LHLB curve-ready seam after fixing Windows annex-pointer source resolution
+- `#169` / `P53.1d29` live seam closeout:
+  - reran strict row 12 from the relocked row-11 checkpoint far enough to
+    write the official `data/tsr/lhlb_checkpoint.feather` restart artifact in
+    the active TSA29 instance;
+  - captured the exact direct-promotion blocker:
+    `compile_tsr_thlb_step13_attributes(...)` failed while loading the Highway
+    97 GeoPackage because the resolved BCDC source path was a Windows
+    git-annex pointer stub rather than the materialized payload object;
+  - fixed TSR source-artifact resolution so both generic source loading and
+    the specific Highway 97 geometry loader now resolve Windows annex pointer
+    stubs to their payload path before calling GeoPandas/pyogrio; and
+  - added targeted regression coverage for both the generic source resolver
+    path and the Highway 97 loader path.
+- Validation:
+  - `.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py::test_resolve_source_artifact_path_uses_annex_payload_when_available tests/test_tsr_recipes.py::test_load_highway_97_geometry_uses_annex_payload_path -q`
+  - `.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py src/femic/tsr_catalog/step13_attributes.py tests/test_tsr_recipes.py`
+- Inspected live seam outputs:
+  - `data/tsr/lhlb_checkpoint.feather` exists with `401,426` rows and
+    `2,284,357.000 ha` managed area;
+  - `data/tsr/lhlb_curve_ready_checkpoint.feather` now exists with the same
+    row count and managed area; and
+  - the promoted curve-ready artifact carries the required late-stage columns
+    `curve1`, `curve2`, `stratum`, `au`,
+    `femic_step13_steep_slope_flag`, and `femic_hwy97_side`.
+- Next bounded move:
+  - run strict row 14 only from the official
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.

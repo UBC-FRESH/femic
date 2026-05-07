@@ -1426,3 +1426,34 @@
     - rerun strict row 12 once from the relocked row-11 checkpoint so the
       active TSA29 instance materializes the official restart seam before row
       14 resumes from it.
+- 2026-05-07: Closed the live TSA29 row-12-to-row-14 seam by fixing Windows
+  annex-pointer source resolution during curve-ready promotion.
+  - What happened:
+    - the repaired strict row-12 rerun now writes the official
+      `data/tsr/lhlb_checkpoint.feather` artifact in the active TSA29
+      instance; but
+    - direct promotion from `lhlb_checkpoint` to
+      `lhlb_curve_ready_checkpoint` initially failed inside
+      `compile_tsr_thlb_step13_attributes(...)` while loading the Highway 97
+      GeoPackage because the resolved source path was still a Windows
+      git-annex pointer stub rather than the materialized payload object.
+  - Fix:
+    - `_resolve_source_artifact_path(...)` now resolves Windows annex pointer
+      stubs to their payload path before returning TSA29 source artifacts; and
+    - `_load_highway_97_geometry(...)` now applies the same payload-path
+      resolution before handing the GeoPackage path to GeoPandas/pyogrio.
+  - Validation:
+    - targeted tests now cover both generic TSR source-artifact resolution and
+      the specific Highway 97 loader path against annex-pointer stubs; and
+    - direct promotion now writes the official
+      `data/tsr/lhlb_curve_ready_checkpoint.feather` artifact successfully in
+      the active instance.
+  - Inspected live seam output:
+    - `data/tsr/lhlb_curve_ready_checkpoint.feather` now exists and carries
+      late-stage restart fields `curve1`, `curve2`, `stratum`, `au`,
+      `femic_step13_steep_slope_flag`, and `femic_hwy97_side`; and
+    - the promoted artifact retains `401,426` rows and `2,284,357.000 ha`
+      managed area, matching the row-12/LHLB seam area.
+  - Next bounded move:
+    - run strict row 14 only from the official
+      `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.

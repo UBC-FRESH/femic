@@ -54,7 +54,11 @@ from femic.bcdc_fetch import (
     fetch_bcdc_wfs_data,
 )
 from femic.pipeline.bundle import assign_curve_ids_from_au_table, tsa_curve_id_prefix
-from femic.pipeline.io import file_sha256, load_pipeline_run_profile
+from femic.pipeline.io import (
+    file_sha256,
+    load_pipeline_run_profile,
+    resolve_windows_annex_pointer_payload_path,
+)
 from femic.pipeline.tsa import (
     apply_stratum_alias_map,
     assign_au_ids_from_scsi,
@@ -17709,7 +17713,7 @@ def _resolve_source_artifact_path(
     resolved = candidate.expanduser().resolve()
     if not resolved.exists():
         return None
-    return resolved
+    return resolve_windows_annex_pointer_payload_path(resolved)
 
 
 def _parse_bbox_payload(

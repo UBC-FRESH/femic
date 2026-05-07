@@ -1438,7 +1438,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d26 Convert row 12 into an explicit aspatial PRA bridge sized to land the AFLB -> LHLB stage on the TSR cumulative target, then validate row 12 only from the relocked post-row-11 checkpoint.
     - [x] P53.1d27 Validate strict row 13 from the zero-delta post-row-12 checkpoint before advancing farther through LHLB -> THLB.
     - [x] P53.1d28 Reconcile or relock strict row 13 to the reproducible zero-delta-post-row-12 result before advancing to row 14.
-    - [ ] P53.1d29 Repair strict LHLB seam publication so row 13 auto-publishes the official `lhlb_checkpoint` / `lhlb_curve_ready_checkpoint` restart artifacts, then resume row 14 from that seam.
+    - [x] P53.1d29 Repair strict LHLB seam publication so row 13 auto-publishes the official `lhlb_checkpoint` / `lhlb_curve_ready_checkpoint` restart artifacts, then resume row 14 from that seam.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2006,13 +2006,21 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P53.1d28` is complete: row 13 is now relocked to the reproducible
     zero-delta-post-row-12 result (`31,974.000 ha` removed;
     `2,252,383.000 ha` remaining).
-  - `P53.1d29` remains open, but the seam bug is now repaired in code: the
-    strict locked-step runner now detects the last `aflb_to_lhlb` parent step
-    and publishes the official `lhlb_checkpoint` /
-    `lhlb_curve_ready_checkpoint` restart artifacts instead of only writing a
-    strict-chain row output. The next bounded move is to rerun row 12 once from
-    the relocked row-11 checkpoint so the active TSA29 instance actually
-    materializes that official seam before row 14 resumes from it.
+  - `P53.1d29` is complete: the strict locked-step runner now detects the last
+    `aflb_to_lhlb` parent step, publishes the official
+    `lhlb_checkpoint`/`lhlb_curve_ready_checkpoint` restart artifacts, and
+    resolves Windows git-annex pointer stubs to their payload paths before
+    reading TSA29 source artifacts during curve-ready promotion.
+  - The first live row-12 rerun wrote `data/tsr/lhlb_checkpoint.feather` but
+    exposed a real source-materialization bug during direct curve-ready
+    promotion: the Highway 97 GeoPackage resolved to a Windows annex pointer
+    stub rather than a readable payload path.
+  - After resolving source-artifact reads through the annex payload path, the
+    active TSA29 instance now has a valid
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam with the
+    required late-stage columns (`curve1`, `curve2`, `stratum`, `au`).
+  - The next bounded move is row 14 only from
+    `data/tsr/lhlb_curve_ready_checkpoint.feather`.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

@@ -6993,6 +6993,32 @@ def test_load_cached_landscape_unit_partition_records_reuses_same_hash_alias(
     assert uncached_with_different_hash is None
 
 
+def test_resolve_source_artifact_path_uses_annex_payload_when_available(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "instance"
+    artifact_path = instance_root / "data" / "downloads" / "source.gpkg"
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_text("/annex/objects/fake.gpkg", encoding="utf-8")
+    payload_path = instance_root / "annex" / "objects" / "fake.gpkg"
+    payload_path.parent.mkdir(parents=True, exist_ok=True)
+    payload_path.write_bytes(b"SQLite format 3")
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "resolve_windows_annex_pointer_payload_path",
+        lambda path: payload_path,
+    )
+
+    resolved = tsr_recipes._resolve_source_artifact_path(
+        instance_root=instance_root,
+        source_entry={"artifact_path": "data/downloads/source.gpkg"},
+    )
+
+    assert resolved == payload_path
+
+
 def test_load_cached_landscape_unit_partition_records_rejects_schema_mismatch(
     tmp_path: Path,
 ) -> None:
@@ -11906,6 +11932,57 @@ def test_compile_tsr_thlb_step13_attributes_populates_curve_ready_fields(
         2900002,
         2900003,
     }
+
+
+def test_load_highway_97_geometry_uses_annex_payload_path(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    artifact_path = instance_root / "data" / "downloads" / "hwy97.gpkg"
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_text("/annex/objects/fake_highway.gpkg", encoding="utf-8")
+    payload_path = instance_root / "annex" / "objects" / "fake_highway.gpkg"
+    payload_path.parent.mkdir(parents=True, exist_ok=True)
+    payload_path.write_bytes(b"SQLite format 3")
+
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "load_tsr_source_layers_recipe",
+        lambda path: SimpleNamespace(
+            entries=[
+                {
+                    "entry_id": "whse_imagery_and_base_maps_mot_highway_profiles_sp",
+                    "artifact_path": "data/downloads/hwy97.gpkg",
+                }
+            ]
+        ),
+    )
+    monkeypatch.setattr(
+        tsr_step13_attributes,
+        "resolve_windows_annex_pointer_payload_path",
+        lambda path: payload_path,
+    )
+
+    seen_paths: list[Path] = []
+
+    def _fake_read_file(path: Path) -> gpd.GeoDataFrame:
+        seen_paths.append(Path(path))
+        return gpd.GeoDataFrame(
+            {"HIGHWAY_NUMBER": ["97"]},
+            geometry=[LineString([(0, 0), (1, 1)])],
+            crs="EPSG:3005",
+        )
+
+    monkeypatch.setattr(tsr_step13_attributes.gpd, "read_file", _fake_read_file)
+
+    resolved_artifact_path, highway_line = tsr_step13_attributes._load_highway_97_geometry(
+        instance_root=instance_root
+    )
+
+    assert resolved_artifact_path == payload_path
+    assert seen_paths == [payload_path]
+    assert isinstance(highway_line, LineString)
 
 
 def test_compile_tsr_thlb_step13_attributes_reuses_precomputed_yield_ready_fields(
