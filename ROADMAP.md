@@ -1440,6 +1440,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d28 Reconcile or relock strict row 13 to the reproducible zero-delta-post-row-12 result before advancing to row 14.
     - [x] P53.1d29 Repair strict LHLB seam publication so row 13 auto-publishes the official `lhlb_checkpoint` / `lhlb_curve_ready_checkpoint` restart artifacts, then resume row 14 from that seam.
     - [x] P53.1d30 Validate strict row 14 from the official `lhlb_curve_ready_checkpoint` restart seam before advancing to row 15.
+    - [x] P53.1d31 Relock strict row 14 to the reproducible official curve-ready seam result before advancing to row 15.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2031,8 +2032,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - versus the TSR row-14 benchmark (`321,044.000 ha` removed;
       `1,929,780.000 ha` remaining), it under-removes by `27,196.797 ha` and
       stays `60,729.797 ha` high cumulatively.
-  - The next bounded move is to adjudicate or relock row 14 before any row-15
-    work.
+  - `P53.1d31` is complete: row 14 is now relocked to the reproducible
+    official curve-ready seam result (`293,847.203 ha` removed;
+    `1,990,509.797 ha` remaining), superseding the older row-14 lock that no
+    longer reproduces from the repaired live seam.
+  - The next bounded move is row 15 only from the official
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.
   - The next bounded move is row 14 only from
     `data/tsr/lhlb_curve_ready_checkpoint.feather`.
 - Phase 65 archival-publication follow-up is complete:

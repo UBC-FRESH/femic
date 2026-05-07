@@ -16957,3 +16957,16 @@
     `27,196.797 ha` and stays `60,729.797 ha` high cumulatively.
 - Next bounded move:
   - adjudicate or relock row 14 before any row-15 execution.
+## 2026-05-07 - Relocked TSA29 strict row 14 to the repaired official curve-ready seam result
+- `#169` / `P53.1d31` lock update:
+  - updated the TSA29 locked-chain ledger row 14 to the reproducible official
+    `lhlb_curve_ready_checkpoint` result:
+    - locked marginal `293,847.203 ha`
+    - locked cumulative `1,990,509.797 ha`
+    - locked cumulative delta `60,729.797 ha`
+  - superseded the older row-14 lock (`314,591.438 ha` removed;
+    `1,926,393.594 ha` remaining) because it no longer reproduces from the
+    repaired live official curve-ready seam.
+- Next bounded move:
+  - run row 15 only from the official
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.

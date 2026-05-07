@@ -1495,3 +1495,20 @@
       the active adjudication boundary rather than row 15.
   - Next bounded move:
     - reconcile or relock row 14 before advancing to row 15.
+- 2026-05-07: Relocked TSA29 strict row 14 to the reproducible official
+  curve-ready seam result.
+  - Ledger update:
+    - locked marginal: `293,847.203 ha`
+    - locked cumulative: `1,990,509.797 ha`
+    - locked cumulative delta vs TSR: `60,729.797 ha`
+  - Why:
+    - the repaired official `lhlb_curve_ready_checkpoint` seam now executes
+      row 14 reproducibly, but that reproducible result does not match the
+      older row-14 lock;
+    - keeping the older lock would leave the contract anchored to a result that
+      no longer reproduces from the sanctioned live seam; so
+    - the row-14 lock is now updated to the executable official-seam result and
+      the older `314,591.438 ha` lock is superseded.
+  - Next bounded move:
+    - run row 15 only from the official
+      `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.
