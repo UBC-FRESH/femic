@@ -1402,6 +1402,27 @@
       `curve1`/late-stage curve-ready fields, so row 14 cannot be treated as a
       same-lane continuation from this checkpoint.
   - Next bounded move:
-    - `P53.1d29` should resume strict validation at row 14 from the official
-      curve-ready restart seam once that checkpoint is present/materialized in
-      the active TSA29 instance.
+    - `P53.1d29` should repair the strict locked-step seam so reaching the
+      validated LHLB boundary auto-publishes the official
+      `lhlb_checkpoint`/`lhlb_curve_ready_checkpoint` restart artifacts before
+      row 14 resumes from that curve-ready seam.
+- 2026-05-06: Repaired the strict LHLB publication seam inside
+  `run_tsr_thlb_locked_parent_step`.
+  - Root cause:
+    - the generic reconstructed runner already published
+      `lhlb_checkpoint`/`lhlb_curve_ready_checkpoint`, but the strict
+      locked-step runner only wrote strict-chain row outputs and never called
+      that publication hook.
+  - Fix:
+    - the strict runner now detects the last `aflb_to_lhlb` parent step by
+      looking ahead to the next locked parent-stage transition; and
+    - when that seam is reached, it writes the official
+      `data/tsr/lhlb_checkpoint.feather` artifact and immediately promotes the
+      matching `data/tsr/lhlb_curve_ready_checkpoint.feather` restart artifact.
+  - Validation:
+    - targeted tests now cover both the normal strict locked-step output path
+      and the new row-12 seam-publication path.
+  - Next bounded move:
+    - rerun strict row 12 once from the relocked row-11 checkpoint so the
+      active TSA29 instance materializes the official restart seam before row
+      14 resumes from it.

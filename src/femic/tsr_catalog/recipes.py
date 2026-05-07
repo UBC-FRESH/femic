@@ -8350,6 +8350,37 @@ def _is_lhlb_to_thlb_stage(step: dict[str, Any]) -> bool:
     return str(step.get("land_base_stage", "")).strip() == "lhlb_to_thlb"
 
 
+def _locked_parent_step_should_publish_lhlb_restart_artifacts(
+    recipe: Any, target_parent: dict[str, Any]
+) -> bool:
+    if not _is_aflb_to_lhlb_stage(target_parent):
+        return False
+    current_row_order = _locked_step_row_order(target_parent.get("row_order"))
+    if current_row_order is None:
+        return False
+    parent_steps = tuple(getattr(recipe, "parent_steps", ()) or ())
+    if not parent_steps:
+        return False
+    sorted_parent_steps = sorted(
+        (
+            item
+            for item in parent_steps
+            if isinstance(item, dict)
+            and _locked_step_row_order(item.get("row_order")) is not None
+        ),
+        key=lambda item: int(item.get("row_order", 0) or 0),
+    )
+    next_parent = next(
+        (
+            item
+            for item in sorted_parent_steps
+            if int(item.get("row_order", 0) or 0) > current_row_order
+        ),
+        None,
+    )
+    return next_parent is not None and _is_lhlb_to_thlb_stage(next_parent)
+
+
 def _is_applied_runtime_status(status: str) -> bool:
     return status in {"applied", "applied_noop"}
 
@@ -8690,6 +8721,40 @@ def _write_reconstructed_restart_checkpoint_artifacts(
         instance_root=instance_root,
     )
     return feather_path, written_gpkg, _managed_area_ha(prepared), True
+
+
+def _publish_locked_lhlb_restart_artifacts(
+    *, instance_root: Path, checkpoint: gpd.GeoDataFrame
+) -> tuple[Path, Path, float, float]:
+    lhlb_checkpoint_path = default_tsr_lhlb_checkpoint_path(instance_root=instance_root)
+    (
+        written_lhlb_checkpoint_path,
+        _written_lhlb_gpkg_path,
+        lhlb_checkpoint_area_ha,
+        _lhlb_lu_cache_warmed,
+    ) = _write_reconstructed_restart_checkpoint_artifacts(
+        checkpoint=checkpoint,
+        instance_root=instance_root,
+        feather_path=lhlb_checkpoint_path,
+        gpkg_path=None,
+        gpkg_layer_name="lhlb_checkpoint",
+    )
+    (
+        written_lhlb_curve_ready_checkpoint_path,
+        _written_lhlb_curve_ready_gpkg_path,
+        lhlb_curve_ready_checkpoint_area_ha,
+        _lhlb_curve_ready_lu_cache_warmed,
+    ) = _ensure_lhlb_curve_ready_checkpoint_artifacts(
+        instance_root=instance_root,
+        checkpoint_path=written_lhlb_checkpoint_path,
+        write_gpkg=False,
+    )
+    return (
+        written_lhlb_checkpoint_path,
+        written_lhlb_curve_ready_checkpoint_path,
+        lhlb_checkpoint_area_ha,
+        lhlb_curve_ready_checkpoint_area_ha,
+    )
 
 
 def _resolve_effective_stand_area_sqm(checkpoint: gpd.GeoDataFrame) -> pd.Series:
@@ -13580,6 +13645,7 @@ def run_tsr_thlb_locked_parent_step(
         "input_prepare_seconds": 0.0,
         "execute_seconds": 0.0,
         "output_write_seconds": 0.0,
+        "lhlb_restart_publish_seconds": 0.0,
         "result_json_write_seconds": 0.0,
     }
     checkpoint_load_started = perf_counter()
@@ -14129,6 +14195,37 @@ def run_tsr_thlb_locked_parent_step(
             profiling["output_partition_cache_chunk_count"] = 0
         profiling["output_partition_cache_write_seconds"] = (
             perf_counter() - output_cache_started
+        )
+
+    if _locked_parent_step_should_publish_lhlb_restart_artifacts(recipe, target_parent):
+        lhlb_publish_started = perf_counter()
+        (
+            written_lhlb_checkpoint_path,
+            written_lhlb_curve_ready_checkpoint_path,
+            lhlb_checkpoint_area_ha,
+            lhlb_curve_ready_checkpoint_area_ha,
+        ) = _publish_locked_lhlb_restart_artifacts(
+            instance_root=instance_root,
+            checkpoint=working,
+        )
+        profiling["lhlb_restart_publish_seconds"] = (
+            perf_counter() - lhlb_publish_started
+        )
+        profiling["lhlb_checkpoint_path"] = str(
+            written_lhlb_checkpoint_path.relative_to(instance_root).as_posix()
+        )
+        profiling["lhlb_checkpoint_area_ha"] = lhlb_checkpoint_area_ha
+        profiling["lhlb_curve_ready_checkpoint_path"] = str(
+            written_lhlb_curve_ready_checkpoint_path.relative_to(
+                instance_root
+            ).as_posix()
+        )
+        profiling["lhlb_curve_ready_checkpoint_area_ha"] = (
+            lhlb_curve_ready_checkpoint_area_ha
+        )
+        notes.append(
+            "Published official LHLB and curve-ready restart checkpoints for the "
+            "downstream strict row-14 seam."
         )
 
     result_json_path.parent.mkdir(parents=True, exist_ok=True)

@@ -16887,3 +16887,22 @@
     fields, so the next valid row-14 work must resume from the official
     curve-ready checkpoint surface rather than pretending the strict-chain lane
     continues directly.
+## 2026-05-06 - Repaired strict TSA29 LHLB seam publication
+- `#169` / `P53.1d29` seam repair:
+  - updated the Phase 53 roadmap/planning edge so the active bounded move is
+    the strict row-12-to-row-14 seam repair, not vague seam-selection;
+  - fixed `run_tsr_thlb_locked_parent_step` so the last strict
+    `aflb_to_lhlb` parent step now publishes the official
+    `data/tsr/lhlb_checkpoint.feather` and
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` restart artifacts instead of
+    only writing a strict-chain row output; and
+  - added targeted tests proving both the normal strict locked-step output path
+    and the new LHLB seam-publication path.
+- Validation:
+  - `.venv\Scripts\python.exe -m pytest tests/test_tsr_recipes.py::test_run_tsr_thlb_locked_parent_step_executes_one_locked_step tests/test_tsr_recipes.py::test_run_tsr_thlb_locked_parent_step_publishes_lhlb_restart_artifacts_at_stage_seam -q`
+  - `.venv\Scripts\python.exe -m ruff format src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+  - `.venv\Scripts\python.exe -m ruff check src/femic/tsr_catalog/recipes.py tests/test_tsr_recipes.py`
+- Next bounded move:
+  - rerun strict row 12 once from the relocked row-11 checkpoint so the active
+    TSA29 instance actually materializes the official restart seam before row
+    14 resumes from it.

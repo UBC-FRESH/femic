@@ -623,6 +623,153 @@ def test_run_tsr_thlb_locked_parent_step_short_circuits_zero_removal_reviewed_sk
     )
 
 
+def test_run_tsr_thlb_locked_parent_step_publishes_lhlb_restart_artifacts_at_stage_seam(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _ForbiddenExecutor:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            raise AssertionError("row-12 seam proof should not need workers")
+
+    instance_root = tmp_path / "instance"
+    checkpoint_path = (
+        instance_root / "data" / "tsr" / "strict_chain" / "row12_in.feather"
+    )
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0],
+            "thlb_fact": [1.0],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    ).to_feather(checkpoint_path)
+    ledger_path = instance_root / "config" / "tsr" / "thlb_locked_chain_ledger.json"
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    ledger_path.write_text(
+        json.dumps(
+            {
+                "entries": [
+                    {
+                        "parent_step_id": (
+                            "thlb_parent_012_proven_aboriginal_rights_areas"
+                        ),
+                        "locked_net_removed_area_ha": 0.0,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    tsa = tsr_catalog.TsrOverlayTsaRecord(
+        tsa_id="tsa_29",
+        tsa_code="29",
+        tsa_name="Williams Lake",
+    )
+    recipe = SimpleNamespace(
+        tsa=tsa,
+        parent_steps=(
+            {
+                "parent_step_id": "thlb_parent_012_proven_aboriginal_rights_areas",
+                "row_order": 12,
+                "land_base_stage": "aflb_to_lhlb",
+            },
+            {
+                "parent_step_id": "thlb_parent_013_areas_considered_inoperable",
+                "row_order": 13,
+                "land_base_stage": "lhlb_to_thlb",
+            },
+        ),
+    )
+    parent_step = {
+        "parent_step_id": "thlb_parent_012_proven_aboriginal_rights_areas",
+        "parent_label": "Proven Aboriginal rights areas",
+        "row_order": 12,
+        "parent_kind": "transformation",
+        "execution_class": "documented_aspatial_bridge",
+        "land_base_stage": "aflb_to_lhlb",
+        "approved": True,
+        "ratchet_state": "approved",
+        "benchmark_marginal_area_ha": 0.0,
+        "benchmark_cumulative_area_ha": 1.0,
+        "compiled_logic": (
+            {
+                "step_id": "thlb_parent_012_proven_aboriginal_rights_areas_compiled_01",
+                "label": "Approved aspatial bridge",
+                "compiled_operation_type": "manual_review_required",
+                "step_status": "manual_review_required",
+                "notes": ("Approved bridge carries the checkpoint forward.",),
+            },
+        ),
+    }
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_tsr_thlb_recipe_context",
+        lambda recipe_path: (recipe, instance_root, None, {}, {}),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_resolve_tsr_thlb_parent_step",
+        lambda recipe, parent_step_id: parent_step,
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_resolve_tsr_total_area_benchmark",
+        lambda recipe: 1.0,
+    )
+    monkeypatch.setattr(tsr_recipes, "ProcessPoolExecutor", _ForbiddenExecutor)
+
+    seen_publish: list[tuple[Path, float]] = []
+
+    def _fake_publish(
+        *, instance_root: Path, checkpoint: gpd.GeoDataFrame
+    ) -> tuple[Path, Path, float, float]:
+        seen_publish.append((instance_root, tsr_recipes._managed_area_ha(checkpoint)))
+        lhlb_checkpoint_path = (
+            instance_root / "data" / "tsr" / "lhlb_checkpoint.feather"
+        )
+        lhlb_curve_ready_checkpoint_path = (
+            instance_root / "data" / "tsr" / "lhlb_curve_ready_checkpoint.feather"
+        )
+        return (
+            lhlb_checkpoint_path,
+            lhlb_curve_ready_checkpoint_path,
+            1.0,
+            1.0,
+        )
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_publish_locked_lhlb_restart_artifacts",
+        _fake_publish,
+    )
+
+    result = tsr_recipes.run_tsr_thlb_locked_parent_step(
+        recipe_path=instance_root
+        / "workbench"
+        / "tsr"
+        / "thlb_netdown.locked.recipe.yaml",
+        parent_step_id="thlb_parent_012_proven_aboriginal_rights_areas",
+        checkpoint_path=checkpoint_path,
+    )
+
+    assert len(seen_publish) == 1
+    assert seen_publish[0][0] == instance_root
+    assert seen_publish[0][1] == pytest.approx(1.0)
+    payload = json.loads(result.result_json_path.read_text(encoding="utf-8"))
+    assert (
+        payload["profiling"]["lhlb_checkpoint_path"]
+        == "data/tsr/lhlb_checkpoint.feather"
+    )
+    assert (
+        payload["profiling"]["lhlb_curve_ready_checkpoint_path"]
+        == "data/tsr/lhlb_curve_ready_checkpoint.feather"
+    )
+    assert any("Published official LHLB" in note for note in payload["notes"])
+
+
 def test_run_tsr_thlb_locked_parent_step_uses_true_before_after_net_change(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
