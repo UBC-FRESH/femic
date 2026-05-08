@@ -17042,3 +17042,37 @@
 - Next bounded move:
   - start from the rebuilt step-14 output, derive the needed curve-ready
     fields onto it, and run only step 15.
+## 2026-05-07 - Validated TSA29 true chained row 15 from the rebuilt step-14 output
+- `#169` / `P53.1d35` chained-surface validation:
+  - started from
+    `data/tsr/strict_chain/14_thlb_parent_014_sites_with_low_growing_timber_potential.feather`;
+  - compiled a fresh step-14-derived curve-ready checkpoint to
+    `runtime/scratch/tsa29_step14_output_curve_ready.feather`; and
+  - ran only `thlb_parent_015_non_merchantable_timber_profiles` from that
+    derived checkpoint.
+- Inspected outputs:
+  - `runtime/logs/tsr/strict_chain/15_thlb_parent_015_non_merchantable_timber_profiles.json`
+  - `data/tsr/strict_chain/15_thlb_parent_015_non_merchantable_timber_profiles.feather`
+  - derived input remaining: `1,962,648.757 ha`
+  - row-15 removed: `32,067.965 ha`
+  - row-15 remaining: `1,930,580.793 ha`
+- Comparison:
+  - this replaces the old raw-seam row-15 validation surface
+    (`33,535.732 ha` removed / `2,250,821.268 ha` remaining); and
+  - versus TSR row 15 (`49,052.000 ha` removed / `1,880,728.000 ha`
+    remaining), the corrected chained row-15 result is now `49,852.793 ha`
+    high cumulatively.
+- Next bounded move:
+  - relock row 15 to this true chained result before any row-16 execution.
+## 2026-05-07 - Relocked TSA29 strict row 15 to the true chained step-14 -> step-15 result
+- `#169` / `P53.1d36` lock-surface correction:
+  - updated
+    `external/femic-tsa29-instance/config/tsr/thlb_locked_chain_ledger.json`
+    so row 15 now reflects the true chained run from the rebuilt step-14
+    output rather than the earlier raw-seam replay surface;
+  - row 15 is now locked at:
+    - `32,067.965 ha` removed;
+    - `1,930,580.793 ha` remaining; and
+    - `+49,852.793 ha` cumulative delta versus TSR;
+  - the next bounded move is to derive the needed curve-ready fields onto the
+    rebuilt step-15 output and run only step 16 from that true chained input.

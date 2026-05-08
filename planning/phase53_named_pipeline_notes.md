@@ -1619,3 +1619,51 @@
   - Next bounded move:
     - start from this rebuilt step-14 output, derive the needed curve-ready
       fields onto it, and run only step 15.
+- 2026-05-07: Ran the true chained row 15 from the rebuilt step-14 output.
+  - Corrected execution shape:
+    - start from the actual step-14 output
+      `data/tsr/strict_chain/14_thlb_parent_014_sites_with_low_growing_timber_potential.feather`;
+    - compile a fresh step-14-derived curve-ready checkpoint to
+      `runtime/scratch/tsa29_step14_output_curve_ready.feather`; and
+    - run only `thlb_parent_015_non_merchantable_timber_profiles` from that
+      derived checkpoint.
+  - Inspected outputs:
+    - derived checkpoint:
+      `runtime/scratch/tsa29_step14_output_curve_ready.feather`
+    - row-15 JSON:
+      `runtime/logs/tsr/strict_chain/15_thlb_parent_015_non_merchantable_timber_profiles.json`
+    - row-15 feather:
+      `data/tsr/strict_chain/15_thlb_parent_015_non_merchantable_timber_profiles.feather`
+    - derived checkpoint remaining: `1,962,648.757 ha`
+    - row-15 removed: `32,067.965 ha`
+    - row-15 remaining: `1,930,580.793 ha`
+  - Comparison:
+    - versus the old raw-seam row-15 lock `33,535.732 ha` removed /
+      `2,250,821.268 ha` remaining:
+      - marginal delta: `-1,467.767 ha`
+      - cumulative delta: `-320,240.475 ha`
+    - versus the TSR row-15 benchmark `49,052.000 ha` removed /
+      `1,880,728.000 ha` remaining:
+      - marginal delta: `-16,984.035 ha`
+      - cumulative delta: `+49,852.793 ha`
+  - Interpretation:
+    - this is the first true chained row-15 surface after the row-13
+      backtrack/correction;
+    - it massively corrects the nonsensical raw-seam cumulative surface while
+      still under-removing versus TSR; and
+    - row 15 should now be relocked to this chained result before row 16.
+  - Next bounded move:
+    - relock row 15 to this true chained result before any row-16 execution.
+- 2026-05-07: Relocked TSA29 strict row 15 to the true chained step-14 -> step-15 result.
+  - Locked chain update:
+    - row 15 now locks the true chained run from the rebuilt step-14 output,
+      not the earlier raw-seam replay surface.
+    - locked row-15 values are now:
+      - `32,067.965 ha` removed
+      - `1,930,580.793 ha` remaining
+      - `+49,852.793 ha` cumulative delta versus TSR
+    - `locked_source_note` now records that this relocked value comes from the
+      rebuilt step-14 output with fresh curve-ready attribute compilation.
+  - Next bounded move:
+    - derive the needed curve-ready fields onto the rebuilt step-15 output and
+      run only step 16 from that true chained input.
