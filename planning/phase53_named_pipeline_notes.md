@@ -1551,3 +1551,35 @@
     - repair/adjudicate the row-15 late-stage runner contract before any row-16
       execution, specifically merge/finalization after completed bundles and
       the correct comparison surface for row-15 validation.
+- 2026-05-07: Reran and relocked TSA29 strict row 15 from the official
+  curve-ready seam.
+  - Rerun result:
+    - rerunning `thlb_parent_015_non_merchantable_timber_profiles` from
+      `data/tsr/lhlb_curve_ready_checkpoint.feather` completed cleanly on the
+      second attempt and wrote the final JSON plus merged strict-chain feather;
+    - inspected outputs:
+      - `runtime/logs/tsr/strict_chain/15_thlb_parent_015_non_merchantable_timber_profiles.json`
+      - `data/tsr/strict_chain/15_thlb_parent_015_non_merchantable_timber_profiles.feather`
+    - execution mode: `lu_parallel`
+    - workers: `8`
+    - runtime: `43.065 s`
+    - removed: `33,535.732 ha`
+    - remaining: `2,250,821.268 ha`
+  - Comparison:
+    - the rerun matches the earlier bundle-aggregate probe result exactly, so
+      the row-15 executable semantics are now reproducible even though the
+      first attempt hung during finalization;
+    - versus the older locked row-15 marginal `48,308.452 ha`, the reproducible
+      rerun under-removes by `14,772.720 ha`; and
+    - versus the TSR row-15 marginal `49,052.000 ha`, it under-removes by
+      `15,516.268 ha`.
+  - Lock update:
+    - row 15 is now relocked to the reproducible official-seam rerun result:
+      - locked marginal: `33,535.732 ha`
+      - locked cumulative: `2,250,821.268 ha`
+      - locked cumulative delta vs TSR: `370,093.268 ha`
+    - the older row-15 lock is superseded because it no longer reproduces from
+      the sanctioned official `lhlb_curve_ready_checkpoint` seam.
+  - Next bounded move:
+    - run row 16 only from the official
+      `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.

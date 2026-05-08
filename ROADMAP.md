@@ -1442,6 +1442,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d30 Validate strict row 14 from the official `lhlb_curve_ready_checkpoint` restart seam before advancing to row 15.
     - [x] P53.1d31 Relock strict row 14 to the reproducible official curve-ready seam result before advancing to row 15.
     - [x] P53.1d32 Probe strict row 15 from the official `lhlb_curve_ready_checkpoint` restart seam and record whether the late-stage runner reproduces the locked contract or exposes the next seam defect.
+    - [x] P53.1d33 Relock strict row 15 to the reproducible official curve-ready seam rerun result before advancing to row 16.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2037,26 +2038,23 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     official curve-ready seam result (`293,847.203 ha` removed;
     `1,990,509.797 ha` remaining), superseding the older row-14 lock that no
     longer reproduces from the repaired live seam.
-  - `P53.1d32` is complete as a probe, not a clean validation closeout:
-    - a direct row-15-only replay from the official
-      `data/tsr/lhlb_curve_ready_checkpoint.feather` seam launched and all
-      `8` LU-parallel worker bundles completed, writing bundle progress JSON
-      plus `bundle_*.output.feather` artifacts;
-    - the runner then stalled before final merge/result JSON publication, so
-      the live process tree had to be stopped and no final row-15 checkpoint or
-      status JSON was produced;
-    - aggregating the completed bundle outputs leaves `2,250,821.268 ha`
-      remaining on the raw LHLB curve-ready seam, implying only
-      `33,535.732 ha` removed from the seam input `2,284,357.000 ha`; and
-    - that direct seam replay therefore under-removes versus the current row-15
-      locked marginal `48,308.452 ha` by `14,772.720 ha`, while also proving
-      that this replay surface is not carrying the row-14 cumulative state that
-      the locked row-15 cumulative contract assumes.
-  - The next bounded move is to repair/adjudicate the late-stage row-15 runner
-    contract before any row-16 execution, specifically whether row 15 should
-    merge/finalize correctly from the official seam and whether its valid
-    comparison surface is a raw seam replay or a row-14-plus-row-15 bounded
-    slice.
+  - `P53.1d32` is complete as a probe:
+    - the first direct row-15 replay from the official seam showed that worker
+      bundles completed but the runner could still stall before final
+      merge/result publication; and
+    - that probe established the executable row-15 marginal surface
+      `33,535.732 ha` removed from the raw official seam.
+  - `P53.1d33` is complete: rerunning row 15 from the same official seam now
+    finishes cleanly and reproduces that same result as a full checked-in
+    JSON/feather output:
+    - `33,535.732 ha` removed;
+    - `2,250,821.268 ha` remaining; and
+    - `43.1 s` runtime with `8` workers.
+  - Row 15 is now relocked to that reproducible official-seam rerun result,
+    superseding the older row-15 lock that no longer reproduces from the
+    sanctioned late-stage seam.
+  - The next bounded move is row 16 only from the official
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.
   - The next bounded move is row 14 only from
     `data/tsr/lhlb_curve_ready_checkpoint.feather`.
 - Phase 65 archival-publication follow-up is complete:

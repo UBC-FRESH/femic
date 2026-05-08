@@ -16998,3 +16998,22 @@
 - Next bounded move:
   - repair/adjudicate the row-15 late-stage runner contract before any row-16
     execution.
+## 2026-05-07 - Relocked TSA29 strict row 15 to the reproducible official curve-ready seam rerun result
+- `#169` / `P53.1d33` lock update:
+  - reran `thlb_parent_015_non_merchantable_timber_profiles` from
+    `data/tsr/lhlb_curve_ready_checkpoint.feather`;
+  - inspected the rebuilt
+    `runtime/logs/tsr/strict_chain/15_thlb_parent_015_non_merchantable_timber_profiles.json`
+    and
+    `data/tsr/strict_chain/15_thlb_parent_015_non_merchantable_timber_profiles.feather`;
+  - confirmed the clean rerun lands at `33,535.732 ha` removed /
+    `2,250,821.268 ha` remaining in `43.1 s` with `8` workers; and
+  - relocked row 15 to that reproducible official-seam rerun result.
+- Comparison:
+  - the rerun matches the earlier row-15 bundle-aggregate probe exactly;
+  - it is `14,772.720 ha` below the older locked row-15 marginal
+    `48,308.452 ha`; and
+  - it is `15,516.268 ha` below the TSR row-15 marginal `49,052.000 ha`.
+- Next bounded move:
+  - run row 16 only from the official
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.
