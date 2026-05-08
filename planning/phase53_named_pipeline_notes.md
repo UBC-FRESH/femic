@@ -1583,3 +1583,39 @@
   - Next bounded move:
     - run row 16 only from the official
       `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.
+- 2026-05-07: Backtracked to the last clean chained point and reran row 14 on
+  the correct chained surface.
+  - Corrected execution shape:
+    - start from the actual step-13 output
+      `data/tsr/strict_chain/13_thlb_parent_013_areas_considered_inoperable.feather`;
+    - compile a fresh step-13-derived curve-ready checkpoint to
+      `runtime/scratch/tsa29_step13_output_curve_ready.feather`; and
+    - run only `thlb_parent_014_sites_with_low_growing_timber_potential` from
+      that derived checkpoint.
+  - Inspected outputs:
+    - derived checkpoint:
+      `runtime/scratch/tsa29_step13_output_curve_ready.feather`
+    - row-14 JSON:
+      `runtime/logs/tsr/strict_chain/14_thlb_parent_014_sites_with_low_growing_timber_potential.json`
+    - row-14 feather:
+      `data/tsr/strict_chain/14_thlb_parent_014_sites_with_low_growing_timber_potential.feather`
+    - derived checkpoint remaining: `2,252,383.000 ha`
+    - row-14 removed: `289,734.243 ha`
+    - row-14 remaining: `1,962,648.757 ha`
+  - Comparison:
+    - versus the old raw-seam row-14 lock `293,847.203 ha` removed /
+      `1,990,509.797 ha` remaining:
+      - marginal delta: `-4,112.961 ha`
+      - cumulative delta: `-27,861.039 ha`
+    - versus the TSR row-14 benchmark `321,044.000 ha` removed /
+      `1,929,780.000 ha` remaining:
+      - marginal delta: `-31,309.757 ha`
+      - cumulative delta: `+32,868.757 ha`
+  - Lock update:
+    - row 14 is now relocked to this true chained step-13 -> step-14 result:
+      - locked marginal: `289,734.243 ha`
+      - locked cumulative: `1,962,648.757 ha`
+      - locked cumulative delta vs TSR: `32,868.757 ha`
+  - Next bounded move:
+    - start from this rebuilt step-14 output, derive the needed curve-ready
+      fields onto it, and run only step 15.

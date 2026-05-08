@@ -17017,3 +17017,28 @@
 - Next bounded move:
   - run row 16 only from the official
     `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.
+## 2026-05-07 - Backtracked and relocked TSA29 strict row 14 to the true chained step-13 -> step-14 result
+- `#169` / `P53.1d34` chained-surface correction:
+  - stopped treating raw late-stage seam replays as though they were cumulative
+    chained results;
+  - started from
+    `data/tsr/strict_chain/13_thlb_parent_013_areas_considered_inoperable.feather`;
+  - compiled a fresh step-13-derived curve-ready checkpoint to
+    `runtime/scratch/tsa29_step13_output_curve_ready.feather`; and
+  - ran only `thlb_parent_014_sites_with_low_growing_timber_potential` from
+    that derived checkpoint.
+- Inspected outputs:
+  - `runtime/logs/tsr/strict_chain/14_thlb_parent_014_sites_with_low_growing_timber_potential.json`
+  - `data/tsr/strict_chain/14_thlb_parent_014_sites_with_low_growing_timber_potential.feather`
+  - derived input remaining: `2,252,383.000 ha`
+  - row-14 removed: `289,734.243 ha`
+  - row-14 remaining: `1,962,648.757 ha`
+- Comparison:
+  - this replaces the earlier raw-seam row-14 lock
+    (`293,847.203 ha` removed / `1,990,509.797 ha` remaining); and
+  - versus TSR row 14 (`321,044.000 ha` removed / `1,929,780.000 ha`
+    remaining), the corrected chained row-14 result is now `32,868.757 ha`
+    high cumulatively.
+- Next bounded move:
+  - start from the rebuilt step-14 output, derive the needed curve-ready
+    fields onto it, and run only step 15.
