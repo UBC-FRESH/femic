@@ -16970,3 +16970,31 @@
 - Next bounded move:
   - run row 15 only from the official
     `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.
+## 2026-05-07 - Probed TSA29 strict row 15 from the official curve-ready seam and exposed the next late-stage seam defect
+- `#169` / `P53.1d32` bounded probe:
+  - launched only `thlb_parent_015_non_merchantable_timber_profiles` from
+    `data/tsr/lhlb_curve_ready_checkpoint.feather`;
+  - the row-15 shell launcher timed out while the live process tree remained
+    running, so the row-15 processes were stopped manually after inspection;
+  - no final `15_...json` or merged strict-chain feather was written; but
+  - all `8` LU-parallel worker bundles completed and wrote both bundle progress
+    JSON and `bundle_*.output.feather` artifacts under the row-15 parallel
+    progress directory.
+- Partial-result evidence:
+  - every row-15 bundle JSON reports `status = completed`;
+  - aggregating the completed `bundle_*.output.feather` artifacts leaves
+    `2,250,821.268 ha` remaining on the raw
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` seam input
+    `2,284,357.000 ha`; and
+  - that implies a direct row-15-only seam removal of `33,535.732 ha`, which
+    is `14,772.720 ha` below the current locked row-15 marginal
+    `48,308.452 ha`.
+- Interpretation:
+  - the row-15 worker logic itself appears to finish, but the late-stage
+    runner is stalling after worker completion during final
+    merge/result publication; and
+  - the direct raw-seam row-15 replay is not carrying the prior row-14 state
+    assumed by the current locked row-15 cumulative contract.
+- Next bounded move:
+  - repair/adjudicate the row-15 late-stage runner contract before any row-16
+    execution.

@@ -1512,3 +1512,42 @@
   - Next bounded move:
     - run row 15 only from the official
       `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam.
+- 2026-05-07: Probed TSA29 strict row 15 from the official curve-ready seam
+  and found the next late-stage contract defect.
+  - Command surface:
+    - saved-script call to `run_tsr_thlb_locked_parent_step(...)` with
+      `parent_step_id = thlb_parent_015_non_merchantable_timber_profiles` and
+      `checkpoint_path = data/tsr/lhlb_curve_ready_checkpoint.feather`.
+  - What happened:
+    - the shell launcher timed out while the row-15 process tree remained
+      alive;
+    - no final row-15 JSON or merged strict-chain feather was written; but
+    - all `8` LU-parallel worker bundles completed and wrote both progress JSON
+      and `bundle_*.output.feather` artifacts under
+      `runtime/logs/tsr/strict_chain/15_thlb_parent_015_non_merchantable_timber_profiles.parallel/`.
+  - Worker-bundle evidence:
+    - every bundle JSON reports `status = completed`;
+    - the worker notes confirm the intended row-15 semantics:
+      broadleaf-leading exclusion on the late-stage curve-ready checkpoint
+      using the current `PROJ_AGE_1 >= 95` minimum-age proxy; and
+    - the live row-15 process tree had to be stopped manually after the shell
+      timeout because the run had stalled after worker completion.
+  - Aggregate partial-result evidence:
+    - concatenating the finished `bundle_*.output.feather` surfaces leaves
+      `2,250,821.268 ha` remaining on the raw
+      `data/tsr/lhlb_curve_ready_checkpoint.feather` input surface;
+    - against the raw seam input `2,284,357.000 ha`, that implies
+      `33,535.732 ha` removed; and
+    - that marginal is `14,772.720 ha` below the current locked row-15
+      marginal `48,308.452 ha`.
+  - Interpretation:
+    - the row-15 worker logic itself appears to execute to completion, but the
+      late-stage runner is failing after worker completion during final
+      merge/result publication; and
+    - the direct row-15-only replay from the raw official seam is not
+      comparable to the current locked cumulative row-15 contract, which still
+      assumes prior row-14 state has already been applied.
+  - Next bounded move:
+    - repair/adjudicate the row-15 late-stage runner contract before any row-16
+      execution, specifically merge/finalization after completed bundles and
+      the correct comparison surface for row-15 validation.
