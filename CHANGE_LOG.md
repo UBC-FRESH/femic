@@ -17308,3 +17308,15 @@
     `femic-tsa29-instance` lane after the shared/default promotion lands; and
   - updated `ROADMAP.md` so Phase 67 now governs the shared/default promotion
     and TSA29 follow-on sequence.
+## 2026-05-10 - Audited where AU first-growth default-selection actually lives
+- `#187` / `P67.2a` audit checkpoint:
+  - confirmed `src/femic/pipeline/mkrf_first_growth.py` already hard-codes the
+    AU-level direct-fit selection to `smoothed_bin_pchip`;
+  - confirmed `src/femic/workflows/mkrf.py` already publishes that family into
+    MKRF runtime/metadata surfaces as the explicit first-growth curve family;
+  - confirmed `src/femic/pipeline/vdyp_stage.py` is still the older
+    stratum-level NLLS-oriented smoothing/fallback engine rather than a shared
+    AU-level first-growth default-selection seam; and
+  - recorded that the next implementation move must be a real shared/default
+    surface introduction under `P67.2b`, not a cosmetic flag flip in the
+    legacy stratum smoother.
