@@ -17113,3 +17113,16 @@
     is blocked on missing source `whse_forest_vegetation_gry_psp_status`; and
   - the next bounded move is to materialize that PSP source artifact and rerun
     only row 17.
+## 2026-05-09 - Auto-materialized strict TSR source artifacts before GIS reads
+- `#184` / `#169` / `P53.1d42` strict-source guardrail:
+  - added `discover_git_worktree_root(...)` and
+    `materialize_annex_artifact_path(...)` in `src/femic/pipeline/io.py` so
+    TSR source resolution can run `git annex get` against tracked worktree
+    artifacts before GIS code tries to open them;
+  - updated strict parent-step source preflight in
+    `src/femic/tsr_catalog/recipes.py` to auto-materialize required
+    annex-backed GIS inputs before LU partitioning and only hard-fail when the
+    source still cannot be resolved as readable vector geometry afterward;
+  - replaced the old fail-fast regression with a test that proves the strict
+    preflight auto-materializes an annex pointer stub before proceeding; and
+  - validated the slice with targeted `pytest` and `ruff check`.

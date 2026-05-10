@@ -1450,6 +1450,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d38 Harden TSR source-artifact materialization checks so annex pointer stubs are treated as unmaterialized blockers before GIS reads, then return to the row-16 rerun.
     - [x] P53.1d39 Relock row 16 to the true chained step-15 -> step-16 result before any row-17 execution.
     - [x] P53.1d40 Validate the true chained step-17 result by running only step 17 from the rebuilt row-16 output.
+    - [x] P53.1d42 Add strict parent-step source-artifact auto-materialization/preflight so annex-backed GIS inputs are materialized before LU work starts and only hard-fail when materialization still cannot produce a readable payload (`#184`).
     - [ ] P53.1d41 Materialize the PSP source artifact required by row 17 and rerun only step 17 from the rebuilt row-16 output.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
@@ -2122,8 +2123,13 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - versus the TSR row-17 benchmark (`3,577.000 ha` removed /
       `1,867,553.000 ha` remaining), the blocked run is `-3,577.000 ha`
       marginal and `+56,600.572 ha` cumulative.
-  - The next bounded move is `P53.1d41`: materialize the PSP source artifact
-    required by row 17 and rerun only step 17 from the rebuilt row-16 output.
+  - `P53.1d42` is complete: strict parent-step source resolution now attempts
+    `git annex get` for required annex-backed GIS artifacts before LU
+    partitioning starts and only hard-fails if the source still cannot be
+    resolved as readable vector input after that materialization attempt.
+  - The next rerun move is `P53.1d41`:
+    materialize the PSP source artifact required by row 17 and rerun only step
+    17 from the rebuilt row-16 output.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

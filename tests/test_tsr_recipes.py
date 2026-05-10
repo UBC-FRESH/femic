@@ -930,6 +930,73 @@ def test_run_tsr_thlb_locked_parent_step_uses_true_before_after_net_change(
     assert result.benchmark_cumulative_delta_ha == pytest.approx(0.0)
 
 
+def test_locked_parent_step_source_preflight_auto_materializes_annex_stub(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance_root = tmp_path / "instance"
+    artifact_path = (
+        instance_root
+        / "data"
+        / "downloads"
+        / "bcdc"
+        / "WHSE_FOREST_VEGETATION_GRY_PSP_STATUS"
+        / "GRY_PSP_STATUS.gpkg"
+    )
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_text(
+        "/annex/objects/MD5E-s12--deadbeef.gpkg",
+        encoding="utf-8",
+    )
+    source_entry_map = {
+        "whse_forest_vegetation_gry_psp_status": {
+            "entry_id": "whse_forest_vegetation_gry_psp_status",
+            "artifact_path": (
+                "data/downloads/bcdc/WHSE_FOREST_VEGETATION_GRY_PSP_STATUS/"
+                "GRY_PSP_STATUS.gpkg"
+            ),
+        }
+    }
+
+    materialized_calls: list[Path] = []
+
+    def _fake_materialize(path: Path) -> Path:
+        materialized_calls.append(path)
+        artifact_path.write_bytes(b"SQLite format 3")
+        return artifact_path
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "materialize_annex_artifact_path",
+        _fake_materialize,
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_probe_vector_artifact_bounds",
+        lambda path: (0.0, 0.0, 1.0, 1.0),
+    )
+
+    tsr_recipes._preflight_locked_parent_step_required_sources(
+        instance_root=instance_root,
+        parent_step_id="thlb_parent_017_growth_and_yield_permanent_sample_plots",
+        compiled_logic=(
+            {
+                "step_id": (
+                    "thlb_parent_017_growth_and_yield_permanent_sample_plots_compiled_01"
+                ),
+                "label": "Growth and yield permanent sample plots",
+                "compiled_operation_type": "select_spatial_intersect",
+                "linked_source_entry_ids": [
+                    "whse_forest_vegetation_gry_psp_status"
+                ],
+            },
+        ),
+        source_entry_map=source_entry_map,
+    )
+
+    assert materialized_calls == [artifact_path.resolve()]
+
+
 def test_locked_strict_execution_does_not_double_count_row2_residual_fallback() -> None:
     parent_step = {
         "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",

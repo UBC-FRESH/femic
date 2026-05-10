@@ -2,7 +2,9 @@ from pathlib import Path
 
 from femic.pipeline.io import (
     build_legacy_data_artifact_paths,
+    discover_git_worktree_root,
     is_windows_annex_pointer_stub,
+    materialize_annex_artifact_path,
     resolve_legacy_siteprod_artifacts,
     resolve_legacy_thlb_raster_path,
     resolve_windows_annex_pointer_payload_path,
@@ -143,6 +145,57 @@ def test_resolve_windows_annex_pointer_payload_path_maps_annex_objects_pointer(
     )
 
     resolved = resolve_windows_annex_pointer_payload_path(pointer_path, os_name="nt")
+
+    assert resolved == payload.resolve()
+
+
+def test_discover_git_worktree_root_finds_enclosing_dataset(tmp_path: Path) -> None:
+    worktree_root = tmp_path / "dataset"
+    artifact_path = worktree_root / "data" / "downloads" / "source.gpkg"
+    artifact_path.parent.mkdir(parents=True)
+    artifact_path.write_text("stub", encoding="utf-8")
+    (worktree_root / ".git").write_text("gitdir: ../gitdir\n", encoding="utf-8")
+
+    assert discover_git_worktree_root(artifact_path) == worktree_root
+
+
+def test_materialize_annex_artifact_path_runs_annex_get_and_resolves_payload(
+    tmp_path: Path,
+) -> None:
+    worktree_root = tmp_path / "dataset"
+    pointer_path = worktree_root / "data" / "downloads" / "source.gpkg"
+    pointer_path.parent.mkdir(parents=True)
+    gitdir = tmp_path / "gitdir"
+    payload = (
+        gitdir
+        / "annex"
+        / "objects"
+        / "MD5E-s12--deadbeef.gpkg"
+    )
+    payload.parent.mkdir(parents=True)
+    (worktree_root / ".git").write_text("gitdir: ../gitdir\n", encoding="utf-8")
+    pointer_path.write_text(
+        "/annex/objects/MD5E-s12--deadbeef.gpkg",
+        encoding="utf-8",
+    )
+
+    def _fake_run(args, **_kwargs):
+        assert args == [
+            "git",
+            "-C",
+            str(worktree_root),
+            "annex",
+            "get",
+            "--",
+            "data/downloads/source.gpkg",
+        ]
+        payload.write_bytes(b"SQLite format 3")
+        return type("Result", (), {"returncode": 0})()
+
+    resolved = materialize_annex_artifact_path(
+        pointer_path,
+        subprocess_run=_fake_run,
+    )
 
     assert resolved == payload.resolve()
 

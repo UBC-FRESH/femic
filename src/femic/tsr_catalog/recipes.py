@@ -58,6 +58,7 @@ from femic.pipeline.io import (
     file_sha256,
     is_windows_annex_pointer_stub,
     load_pipeline_run_profile,
+    materialize_annex_artifact_path,
     resolve_windows_annex_pointer_payload_path,
 )
 from femic.pipeline.tsa import (
@@ -13637,6 +13638,12 @@ def run_tsr_thlb_locked_parent_step(
         compiled_logic,
         locked_net_removed_area_ha=locked_net_removed_area_ha,
     )
+    _preflight_locked_parent_step_required_sources(
+        instance_root=instance_root,
+        parent_step_id=parent_step_id,
+        compiled_logic=compiled_logic,
+        source_entry_map=source_entry_map,
+    )
     resolved_checkpoint_path = checkpoint_path.expanduser().resolve()
     _reject_tsa29_legacy_checkpoint_path(
         instance_root=instance_root,
@@ -17720,6 +17727,100 @@ def _resolve_source_artifact_path(
     if is_windows_annex_pointer_stub(resolved):
         return None
     return payload_path
+
+
+def _compiled_item_requires_source_artifact_preflight(
+    compiled_item: Mapping[str, Any],
+) -> bool:
+    return _resolve_compiled_operation_type(compiled_item) in {
+        "select_spatial_intersect",
+        "buffer_then_intersect",
+    }
+
+
+def _preflight_locked_parent_step_required_sources(
+    *,
+    instance_root: Path,
+    parent_step_id: str,
+    compiled_logic: Sequence[Mapping[str, Any]],
+    source_entry_map: Mapping[str, Mapping[str, Any]],
+) -> None:
+    blockers: list[str] = []
+    seen_entry_ids: set[str] = set()
+    for compiled_item in compiled_logic:
+        if not _compiled_item_requires_source_artifact_preflight(compiled_item):
+            continue
+        source_fields = ("linked_source_entry_ids", "restoration_source_entry_ids")
+        for field_name in source_fields:
+            linked_entry_ids = tuple(
+                str(value).strip()
+                for value in compiled_item.get(field_name, ())
+                if str(value).strip()
+            )
+            for entry_id in linked_entry_ids:
+                if entry_id in seen_entry_ids:
+                    continue
+                seen_entry_ids.add(entry_id)
+                source_entry = source_entry_map.get(entry_id)
+                if source_entry is None:
+                    blockers.append(
+                        f"`{entry_id}` has no source-layer recipe entry."
+                    )
+                    continue
+                artifact_path = str(source_entry.get("artifact_path", "")).strip()
+                candidate_path = (
+                    (instance_root / artifact_path).expanduser().resolve()
+                    if artifact_path
+                    else None
+                )
+                resolved_path = _resolve_source_artifact_path(
+                    instance_root=instance_root,
+                    source_entry=dict(source_entry),
+                )
+                if resolved_path is None and artifact_path and candidate_path is not None:
+                    materialized_path = materialize_annex_artifact_path(candidate_path)
+                    if materialized_path is not None:
+                        resolved_path = _resolve_source_artifact_path(
+                            instance_root=instance_root,
+                            source_entry=dict(source_entry),
+                        )
+                if resolved_path is None:
+                    if candidate_path is not None and candidate_path.exists():
+                        if is_windows_annex_pointer_stub(candidate_path):
+                            blockers.append(
+                                f"`{entry_id}` artifact `{artifact_path}` is still an "
+                                "unmaterialized annex pointer stub after auto-materialization."
+                            )
+                        else:
+                            blockers.append(
+                                f"`{entry_id}` artifact `{artifact_path}` exists but "
+                                "could not be resolved as a readable source payload."
+                            )
+                    elif artifact_path:
+                        blockers.append(
+                            f"`{entry_id}` artifact `{artifact_path}` is missing, not "
+                            "materialized, or could not be auto-materialized."
+                        )
+                    else:
+                        blockers.append(
+                            f"`{entry_id}` has no materialized artifact path."
+                        )
+                    continue
+                if _probe_vector_artifact_bounds(resolved_path) is None:
+                    try:
+                        display_path = resolved_path.relative_to(instance_root).as_posix()
+                    except ValueError:
+                        display_path = str(resolved_path)
+                    blockers.append(
+                        f"`{entry_id}` artifact `{display_path}` is unreadable or "
+                        "does not expose usable vector geometry."
+                    )
+    if blockers:
+        detail = " ".join(blockers)
+        raise TsrRecipeError(
+            f"Locked strict parent-step source preflight failed for "
+            f"`{parent_step_id}`: {detail}"
+        )
 
 
 def _parse_bbox_payload(

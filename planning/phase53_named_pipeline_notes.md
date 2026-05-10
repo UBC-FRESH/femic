@@ -1740,3 +1740,20 @@
   - Next bounded move:
     - materialize the PSP source artifact required by row 17 and rerun only
       step 17 from the rebuilt row-16 output.
+- 2026-05-09: Hardened strict parent-step source preflight to auto-materialize annex-backed GIS inputs before row execution.
+  - What changed:
+    - added a reusable annex-materialization helper that discovers the enclosing
+      git worktree, runs `git annex get` for the tracked artifact path, and
+      re-resolves the readable payload path after materialization;
+    - updated strict parent-step source preflight to call that helper whenever a
+      required GIS source still resolves to a pointer stub or other
+      unmaterialized artifact; and
+    - kept the hard failure boundary before LU partitioning when the source
+      still cannot be read as vector geometry after the materialization attempt.
+  - Validation:
+    - targeted pytest passed for the new annex helper and strict source
+      auto-materialization preflight coverage; and
+    - `ruff check` passed on the touched pipeline/TSR modules and tests.
+  - Next bounded move:
+    - rerun only step 17 from the rebuilt row-16 output so the PSP source can
+      be materialized automatically instead of yielding another blocked missing-source run.
