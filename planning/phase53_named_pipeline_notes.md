@@ -1930,3 +1930,10 @@
       riparian step and comfortably inside the current late-stage envelope.
   - Next bounded move:
     - relock row 20 to the true chained result before any row-21 execution.
+- 2026-05-10: Relocked row 20 to the true chained step-19 -> step-20 result.
+  - Locked row-20 result:
+    - removed: `94,417.000 ha`
+    - remaining: `1,744,082.044 ha`
+    - cumulative delta versus TSR: `+33,818.044 ha`
+  - Next bounded move:
+    - run only step 21 from the rebuilt row-20 output.

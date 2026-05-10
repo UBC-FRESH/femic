@@ -17230,3 +17230,11 @@
     instead of bundle labels; and
   - recorded the true chained row-20 result:
     `94,417.000 ha` removed and `1,744,082.044 ha` remaining.
+## 2026-05-10 - Relocked row 20 to the true chained WTRA result
+- `#169` / `P53.1d52` row-20 relock:
+  - updated the authoritative locked-chain ledger entry for row 20 from the
+    older post-step-19 restart-bounded value to the true chained row-19 ->
+    row-20 result;
+  - locked row 20 at `94,417.000 ha` removed and `1,744,082.044 ha`
+    remaining; and
+  - moved the active bounded move to row 21 from the rebuilt row-20 output.
