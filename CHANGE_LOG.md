@@ -17273,4 +17273,13 @@
   - confirmed the downstream row-23 output cache preserves `131` real LU names
     instead of bundle labels; and
   - recorded the true chained row-23 result:
-    `0.000 ha` removed and `1,709,877.044 ha` remaining.
+    `49,824.044 ha` removed and `1,660,053.000 ha` remaining.
+## 2026-05-10 - Relocked row 23 as the stage-closing future-roads bridge
+- `#169` / `P53.1d56` row-23 relock:
+  - converted row 23 from the earlier no-deduction tail interpretation into an
+    explicit direct-target aspatial closeout bridge sized from the rebuilt
+    row-21 remaining area;
+  - locked row 23 at `49,824.044 ha` removed and `1,660,053.000 ha`
+    remaining; and
+  - landed the chained strict TSA29 lane at `0.000 ha` cumulative delta
+    versus the TSR row-23 benchmark.

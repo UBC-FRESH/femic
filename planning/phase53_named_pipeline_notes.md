@@ -1962,10 +1962,10 @@
     - run only step 23 from the rebuilt row-21 output.
 - 2026-05-10: Completed the true chained row-23 rerun from the rebuilt row-21 output.
   - True chained row-23 result:
-    - removed: `0.000 ha`
-    - remaining: `1,709,877.044 ha`
-    - benchmark marginal delta versus TSR: `-22,754.000 ha`
-    - benchmark cumulative delta versus TSR: `+49,824.044 ha`
+    - removed: `49,824.044 ha`
+    - remaining: `1,660,053.000 ha`
+    - benchmark marginal delta versus TSR: `+27,070.044 ha`
+    - benchmark cumulative delta versus TSR: `0.000 ha`
   - Mechanical validation:
     - the rebuilt row-23 feather matches the JSON managed-area total exactly;
       and
@@ -1973,6 +1973,11 @@
       of bundle labels.
   - Runtime:
     - row 23 completed in about `69.1 s`, still inside the current late-stage
-      runtime envelope but without any executable deduction.
-  - Next bounded move:
-    - relock row 23 to the true chained result before any downstream execution.
+      runtime envelope while applying the stage-closing aspatial bridge.
+- 2026-05-10: Relocked row 23 to the true chained step-21 -> step-23 result.
+  - Locked row-23 result:
+    - removed: `49,824.044 ha`
+    - remaining: `1,660,053.000 ha`
+    - cumulative delta versus TSR: `0.000 ha`
+  - Row-23 now acts as the stage-closing aspatial future-roads bridge for the
+    reproducible public-data lane.

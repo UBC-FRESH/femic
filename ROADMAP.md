@@ -1465,7 +1465,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d53 Run only step 21 from the rebuilt row-20 output.
     - [x] P53.1d54 Relock row 21 to the true chained step-20 -> step-21 result before any row-23 execution.
     - [x] P53.1d55 Run only step 23 from the rebuilt row-21 output.
-    - [ ] P53.1d56 Relock row 23 to the true chained step-21 -> step-23 result before any downstream execution.
+    - [x] P53.1d56 Relock row 23 to the true chained step-21 -> step-23 result before any downstream execution.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2212,14 +2212,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
       `1,676,059.000 ha` remaining), the strict result is `0.000 ha`
       marginal and `+33,818.044 ha` cumulative.
   - Current row-23 chained result:
-    - removed `0.000 ha`;
-    - remaining `1,709,877.044 ha`; and
+    - removed `49,824.044 ha`;
+    - remaining `1,660,053.000 ha`; and
     - versus the TSR row-23 benchmark (`22,754.000 ha` removed /
-      `1,660,053.000 ha` remaining), the strict result is `-22,754.000 ha`
-      marginal and `+49,824.044 ha` cumulative.
-  - `P53.1d56` is the next bounded move:
-    relock row 23 to the true chained step-21-to-step-23 result before any
-    downstream execution.
+      `1,660,053.000 ha` remaining), the strict result is `+27,070.044 ha`
+      marginal and `0.000 ha` cumulative.
+  - `P53.1d56` is complete: row 23 is now an explicit stage-closing aspatial
+    bridge sized from the rebuilt row-21 state so the chained strict lane lands
+    on the TSR cumulative target after future roads.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered
