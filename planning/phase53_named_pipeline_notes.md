@@ -1717,3 +1717,26 @@
       after materializing the FTEN recreation GeoPackage.
   - Next bounded move:
     - run only step 17 from the rebuilt row-16 output.
+- 2026-05-09: Ran TSA29 strict row 17 from the rebuilt row-16 output.
+  - Corrected execution shape:
+    - started from the actual step-16 output
+      `data/tsr/strict_chain/16_thlb_parent_016_recreation_features.feather`;
+    - ran only `thlb_parent_017_growth_and_yield_permanent_sample_plots`.
+  - Inspected outputs:
+    - row-17 JSON:
+      `runtime/logs/tsr/strict_chain/17_thlb_parent_017_growth_and_yield_permanent_sample_plots.json`
+    - row-17 feather:
+      `data/tsr/strict_chain/17_thlb_parent_017_growth_and_yield_permanent_sample_plots.feather`
+    - row-17 removed: `0.000 ha`
+    - row-17 remaining: `1,924,153.572 ha`
+  - Blocking source:
+    - `missing_source_entry_ids = [whse_forest_vegetation_gry_psp_status]`
+    - runtime status: `blocked_missing_source`
+  - Comparison:
+    - versus the TSR row-17 benchmark `3,577.000 ha` removed /
+      `1,867,553.000 ha` remaining:
+      - marginal delta: `-3,577.000 ha`
+      - cumulative delta: `+56,600.572 ha`
+  - Next bounded move:
+    - materialize the PSP source artifact required by row 17 and rerun only
+      step 17 from the rebuilt row-16 output.

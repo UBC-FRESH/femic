@@ -1449,6 +1449,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d37 Validate the true chained step-16 result by deriving the needed curve-ready fields onto the rebuilt step-15 output and running only step 16.
     - [x] P53.1d38 Harden TSR source-artifact materialization checks so annex pointer stubs are treated as unmaterialized blockers before GIS reads, then return to the row-16 rerun.
     - [x] P53.1d39 Relock row 16 to the true chained step-15 -> step-16 result before any row-17 execution.
+    - [x] P53.1d40 Validate the true chained step-17 result by running only step 17 from the rebuilt row-16 output.
+    - [ ] P53.1d41 Materialize the PSP source artifact required by row 17 and rerun only step 17 from the rebuilt row-16 output.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2111,8 +2113,17 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - `+53,023.572 ha` cumulative.
   - `P53.1d39` is complete: row 16 is now relocked to that true chained
     step-15 -> step-16 result.
-  - The next bounded move is to run only step 17 from the rebuilt row-16
-    output.
+  - `P53.1d40` is complete: row 17 has now been run from the rebuilt row-16
+    output on the true chained surface.
+  - The row-17 result is blocked on a missing materialized PSP source:
+    - `whse_forest_vegetation_gry_psp_status`
+    - current row-17 run removed `0.000 ha` and left `1,924,153.572 ha`
+      remaining;
+    - versus the TSR row-17 benchmark (`3,577.000 ha` removed /
+      `1,867,553.000 ha` remaining), the blocked run is `-3,577.000 ha`
+      marginal and `+56,600.572 ha` cumulative.
+  - The next bounded move is `P53.1d41`: materialize the PSP source artifact
+    required by row 17 and rerun only step 17 from the rebuilt row-16 output.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

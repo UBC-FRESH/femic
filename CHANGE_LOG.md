@@ -17101,3 +17101,15 @@
   - row 16 now removes `6,427.221 ha` and leaves `1,924,153.572 ha`
     remaining; and
   - relocked row 16 to that true chained result before any row-17 execution.
+## 2026-05-09 - Ran TSA29 strict row 17 from the rebuilt row-16 output and exposed the next source-materialization blocker
+- `#169` / `P53.1d40` chained row-17 validation:
+  - reran only `thlb_parent_017_growth_and_yield_permanent_sample_plots` from
+    `external/femic-tsa29-instance/data/tsr/strict_chain/16_thlb_parent_016_recreation_features.feather`;
+  - inspected
+    `runtime/logs/tsr/strict_chain/17_thlb_parent_017_growth_and_yield_permanent_sample_plots.json`
+    and
+    `data/tsr/strict_chain/17_thlb_parent_017_growth_and_yield_permanent_sample_plots.feather`;
+  - row 17 removed `0.000 ha` and left `1,924,153.572 ha` remaining because it
+    is blocked on missing source `whse_forest_vegetation_gry_psp_status`; and
+  - the next bounded move is to materialize that PSP source artifact and rerun
+    only row 17.
