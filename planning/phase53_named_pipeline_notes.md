@@ -1907,3 +1907,10 @@
       healthy on the next chained step.
   - Next bounded move:
     - relock row 19 to the true chained result before any row-20 execution.
+- 2026-05-10: Relocked row 19 to the true chained step-18 -> step-19 result.
+  - Locked row-19 result:
+    - removed: `11,806.113 ha`
+    - remaining: `1,838,499.044 ha`
+    - cumulative delta versus TSR: `+33,818.044 ha`
+  - Next bounded move:
+    - run only step 20 from the rebuilt row-19 output.

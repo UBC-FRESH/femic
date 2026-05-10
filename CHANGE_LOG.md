@@ -17208,3 +17208,11 @@
     instead of bundle labels; and
   - recorded the true chained row-19 result:
     `11,806.113 ha` removed and `1,838,499.044 ha` remaining.
+## 2026-05-10 - Relocked row 19 to the true chained buffered-trails result
+- `#169` / `P53.1d50` row-19 relock:
+  - updated the authoritative locked-chain ledger entry for row 19 from the
+    older post-step-18 restart-bounded value to the true chained row-18 ->
+    row-19 result;
+  - locked row 19 at `11,806.113 ha` removed and `1,838,499.044 ha`
+    remaining; and
+  - moved the active bounded move to row 20 from the rebuilt row-19 output.
