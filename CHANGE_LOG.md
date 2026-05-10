@@ -17087,3 +17087,17 @@
   - added targeted regressions for the new pointer form and the unresolved-stub
     rejection path; and
   - validated the slice with targeted `pytest` and `ruff check`.
+## 2026-05-09 - Validated and relocked TSA29 strict row 16 on the true chained surface
+- `#169` / `P53.1d37` / `P53.1d39` chained row-16 correction:
+  - materialized
+    `external/femic-tsa29-instance/data/downloads/bcdc/WHSE_FOREST_TENURE_FTEN_RECREATION/WHSE_FOREST_TENURE_FTEN_RECREATION.gpkg`
+    before rerunning row 16;
+  - reran only `thlb_parent_016_recreation_features` from
+    `external/femic-tsa29-instance/data/tsr/strict_chain/15_thlb_parent_015_non_merchantable_timber_profiles.feather`;
+  - inspected
+    `runtime/logs/tsr/strict_chain/16_thlb_parent_016_recreation_features.json`
+    and
+    `data/tsr/strict_chain/16_thlb_parent_016_recreation_features.feather`;
+  - row 16 now removes `6,427.221 ha` and leaves `1,924,153.572 ha`
+    remaining; and
+  - relocked row 16 to that true chained result before any row-17 execution.

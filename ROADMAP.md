@@ -1446,8 +1446,9 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d34 Backtrack to the last clean chained point and relock row 14 to the true chained step-13 -> step-14 result before advancing to a true chained row 15.
     - [x] P53.1d35 Validate the true chained step-15 result by deriving curve-ready fields onto the rebuilt step-14 output and running only step 15.
     - [x] P53.1d36 Relock row 15 to the true chained step-14 -> step-15 result before any row-16 execution.
-    - [ ] P53.1d37 Validate the true chained step-16 result by deriving the needed curve-ready fields onto the rebuilt step-15 output and running only step 16.
+    - [x] P53.1d37 Validate the true chained step-16 result by deriving the needed curve-ready fields onto the rebuilt step-15 output and running only step 16.
     - [x] P53.1d38 Harden TSR source-artifact materialization checks so annex pointer stubs are treated as unmaterialized blockers before GIS reads, then return to the row-16 rerun.
+    - [x] P53.1d39 Relock row 16 to the true chained step-15 -> step-16 result before any row-17 execution.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2097,9 +2098,21 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
       as if it were a real vector artifact; and
     - targeted regressions now cover both the new pointer form and the
       unresolved-stub rejection path.
-  - The next bounded move is back to `P53.1d37`: rerun only row 16 from the
-    rebuilt step-15 output and confirm whether the recreation layer now
-    materializes or fails explicitly as still-unmaterialized.
+  - `P53.1d37` is complete: row 16 has now been rerun on the true chained
+    surface from the rebuilt step-15 output after materializing the recreation
+    GeoPackage.
+  - The true chained step-16 result is:
+    - `6,427.221 ha` removed;
+    - `1,924,153.572 ha` remaining; and
+    - `8` workers on the rebuilt step-15 input.
+  - Versus the TSR row-16 benchmark (`9,598.000 ha` removed /
+    `1,871,130.000 ha` remaining), the corrected chained row-16 run is:
+    - `-3,170.779 ha` marginal; and
+    - `+53,023.572 ha` cumulative.
+  - `P53.1d39` is complete: row 16 is now relocked to that true chained
+    step-15 -> step-16 result.
+  - The next bounded move is to run only step 17 from the rebuilt row-16
+    output.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

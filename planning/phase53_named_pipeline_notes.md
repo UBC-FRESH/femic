@@ -1689,3 +1689,31 @@
     - rerun only row 16 from the rebuilt step-15 output and confirm whether
       the recreation source now resolves to a readable payload or fails
       explicitly as still-unmaterialized.
+- 2026-05-09: Validated and relocked TSA29 strict row 16 on the true chained surface.
+  - Corrected execution shape:
+    - materialized
+      `data/downloads/bcdc/WHSE_FOREST_TENURE_FTEN_RECREATION/WHSE_FOREST_TENURE_FTEN_RECREATION.gpkg`;
+    - started from the actual step-15 output
+      `data/tsr/strict_chain/15_thlb_parent_015_non_merchantable_timber_profiles.feather`;
+    - ran only `thlb_parent_016_recreation_features`.
+  - Inspected outputs:
+    - row-16 JSON:
+      `runtime/logs/tsr/strict_chain/16_thlb_parent_016_recreation_features.json`
+    - row-16 feather:
+      `data/tsr/strict_chain/16_thlb_parent_016_recreation_features.feather`
+    - row-16 removed: `6,427.221 ha`
+    - row-16 remaining: `1,924,153.572 ha`
+  - Comparison:
+    - versus the old raw-seam row-16 lock `8,891.240 ha` removed /
+      `1,869,193.903 ha` remaining:
+      - marginal delta: `-2,464.019 ha`
+      - cumulative delta: `+54,959.669 ha`
+    - versus the TSR row-16 benchmark `9,598.000 ha` removed /
+      `1,871,130.000 ha` remaining:
+      - marginal delta: `-3,170.779 ha`
+      - cumulative delta: `+53,023.572 ha`
+  - Locked chain update:
+    - row 16 now locks the true chained run from the rebuilt step-15 output
+      after materializing the FTEN recreation GeoPackage.
+  - Next bounded move:
+    - run only step 17 from the rebuilt row-16 output.
