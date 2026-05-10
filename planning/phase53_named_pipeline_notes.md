@@ -1866,3 +1866,27 @@
   - Next bounded move:
     - rerun only step 18 from the rebuilt row-17 output on the corrected
       LU-granular cache surface.
+- 2026-05-10: Completed the true chained row-18 rerun after rebuilding the stale row-17 warm-start cache to real LU chunks.
+  - What changed before execution:
+    - deleted the stale row-17 partition cache that still registered
+      `worker_01` ... `worker_08` bundle chunks; and
+    - rebuilt the row-17 cache from the real row-17 checkpoint into `131`
+      LU-granular chunks before rerunning step 18.
+  - True chained row-18 result:
+    - removed: `73,011.241 ha`
+    - remaining: `1,850,305.157 ha`
+    - benchmark marginal delta versus TSR: `+18,178.241 ha`
+    - benchmark cumulative delta versus TSR: `+37,585.157 ha`
+  - Mechanical validation:
+    - row-18 output cache now registers `131` real LU names instead of
+      `worker_01` ... `worker_08`; and
+    - the rebuilt feather still carries late-stage fields such as `curve1` and
+      `au`.
+  - Runtime concern:
+    - despite the cache fix, row 18 still took about `14.9 min`, far above the
+      older `3-4 min` benchmark envelope, with most time spent inside a few
+      heavy riparian LU executions (`Nazko`, `Mackin`, `Hawks Creek`,
+      `Corkscrew`).
+  - Next bounded move:
+    - relock row 18 to the true chained result, then run only step 19 from the
+      rebuilt row-18 output.

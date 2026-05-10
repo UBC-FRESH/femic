@@ -17179,3 +17179,18 @@
   - validated the fix with targeted pytest plus a new regression test proving
     that two LU chunks routed through a single worker bundle still re-register
     as `LU A` / `LU B`.
+## 2026-05-10 - Relocked row 18 to the true chained riparian rerun
+- `#169` / `P53.1d46`-`P53.1d48` chained row-18 validation:
+  - deleted the stale row-17 warm-start cache that still registered
+    `worker_01` ... `worker_08` bundle chunks and rebuilt it from the real
+    row-17 checkpoint into `131` LU-granular chunks;
+  - reran only row 18 from the rebuilt row-17 output and inspected the actual
+    rebuilt artifacts
+    `external/femic-tsa29-instance/runtime/logs/tsr/strict_chain/18_thlb_parent_018_riparian_areas.json`
+    and
+    `external/femic-tsa29-instance/data/tsr/strict_chain/18_thlb_parent_018_riparian_areas.feather`;
+  - relocked row 18 to the true chained result:
+    `73,011.241 ha` removed and `1,850,305.157 ha` remaining; and
+  - confirmed the downstream row-18 output cache now preserves `131` real LU
+    names instead of bundle labels, even though row-18 runtime is still much
+    slower than the older benchmark envelope.
