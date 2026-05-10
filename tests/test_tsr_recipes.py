@@ -426,7 +426,7 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
     metadata = json.loads(metadata_paths[0].read_text(encoding="utf-8"))
     assert metadata["checkpoint_path"] == str(result.output_path.resolve())
     assert metadata["input_row_count"] == 1
-    assert metadata["chunk_records"][0]["lu_name"] == "worker_01"
+    assert metadata["chunk_records"][0]["lu_name"] == "Test LU"
     cached_chunk = gpd.read_feather(
         metadata_paths[0].parent / metadata["chunk_records"][0]["chunk_path"]
     )
@@ -459,6 +459,179 @@ def test_run_tsr_thlb_locked_parent_step_executes_one_locked_step(
         and event.get("remaining_area_ha") == 0.8
         for event in captured_events
     )
+
+
+def test_run_tsr_thlb_locked_parent_step_preserves_lu_chunk_cache_records(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _ImmediateFuture:
+        def __init__(self, value: object) -> None:
+            self._value = value
+
+        def result(self) -> object:
+            return self._value
+
+    class _ImmediateExecutor:
+        def __init__(self, *, max_workers: int | None = None) -> None:
+            self.max_workers = max_workers
+
+        def __enter__(self) -> "_ImmediateExecutor":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            return None
+
+        def submit(self, fn, /, *args, **kwargs) -> _ImmediateFuture:
+            return _ImmediateFuture(fn(*args, **kwargs))
+
+    instance_root = tmp_path / "instance"
+    checkpoint_path = instance_root / "data" / "tsr" / "glb_checkpoint.feather"
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    chunk_root = instance_root / "runtime" / "logs" / "tsr"
+    chunk_root.mkdir(parents=True, exist_ok=True)
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [20000.0],
+            "FOR_MGMT_LAND_BASE_IND": ["Y"],
+        },
+        geometry=[box(0, 0, 200, 100)],
+        crs="EPSG:3005",
+    ).to_feather(checkpoint_path)
+    chunk_a = chunk_root / "strict_chunk_a.feather"
+    chunk_b = chunk_root / "strict_chunk_b.feather"
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0],
+            "_stand_area_sqm": [10000.0],
+            "_row_id": [0],
+            "thlb_fact": [1.0],
+            "thlb": [1],
+        },
+        geometry=[box(0, 0, 100, 100)],
+        crs="EPSG:3005",
+    ).to_feather(chunk_a)
+    gpd.GeoDataFrame(
+        {
+            "FEATURE_AREA_SQM": [10000.0],
+            "_stand_area_sqm": [10000.0],
+            "_row_id": [1],
+            "thlb_fact": [1.0],
+            "thlb": [1],
+        },
+        geometry=[box(100, 0, 200, 100)],
+        crs="EPSG:3005",
+    ).to_feather(chunk_b)
+
+    tsa = tsr_catalog.TsrOverlayTsaRecord(
+        tsa_id="tsa_29",
+        tsa_code="29",
+        tsa_name="Williams Lake",
+    )
+    recipe = SimpleNamespace(tsa=tsa)
+    parent_step = {
+        "parent_step_id": "thlb_parent_002_land_not_administered_by_the_province",
+        "parent_label": "Land not administered by the Province",
+        "row_order": 2,
+        "parent_kind": "transformation",
+        "execution_class": "bounded_step_run",
+        "land_base_stage": "glb_to_aflb",
+        "approved": True,
+        "ratchet_state": "approved",
+        "last_notebook_run_status": "applied",
+        "benchmark_marginal_area_ha": 0.4,
+        "benchmark_cumulative_area_ha": 1.6,
+        "compiled_logic": (
+            {
+                "step_id": "thlb_parent_002_compiled_01",
+                "label": "Ownership filter",
+            },
+        ),
+    }
+
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_tsr_thlb_recipe_context",
+        lambda recipe_path: (recipe, instance_root, None, {}, {}),
+    )
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_resolve_tsr_thlb_parent_step",
+        lambda recipe, parent_step_id: parent_step,
+    )
+    monkeypatch.setattr(tsr_recipes, "_resolve_tsr_total_area_benchmark", lambda recipe: 2.0)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "_load_cached_landscape_unit_partition_records",
+        lambda **kwargs: (
+            ("LU A", "LU B"),
+            [
+                {"lu_name": "LU A", "chunk_path": chunk_a, "area_ha": 1.0},
+                {"lu_name": "LU B", "chunk_path": chunk_b, "area_ha": 1.0},
+            ],
+        ),
+    )
+    monkeypatch.setattr(tsr_recipes, "ProcessPoolExecutor", _ImmediateExecutor)
+    monkeypatch.setattr(
+        tsr_recipes,
+        "wait",
+        lambda futures, timeout=None, return_when=None: (set(futures), set()),
+    )
+
+    def _fake_execute(
+        *,
+        checkpoint,
+        compiled_item,
+        instance_root,
+        source_entry_map,
+        total_area_benchmark_ha,
+        applied_steps=(),
+    ):
+        updated = checkpoint.copy()
+        updated["thlb_fact"] = updated["thlb_fact"] * 0.8
+        removed_area_ha = float(
+            checkpoint.geometry.area.astype(float).sum() / 10000.0
+            - (updated.geometry.area.astype(float) * updated["thlb_fact"]).sum() / 10000.0
+        )
+        return updated, {
+            "step_id": "thlb_parent_002_compiled_01",
+            "label": "Ownership filter",
+            "execution_status": "applied",
+            "removed_area_ha": removed_area_ha,
+            "net_removed_area_ha": removed_area_ha,
+            "remaining_area_ha": float(
+                (updated.geometry.area.astype(float) * updated["thlb_fact"]).sum() / 10000.0
+            ),
+            "runtime_notes": ["bounded locked step"],
+        }
+
+    monkeypatch.setattr(tsr_recipes, "_execute_workbench_compiled_item", _fake_execute)
+
+    result = tsr_recipes.run_tsr_thlb_locked_parent_step(
+        recipe_path=instance_root
+        / "workbench"
+        / "tsr"
+        / "thlb_netdown.locked.recipe.yaml",
+        parent_step_id="thlb_parent_002_land_not_administered_by_the_province",
+        checkpoint_path=checkpoint_path,
+        max_workers=1,
+        lu_bundle_count=1,
+    )
+
+    metadata_paths = list(
+        tsr_recipes.default_tsr_thlb_lu_partition_root(
+            instance_root=instance_root
+        ).glob("*/partition_metadata.json")
+    )
+    assert len(metadata_paths) == 1
+    metadata = json.loads(metadata_paths[0].read_text(encoding="utf-8"))
+    assert [item["lu_name"] for item in metadata["chunk_records"]] == ["LU A", "LU B"]
+    for item in metadata["chunk_records"]:
+        assert "worker_" not in item["lu_name"]
+        cached_chunk = gpd.read_feather(metadata_paths[0].parent / item["chunk_path"])
+        assert "_row_id" in cached_chunk.columns
+        assert "_stand_area_sqm" in cached_chunk.columns
+    assert result.lu_bundle_count == 1
 
 
 def test_run_tsr_thlb_locked_parent_step_short_circuits_zero_removal_reviewed_skip(

@@ -1828,3 +1828,41 @@
     - cumulative delta versus TSR: `+55,763.398 ha`
   - Next bounded move:
     - run only step 18 from the rebuilt row-17 output.
+- 2026-05-10: Aborted the first strict row-18 full-TSA rerun after it stalled far beyond the prior benchmark runtime envelope.
+  - What happened:
+    - the strict row-18 rerun was stopped after roughly 18 minutes with no final
+      row-18 JSON/feather output;
+    - the worker progress files never advanced beyond `completed_lus = 0`; and
+    - no `bundle_*.output.feather` files were written.
+  - Root-cause diagnosis:
+    - the strict chained late-stage output cache handoff is preserving worker
+      bundle outputs rather than true LU-granular partition records;
+    - the row-17 output therefore warm-started row 18 from eight oversized
+      bundle chunks (`worker_01` ... `worker_08`) instead of the expected LU
+      pool; and
+    - that broke the intended recipe execution grain for the riparian step.
+  - Benchmark comparison:
+    - previous successful row-18 benchmark runs recorded in repo notes were on
+      the order of roughly `3-4 minutes`, not `18+ minutes`.
+  - Next bounded move:
+    - patch the strict cache registration path so chained late-stage outputs
+      keep true LU-granular partition records before rerunning row 18.
+- 2026-05-10: Fixed the strict late-stage cache handoff so chained outputs preserve LU-granular partition records.
+  - Root cause:
+    - the strict runner was registering downstream partition-cache metadata from
+      merged worker-bundle outputs (`worker_01`, `worker_02`, ...) instead of
+      the per-LU outputs that the recipe execution contract expects.
+  - What changed:
+    - the strict bundle worker now writes and returns one cached output feather
+      per LU chunk in addition to its merged bundle output; and
+    - downstream cache registration now prefers those per-LU output chunk
+      records, preserving the real LU pool across chained late-stage steps.
+  - Validation:
+    - targeted pytest passed for the existing strict locked-step execution test;
+      and
+    - a new test proved that two LU chunks routed through a single worker bundle
+      still re-register as `LU A` / `LU B` instead of collapsing to
+      `worker_01`.
+  - Next bounded move:
+    - rerun only step 18 from the rebuilt row-17 output on the corrected
+      LU-granular cache surface.

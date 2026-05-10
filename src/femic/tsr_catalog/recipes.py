@@ -13179,6 +13179,7 @@ def _run_tsr_thlb_parent_step_bundle_worker(
     statuses: set[str] = set()
     completed_lus = 0
     chunk_profile_items: list[dict[str, Any]] = []
+    output_chunk_records: list[dict[str, Any]] = []
 
     try:
         for lu_name, chunk_path in bundle_items:
@@ -13219,6 +13220,15 @@ def _run_tsr_thlb_parent_step_bundle_worker(
             )
             execute_elapsed = perf_counter() - execute_started
             merged_frames.append(updated)
+            lu_output_slug = (
+                re.sub(r"[^A-Za-z0-9]+", "_", str(lu_name).strip()).strip("_").lower()
+                or f"lu_{completed_lus + 1:03d}"
+            )
+            lu_output_path = (
+                Path(output_path).parent
+                / f"bundle_{bundle_index:02d}.{completed_lus + 1:03d}_{lu_output_slug}.feather"
+            )
+            updated.to_feather(lu_output_path)
             if not executed_parent_step_ids:
                 executed_parent_step_ids = tuple(current_parent_step_ids)
             executed_items.extend(current_executed_items)
@@ -13228,10 +13238,20 @@ def _run_tsr_thlb_parent_step_bundle_worker(
                 str(value).strip() for value in current_notes if str(value).strip()
             )
             completed_lus += 1
+            output_chunk_records.append(
+                {
+                    "lu_name": str(lu_name).strip(),
+                    "chunk_path": lu_output_path,
+                    "area_ha": float(
+                        updated.geometry.area.astype(float).sum() / 10000.0
+                    ),
+                }
+            )
             chunk_profile_items.append(
                 {
                     "lu_name": lu_name,
                     "chunk_path": str(chunk_path),
+                    "output_chunk_path": str(lu_output_path),
                     "input_row_count": int(len(checkpoint)),
                     "output_row_count": int(len(updated)),
                     "read_seconds": read_elapsed,
@@ -13315,6 +13335,7 @@ def _run_tsr_thlb_parent_step_bundle_worker(
         "bundle_label": bundle_label,
         "lu_names": lu_names,
         "completed_lus": len(bundle_items),
+        "output_chunk_records": output_chunk_records,
         "profiling": {
             "bundle_total_seconds": perf_counter() - bundle_started,
             "bundle_concat_seconds": concat_elapsed,
@@ -14134,15 +14155,26 @@ def run_tsr_thlb_locked_parent_step(
         ]
         output_partition_source_records = [
             {
-                "lu_name": str(
-                    worker_result.get("bundle_label")
-                    or f"bundle_{int(worker_result.get('bundle_index', 0) or 0):02d}"
-                ).strip(),
-                "chunk_path": Path(str(worker_result["output_path"])),
-                "area_ha": float(worker_result.get("geometry_area_ha", 0.0) or 0.0),
+                "lu_name": str(item.get("lu_name", "")).strip(),
+                "chunk_path": Path(str(item["chunk_path"])),
+                "area_ha": float(item.get("area_ha", 0.0) or 0.0),
             }
             for worker_result in worker_results
+            for item in worker_result.get("output_chunk_records", [])
+            if isinstance(item, dict) and str(item.get("chunk_path", "")).strip()
         ]
+        if not output_partition_source_records:
+            output_partition_source_records = [
+                {
+                    "lu_name": str(
+                        worker_result.get("bundle_label")
+                        or f"bundle_{int(worker_result.get('bundle_index', 0) or 0):02d}"
+                    ).strip(),
+                    "chunk_path": Path(str(worker_result["output_path"])),
+                    "area_ha": float(worker_result.get("geometry_area_ha", 0.0) or 0.0),
+                }
+                for worker_result in worker_results
+            ]
         profiling["execute_seconds"] = perf_counter() - execute_started
 
     final_status = (

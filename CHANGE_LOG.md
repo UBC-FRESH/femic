@@ -17167,3 +17167,15 @@
     data instead of wiring unavailable geometry into the recipe contract; and
   - relocked row 17 to the true chained public/materialized run result:
     `837.174 ha` removed and `1,923,316.398 ha` remaining.
+## 2026-05-10 - Fixed strict late-stage LU cache handoff for chained row execution
+- `#169` / `P53.1d47` runner-cache fix:
+  - fixed the strict late-stage cache handoff so chained outputs preserve
+    true LU-granular partition records instead of re-registering merged
+    worker-bundle outputs like `worker_01`;
+  - updated the strict bundle worker to emit one cached output feather per LU
+    chunk alongside its merged bundle output;
+  - updated downstream cache registration to prefer those per-LU output chunk
+    records when preparing the next chained step; and
+  - validated the fix with targeted pytest plus a new regression test proving
+    that two LU chunks routed through a single worker bundle still re-register
+    as `LU A` / `LU B`.

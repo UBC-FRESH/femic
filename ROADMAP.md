@@ -1456,6 +1456,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d44 Search for a broader benchmark-equivalent public/materializable row-17 geometry surface and confirm whether it is admissible in the reproducible pipeline.
     - [x] P53.1d45 Relock row 17 to the current public/materializable chained PSP result when no broader admissible public geometry surface can be found.
     - [ ] P53.1d46 Run only step 18 from the rebuilt row-17 output.
+    - [ ] P53.1d47 Preserve true LU-granular cache records across chained strict late-stage steps so downstream runs do not warm-start from worker-bundle mega-chunks.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2150,9 +2151,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - the source contract now stays explicit that row 17 is using the
       active-status public PSP surface, not a broader all-status benchmark
       overlay.
-  - `P53.1d46` is the next bounded move:
-    run only step 18 from the rebuilt row-17 output after relocking row 17 to
-    the admissible public/materializable active-PSP result.
+  - `P53.1d47` is the next bounded move:
+    fix the strict late-stage cache handoff so chained outputs keep true
+    LU-granular partition records instead of registering worker-bundle cache
+    entries, then return to the row-18 rerun.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered
