@@ -17299,3 +17299,12 @@
     BCDC/pipeline runtime artifacts; and
   - reduced the parent worktree back to the intentional tracked public-data
     pointer update instead of hundreds of untracked TSA29 runtime files.
+## 2026-05-10 - Opened the smoothed AU-level VDYP first-growth promotion lane
+- `#187` / `#188` planning and tracker kickoff:
+  - opened parent feature issue `#187` to promote `smoothed_bin_pchip` as the
+    official default for AU-level first-growth / unmanaged VDYP synthesis,
+    using the accepted MKRF evidence from `#177` / `#173`;
+  - opened TSA29-only child issue `#188` to adopt that promoted default on the
+    `femic-tsa29-instance` lane after the shared/default promotion lands; and
+  - updated `ROADMAP.md` so Phase 67 now governs the shared/default promotion
+    and TSA29 follow-on sequence.

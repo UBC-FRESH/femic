@@ -1848,8 +1848,35 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P66.3b Regenerate the canonical runtime package, rerun Matrix Builder, and rerun the canonical `100000`-iteration even-flow smoke.
   - [x] P66.3c Inspect representative lower-bucket and higher-bucket CT outputs, confirm CT-vs-no-CT full-rotation harvested-volume behavior, rebuild parent/instance docs warning-clean, and record the `v0.0.2a1` framing in repo/GitHub surfaces.
 
+## Phase 67: Promote Smoothed AU-Level VDYP First-Growth Curves Beyond MKRF
+
+- [x] P67.1 Record the shared/default promotion lane for AU-level first-growth VDYP synthesis (`#187`)
+  - [x] P67.1a Open the parent feature issue with the accepted MKRF evidence basis, rationale, and default-method acceptance criteria.
+  - [x] P67.1b Open the TSA29-only child issue and record the downstream adoption boundary (`#188`).
+- [ ] P67.2 Promote `smoothed_bin_pchip` to the default AU-level first-growth / unmanaged VDYP synthesis method (`#187`)
+  - [ ] P67.2a Audit where first-growth default-selection currently lives across the MKRF-specific builder and reusable VDYP-stage machinery.
+  - [ ] P67.2b Expose the promoted default without breaking legacy callers that still rely on older NLLS-oriented behavior.
+  - [ ] P67.2c Update docs/contracts/tests so `smoothed_bin_pchip` is the official default and NLLS is clearly legacy/fallback.
+- [ ] P67.3 Adopt the promoted default on the TSA29 instance lane (`#188`)
+  - [ ] P67.3a Switch the TSA29 AU-level first-growth build path to the promoted default and regenerate the relevant instance outputs.
+  - [ ] P67.3b Validate TSA29 residual/shape diagnostics against AU binned medians and record explicit insufficient-support AU treatment.
+
 ### Detailed Next Steps Notes
 
+- Phase 67 smoothed AU-level first-growth promotion is now opened on `#187`
+  with TSA29 child issue `#188`:
+  - the accepted evidence basis is the recent MKRF curve-quality lane under
+    `#177` / `#173`, where AU-local `smoothed_bin_pchip` curves were adopted as
+    the accepted direct first-growth family;
+  - the promotion scope is intentionally limited to AU-level first-growth /
+    unmanaged VDYP synthesis, not the managed lane;
+  - the next bounded move is `P67.2a`: audit exactly where first-growth
+    default-selection still lives across `src/femic/pipeline/mkrf_first_growth.py`
+    and `src/femic/pipeline/vdyp_stage.py`, then decide the smallest shared
+    code surface that can carry the promoted default without breaking legacy
+    callers; and
+  - TSA29 adoption work stays parked behind that shared/default promotion and
+    should proceed only through child issue `#188`.
 - Phase 66 bucketed CT redesign is now implemented on `#182`:
   - the canonical MKRF lane now emits `CT40`, `CT50`, `CT60`, ... bucket
     treatments with per-bucket `thn040_`, `thn050_`, ... thinned lanes;
