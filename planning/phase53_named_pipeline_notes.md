@@ -1667,3 +1667,25 @@
   - Next bounded move:
     - derive the needed curve-ready fields onto the rebuilt step-15 output and
       run only step 16 from that true chained input.
+- 2026-05-09: Hardened TSA29 TSR source-artifact materialization checks for annex pointer stubs.
+  - Row-16 recreation failure diagnosis:
+    - `whse_forest_tenure_ften_recreation` still pointed at an on-disk `.gpkg`
+      worktree file whose contents were an annex pointer stub rather than a
+      readable GeoPackage payload.
+    - The pointer text used the `/annex/objects/...` form, which the existing
+      Windows payload resolver did not recognize.
+  - Code changes:
+    - `resolve_windows_annex_pointer_payload_path(...)` now resolves both the
+      historical `.git/annex/...` form and the `/annex/objects/...` form used
+      by the current TSA29 submodule worktree.
+    - `_resolve_source_artifact_path(...)` now rejects unresolved Windows annex
+      pointer stubs as unmaterialized by returning `None` instead of handing
+      the stub path to GeoPandas.
+  - Validation:
+    - targeted tests now cover both pointer forms and the unresolved-stub
+      rejection path; and
+    - targeted `ruff check` passed on the touched source and test files.
+  - Next bounded move:
+    - rerun only row 16 from the rebuilt step-15 output and confirm whether
+      the recreation source now resolves to a readable payload or fails
+      explicitly as still-unmaterialized.

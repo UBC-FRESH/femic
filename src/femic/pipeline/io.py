@@ -476,20 +476,29 @@ def resolve_windows_annex_pointer_payload_path(
         return candidate
     normalized = text.replace("\\", "/")
     marker = ".git/annex/"
-    if marker not in normalized:
+    gitdir = _discover_gitdir_from_worktree(candidate.parent)
+    if marker in normalized:
+        direct = (candidate.parent / Path(normalized)).resolve()
+        if direct.exists():
+            return direct
+        if gitdir is not None:
+            suffix = normalized.split(".git/", 1)[1]
+            payload = (gitdir / Path(suffix)).resolve()
+            if payload.exists():
+                return payload
+    elif normalized.startswith("/annex/objects/") or normalized.startswith(
+        "annex/objects/"
+    ):
+        if gitdir is None:
+            return candidate
+        payload = (gitdir / Path(normalized.lstrip("/"))).resolve()
+        if payload.exists():
+            return payload
+    else:
         return candidate
 
-    direct = (candidate.parent / Path(normalized)).resolve()
-    if direct.exists():
-        return direct
-
-    gitdir = _discover_gitdir_from_worktree(candidate.parent)
     if gitdir is None:
         return candidate
-    suffix = normalized.split(".git/", 1)[1]
-    payload = (gitdir / Path(suffix)).resolve()
-    if payload.exists():
-        return payload
     key_name = Path(normalized).name
     annex_objects = gitdir / "annex" / "objects"
     if annex_objects.is_dir():
@@ -501,6 +510,32 @@ def resolve_windows_annex_pointer_payload_path(
         if matches:
             return matches[0]
     return candidate
+
+
+def is_windows_annex_pointer_stub(
+    path: str | Path,
+    *,
+    os_name: str | None = None,
+    max_pointer_bytes: int = 4096,
+) -> bool:
+    """Return True when a Windows worktree file still looks like an annex pointer stub."""
+    candidate = Path(path)
+    if (os_name or os.name) != "nt":
+        return False
+    try:
+        if not candidate.is_file():
+            return False
+        if candidate.stat().st_size > int(max_pointer_bytes):
+            return False
+        text = candidate.read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeDecodeError):
+        return False
+    if not text or "\n" in text or "\r" in text:
+        return False
+    normalized = text.replace("\\", "/")
+    return ".git/annex/" in normalized or normalized.startswith(
+        "/annex/objects/"
+    ) or normalized.startswith("annex/objects/")
 
 
 def _normalize_optional_str_list(value: object, *, field_name: str) -> list[str] | None:

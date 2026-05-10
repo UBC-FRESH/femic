@@ -56,6 +56,7 @@ from femic.bcdc_fetch import (
 from femic.pipeline.bundle import assign_curve_ids_from_au_table, tsa_curve_id_prefix
 from femic.pipeline.io import (
     file_sha256,
+    is_windows_annex_pointer_stub,
     load_pipeline_run_profile,
     resolve_windows_annex_pointer_payload_path,
 )
@@ -17713,7 +17714,12 @@ def _resolve_source_artifact_path(
     resolved = candidate.expanduser().resolve()
     if not resolved.exists():
         return None
-    return resolve_windows_annex_pointer_payload_path(resolved)
+    payload_path = resolve_windows_annex_pointer_payload_path(resolved)
+    if payload_path.exists() and payload_path != resolved:
+        return payload_path
+    if is_windows_annex_pointer_stub(resolved):
+        return None
+    return payload_path
 
 
 def _parse_bbox_payload(

@@ -1446,6 +1446,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d34 Backtrack to the last clean chained point and relock row 14 to the true chained step-13 -> step-14 result before advancing to a true chained row 15.
     - [x] P53.1d35 Validate the true chained step-15 result by deriving curve-ready fields onto the rebuilt step-14 output and running only step 15.
     - [x] P53.1d36 Relock row 15 to the true chained step-14 -> step-15 result before any row-16 execution.
+    - [ ] P53.1d37 Validate the true chained step-16 result by deriving the needed curve-ready fields onto the rebuilt step-15 output and running only step 16.
+    - [x] P53.1d38 Harden TSR source-artifact materialization checks so annex pointer stubs are treated as unmaterialized blockers before GIS reads, then return to the row-16 rerun.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2077,6 +2079,27 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - `+49,852.793 ha` cumulative delta versus TSR.
   - The next bounded move is to derive the needed curve-ready fields onto the
     rebuilt step-15 output and run only step 16 from that true chained input.
+  - Row 16 exposed the broader source-materialization defect again: the
+    recreation layer path existed in the source recipe, but the `.gpkg` on disk
+    was still an annex pointer stub rather than a readable payload.
+  - `P53.1d38` is therefore the next bounded move before another row-16 rerun:
+    - teach the annex-pointer resolver the `/annex/objects/...` stub form used
+      by these Windows submodule worktrees; and
+    - make TSR source-artifact resolution treat unresolved pointer stubs as
+      unmaterialized blockers rather than passing them through to GeoPandas as
+      if they were real vector payloads.
+  - `P53.1d38` is complete:
+    - `resolve_windows_annex_pointer_payload_path(...)` now resolves both the
+      historical `.git/annex/...` pointer form and the `/annex/objects/...`
+      stub form used by the current TSA29 instance worktree;
+    - `_resolve_source_artifact_path(...)` now returns `None` for unresolved
+      Windows annex pointer stubs instead of handing the stub path to GeoPandas
+      as if it were a real vector artifact; and
+    - targeted regressions now cover both the new pointer form and the
+      unresolved-stub rejection path.
+  - The next bounded move is back to `P53.1d37`: rerun only row 16 from the
+    rebuilt step-15 output and confirm whether the recreation layer now
+    materializes or fails explicitly as still-unmaterialized.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

@@ -7019,6 +7019,26 @@ def test_resolve_source_artifact_path_uses_annex_payload_when_available(
     assert resolved == payload_path
 
 
+def test_resolve_source_artifact_path_rejects_unmaterialized_annex_pointer_stub(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    artifact_path = instance_root / "data" / "downloads" / "source.gpkg"
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_text(
+        "/annex/objects/MD5E-s12--deadbeef.gpkg",
+        encoding="utf-8",
+    )
+    (instance_root / ".git").write_text("gitdir: ../gitdir\n", encoding="utf-8")
+
+    resolved = tsr_recipes._resolve_source_artifact_path(
+        instance_root=instance_root,
+        source_entry={"artifact_path": "data/downloads/source.gpkg"},
+    )
+
+    assert resolved is None
+
+
 def test_load_cached_landscape_unit_partition_records_rejects_schema_mismatch(
     tmp_path: Path,
 ) -> None:

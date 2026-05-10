@@ -17076,3 +17076,14 @@
     - `+49,852.793 ha` cumulative delta versus TSR;
   - the next bounded move is to derive the needed curve-ready fields onto the
     rebuilt step-15 output and run only step 16 from that true chained input.
+## 2026-05-09 - Hardened TSA29 TSR source-artifact materialization checks for annex pointer stubs
+- `#169` / `#184` / `P53.1d38` source-resolution hardening:
+  - extended `resolve_windows_annex_pointer_payload_path(...)` to recognize the
+    `/annex/objects/...` pointer-stub form used by the current TSA29 Windows
+    submodule worktree in addition to the older `.git/annex/...` form;
+  - updated `_resolve_source_artifact_path(...)` so unresolved Windows annex
+    pointer stubs are treated as unmaterialized blockers instead of being
+    passed through to GeoPandas as if they were real vector payloads;
+  - added targeted regressions for the new pointer form and the unresolved-stub
+    rejection path; and
+  - validated the slice with targeted `pytest` and `ruff check`.
