@@ -17283,3 +17283,10 @@
     remaining; and
   - landed the chained strict TSA29 lane at `0.000 ha` cumulative delta
     versus the TSR row-23 benchmark.
+## 2026-05-10 - Parked TSA29 THLB netdown at the locked row-23 closeout state
+- `#169` / Phase 53 lane freeze:
+  - confirmed the authoritative locked chain now ends at row 23;
+  - froze the TSA29 THLB netdown lane at `1,660,053.000 ha` remaining with
+    `0.000 ha` cumulative delta versus TSR; and
+  - shifted the active focus from late-stage THLB adjudication to downstream
+    work off the locked closeout state.

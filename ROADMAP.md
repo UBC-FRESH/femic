@@ -2220,6 +2220,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P53.1d56` is complete: row 23 is now an explicit stage-closing aspatial
     bridge sized from the rebuilt row-21 state so the chained strict lane lands
     on the TSR cumulative target after future roads.
+  - TSA29 THLB netdown is now locked through row 23 and parked for downstream
+    work. Do not reopen the late-stage netdown lane unless downstream work
+    surfaces a concrete contract break that requires revisiting the locked
+    chain.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

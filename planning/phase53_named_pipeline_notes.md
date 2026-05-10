@@ -1981,3 +1981,9 @@
     - cumulative delta versus TSR: `0.000 ha`
   - Row-23 now acts as the stage-closing aspatial future-roads bridge for the
     reproducible public-data lane.
+- 2026-05-10: Parked the TSA29 THLB netdown lane after the row-23 closeout bridge.
+  - The authoritative locked chain now ends at row 23 with `0.000 ha`
+    cumulative delta versus TSR.
+  - THLB netdown is frozen here for now so downstream work can proceed from the
+    locked closeout state rather than reopening the late-stage adjudication
+    lane.
