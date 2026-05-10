@@ -17320,3 +17320,16 @@
   - recorded that the next implementation move must be a real shared/default
     surface introduction under `P67.2b`, not a cosmetic flag flip in the
     legacy stratum smoother.
+## 2026-05-10 - Added a reusable AU-level first-growth default-selection seam
+- `#187` / `P67.2b` shared-surface implementation:
+  - added `src/femic/pipeline/au_first_growth.py` as the reusable AU-level
+    first-growth selector implementing the promoted `smoothed_bin_pchip`
+    default path and explicit `insufficient_source_stands` fallback;
+  - switched `src/femic/pipeline/mkrf_first_growth.py` to consume that shared
+    selector instead of carrying the default-selection logic only as MKRF-local
+    private helpers;
+  - exported the new shared surface through `src/femic/pipeline/__init__.py`;
+  - added focused regression coverage in `tests/test_au_first_growth.py`; and
+  - kept `src/femic/pipeline/vdyp_stage.py` unchanged so the older
+    stratum-level NLLS-oriented smoothing path remains available for legacy
+    callers while the AU-level default-promotion lane moves forward.

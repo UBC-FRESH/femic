@@ -23,6 +23,12 @@ from femic.pipeline.io import (
     resolve_effective_run_options,
     resolve_legacy_external_data_paths,
 )
+from femic.pipeline.au_first_growth import (
+    AuFirstGrowthSelectionResult,
+    build_smoothed_bin_pchip_curve,
+    fit_au_first_growth_quality,
+    select_au_first_growth_curve,
+)
 from femic.pipeline.manifest import (
     build_run_manifest_payload,
     collect_runtime_versions,
@@ -386,4 +392,8 @@ __all__ = [
     "compile_strata_fit_results",
     "load_vdyp_input_tables",
     "load_or_build_vdyp_results_tsa",
+    "AuFirstGrowthSelectionResult",
+    "build_smoothed_bin_pchip_curve",
+    "fit_au_first_growth_quality",
+    "select_au_first_growth_curve",
 ]

@@ -1855,7 +1855,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P67.1b Open the TSA29-only child issue and record the downstream adoption boundary (`#188`).
 - [ ] P67.2 Promote `smoothed_bin_pchip` to the default AU-level first-growth / unmanaged VDYP synthesis method (`#187`)
   - [x] P67.2a Audit where first-growth default-selection currently lives across the MKRF-specific builder and reusable VDYP-stage machinery.
-  - [ ] P67.2b Expose the promoted default without breaking legacy callers that still rely on older NLLS-oriented behavior.
+  - [x] P67.2b Expose the promoted default without breaking legacy callers that still rely on older NLLS-oriented behavior.
   - [ ] P67.2c Update docs/contracts/tests so `smoothed_bin_pchip` is the official default and NLLS is clearly legacy/fallback.
 - [ ] P67.3 Adopt the promoted default on the TSA29 instance lane (`#188`)
   - [ ] P67.3a Switch the TSA29 AU-level first-growth build path to the promoted default and regenerate the relevant instance outputs.
@@ -1881,14 +1881,22 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
       smoothing/fallback engine with NLLS-first selection paths such as
       `primary_nlls`, `reparameterized_nlls`, `censored_refit`,
       `tail_blend`, and `merchantable_floor`; and
-    - therefore the shared/default promotion cannot be implemented as a simple
-      one-line flag flip in `vdyp_stage.py`; `P67.2b` must introduce an
-      explicit reusable AU-level first-growth default-selection surface that
-      generalizes the MKRF builder rather than pretending the old stratum
-      smoother already owns this contract; and
-  - the next bounded move is `P67.2b`: implement that reusable/shared
-    default-selection surface and switch callers onto it without breaking
-    legacy NLLS-oriented paths; and
+    - therefore the shared/default promotion could not be implemented as a
+      simple one-line flag flip in `vdyp_stage.py`; and
+  - `P67.2b` is complete:
+    - added `src/femic/pipeline/au_first_growth.py` as the explicit reusable
+      AU-level first-growth default-selection seam;
+    - moved the generic `smoothed_bin_pchip` selection behavior into that new
+      shared helper instead of leaving it implicit inside the MKRF-only module;
+    - switched `src/femic/pipeline/mkrf_first_growth.py` to consume the shared
+      selector so MKRF now rides the same reusable default-selection surface we
+      intend to promote more broadly; and
+    - kept the older `src/femic/pipeline/vdyp_stage.py` stratum-level
+      NLLS-oriented smoothing engine unchanged, so legacy callers are not
+      broken by this promotion seam extraction; and
+  - the next bounded move is `P67.2c`: update the remaining docs/contracts
+    surfaces so `smoothed_bin_pchip` is described as the official default
+    first-growth method and NLLS is demoted to legacy/fallback framing; and
   - TSA29 adoption work stays parked behind that shared/default promotion and
     should proceed only through child issue `#188`.
 - Phase 66 bucketed CT redesign is now implemented on `#182`:
