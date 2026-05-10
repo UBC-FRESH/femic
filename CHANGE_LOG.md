@@ -17216,3 +17216,17 @@
   - locked row 19 at `11,806.113 ha` removed and `1,838,499.044 ha`
     remaining; and
   - moved the active bounded move to row 20 from the rebuilt row-19 output.
+## 2026-05-10 - Validated row 20 from the rebuilt row-19 output
+- `#169` / `P53.1d51` chained row-20 validation:
+  - ran only row 20 from
+    `external/femic-tsa29-instance/data/tsr/strict_chain/19_thlb_parent_019_buffered_trails.feather`;
+  - inspected the actual rebuilt artifacts
+    `external/femic-tsa29-instance/runtime/logs/tsr/strict_chain/20_thlb_parent_020_wildlife_tree_retention_areas.json`
+    and
+    `external/femic-tsa29-instance/data/tsr/strict_chain/20_thlb_parent_020_wildlife_tree_retention_areas.feather`;
+  - confirmed the rebuilt feather matches the JSON managed-area total exactly
+    and still carries late-stage fields such as `curve1` and `au`;
+  - confirmed the downstream row-20 output cache preserves `131` real LU names
+    instead of bundle labels; and
+  - recorded the true chained row-20 result:
+    `94,417.000 ha` removed and `1,744,082.044 ha` remaining.
