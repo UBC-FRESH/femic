@@ -17141,3 +17141,15 @@
     `data/tsr/strict_chain/17_thlb_parent_017_growth_and_yield_permanent_sample_plots.feather`;
   - row 17 removed `837.174 ha` and left `1,923,316.398 ha` remaining; and
   - the next bounded move is to adjudicate/relock row 17 before any row-18 execution.
+## 2026-05-09 - Corrected the row-17 PSP source contract from all-status to active-status
+- `#169` / `P53.1d43` PSP audit/fix:
+  - audited the materialized row-17 PSP payload against the chained row-16
+    checkpoint and confirmed it is not an obviously clipped one-corner subset:
+    the active PSP layer spans nearly the full TSA checkpoint envelope;
+  - found the concrete contract bug in
+    `external/femic-tsa29-instance/config/tsr/source_layers.recipe.yaml`:
+    `whse_forest_vegetation_gry_psp_status` was still labeled/querying the
+    broader `GRY_PSP_STATUS` / “All Status” surface while actually using the
+    narrower `GRY_PSP_STATUS_ACTIVE.gpkg` artifact; and
+  - corrected that source entry so future row-17 interpretation stays explicit
+    that the current public PSP geometry is active-status only.

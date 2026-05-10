@@ -1785,3 +1785,25 @@
       - cumulative delta: `+55,763.398 ha`
   - Next bounded move:
     - relock/adjudicate row 17 before any row-18 execution.
+- 2026-05-09: Audited the row-17 PSP overlay contract after the continued under-removal pattern.
+  - Extent findings:
+    - the materialized PSP payload is not a tiny clipped subset: the active PSP
+      layer spans bounds `(1045444.266, 656924.844, 1393139.055, 899602.325)`
+      against the chained row-16 checkpoint bounds
+      `(1015173.809, 653962.516, 1393202.268, 901924.510)`;
+    - that is slightly narrower than the full checkpoint envelope but still
+      broad enough that the row-17 under-removal is not explained by an obvious
+      one-LU or corner-clipped acquisition mistake.
+  - Contract defect found:
+    - `config/tsr/source_layers.recipe.yaml` still described
+      `whse_forest_vegetation_gry_psp_status` as the broader
+      `GRY_PSP_STATUS` / “All Status” dataset even though the actual artifact,
+      DWDS order contents, and BCGW metadata all point to
+      `GRY_PSP_STATUS_ACTIVE.gpkg`; and
+    - the source contract is now corrected to the active-status public PSP
+      surface so future adjudication does not confuse that narrower payload with
+      a broader benchmark overlay.
+  - Implication:
+    - the remaining row-17 under-removal is not a simple full-TSA extent miss;
+      it is more likely the expected difference between the active-status public
+      PSP geometry and the broader benchmark surface used in older notes.
