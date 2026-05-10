@@ -17126,3 +17126,18 @@
   - replaced the old fail-fast regression with a test that proves the strict
     preflight auto-materializes an annex pointer stub before proceeding; and
   - validated the slice with targeted `pytest` and `ruff check`.
+## 2026-05-09 - Validated TSA29 strict row 17 after PSP source auto-materialization
+- `#169` / `P53.1d41` chained row-17 validation:
+  - reran only `thlb_parent_017_growth_and_yield_permanent_sample_plots` from
+    `external/femic-tsa29-instance/data/tsr/strict_chain/16_thlb_parent_016_recreation_features.feather`
+    through the strict locked parent-step runner;
+  - auto-materialized
+    `external/femic-tsa29-instance/data/downloads/bcdc/WHSE_FOREST_VEGETATION_GRY_PSP_STATUS_ACTIVE/GRY_PSP_STATUS_ACTIVE.gpkg`
+    during strict source preflight, replacing the 68-byte annex pointer stub
+    with the readable `303104`-byte GeoPackage payload;
+  - inspected
+    `runtime/logs/tsr/strict_chain/17_thlb_parent_017_growth_and_yield_permanent_sample_plots.json`
+    and
+    `data/tsr/strict_chain/17_thlb_parent_017_growth_and_yield_permanent_sample_plots.feather`;
+  - row 17 removed `837.174 ha` and left `1,923,316.398 ha` remaining; and
+  - the next bounded move is to adjudicate/relock row 17 before any row-18 execution.

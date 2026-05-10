@@ -1451,7 +1451,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d39 Relock row 16 to the true chained step-15 -> step-16 result before any row-17 execution.
     - [x] P53.1d40 Validate the true chained step-17 result by running only step 17 from the rebuilt row-16 output.
     - [x] P53.1d42 Add strict parent-step source-artifact auto-materialization/preflight so annex-backed GIS inputs are materialized before LU work starts and only hard-fail when materialization still cannot produce a readable payload (`#184`).
-    - [ ] P53.1d41 Materialize the PSP source artifact required by row 17 and rerun only step 17 from the rebuilt row-16 output.
+    - [x] P53.1d41 Materialize the PSP source artifact required by row 17 and rerun only step 17 from the rebuilt row-16 output.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2127,9 +2127,16 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     `git annex get` for required annex-backed GIS artifacts before LU
     partitioning starts and only hard-fails if the source still cannot be
     resolved as readable vector input after that materialization attempt.
-  - The next rerun move is `P53.1d41`:
-    materialize the PSP source artifact required by row 17 and rerun only step
-    17 from the rebuilt row-16 output.
+  - `P53.1d41` is complete: the strict locked row-17 rerun now auto-materializes
+    `GRY_PSP_STATUS_ACTIVE.gpkg` and produces a real chained deduction instead
+    of another blocked missing-source no-op.
+  - Current row-17 chained result:
+    - removed `837.174 ha`;
+    - remaining `1,923,316.398 ha`; and
+    - versus the TSR row-17 benchmark (`3,577.000 ha` removed /
+      `1,867,553.000 ha` remaining), the strict result is `-2,739.826 ha`
+      marginal and `+55,763.398 ha` cumulative.
+  - The next bounded move is to adjudicate/relock row 17 before any row-18 run.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

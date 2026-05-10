@@ -1757,3 +1757,31 @@
   - Next bounded move:
     - rerun only step 17 from the rebuilt row-16 output so the PSP source can
       be materialized automatically instead of yielding another blocked missing-source run.
+- 2026-05-09: Ran TSA29 strict row 17 through the locked parent-step lane after the source auto-materialization fix.
+  - Corrected execution lane:
+    - reran row 17 with `run_tsr_thlb_locked_parent_step(...)`, not the older
+      notebook parent-step runner; and
+    - started from the actual step-16 output
+      `data/tsr/strict_chain/16_thlb_parent_016_recreation_features.feather`.
+  - Source materialization:
+    - `data/downloads/bcdc/WHSE_FOREST_VEGETATION_GRY_PSP_STATUS_ACTIVE/GRY_PSP_STATUS_ACTIVE.gpkg`
+      was materialized automatically during strict source preflight; and
+    - the artifact now exists as a real `303104`-byte GeoPackage payload instead
+      of a 68-byte annex pointer stub.
+  - Inspected outputs:
+    - row-17 JSON:
+      `runtime/logs/tsr/strict_chain/17_thlb_parent_017_growth_and_yield_permanent_sample_plots.json`
+    - row-17 feather:
+      `data/tsr/strict_chain/17_thlb_parent_017_growth_and_yield_permanent_sample_plots.feather`
+    - row-17 removed: `837.174 ha`
+    - row-17 remaining: `1,923,316.398 ha`
+    - feather-managed area matches the JSON remaining area exactly; and
+    - the rebuilt feather preserves the late-stage fields `curve1`, `curve2`,
+      `stratum`, and `au`.
+  - Comparison:
+    - versus the TSR row-17 benchmark `3,577.000 ha` removed /
+      `1,867,553.000 ha` remaining:
+      - marginal delta: `-2,739.826 ha`
+      - cumulative delta: `+55,763.398 ha`
+  - Next bounded move:
+    - relock/adjudicate row 17 before any row-18 execution.
