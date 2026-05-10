@@ -1890,3 +1890,20 @@
   - Next bounded move:
     - relock row 18 to the true chained result, then run only step 19 from the
       rebuilt row-18 output.
+- 2026-05-10: Completed the true chained row-19 rerun from the rebuilt row-18 output.
+  - True chained row-19 result:
+    - removed: `11,806.113 ha`
+    - remaining: `1,838,499.044 ha`
+    - benchmark marginal delta versus TSR: `+3,767.113 ha`
+    - benchmark cumulative delta versus TSR: `+33,818.044 ha`
+  - Mechanical validation:
+    - the rebuilt row-19 feather matches the JSON managed-area total exactly;
+      and
+    - the downstream row-19 output cache preserves `131` real LU names instead
+      of bundle labels.
+  - Runtime:
+    - row 19 completed in about `111.6 s`, which is materially better than the
+      row-18 riparian runtime and confirms the LU-granular cache handoff stayed
+      healthy on the next chained step.
+  - Next bounded move:
+    - relock row 19 to the true chained result before any row-20 execution.

@@ -1458,7 +1458,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d46 Run only step 18 from the rebuilt row-17 output.
     - [x] P53.1d47 Preserve true LU-granular cache records across chained strict late-stage steps so downstream runs do not warm-start from worker-bundle mega-chunks.
     - [x] P53.1d48 Relock row 18 to the true chained step-17 -> step-18 result after rebuilding the row-17 LU cache to true LU chunks.
-    - [ ] P53.1d49 Run only step 19 from the rebuilt row-18 output.
+    - [x] P53.1d49 Run only step 19 from the rebuilt row-18 output.
+    - [ ] P53.1d50 Relock row 19 to the true chained step-18 -> step-19 result before any row-20 execution.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2166,9 +2167,19 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - The row-18 relock now supersedes the older TSA29-only S4/W5 riparian hack
     lock, but row-18 runtime is still far too slow at about `14.9 min` even on
     the corrected LU-granular cache surface.
-  - `P53.1d49` is the next bounded move:
-    run only row 19 from the rebuilt row-18 output, inspect the actual
-    rebuilt artifacts, and stop.
+  - `P53.1d49` is complete:
+    row 19 now runs cleanly from the rebuilt row-18 output on the corrected
+    LU-granular warm-start surface and no longer regresses to bundle-label
+    cache metadata.
+  - Current row-19 chained result:
+    - removed `11,806.113 ha`;
+    - remaining `1,838,499.044 ha`; and
+    - versus the TSR row-19 benchmark (`8,039.000 ha` removed /
+      `1,804,681.000 ha` remaining), the strict result is `+3,767.113 ha`
+      marginal and `+33,818.044 ha` cumulative.
+  - `P53.1d50` is the next bounded move:
+    relock row 19 to the true chained step-18-to-step-19 result before any
+    row-20 execution.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered

@@ -17194,3 +17194,17 @@
   - confirmed the downstream row-18 output cache now preserves `131` real LU
     names instead of bundle labels, even though row-18 runtime is still much
     slower than the older benchmark envelope.
+## 2026-05-10 - Validated row 19 from the rebuilt row-18 output
+- `#169` / `P53.1d49` chained row-19 validation:
+  - ran only row 19 from
+    `external/femic-tsa29-instance/data/tsr/strict_chain/18_thlb_parent_018_riparian_areas.feather`;
+  - inspected the actual rebuilt artifacts
+    `external/femic-tsa29-instance/runtime/logs/tsr/strict_chain/19_thlb_parent_019_buffered_trails.json`
+    and
+    `external/femic-tsa29-instance/data/tsr/strict_chain/19_thlb_parent_019_buffered_trails.feather`;
+  - confirmed the rebuilt feather matches the JSON managed-area total exactly
+    and still carries late-stage fields such as `curve1` and `au`;
+  - confirmed the downstream row-19 output cache preserves `131` real LU names
+    instead of bundle labels; and
+  - recorded the true chained row-19 result:
+    `11,806.113 ha` removed and `1,838,499.044 ha` remaining.
