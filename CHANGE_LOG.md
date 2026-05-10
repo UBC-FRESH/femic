@@ -17252,3 +17252,11 @@
     instead of bundle labels; and
   - recorded the true chained row-21 result:
     `34,205.000 ha` removed and `1,709,877.044 ha` remaining.
+## 2026-05-10 - Relocked row 21 to the true chained cultural-heritage result
+- `#169` / `P53.1d54` row-21 relock:
+  - updated the authoritative locked-chain ledger entry for row 21 from the
+    older post-step-20 restart-bounded value to the true chained row-20 ->
+    row-21 result;
+  - locked row 21 at `34,205.000 ha` removed and `1,709,877.044 ha`
+    remaining; and
+  - moved the active bounded move to row 23 from the rebuilt row-21 output.

@@ -1953,3 +1953,10 @@
       late-stage aspatial-step runtime envelope.
   - Next bounded move:
     - relock row 21 to the true chained result before any row-23 execution.
+- 2026-05-10: Relocked row 21 to the true chained step-20 -> step-21 result.
+  - Locked row-21 result:
+    - removed: `34,205.000 ha`
+    - remaining: `1,709,877.044 ha`
+    - cumulative delta versus TSR: `+33,818.044 ha`
+  - Next bounded move:
+    - run only step 23 from the rebuilt row-21 output.

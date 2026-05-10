@@ -1463,7 +1463,8 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d51 Run only step 20 from the rebuilt row-19 output.
     - [x] P53.1d52 Relock row 20 to the true chained step-19 -> step-20 result before any row-21 execution.
     - [x] P53.1d53 Run only step 21 from the rebuilt row-20 output.
-    - [ ] P53.1d54 Relock row 21 to the true chained step-20 -> step-21 result before any row-23 execution.
+    - [x] P53.1d54 Relock row 21 to the true chained step-20 -> step-21 result before any row-23 execution.
+    - [ ] P53.1d55 Run only step 23 from the rebuilt row-21 output.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2203,9 +2204,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - versus the TSR row-21 benchmark (`34,205.000 ha` removed /
       `1,676,059.000 ha` remaining), the strict result is `0.000 ha`
       marginal and `+33,818.044 ha` cumulative.
-  - `P53.1d54` is the next bounded move:
-    relock row 21 to the true chained step-20-to-step-21 result before any
-    row-23 execution.
+  - Row 21 is now relocked to the true chained step-20 -> step-21 result:
+    - removed `34,205.000 ha`;
+    - remaining `1,709,877.044 ha`; and
+    - versus the TSR row-21 benchmark (`34,205.000 ha` removed /
+      `1,676,059.000 ha` remaining), the strict result is `0.000 ha`
+      marginal and `+33,818.044 ha` cumulative.
+  - `P53.1d55` is the next bounded move:
+    run only row 23 from the rebuilt row-21 output.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered
