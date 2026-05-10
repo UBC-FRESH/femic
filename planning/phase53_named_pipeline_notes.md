@@ -1807,3 +1807,24 @@
     - the remaining row-17 under-removal is not a simple full-TSA extent miss;
       it is more likely the expected difference between the active-status public
       PSP geometry and the broader benchmark surface used in older notes.
+- 2026-05-09: Closed the row-17 broader-source search and relocked row 17 to the admissible public/materializable result.
+  - Source-surface search result:
+    - audited repo evidence and automated BCGW acquisition for a broader
+      benchmark-equivalent row-17 geometry surface;
+    - confirmed the public PSP path still resolves only to
+      `WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE`; and
+    - identified a plausible missing research-installation boundary layer
+      (`WHSE_FOREST_VEGETATION.RESPROJ_RSRCH_INSTLTNS_SVW`), but the current
+      automated public DWDS path does not provide a materializable payload for
+      that layer.
+  - Contract conclusion:
+    - the reproducible public TSA29 pipeline cannot depend on that unavailable
+      research-installation geometry; and
+    - row 17 therefore stays defined by the available public/materialized active
+      PSP surface.
+  - Locked row-17 result:
+    - removed: `837.174 ha`
+    - remaining: `1,923,316.398 ha`
+    - cumulative delta versus TSR: `+55,763.398 ha`
+  - Next bounded move:
+    - run only step 18 from the rebuilt row-17 output.

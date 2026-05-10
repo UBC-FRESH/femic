@@ -17153,3 +17153,17 @@
     narrower `GRY_PSP_STATUS_ACTIVE.gpkg` artifact; and
   - corrected that source entry so future row-17 interpretation stays explicit
     that the current public PSP geometry is active-status only.
+## 2026-05-09 - Relocked row 17 to the admissible public/materializable PSP result
+- `#169` / `P53.1d44`-`P53.1d45` row-17 closure:
+  - audited repo evidence and automated BCGW acquisition for a broader
+    benchmark-equivalent public/materializable row-17 geometry surface;
+  - confirmed the public PSP path still resolves only to
+    `WHSE_FOREST_VEGETATION.GRY_PSP_STATUS_ACTIVE`;
+  - identified a plausible missing research-installation boundary layer
+    (`WHSE_FOREST_VEGETATION.RESPROJ_RSRCH_INSTLTNS_SVW`), but confirmed the
+    current automated public DWDS path does not provide a materializable payload
+    for that layer;
+  - kept the reproducible public TSA29 pipeline constrained to admissible public
+    data instead of wiring unavailable geometry into the recipe contract; and
+  - relocked row 17 to the true chained public/materialized run result:
+    `837.174 ha` removed and `1,923,316.398 ha` remaining.
