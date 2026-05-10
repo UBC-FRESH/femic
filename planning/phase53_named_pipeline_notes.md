@@ -1987,3 +1987,12 @@
   - THLB netdown is frozen here for now so downstream work can proceed from the
     locked closeout state rather than reopening the late-stage adjudication
     lane.
+- 2026-05-10: Cleaned the parent/submodule state for downstream work after the
+  row-23 closeout lock.
+  - Parent `external/femic-public-data` now points at canonical commit
+    `aa67a3d` on `main`.
+  - Purged the TSA29 instance generated strict-chain checkpoints, strict-chain
+    runtime logs, named-pipeline event logs, scratch outputs, and related
+    BCDC/pipeline runtime artifacts.
+  - Result: parent repo now carries only the intentional tracked public-data
+    pointer update rather than hundreds of generated TSA29 worktree files.

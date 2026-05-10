@@ -17290,3 +17290,12 @@
     `0.000 ha` cumulative delta versus TSR; and
   - shifted the active focus from late-stage THLB adjudication to downstream
     work off the locked closeout state.
+## 2026-05-10 - Normalized public-data pointer and purged TSA29 generated noise
+- `#169` / `P53.1d59` hygiene cleanup:
+  - updated the parent `external/femic-public-data` submodule pointer to
+    canonical commit `aa67a3d` (`Replace 2024 VRI FileGDB with zip archive`);
+  - removed the TSA29 instance generated strict-chain checkpoints, strict-chain
+    runtime logs, named-pipeline event logs, scratch outputs, and related
+    BCDC/pipeline runtime artifacts; and
+  - reduced the parent worktree back to the intentional tracked public-data
+    pointer update instead of hundreds of untracked TSA29 runtime files.

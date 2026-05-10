@@ -1466,6 +1466,7 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d54 Relock row 21 to the true chained step-20 -> step-21 result before any row-23 execution.
     - [x] P53.1d55 Run only step 23 from the rebuilt row-21 output.
     - [x] P53.1d56 Relock row 23 to the true chained step-21 -> step-23 result before any downstream execution.
+    - [x] P53.1d59 Normalize the `femic-public-data` parent pointer to the current canonical submodule head and purge the TSA29 generated runtime/output noise so downstream work starts from a clean tracked state.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -2224,6 +2225,13 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     work. Do not reopen the late-stage netdown lane unless downstream work
     surfaces a concrete contract break that requires revisiting the locked
     chain.
+  - `P53.1d59` is complete:
+    - parent `external/femic-public-data` now points at canonical public-data
+      commit `aa67a3d` (`Replace 2024 VRI FileGDB with zip archive`); and
+    - TSA29 instance generated `data/tsr/strict_chain`, strict-chain runtime
+      logs, named-pipeline event logs, scratch outputs, and related BCDC/pipeline
+      runtime artifacts were purged so downstream work starts from a clean
+      tracked state.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered
