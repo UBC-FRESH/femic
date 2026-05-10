@@ -1856,7 +1856,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 - [ ] P67.2 Promote `smoothed_bin_pchip` to the default AU-level first-growth / unmanaged VDYP synthesis method (`#187`)
   - [x] P67.2a Audit where first-growth default-selection currently lives across the MKRF-specific builder and reusable VDYP-stage machinery.
   - [x] P67.2b Expose the promoted default without breaking legacy callers that still rely on older NLLS-oriented behavior.
-  - [ ] P67.2c Update docs/contracts/tests so `smoothed_bin_pchip` is the official default and NLLS is clearly legacy/fallback.
+  - [x] P67.2c Update docs/contracts/tests so `smoothed_bin_pchip` is the official default and NLLS is clearly legacy/fallback.
 - [ ] P67.3 Adopt the promoted default on the TSA29 instance lane (`#188`)
   - [ ] P67.3a Switch the TSA29 AU-level first-growth build path to the promoted default and regenerate the relevant instance outputs.
   - [ ] P67.3b Validate TSA29 residual/shape diagnostics against AU binned medians and record explicit insufficient-support AU treatment.
@@ -1894,9 +1894,17 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - kept the older `src/femic/pipeline/vdyp_stage.py` stratum-level
       NLLS-oriented smoothing engine unchanged, so legacy callers are not
       broken by this promotion seam extraction; and
-  - the next bounded move is `P67.2c`: update the remaining docs/contracts
-    surfaces so `smoothed_bin_pchip` is described as the official default
-    first-growth method and NLLS is demoted to legacy/fallback framing; and
+  - `P67.2c` is complete:
+    - corrected the stale MKRF planning contract text that still described
+      AU-level first-growth as an NLLS-default lane;
+    - updated the relevant diagnostics/pipeline guide text so
+      `smoothed_bin_pchip` is described as the official default first-growth
+      method and NLLS as legacy/fallback; and
+    - added a focused docs-contract test so those surfaces must keep the
+      promoted default framing in future changes; and
+  - the next bounded move is `P67.3a`: switch the TSA29 AU-level first-growth
+    build path to the promoted default and regenerate the relevant instance
+    outputs; and
   - TSA29 adoption work stays parked behind that shared/default promotion and
     should proceed only through child issue `#188`.
 - Phase 66 bucketed CT redesign is now implemented on `#182`:

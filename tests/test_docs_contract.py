@@ -139,6 +139,23 @@ def test_guides_pages_are_in_docs_tree() -> None:
         assert slug in guides_index, f"missing toctree entry for {slug}"
 
 
+def test_smoothed_bin_pchip_is_documented_as_default_au_first_growth_method() -> None:
+    planning_text = Path("planning/mkrf_femic_native_rebuild.md").read_text(
+        encoding="utf-8"
+    )
+    diagnostics_text = (GUIDES_ROOT / "diagnostics-playbook.rst").read_text(
+        encoding="utf-8"
+    )
+    pipeline_text = (GUIDES_ROOT / "pipeline-overview.rst").read_text(
+        encoding="utf-8"
+    )
+
+    assert "smoothed_bin_pchip" in planning_text
+    assert "legacy/fallback" in planning_text
+    assert "smoothed_bin_pchip" in diagnostics_text
+    assert "smoothed_bin_pchip" in pipeline_text
+
+
 def test_release_runbook_and_workflows_exist() -> None:
     runbook = GUIDES_ROOT / "pypi-release-runbook.rst"
     assert runbook.exists()

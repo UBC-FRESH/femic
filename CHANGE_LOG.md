@@ -17333,3 +17333,12 @@
   - kept `src/femic/pipeline/vdyp_stage.py` unchanged so the older
     stratum-level NLLS-oriented smoothing path remains available for legacy
     callers while the AU-level default-promotion lane moves forward.
+## 2026-05-10 - Updated docs/contracts framing for the promoted AU first-growth default
+- `#187` / `P67.2c` docs/contracts/test update:
+  - corrected the stale MKRF planning contract language that still described
+    AU-level first-growth synthesis as an NLLS-default lane;
+  - updated the diagnostics and pipeline guide surfaces so
+    `smoothed_bin_pchip` is described as the official AU-level first-growth
+    default and NLLS is clearly legacy/fallback; and
+  - added a focused docs-contract test to keep that default-method framing from
+    drifting back.

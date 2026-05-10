@@ -1002,15 +1002,17 @@ AU.
 The required curve-consolidation behavior is:
 
 - aggregate stand-level first-growth evidence to the canonical AU level;
-- fit AU-wise unmanaged/first-growth curves using the existing FEMIC NLLS
-  functions and policy style already used for K3Z; and
+- fit AU-wise unmanaged/first-growth curves using the accepted strongly
+  smoothed observed-bin PCHIP family (`smoothed_bin_pchip`) as the canonical
+  default direct-fit method, with the older AU-wise NLLS lane treated as
+  legacy/fallback rather than the default; and
 - publish AU-wise unmanaged/first-growth curves as the runtime-facing surface
   consumed by the canonical XML/track-generation lane.
 
 The legacy one-curve-per-stand first-growth implementation remains valid only
 as benchmark/reference evidence. It is not part of the canonical rebuild
-architecture unless a later benchmark gate proves the AU-wise NLLS approach is
-insufficient.
+architecture unless a later benchmark gate proves the canonical
+`smoothed_bin_pchip` approach is insufficient.
 
 ### Publication and acceptance rule
 
@@ -1019,8 +1021,9 @@ Before `P60.5a` can be considered satisfied, the rebuild lane should publish:
 - an explicit AU table proving the canonical AU key is being used;
 - traceable lineage from stand-level VDYP first-growth evidence into AU-wise
   first-growth surfaces; and
-- curve-fit diagnostics and acceptance checks for the AU-wise NLLS-fitted
-  unmanaged curves.
+- curve-fit diagnostics and acceptance checks for the AU-wise
+  `smoothed_bin_pchip` unmanaged curves, with any surviving NLLS-family use
+  called out explicitly as legacy/fallback behavior.
 
 In other words, `P60.5a` should consume the AU-wise first-growth lane, not
 recreate a stand-wise unmanaged curve contract inside the canonical runtime
@@ -1185,8 +1188,10 @@ The rebuild lane should compile AU-wise unmanaged/first-growth VDYP curves by:
   `P60.5b`;
 - aggregating the unmanaged/first-growth evidence to one AU-wise fitting lane
   per canonical `au_id`;
-- fitting one unmanaged/first-growth curve per canonical AU with the existing
-  FEMIC NLLS functions and policy style already used for K3Z; and
+- fitting one unmanaged/first-growth curve per canonical AU with the accepted
+  strongly smoothed observed-bin PCHIP family (`smoothed_bin_pchip`) as the
+  canonical default, while treating the older NLLS family as legacy/fallback
+  only; and
 - publishing both the AU-wise curve surface and its fit diagnostics as explicit
   canonical model-input artifacts.
 
@@ -1209,7 +1214,9 @@ The AU-wise first-growth lane should leave behind traceable lineage showing:
 - the canonical `au_id` each source record was assigned to;
 - the sample counts contributing to each AU fit;
 - the age/value domain used for fitting; and
-- the exact FEMIC NLLS policy family used for the accepted fit.
+- the exact accepted curve family used for the fit, with
+  `smoothed_bin_pchip` as the canonical default and any NLLS-family use marked
+  explicitly as legacy/fallback.
 
 ### Required diagnostics
 
@@ -1738,7 +1745,7 @@ The canonical runtime package must consume:
 That means the canonical XML and track-generation lane may not:
 
 - emit one unmanaged/first-growth curve per stand; or
-- bypass the AU-wise NLLS-fitted first-growth surface while still claiming a
+- bypass the AU-wise canonical first-growth surface while still claiming a
   canonical rebuild runtime package.
 
 ### Acceptance rule for `P60.8a`

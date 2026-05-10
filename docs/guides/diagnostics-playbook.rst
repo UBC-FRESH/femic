@@ -24,6 +24,8 @@ VDYP Fit Diagnostics (``vdyp_fitdiag_*.png``)
 Healthy signals:
 
 - Smoothed curve tracks binned median trend.
+- For AU-level first-growth synthesis, the default accepted direct-fit family
+  is ``smoothed_bin_pchip`` rather than the older NLLS-first approach.
 - SI levels show coherent ordering when signal exists.
 - Tail handling avoids unrealistic late-age collapse/oscillation.
 
@@ -32,6 +34,8 @@ Red flags:
 - Outlier-driven overfit (for example impossible young-age volumes).
 - Inverted SI dominance where ecological signal should be monotonic.
 - Apparent fit to sparse/noisy bins without fallback/merge behavior.
+- Unexplained reversion to an older NLLS-oriented first-growth fit when the
+  canonical AU-level default should be ``smoothed_bin_pchip``.
 
 TIPSY vs VDYP Overlays (``tipsy_vdyp_*.png``)
 ---------------------------------------------
