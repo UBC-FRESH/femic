@@ -17260,3 +17260,17 @@
   - locked row 21 at `34,205.000 ha` removed and `1,709,877.044 ha`
     remaining; and
   - moved the active bounded move to row 23 from the rebuilt row-21 output.
+## 2026-05-10 - Validated row 23 from the rebuilt row-21 output
+- `#169` / `P53.1d55` chained row-23 validation:
+  - ran only row 23 from
+    `external/femic-tsa29-instance/data/tsr/strict_chain/21_thlb_parent_021_cultural_heritage_and_archaeological_resources.feather`;
+  - inspected the actual rebuilt artifacts
+    `external/femic-tsa29-instance/runtime/logs/tsr/strict_chain/23_thlb_parent_023_future_roads.json`
+    and
+    `external/femic-tsa29-instance/data/tsr/strict_chain/23_thlb_parent_023_future_roads.feather`;
+  - confirmed the rebuilt feather matches the JSON managed-area total exactly
+    and still carries late-stage fields such as `curve1` and `au`;
+  - confirmed the downstream row-23 output cache preserves `131` real LU names
+    instead of bundle labels; and
+  - recorded the true chained row-23 result:
+    `0.000 ha` removed and `1,709,877.044 ha` remaining.

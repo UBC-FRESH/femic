@@ -1960,3 +1960,19 @@
     - cumulative delta versus TSR: `+33,818.044 ha`
   - Next bounded move:
     - run only step 23 from the rebuilt row-21 output.
+- 2026-05-10: Completed the true chained row-23 rerun from the rebuilt row-21 output.
+  - True chained row-23 result:
+    - removed: `0.000 ha`
+    - remaining: `1,709,877.044 ha`
+    - benchmark marginal delta versus TSR: `-22,754.000 ha`
+    - benchmark cumulative delta versus TSR: `+49,824.044 ha`
+  - Mechanical validation:
+    - the rebuilt row-23 feather matches the JSON managed-area total exactly;
+      and
+    - the downstream row-23 output cache preserves `131` real LU names instead
+      of bundle labels.
+  - Runtime:
+    - row 23 completed in about `69.1 s`, still inside the current late-stage
+      runtime envelope but without any executable deduction.
+  - Next bounded move:
+    - relock row 23 to the true chained result before any downstream execution.
