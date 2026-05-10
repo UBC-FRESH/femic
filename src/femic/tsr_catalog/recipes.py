@@ -54,7 +54,13 @@ from femic.bcdc_fetch import (
     fetch_bcdc_wfs_data,
 )
 from femic.pipeline.bundle import assign_curve_ids_from_au_table, tsa_curve_id_prefix
-from femic.pipeline.io import file_sha256, load_pipeline_run_profile
+from femic.pipeline.io import (
+    file_sha256,
+    is_windows_annex_pointer_stub,
+    load_pipeline_run_profile,
+    materialize_annex_artifact_path,
+    resolve_windows_annex_pointer_payload_path,
+)
 from femic.pipeline.tsa import (
     apply_stratum_alias_map,
     assign_au_ids_from_scsi,
@@ -3616,7 +3622,8 @@ def _specialized_compiled_logic_for_parent_step(
                 "normalized_subject": "Community areas of special concern",
                 "normalized_predicate": (
                     "exclude only LUO/CARC CCLUP legal-planning polygons where "
-                    "LEGAL_FEAT_OBJECTIVE = Community Areas of Special Concern"
+                    "LEGAL_FEAT_OBJECTIVE = Community Areas of Special Concern "
+                    "and SOURCE_HARV_CAT is one of ART, IR, or STR"
                 ),
                 "linked_source_entry_ids": [
                     "whse_land_use_planning_rmp_plan_legal_poly_svw",
@@ -3632,9 +3639,15 @@ def _specialized_compiled_logic_for_parent_step(
                         "operator": "eq",
                         "value": "Community Areas of Special Concern",
                     },
+                    {
+                        "field": "SOURCE_HARV_CAT",
+                        "operator": "in",
+                        "value": ["ART", "IR", "STR"],
+                    },
                 ],
                 "notes": [
-                    "TSA29 section 6.3.7 points to LUO / CCLUP Map 5 boundaries, so notebook execution uses the legal CCLUP planning polygons instead of broad designated-area overlays."
+                    "TSA29 section 6.3.7 points to LUO / CCLUP Map 5 boundaries, so notebook execution uses the legal CCLUP planning polygons instead of broad designated-area overlays.",
+                    "The legal-planning source encodes CASC harvest semantics in repeated LEGAL_FEAT_ATRB name/value slots; row 11 narrows execution to the ART / IR / STR source harvest categories instead of excluding the full CASC polygon set.",
                 ],
             }
         )
@@ -4167,26 +4180,28 @@ def _specialized_compiled_logic_for_parent_step(
     if lower == "proven aboriginal rights areas":
         pra_item = _base_item(
             "compiled_01",
-            "Proven Aboriginal Rights area boundary",
-            "manual_review_required",
+            "Proven Aboriginal Rights area reduction",
+            "aspatial_reduction",
         )
         pra_item.update(
             {
-                "normalized_action": "review",
-                "normalized_subject": "Proven Aboriginal Rights area boundary",
-                "normalized_predicate": (
-                    "requires a reviewed PRA boundary overlay before automation; "
-                    "do not auto-exclude with broad TSA or designated-area polygons"
+                "benchmark_marginal_area_ha": (
+                    benchmark_marginal_area_ha
+                    if benchmark_marginal_area_ha is not None
+                    else 68401.0
                 ),
-                "linked_source_entry_ids": [
-                    "whse_admin_boundaries_pip_consultation",
-                    "whse_land_use_planning_fadm_designated",
-                ],
-                "step_status": "manual_review_required",
-                "required": False,
+                "normalized_action": "aspatial_reduction",
+                "normalized_subject": "Proven Aboriginal Rights area reduction",
+                "normalized_predicate": (
+                    "apply the approved PRA bridge as an aspatial THLB reduction "
+                    "when no trustworthy public PRA boundary is available"
+                ),
+                "linked_source_entry_ids": [],
+                "direct_target_removed_area": True,
                 "notes": [
                     "TSA29 section 6.4.1 defines the Proven Aboriginal Rights area conceptually but does not cite a clean public vector source in the data-package text.",
-                    "Current public lead is the PIP Consultation Areas public map service; treat this step as review/manual until a trustworthy boundary source or override is adopted.",
+                    "The approved public-data lane keeps this as a benchmark-anchored aspatial bridge because no trustworthy public PRA boundary is available for defensible automated exclusion.",
+                    "When the row-11 chained input state changes, row 12 can absorb the AFLB-to-LHLB stage residual so the stage lands on the TSR cumulative target.",
                 ],
             }
         )
@@ -7561,6 +7576,7 @@ def _load_cached_landscape_unit_partition_records(
     expected_row_count: int | None = None,
     expected_area_ha: float | None = None,
     expected_columns: Sequence[str] | None = None,
+    expected_checkpoint_sha256: str | None = None,
 ) -> tuple[tuple[str, ...], list[dict[str, Any]]] | None:
     partition_root = default_tsr_thlb_lu_partition_root(instance_root=instance_root)
     if not partition_root.exists():
@@ -7576,7 +7592,14 @@ def _load_cached_landscape_unit_partition_records(
             != _TSR_THLB_LU_PARTITION_CACHE_VERSION
         ):
             continue
-        if str(payload.get("checkpoint_path", "")).strip() != resolved_checkpoint:
+        cache_path_matches = (
+            str(payload.get("checkpoint_path", "")).strip() == resolved_checkpoint
+        )
+        if expected_checkpoint_sha256 is not None:
+            cached_checkpoint_sha256 = str(payload.get("checkpoint_sha256", "")).strip()
+            if cached_checkpoint_sha256 != expected_checkpoint_sha256:
+                continue
+        elif not cache_path_matches:
             continue
         if expected_row_count is not None:
             cached_row_count = payload.get("input_row_count")
@@ -7840,6 +7863,7 @@ def _materialize_checkpoint_landscape_unit_partitions(
     metadata_path = partition_dir / "partition_metadata.json"
     checkpoint_row_count = int(len(checkpoint))
     checkpoint_area_ha = float(checkpoint.geometry.area.astype(float).sum() / 10000.0)
+    checkpoint_sha256 = file_sha256(checkpoint_path)
     checkpoint_columns = sorted(
         {str(column).strip() for column in checkpoint.columns if str(column).strip()}
     )
@@ -7856,6 +7880,7 @@ def _materialize_checkpoint_landscape_unit_partitions(
             and isinstance(cached_columns, list)
             and cached_row_count is not None
             and cached_area_ha is not None
+            and str(payload.get("checkpoint_sha256", "")).strip() == checkpoint_sha256
             and int(cached_row_count) == checkpoint_row_count
             and math.isclose(
                 float(cached_area_ha),
@@ -7914,6 +7939,7 @@ def _materialize_checkpoint_landscape_unit_partitions(
     metadata_payload = {
         "cache_version": _TSR_THLB_LU_PARTITION_CACHE_VERSION,
         "checkpoint_path": str(checkpoint_path.expanduser().resolve()),
+        "checkpoint_sha256": checkpoint_sha256,
         "input_row_count": checkpoint_row_count,
         "input_area_ha": checkpoint_area_ha,
         "input_columns": checkpoint_columns,
@@ -7933,6 +7959,90 @@ def _materialize_checkpoint_landscape_unit_partitions(
     )
     records.sort(key=lambda item: str(item.get("lu_name", "")).strip())
     return records
+
+
+def _register_checkpoint_landscape_unit_partition_records(
+    checkpoint: gpd.GeoDataFrame,
+    *,
+    checkpoint_path: Path,
+    selected_landscape_units: Sequence[str],
+    chunk_records: Sequence[dict[str, Any]],
+    instance_root: Path,
+) -> list[dict[str, Any]]:
+    partition_root = default_tsr_thlb_lu_partition_root(instance_root=instance_root)
+    partition_root.mkdir(parents=True, exist_ok=True)
+    lu_key = "|".join(
+        str(value).strip() for value in selected_landscape_units if str(value).strip()
+    )
+    digest = hashlib.sha1(
+        (f"{checkpoint_path.expanduser().resolve()}||{lu_key or 'all_lus'}").encode(
+            "utf-8"
+        )
+    ).hexdigest()[:12]
+    partition_dir = partition_root / f"{checkpoint_path.stem}.{digest}"
+    if partition_dir.exists():
+        shutil.rmtree(partition_dir, ignore_errors=True)
+    partition_dir.mkdir(parents=True, exist_ok=True)
+
+    checkpoint_row_count = int(len(checkpoint))
+    checkpoint_area_ha = float(checkpoint.geometry.area.astype(float).sum() / 10000.0)
+    checkpoint_sha256 = file_sha256(checkpoint_path)
+    checkpoint_columns = sorted(
+        {str(column).strip() for column in checkpoint.columns if str(column).strip()}
+    )
+    registered_records: list[dict[str, Any]] = []
+    for index, item in enumerate(chunk_records, start=1):
+        source_path = Path(str(item.get("chunk_path", ""))).expanduser()
+        if not source_path.exists():
+            continue
+        label = str(
+            item.get("lu_name") or item.get("bundle_label") or f"chunk_{index:03d}"
+        ).strip()
+        slug = (
+            re.sub(r"[^A-Za-z0-9]+", "_", label).strip("_").lower()
+            or f"chunk_{index:03d}"
+        )
+        target_path = partition_dir / f"{index:03d}_{slug}.feather"
+        shutil.copy2(source_path, target_path)
+        area_ha = _normalize_float_or_none(item.get("area_ha"))
+        if area_ha is None:
+            chunk = gpd.read_feather(target_path)
+            area_ha = float(chunk.geometry.area.astype(float).sum() / 10000.0)
+        registered_records.append(
+            {
+                "lu_name": label,
+                "chunk_path": target_path,
+                "area_ha": float(area_ha),
+            }
+        )
+
+    if not registered_records:
+        shutil.rmtree(partition_dir, ignore_errors=True)
+        return []
+
+    metadata_payload = {
+        "cache_version": _TSR_THLB_LU_PARTITION_CACHE_VERSION,
+        "checkpoint_path": str(checkpoint_path.expanduser().resolve()),
+        "checkpoint_sha256": checkpoint_sha256,
+        "input_row_count": checkpoint_row_count,
+        "input_area_ha": checkpoint_area_ha,
+        "input_columns": checkpoint_columns,
+        "selected_landscape_units": list(selected_landscape_units),
+        "chunk_records": [
+            {
+                "lu_name": str(item["lu_name"]),
+                "chunk_path": Path(str(item["chunk_path"])).name,
+                "area_ha": float(item["area_ha"] or 0.0),
+            }
+            for item in registered_records
+        ],
+    }
+    (partition_dir / "partition_metadata.json").write_text(
+        json.dumps(metadata_payload, indent=2, sort_keys=False),
+        encoding="utf-8",
+    )
+    registered_records.sort(key=lambda item: str(item.get("lu_name", "")).strip())
+    return registered_records
 
 
 def _write_tsr_thlb_parallel_progress(
@@ -8244,6 +8354,37 @@ def _is_aflb_to_lhlb_stage(step: dict[str, Any]) -> bool:
 
 def _is_lhlb_to_thlb_stage(step: dict[str, Any]) -> bool:
     return str(step.get("land_base_stage", "")).strip() == "lhlb_to_thlb"
+
+
+def _locked_parent_step_should_publish_lhlb_restart_artifacts(
+    recipe: Any, target_parent: dict[str, Any]
+) -> bool:
+    if not _is_aflb_to_lhlb_stage(target_parent):
+        return False
+    current_row_order = _locked_step_row_order(target_parent.get("row_order"))
+    if current_row_order is None:
+        return False
+    parent_steps = tuple(getattr(recipe, "parent_steps", ()) or ())
+    if not parent_steps:
+        return False
+    sorted_parent_steps = sorted(
+        (
+            item
+            for item in parent_steps
+            if isinstance(item, dict)
+            and _locked_step_row_order(item.get("row_order")) is not None
+        ),
+        key=lambda item: int(item.get("row_order", 0) or 0),
+    )
+    next_parent = next(
+        (
+            item
+            for item in sorted_parent_steps
+            if int(item.get("row_order", 0) or 0) > current_row_order
+        ),
+        None,
+    )
+    return next_parent is not None and _is_lhlb_to_thlb_stage(next_parent)
 
 
 def _is_applied_runtime_status(status: str) -> bool:
@@ -8588,6 +8729,40 @@ def _write_reconstructed_restart_checkpoint_artifacts(
     return feather_path, written_gpkg, _managed_area_ha(prepared), True
 
 
+def _publish_locked_lhlb_restart_artifacts(
+    *, instance_root: Path, checkpoint: gpd.GeoDataFrame
+) -> tuple[Path, Path, float, float]:
+    lhlb_checkpoint_path = default_tsr_lhlb_checkpoint_path(instance_root=instance_root)
+    (
+        written_lhlb_checkpoint_path,
+        _written_lhlb_gpkg_path,
+        lhlb_checkpoint_area_ha,
+        _lhlb_lu_cache_warmed,
+    ) = _write_reconstructed_restart_checkpoint_artifacts(
+        checkpoint=checkpoint,
+        instance_root=instance_root,
+        feather_path=lhlb_checkpoint_path,
+        gpkg_path=None,
+        gpkg_layer_name="lhlb_checkpoint",
+    )
+    (
+        written_lhlb_curve_ready_checkpoint_path,
+        _written_lhlb_curve_ready_gpkg_path,
+        lhlb_curve_ready_checkpoint_area_ha,
+        _lhlb_curve_ready_lu_cache_warmed,
+    ) = _ensure_lhlb_curve_ready_checkpoint_artifacts(
+        instance_root=instance_root,
+        checkpoint_path=written_lhlb_checkpoint_path,
+        write_gpkg=False,
+    )
+    return (
+        written_lhlb_checkpoint_path,
+        written_lhlb_curve_ready_checkpoint_path,
+        lhlb_checkpoint_area_ha,
+        lhlb_curve_ready_checkpoint_area_ha,
+    )
+
+
 def _resolve_effective_stand_area_sqm(checkpoint: gpd.GeoDataFrame) -> pd.Series:
     if TSR_EFFECTIVE_AREA_SQM_COLUMN in checkpoint.columns:
         effective = pd.to_numeric(
@@ -8930,6 +9105,7 @@ def _prepare_reconstructed_lu_chunk_records(
         expected_row_count=len(checkpoint),
         expected_area_ha=float(checkpoint.geometry.area.astype(float).sum() / 10000.0),
         expected_columns=checkpoint.columns,
+        expected_checkpoint_sha256=file_sha256(checkpoint_path),
     )
     profiling["lu_selection_cache_lookup_seconds"] = (
         perf_counter() - cache_lookup_started
@@ -9156,6 +9332,7 @@ def _apply_reconstructed_lu_aspatial_area_reduction(
     target_removed_area_ha: float,
     filters: Sequence[dict[str, Any]] = (),
     mode: str = "any",
+    persist_to_thlb_state: bool = False,
 ) -> tuple[list[dict[str, Any]], float, int, int]:
     if not chunk_records or target_removed_area_ha <= 0.0:
         return [dict(item) for item in chunk_records], 0.0, 0, 0
@@ -9179,11 +9356,18 @@ def _apply_reconstructed_lu_aspatial_area_reduction(
     for index, record in enumerate(chunk_records, start=1):
         current_record = dict(record)
         lu_name = str(current_record.get("lu_name", "")).strip()
-        updated_chunk, current_affected = _apply_aspatial_area_keep_factor(
-            frames_by_lu[lu_name],
-            keep_factor=keep_factor,
-            scope_mask=scope_masks_by_lu[lu_name],
-        )
+        if persist_to_thlb_state:
+            updated_chunk, current_affected = _apply_scoped_aspatial_thlb_keep_factor(
+                frames_by_lu[lu_name],
+                keep_factor=keep_factor,
+                scope_mask=scope_masks_by_lu[lu_name],
+            )
+        else:
+            updated_chunk, current_affected = _apply_aspatial_area_keep_factor(
+                frames_by_lu[lu_name],
+                keep_factor=keep_factor,
+                scope_mask=scope_masks_by_lu[lu_name],
+            )
         affected_row_count += current_affected
         if current_affected > 0:
             touched_chunk_count += 1
@@ -11996,6 +12180,51 @@ def _apply_source_attribute_filters(
     return filtered
 
 
+def _augment_named_value_attribute_columns(
+    layer: gpd.GeoDataFrame,
+    *,
+    name_column_suffix: str = "_NAME",
+    value_column_suffix: str = "_VALUE",
+) -> gpd.GeoDataFrame:
+    """Materialize synthetic columns from repeated NAME/VALUE attribute slots.
+
+    Some BCGW legal-planning layers encode semantically important attributes as
+    repeated pairs such as `LEGAL_FEAT_ATRB_1_NAME` / `LEGAL_FEAT_ATRB_1_VALUE`.
+    This helper lifts those slot pairs into ordinary filterable columns like
+    `SOURCE_HARV_CAT` and `HARV_FACTOR` without discarding the original fields.
+    """
+
+    name_columns = [
+        column
+        for column in layer.columns
+        if column.endswith(name_column_suffix)
+        and column[: -len(name_column_suffix)] + value_column_suffix in layer.columns
+    ]
+    if not name_columns:
+        return layer
+    augmented = layer.copy()
+    for name_column in name_columns:
+        slot_prefix = name_column[: -len(name_column_suffix)]
+        value_column = slot_prefix + value_column_suffix
+        if value_column not in augmented.columns:
+            continue
+        raw_names = augmented[name_column].fillna("").astype(str).str.strip()
+        if raw_names.eq("").all():
+            continue
+        raw_values = augmented[value_column]
+        for attribute_name in raw_names.loc[raw_names.ne("")].unique().tolist():
+            current = (
+                augmented[attribute_name]
+                if attribute_name in augmented.columns
+                else pd.Series(pd.NA, index=augmented.index, dtype="object")
+            )
+            attribute_mask = raw_names.eq(attribute_name)
+            if not bool(attribute_mask.any()):
+                continue
+            augmented[attribute_name] = current.where(~attribute_mask, raw_values)
+    return augmented
+
+
 @lru_cache(maxsize=8)
 def _load_curve_metric_lookup(bundle_root_str: str) -> dict[int, dict[str, Any]]:
     bundle_root = Path(bundle_root_str)
@@ -12322,6 +12551,7 @@ def _load_compiled_logic_geometries(
     if geometries.empty:
         return geometries, missing_sources, True, extent_mismatch_notes
     if filters:
+        geometries = _augment_named_value_attribute_columns(geometries)
         geometries = _apply_source_attribute_filters(geometries, filters=filters)
         if geometries.empty:
             return geometries, missing_sources, True, extent_mismatch_notes
@@ -12333,11 +12563,14 @@ def _load_compiled_logic_geometries(
             )
             extent_mismatch_note = _evaluate_source_extent_mismatch(
                 source_entry=primary_source_entry,
-                artifact_bbox_epsg3005=(
-                    float(geometries.total_bounds[0]),
-                    float(geometries.total_bounds[1]),
-                    float(geometries.total_bounds[2]),
-                    float(geometries.total_bounds[3]),
+                artifact_bbox_epsg3005=_source_artifact_bbox_for_extent_check(
+                    source_entry=primary_source_entry,
+                    fallback_bbox_epsg3005=(
+                        float(geometries.total_bounds[0]),
+                        float(geometries.total_bounds[1]),
+                        float(geometries.total_bounds[2]),
+                        float(geometries.total_bounds[3]),
+                    ),
                 ),
                 target_bbox_epsg3005=bbox,
             )
@@ -12524,11 +12757,24 @@ def _execute_workbench_compiled_item(
             )
             runtime_item["runtime_notes"] = runtime_notes
             return checkpoint, runtime_item
-        target_removed_area_ha = (
-            float(benchmark_marginal_area_ha)
-            * current_managed_area_ha
-            / total_area_benchmark_ha
-        )
+        if bool(compiled_item.get("direct_target_removed_area")):
+            denominator_ha = _normalize_float_or_none(
+                compiled_item.get("direct_target_area_denominator_ha")
+            )
+            if denominator_ha is not None and denominator_ha > 0.0:
+                target_removed_area_ha = (
+                    float(benchmark_marginal_area_ha)
+                    * current_managed_area_ha
+                    / denominator_ha
+                )
+            else:
+                target_removed_area_ha = float(benchmark_marginal_area_ha)
+        else:
+            target_removed_area_ha = (
+                float(benchmark_marginal_area_ha)
+                * current_managed_area_ha
+                / total_area_benchmark_ha
+            )
         updated, removed_area_ha, affected_row_count = _apply_aspatial_thlb_reduction(
             checkpoint,
             target_removed_area_ha=target_removed_area_ha,
@@ -12541,9 +12787,14 @@ def _execute_workbench_compiled_item(
         runtime_notes.append(
             "Later-stage aspatial reduction preserved geometry and reduced THLB state proportionally across the active subset."
         )
-        runtime_notes.append(
-            "Notebook execution scales the TSR benchmark marginal area to the current smoke subset before applying the reduction."
-        )
+        if bool(compiled_item.get("direct_target_removed_area")):
+            runtime_notes.append(
+                f"Applied a direct-target THLB reduction of {target_removed_area_ha:.3f} ha within the active checkpoint subset."
+            )
+        else:
+            runtime_notes.append(
+                "Notebook execution scales the TSR benchmark marginal area to the current smoke subset before applying the reduction."
+            )
         return _finalize(updated)
 
     if operation_type == "aspatial_area_reduction":
@@ -12570,10 +12821,24 @@ def _execute_workbench_compiled_item(
                 * current_area_ha
                 / total_area_benchmark_ha
             )
-        updated, removed_area_ha, affected_row_count = _apply_aspatial_area_reduction(
-            checkpoint,
-            target_removed_area_ha=target_removed_area_ha,
-        )
+        if bool(compiled_item.get("persist_area_reduction_to_thlb_state")):
+            (
+                updated,
+                removed_area_ha,
+                affected_row_count,
+            ) = _apply_aspatial_thlb_reduction(
+                checkpoint,
+                target_removed_area_ha=target_removed_area_ha,
+            )
+        else:
+            (
+                updated,
+                removed_area_ha,
+                affected_row_count,
+            ) = _apply_aspatial_area_reduction(
+                checkpoint,
+                target_removed_area_ha=target_removed_area_ha,
+            )
         runtime_item["gross_touched_area_ha"] = removed_area_ha
         runtime_item["affected_fragment_count"] = affected_row_count
         runtime_item["execution_status"] = (
@@ -12582,6 +12847,10 @@ def _execute_workbench_compiled_item(
         runtime_notes.append(
             "Early-stage aspatial area reduction preserved geometry and reduced stand-area fields across the active AFLB subset."
         )
+        if bool(compiled_item.get("persist_area_reduction_to_thlb_state")):
+            runtime_notes.append(
+                "Strict locked execution persisted this aspatial area reduction into THLB state for chained validation."
+            )
         if bool(compiled_item.get("direct_target_removed_area")):
             runtime_notes.append(
                 f"Applied a direct-target area reduction of {target_removed_area_ha:.3f} ha within the active checkpoint subset."
@@ -12910,6 +13179,7 @@ def _run_tsr_thlb_parent_step_bundle_worker(
     statuses: set[str] = set()
     completed_lus = 0
     chunk_profile_items: list[dict[str, Any]] = []
+    output_chunk_records: list[dict[str, Any]] = []
 
     try:
         for lu_name, chunk_path in bundle_items:
@@ -12950,6 +13220,15 @@ def _run_tsr_thlb_parent_step_bundle_worker(
             )
             execute_elapsed = perf_counter() - execute_started
             merged_frames.append(updated)
+            lu_output_slug = (
+                re.sub(r"[^A-Za-z0-9]+", "_", str(lu_name).strip()).strip("_").lower()
+                or f"lu_{completed_lus + 1:03d}"
+            )
+            lu_output_path = (
+                Path(output_path).parent
+                / f"bundle_{bundle_index:02d}.{completed_lus + 1:03d}_{lu_output_slug}.feather"
+            )
+            updated.to_feather(lu_output_path)
             if not executed_parent_step_ids:
                 executed_parent_step_ids = tuple(current_parent_step_ids)
             executed_items.extend(current_executed_items)
@@ -12959,10 +13238,20 @@ def _run_tsr_thlb_parent_step_bundle_worker(
                 str(value).strip() for value in current_notes if str(value).strip()
             )
             completed_lus += 1
+            output_chunk_records.append(
+                {
+                    "lu_name": str(lu_name).strip(),
+                    "chunk_path": lu_output_path,
+                    "area_ha": float(
+                        updated.geometry.area.astype(float).sum() / 10000.0
+                    ),
+                }
+            )
             chunk_profile_items.append(
                 {
                     "lu_name": lu_name,
                     "chunk_path": str(chunk_path),
+                    "output_chunk_path": str(lu_output_path),
                     "input_row_count": int(len(checkpoint)),
                     "output_row_count": int(len(updated)),
                     "read_seconds": read_elapsed,
@@ -13006,11 +13295,12 @@ def _run_tsr_thlb_parent_step_bundle_worker(
         )
         concat_elapsed = perf_counter() - merge_started
         write_started = perf_counter()
-        updated_frame.drop(
-            columns=["_row_id", "_stand_area_sqm"], errors="ignore"
-        ).to_feather(output_path)
+        updated_frame.to_feather(output_path)
         write_elapsed = perf_counter() - write_started
         remaining_area_ha = _managed_area_ha(updated_frame)
+        geometry_area_ha = float(
+            updated_frame.geometry.area.astype(float).sum() / 10000.0
+        )
     else:
         updated_frame = gpd.GeoDataFrame(geometry=[], crs=BC_ALBERS_EPSG)
         concat_elapsed = 0.0
@@ -13018,6 +13308,7 @@ def _run_tsr_thlb_parent_step_bundle_worker(
         updated_frame.to_feather(output_path)
         write_elapsed = perf_counter() - write_started
         remaining_area_ha = 0.0
+        geometry_area_ha = 0.0
     final_status = _combine_parent_step_statuses(statuses)
     if progress_target is not None:
         _write_tsr_thlb_parallel_progress(
@@ -13037,12 +13328,14 @@ def _run_tsr_thlb_parent_step_bundle_worker(
         "executed_items": executed_items,
         "removed_area_ha": removed_area_ha,
         "remaining_area_ha": remaining_area_ha,
+        "geometry_area_ha": geometry_area_ha,
         "status": final_status,
         "notes": list(dict.fromkeys(notes)),
         "bundle_index": bundle_index,
         "bundle_label": bundle_label,
         "lu_names": lu_names,
         "completed_lus": len(bundle_items),
+        "output_chunk_records": output_chunk_records,
         "profiling": {
             "bundle_total_seconds": perf_counter() - bundle_started,
             "bundle_concat_seconds": concat_elapsed,
@@ -13145,9 +13438,10 @@ def _validate_locked_strict_parent_step_contract(
     ratchet_state = (
         str(resolved_parent_step.get("ratchet_state", "")).strip().casefold()
     )
-    approved = (
-        bool(resolved_parent_step.get("approved", False)) or ratchet_state == "approved"
-    )
+    approved = bool(resolved_parent_step.get("approved", False)) or ratchet_state in {
+        "approved",
+        "benchmarked",
+    }
     if not approved:
         raise TsrRecipeError(
             "Locked strict parent step "
@@ -13176,6 +13470,147 @@ def _validate_locked_strict_parent_step_contract(
             f"`{parent_step_id}` is missing locked `compiled_logic`."
         )
     return resolved_parent_step, compiled_logic
+
+
+def _is_strict_row2_non_additive_residual_fallback(
+    *, parent_step: Mapping[str, Any], compiled_item: Mapping[str, Any]
+) -> bool:
+    parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
+    if parent_step_id != "thlb_parent_002_land_not_administered_by_the_province":
+        return False
+    if _resolve_compiled_operation_type(compiled_item) != "aspatial_area_reduction":
+        return False
+    label = str(compiled_item.get("label", "")).strip().casefold()
+    predicate = str(compiled_item.get("normalized_predicate", "")).strip().casefold()
+    subject = str(compiled_item.get("normalized_subject", "")).strip().casefold()
+    benchmark = _normalize_float_or_none(
+        compiled_item.get("benchmark_marginal_area_ha")
+    )
+    if benchmark is None or abs(benchmark - 191246.0) > 1e-6:
+        return False
+    text = " ".join((label, predicate, subject))
+    return (
+        "treaty" in text
+        and "title" in text
+        and ("fallback" in text or "transfer" in text)
+    )
+
+
+def _has_parent_level_aspatial_marginal_contract(
+    *, parent_step: Mapping[str, Any], compiled_logic: Sequence[Mapping[str, Any]]
+) -> bool:
+    parent_benchmark = _normalize_float_or_none(
+        parent_step.get("benchmark_marginal_area_ha")
+    )
+    if parent_benchmark is None:
+        return False
+    for compiled_item in compiled_logic:
+        if _resolve_compiled_operation_type(compiled_item) != "aspatial_reduction":
+            continue
+        item_benchmark = _normalize_float_or_none(
+            compiled_item.get("benchmark_marginal_area_ha")
+        )
+        if item_benchmark is None:
+            continue
+        if abs(item_benchmark - parent_benchmark) <= 1e-6:
+            return True
+    return False
+
+
+def _compiled_logic_for_locked_strict_execution(
+    parent_step: Mapping[str, Any],
+    compiled_logic: Sequence[Mapping[str, Any]],
+    *,
+    locked_net_removed_area_ha: float | None = None,
+) -> list[dict[str, Any]]:
+    normalized = [dict(item) for item in compiled_logic]
+    if not _has_parent_level_aspatial_marginal_contract(
+        parent_step=parent_step, compiled_logic=normalized
+    ):
+        return normalized
+    selected = [
+        item
+        for item in normalized
+        if not _is_strict_row2_non_additive_residual_fallback(
+            parent_step=parent_step, compiled_item=item
+        )
+    ]
+    if locked_net_removed_area_ha is None:
+        return selected
+    parent_benchmark = _normalize_float_or_none(
+        parent_step.get("benchmark_marginal_area_ha")
+    )
+    if parent_benchmark is None:
+        return selected
+    for item in selected:
+        if _resolve_compiled_operation_type(item) != "aspatial_reduction":
+            continue
+        item_benchmark = _normalize_float_or_none(
+            item.get("benchmark_marginal_area_ha")
+        )
+        if item_benchmark is None or abs(item_benchmark - parent_benchmark) > 1e-6:
+            continue
+        item["benchmark_marginal_area_ha"] = float(locked_net_removed_area_ha)
+        item["direct_target_removed_area"] = True
+        break
+    return selected
+
+
+def _locked_chain_entry_for_parent_step(
+    *, instance_root: Path, parent_step_id: str
+) -> dict[str, Any] | None:
+    ledger_path = instance_root / "config" / "tsr" / "thlb_locked_chain_ledger.json"
+    if not ledger_path.exists():
+        return None
+    payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    entries = payload.get("entries", ()) if isinstance(payload, dict) else ()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        if str(entry.get("parent_step_id", "")).strip() == parent_step_id:
+            return dict(entry)
+    return None
+
+
+def _is_locked_zero_removal_reviewed_skip(
+    *,
+    compiled_logic: Sequence[Mapping[str, Any]],
+    locked_net_removed_area_ha: float | None,
+) -> bool:
+    if locked_net_removed_area_ha is None or abs(locked_net_removed_area_ha) > 1e-6:
+        return False
+    if not compiled_logic:
+        return False
+    return all(
+        _resolve_compiled_operation_type(dict(item)) == "manual_review_required"
+        for item in compiled_logic
+    )
+
+
+def _prepare_locked_parent_step_checkpoint(
+    checkpoint: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
+    prepared = checkpoint.copy()
+    prepared["_row_id"] = range(len(prepared))
+    prepared["_stand_area_sqm"] = _resolve_effective_stand_area_sqm(prepared)
+    if "thlb_fact" in prepared.columns:
+        prepared["thlb_fact"] = (
+            pd.to_numeric(prepared["thlb_fact"], errors="coerce")
+            .fillna(0.0)
+            .clip(lower=0.0, upper=1.0)
+        )
+    else:
+        prepared["thlb_fact"] = 1.0
+    if "thlb" in prepared.columns:
+        fallback_thlb = (prepared["thlb_fact"] > 0.0).astype(int)
+        prepared["thlb"] = (
+            pd.to_numeric(prepared["thlb"], errors="coerce")
+            .fillna(fallback_thlb)
+            .astype(int)
+        )
+    else:
+        prepared["thlb"] = (prepared["thlb_fact"] > 0.0).astype(int)
+    return prepared
 
 
 def default_tsr_thlb_strict_chain_checkpoint_path(
@@ -13211,6 +13646,25 @@ def run_tsr_thlb_locked_parent_step(
     target_parent, compiled_logic = _validate_locked_strict_parent_step_contract(
         target_parent
     )
+    locked_entry = _locked_chain_entry_for_parent_step(
+        instance_root=instance_root, parent_step_id=parent_step_id
+    )
+    locked_net_removed_area_ha = (
+        _normalize_float_or_none(locked_entry.get("locked_net_removed_area_ha"))
+        if locked_entry is not None
+        else None
+    )
+    compiled_logic = _compiled_logic_for_locked_strict_execution(
+        target_parent,
+        compiled_logic,
+        locked_net_removed_area_ha=locked_net_removed_area_ha,
+    )
+    _preflight_locked_parent_step_required_sources(
+        instance_root=instance_root,
+        parent_step_id=parent_step_id,
+        compiled_logic=compiled_logic,
+        source_entry_map=source_entry_map,
+    )
     resolved_checkpoint_path = checkpoint_path.expanduser().resolve()
     _reject_tsa29_legacy_checkpoint_path(
         instance_root=instance_root,
@@ -13224,6 +13678,7 @@ def run_tsr_thlb_locked_parent_step(
         "input_prepare_seconds": 0.0,
         "execute_seconds": 0.0,
         "output_write_seconds": 0.0,
+        "lhlb_restart_publish_seconds": 0.0,
         "result_json_write_seconds": 0.0,
     }
     checkpoint_load_started = perf_counter()
@@ -13231,12 +13686,28 @@ def run_tsr_thlb_locked_parent_step(
     profiling["checkpoint_load_seconds"] = perf_counter() - checkpoint_load_started
 
     input_prepare_started = perf_counter()
-    checkpoint = checkpoint.copy()
-    checkpoint["_row_id"] = range(len(checkpoint))
-    checkpoint["_stand_area_sqm"] = _resolve_effective_stand_area_sqm(checkpoint)
-    checkpoint["thlb_fact"] = 1.0
-    checkpoint["thlb"] = 1
+    checkpoint = _prepare_locked_parent_step_checkpoint(checkpoint)
     input_area_ha = _managed_area_ha(checkpoint)
+    for compiled_item in compiled_logic:
+        if _resolve_compiled_operation_type(compiled_item) == "aspatial_area_reduction":
+            compiled_item["persist_area_reduction_to_thlb_state"] = True
+            if (
+                locked_net_removed_area_ha is not None
+                and _normalize_float_or_none(
+                    compiled_item.get("benchmark_marginal_area_ha")
+                )
+                is not None
+            ):
+                compiled_item["benchmark_marginal_area_ha"] = float(
+                    locked_net_removed_area_ha
+                )
+                compiled_item["direct_target_removed_area"] = True
+        if _resolve_compiled_operation_type(
+            compiled_item
+        ) == "aspatial_reduction" and bool(
+            compiled_item.get("direct_target_removed_area")
+        ):
+            compiled_item["direct_target_area_denominator_ha"] = input_area_ha
     profiling["input_prepare_seconds"] = perf_counter() - input_prepare_started
 
     execution_plan = [
@@ -13262,6 +13733,21 @@ def run_tsr_thlb_locked_parent_step(
     locked_execution_class = (
         str(target_parent.get("execution_class", "")).strip() or None
     )
+    output_path = default_tsr_thlb_strict_chain_checkpoint_path(
+        instance_root=instance_root,
+        parent_step_id=parent_step_id,
+        row_order=row_order,
+    )
+    result_json_path = default_tsr_thlb_strict_chain_result_json_path(
+        instance_root=instance_root,
+        parent_step_id=parent_step_id,
+        row_order=row_order,
+    )
+
+    reviewed_skip = _is_locked_zero_removal_reviewed_skip(
+        compiled_logic=compiled_logic,
+        locked_net_removed_area_ha=locked_net_removed_area_ha,
+    )
 
     worker_count = 1
     resolved_lu_bundle_count: int | None = None
@@ -13271,6 +13757,7 @@ def run_tsr_thlb_locked_parent_step(
     removed_area_ha = 0.0
     statuses: set[str] = set()
     notes: list[str] = []
+    output_partition_source_records: list[dict[str, Any]] = []
     total_area_benchmark_ha = _resolve_tsr_total_area_benchmark(recipe)
     use_reconstructed_lu_executor = any(
         _resolve_compiled_operation_type(item) == "aspatial_area_reduction"
@@ -13306,7 +13793,33 @@ def run_tsr_thlb_locked_parent_step(
 
     execute_started = perf_counter()
     working: gpd.GeoDataFrame
-    if use_reconstructed_lu_executor:
+    if reviewed_skip:
+        working = checkpoint
+        statuses = {"applied_noop"}
+        worker_count = 0
+        resolved_lu_bundle_count = 0
+        lu_chunk_count = 0
+        notes = [
+            str(note).strip()
+            for compiled_item in compiled_logic
+            for note in compiled_item.get("notes", ())
+            if str(note).strip()
+        ]
+        notes.append(
+            "Locked zero-removal reviewed skip; checkpoint carried forward "
+            "without LU partitioning or spatial execution."
+        )
+        executed_items = []
+        for compiled_item in compiled_logic:
+            runtime_item = dict(compiled_item)
+            runtime_item["execution_status"] = "applied_noop"
+            runtime_item["removed_area_ha"] = 0.0
+            runtime_item["net_removed_area_ha"] = 0.0
+            runtime_item["remaining_area_ha"] = input_area_ha
+            runtime_item["runtime_notes"] = tuple(_dedupe_runtime_notes(notes))
+            executed_items.append(runtime_item)
+        profiling["execute_seconds"] = perf_counter() - execute_started
+    elif use_reconstructed_lu_executor:
         (
             working,
             applied_steps,
@@ -13390,7 +13903,9 @@ def run_tsr_thlb_locked_parent_step(
                             target_parent.get("land_base_stage", "")
                         ).strip()
                         or None,
-                        "compiled_step_id": str(compiled_item.get("step_id", "")).strip()
+                        "compiled_step_id": str(
+                            compiled_item.get("step_id", "")
+                        ).strip()
                         or None,
                         "compiled_step_label": str(
                             compiled_item.get("label", "")
@@ -13413,6 +13928,7 @@ def run_tsr_thlb_locked_parent_step(
             expected_columns=tuple(
                 str(column).strip() for column in checkpoint.columns
             ),
+            expected_checkpoint_sha256=file_sha256(resolved_checkpoint_path),
         )
         profiling["lu_selection_cache_lookup_seconds"] = (
             perf_counter() - cache_lookup_started
@@ -13637,18 +14153,37 @@ def run_tsr_thlb_locked_parent_step(
             }
             for worker_result in worker_results
         ]
+        output_partition_source_records = [
+            {
+                "lu_name": str(item.get("lu_name", "")).strip(),
+                "chunk_path": Path(str(item["chunk_path"])),
+                "area_ha": float(item.get("area_ha", 0.0) or 0.0),
+            }
+            for worker_result in worker_results
+            for item in worker_result.get("output_chunk_records", [])
+            if isinstance(item, dict) and str(item.get("chunk_path", "")).strip()
+        ]
+        if not output_partition_source_records:
+            output_partition_source_records = [
+                {
+                    "lu_name": str(
+                        worker_result.get("bundle_label")
+                        or f"bundle_{int(worker_result.get('bundle_index', 0) or 0):02d}"
+                    ).strip(),
+                    "chunk_path": Path(str(worker_result["output_path"])),
+                    "area_ha": float(worker_result.get("geometry_area_ha", 0.0) or 0.0),
+                }
+                for worker_result in worker_results
+            ]
         profiling["execute_seconds"] = perf_counter() - execute_started
 
-    final_status = _combine_parent_step_statuses(statuses)
+    final_status = (
+        "applied_noop" if reviewed_skip else _combine_parent_step_statuses(statuses)
+    )
     remaining_area_ha = _managed_area_ha(working)
     removed_area_ha = _resolve_step_net_removed_area_ha(
         managed_area_before_step_ha=input_area_ha,
         managed_area_after_step_ha=remaining_area_ha,
-    )
-    output_path = default_tsr_thlb_strict_chain_checkpoint_path(
-        instance_root=instance_root,
-        parent_step_id=parent_step_id,
-        row_order=row_order,
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_write_started = perf_counter()
@@ -13656,12 +14191,87 @@ def run_tsr_thlb_locked_parent_step(
         output_path
     )
     profiling["output_write_seconds"] = perf_counter() - output_write_started
+    if output_partition_source_records:
+        output_cache_started = perf_counter()
+        registered_output_records = (
+            _register_checkpoint_landscape_unit_partition_records(
+                working,
+                checkpoint_path=output_path,
+                selected_landscape_units=selected_landscape_units,
+                chunk_records=output_partition_source_records,
+                instance_root=instance_root,
+            )
+        )
+        profiling["output_partition_cache_write_seconds"] = (
+            perf_counter() - output_cache_started
+        )
+        profiling["output_partition_cache_chunk_count"] = len(registered_output_records)
+    elif reviewed_skip:
+        output_cache_started = perf_counter()
+        input_cache = _load_cached_landscape_unit_partition_records(
+            checkpoint_path=resolved_checkpoint_path,
+            instance_root=instance_root,
+            expected_row_count=len(checkpoint),
+            expected_area_ha=float(
+                checkpoint.geometry.area.astype(float).sum() / 10000.0
+            ),
+            expected_columns=tuple(
+                str(column).strip() for column in checkpoint.columns
+            ),
+            expected_checkpoint_sha256=file_sha256(resolved_checkpoint_path),
+        )
+        if input_cache is not None:
+            cached_selected_lus, cached_records = input_cache
+            registered_output_records = (
+                _register_checkpoint_landscape_unit_partition_records(
+                    working,
+                    checkpoint_path=output_path,
+                    selected_landscape_units=cached_selected_lus,
+                    chunk_records=cached_records,
+                    instance_root=instance_root,
+                )
+            )
+            selected_landscape_units = cached_selected_lus
+            profiling["output_partition_cache_chunk_count"] = len(
+                registered_output_records
+            )
+        else:
+            profiling["output_partition_cache_chunk_count"] = 0
+        profiling["output_partition_cache_write_seconds"] = (
+            perf_counter() - output_cache_started
+        )
 
-    result_json_path = default_tsr_thlb_strict_chain_result_json_path(
-        instance_root=instance_root,
-        parent_step_id=parent_step_id,
-        row_order=row_order,
-    )
+    if _locked_parent_step_should_publish_lhlb_restart_artifacts(recipe, target_parent):
+        lhlb_publish_started = perf_counter()
+        (
+            written_lhlb_checkpoint_path,
+            written_lhlb_curve_ready_checkpoint_path,
+            lhlb_checkpoint_area_ha,
+            lhlb_curve_ready_checkpoint_area_ha,
+        ) = _publish_locked_lhlb_restart_artifacts(
+            instance_root=instance_root,
+            checkpoint=working,
+        )
+        profiling["lhlb_restart_publish_seconds"] = (
+            perf_counter() - lhlb_publish_started
+        )
+        profiling["lhlb_checkpoint_path"] = str(
+            written_lhlb_checkpoint_path.relative_to(instance_root).as_posix()
+        )
+        profiling["lhlb_checkpoint_area_ha"] = lhlb_checkpoint_area_ha
+        profiling["lhlb_curve_ready_checkpoint_path"] = str(
+            written_lhlb_curve_ready_checkpoint_path.relative_to(
+                instance_root
+            ).as_posix()
+        )
+        profiling["lhlb_curve_ready_checkpoint_area_ha"] = (
+            lhlb_curve_ready_checkpoint_area_ha
+        )
+        notes.append(
+            "Published official LHLB and curve-ready restart checkpoints for the "
+            "downstream strict row-14 seam."
+        )
+
     result_json_path.parent.mkdir(parents=True, exist_ok=True)
     benchmark_marginal_area_ha = target_parent.get("benchmark_marginal_area_ha")
     benchmark_cumulative_area_ha = target_parent.get("benchmark_cumulative_area_ha")
@@ -13704,11 +14314,15 @@ def run_tsr_thlb_locked_parent_step(
         scaled_benchmark_marginal_delta_ha=None,
         scaled_benchmark_cumulative_delta_ha=None,
         notes=_dedupe_runtime_notes(notes),
-        execution_mode=TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL,
+        execution_mode=(
+            "reviewed_skip"
+            if reviewed_skip
+            else TSR_THLB_PARENT_STEP_EXECUTION_MODE_LU_PARALLEL
+        ),
         worker_count=worker_count,
         lu_chunk_count=lu_chunk_count,
         lu_bundle_count=resolved_lu_bundle_count,
-        progress_root=resolved_progress_root,
+        progress_root=None if reviewed_skip else resolved_progress_root,
         profiling=profiling,
     )
     profiling["total_seconds"] = perf_counter() - total_started
@@ -13961,6 +14575,7 @@ def run_tsr_thlb_parent_step(
                 expected_area_ha=float(
                     checkpoint.geometry.area.astype(float).sum() / 10000.0
                 ),
+                expected_checkpoint_sha256=file_sha256(resolved_checkpoint_path),
             )
             profiling["lu_selection_cache_lookup_seconds"] = (
                 perf_counter() - cache_lookup_started
@@ -17138,7 +17753,106 @@ def _resolve_source_artifact_path(
     resolved = candidate.expanduser().resolve()
     if not resolved.exists():
         return None
-    return resolved
+    payload_path = resolve_windows_annex_pointer_payload_path(resolved)
+    if payload_path.exists() and payload_path != resolved:
+        return payload_path
+    if is_windows_annex_pointer_stub(resolved):
+        return None
+    return payload_path
+
+
+def _compiled_item_requires_source_artifact_preflight(
+    compiled_item: Mapping[str, Any],
+) -> bool:
+    return _resolve_compiled_operation_type(compiled_item) in {
+        "select_spatial_intersect",
+        "buffer_then_intersect",
+    }
+
+
+def _preflight_locked_parent_step_required_sources(
+    *,
+    instance_root: Path,
+    parent_step_id: str,
+    compiled_logic: Sequence[Mapping[str, Any]],
+    source_entry_map: Mapping[str, Mapping[str, Any]],
+) -> None:
+    blockers: list[str] = []
+    seen_entry_ids: set[str] = set()
+    for compiled_item in compiled_logic:
+        if not _compiled_item_requires_source_artifact_preflight(compiled_item):
+            continue
+        source_fields = ("linked_source_entry_ids", "restoration_source_entry_ids")
+        for field_name in source_fields:
+            linked_entry_ids = tuple(
+                str(value).strip()
+                for value in compiled_item.get(field_name, ())
+                if str(value).strip()
+            )
+            for entry_id in linked_entry_ids:
+                if entry_id in seen_entry_ids:
+                    continue
+                seen_entry_ids.add(entry_id)
+                source_entry = source_entry_map.get(entry_id)
+                if source_entry is None:
+                    blockers.append(
+                        f"`{entry_id}` has no source-layer recipe entry."
+                    )
+                    continue
+                artifact_path = str(source_entry.get("artifact_path", "")).strip()
+                candidate_path = (
+                    (instance_root / artifact_path).expanduser().resolve()
+                    if artifact_path
+                    else None
+                )
+                resolved_path = _resolve_source_artifact_path(
+                    instance_root=instance_root,
+                    source_entry=dict(source_entry),
+                )
+                if resolved_path is None and artifact_path and candidate_path is not None:
+                    materialized_path = materialize_annex_artifact_path(candidate_path)
+                    if materialized_path is not None:
+                        resolved_path = _resolve_source_artifact_path(
+                            instance_root=instance_root,
+                            source_entry=dict(source_entry),
+                        )
+                if resolved_path is None:
+                    if candidate_path is not None and candidate_path.exists():
+                        if is_windows_annex_pointer_stub(candidate_path):
+                            blockers.append(
+                                f"`{entry_id}` artifact `{artifact_path}` is still an "
+                                "unmaterialized annex pointer stub after auto-materialization."
+                            )
+                        else:
+                            blockers.append(
+                                f"`{entry_id}` artifact `{artifact_path}` exists but "
+                                "could not be resolved as a readable source payload."
+                            )
+                    elif artifact_path:
+                        blockers.append(
+                            f"`{entry_id}` artifact `{artifact_path}` is missing, not "
+                            "materialized, or could not be auto-materialized."
+                        )
+                    else:
+                        blockers.append(
+                            f"`{entry_id}` has no materialized artifact path."
+                        )
+                    continue
+                if _probe_vector_artifact_bounds(resolved_path) is None:
+                    try:
+                        display_path = resolved_path.relative_to(instance_root).as_posix()
+                    except ValueError:
+                        display_path = str(resolved_path)
+                    blockers.append(
+                        f"`{entry_id}` artifact `{display_path}` is unreadable or "
+                        "does not expose usable vector geometry."
+                    )
+    if blockers:
+        detail = " ".join(blockers)
+        raise TsrRecipeError(
+            f"Locked strict parent-step source preflight failed for "
+            f"`{parent_step_id}`: {detail}"
+        )
 
 
 def _parse_bbox_payload(
@@ -17257,6 +17971,17 @@ def _evaluate_existing_source_artifact_reuse(
     return extent_mismatch_note, effective_scope
 
 
+def _source_artifact_bbox_for_extent_check(
+    *,
+    source_entry: dict[str, Any],
+    fallback_bbox_epsg3005: tuple[float, float, float, float],
+) -> tuple[float, float, float, float]:
+    recorded_bbox = _parse_bbox_payload(
+        source_entry.get("artifact_extent_bbox_epsg3005")
+    )
+    return recorded_bbox if recorded_bbox is not None else fallback_bbox_epsg3005
+
+
 def _load_exclusion_geometries(
     *,
     instance_root: Path,
@@ -17312,11 +18037,14 @@ def _load_exclusion_geometries(
         if not defer_extent_mismatch_check:
             extent_mismatch_note = _evaluate_source_extent_mismatch(
                 source_entry=source_entry,
-                artifact_bbox_epsg3005=(
-                    float(layer.total_bounds[0]),
-                    float(layer.total_bounds[1]),
-                    float(layer.total_bounds[2]),
-                    float(layer.total_bounds[3]),
+                artifact_bbox_epsg3005=_source_artifact_bbox_for_extent_check(
+                    source_entry=source_entry,
+                    fallback_bbox_epsg3005=(
+                        float(layer.total_bounds[0]),
+                        float(layer.total_bounds[1]),
+                        float(layer.total_bounds[2]),
+                        float(layer.total_bounds[3]),
+                    ),
                 ),
                 target_bbox_epsg3005=bbox,
             )
@@ -17977,6 +18705,9 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     target_removed_area_ha=target_removed_area_ha,
                     filters=tuple(updated_step.get("checkpoint_attribute_filters", ())),
                     mode=str(updated_step.get("checkpoint_attribute_mode", "any")),
+                    persist_to_thlb_state=bool(
+                        updated_step.get("persist_area_reduction_to_thlb_state")
+                    ),
                 )
                 step_profile["overlay_seconds"] = perf_counter() - fallback_started
                 step_profile["write_seconds"] = step_profile["overlay_seconds"]
@@ -17992,6 +18723,10 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                     "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
                     "This early-area deduction scales active LU-wise reconstructed stand-area fields instead of claiming exact spatial reproduction.",
                 ]
+                if bool(updated_step.get("persist_area_reduction_to_thlb_state")):
+                    updated_step["run_notes"].append(
+                        "Strict locked execution persisted this aspatial area reduction into THLB state for chained validation."
+                    )
                 if bool(updated_step.get("direct_target_removed_area")):
                     updated_step["run_notes"].append(
                         f"Applied a direct-target area reduction of {target_removed_area_ha:.3f} ha within the active checkpoint subset."

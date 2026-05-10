@@ -1269,7 +1269,7 @@ def _resolve_locked_parent_step_sequence(
             break
     if not found_stop_after:
         raise NamedPipelineError(
-            "Strict scratch pipeline stop target is not present in the locked recipe: "
+            "Strict pipeline stop target is not present in the locked recipe: "
             f"`{normalized_stop_after}`."
         )
     return tuple(sequence)
@@ -1280,7 +1280,10 @@ def _validate_locked_strict_parent_step_execution_contract(
 ) -> Mapping[str, Any]:
     parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
     ratchet_state = str(parent_step.get("ratchet_state", "")).strip().casefold()
-    approved = bool(parent_step.get("approved", False)) or ratchet_state == "approved"
+    approved = bool(parent_step.get("approved", False)) or ratchet_state in {
+        "approved",
+        "benchmarked",
+    }
     compiled_logic = [
         item for item in parent_step.get("compiled_logic", ()) if isinstance(item, dict)
     ]
@@ -1308,14 +1311,20 @@ def _managed_area_ha_from_checkpoint(checkpoint_path: Path) -> float:
         )
     gpd = import_module("geopandas")
     checkpoint = gpd.read_feather(checkpoint_path)
-    if "_stand_area_sqm" in checkpoint.columns and "thlb_fact" in checkpoint.columns:
-        return float(
-            (
-                checkpoint["_stand_area_sqm"].astype(float)
-                * checkpoint["thlb_fact"].astype(float)
-            ).sum()
-            / 10000.0
-        )
+    if "thlb_fact" in checkpoint.columns:
+        thlb_fact = checkpoint["thlb_fact"].astype(float)
+        for area_column in ("_stand_area_sqm", "FEATURE_AREA_SQM", "Shape_Area"):
+            if area_column in checkpoint.columns:
+                return float(
+                    (checkpoint[area_column].astype(float) * thlb_fact).sum() / 10000.0
+                )
+        for area_column in ("POLYGON_AREA", "GEOMETRY_AREA"):
+            if area_column in checkpoint.columns:
+                return float((checkpoint[area_column].astype(float) * thlb_fact).sum())
+        if "geometry" in checkpoint.columns:
+            return float(
+                (checkpoint.geometry.area.astype(float) * thlb_fact).sum() / 10000.0
+            )
     if "geometry" in checkpoint.columns:
         return float(checkpoint.geometry.area.sum() / 10000.0)
     raise NamedPipelineError(
@@ -1705,7 +1714,7 @@ def run_named_pipeline_runbook(
                     **preflight_result,
                 }
             )
-            if plan.seam_id in {"scratch", "glb"}:
+            if plan.seam_id in {"scratch", "glb", "aflb", "aflb_yield_ready"}:
                 start_checkpoint_path = plan.checkpoint_path
                 if plan.seam_id == "scratch":
                     glb_checkpoint_path = _materialize_tsa29_glb_checkpoint_from_result(
@@ -1760,8 +1769,8 @@ def run_named_pipeline_runbook(
                                 validation_result.actual_final_managed_area_ha
                             ),
                             "notes": (
-                                "strict scratch seam executed the locked parent-step "
-                                "sequence through the requested stop target"
+                                "strict seam executed the locked parent-step sequence "
+                                "through the requested stop target"
                             ),
                         }
                     )
@@ -1774,7 +1783,9 @@ def run_named_pipeline_runbook(
                     )
                 validation_result = NamedPipelineValidationResult(
                     contract_kind=plan.validation_contract.contract_kind,
-                    validated_parent_step_count=1,
+                    validated_parent_step_count=cast(
+                        int, preflight_result["locked_row_order"]
+                    ),
                     latest_locked_row_order=cast(
                         int | None, preflight_result.get("locked_row_order")
                     ),
@@ -1795,7 +1806,9 @@ def run_named_pipeline_runbook(
                 runtime_logger.emit(
                     {
                         "event_kind": "pipeline_run_finished",
-                        "validated_parent_step_count": 1,
+                        "validated_parent_step_count": (
+                            validation_result.validated_parent_step_count
+                        ),
                         "latest_locked_row_order": (
                             validation_result.latest_locked_row_order
                         ),
@@ -1809,8 +1822,8 @@ def run_named_pipeline_runbook(
                             validation_result.actual_final_managed_area_ha
                         ),
                         "notes": (
-                            "strict scratch seam validated locked-chain row 1 and "
-                            "stopped before step 002"
+                            "strict seam validated the locked-chain restart row and "
+                            "stopped before the next parent step"
                         ),
                     }
                 )

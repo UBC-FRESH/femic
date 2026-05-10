@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
 import tomllib
 from typing import Callable, Iterable, Mapping, Sequence
 import uuid
@@ -454,6 +455,17 @@ def _discover_gitdir_from_worktree(path: Path) -> Path | None:
     return None
 
 
+def discover_git_worktree_root(path: str | Path) -> Path | None:
+    """Return the nearest enclosing git worktree root for a path, if any."""
+    candidate = Path(path)
+    search_root = candidate if candidate.is_dir() else candidate.parent
+    for base in (search_root, *search_root.parents):
+        git_entry = base / ".git"
+        if git_entry.is_dir() or git_entry.is_file():
+            return base
+    return None
+
+
 def resolve_windows_annex_pointer_payload_path(
     path: str | Path,
     *,
@@ -476,20 +488,29 @@ def resolve_windows_annex_pointer_payload_path(
         return candidate
     normalized = text.replace("\\", "/")
     marker = ".git/annex/"
-    if marker not in normalized:
+    gitdir = _discover_gitdir_from_worktree(candidate.parent)
+    if marker in normalized:
+        direct = (candidate.parent / Path(normalized)).resolve()
+        if direct.exists():
+            return direct
+        if gitdir is not None:
+            suffix = normalized.split(".git/", 1)[1]
+            payload = (gitdir / Path(suffix)).resolve()
+            if payload.exists():
+                return payload
+    elif normalized.startswith("/annex/objects/") or normalized.startswith(
+        "annex/objects/"
+    ):
+        if gitdir is None:
+            return candidate
+        payload = (gitdir / Path(normalized.lstrip("/"))).resolve()
+        if payload.exists():
+            return payload
+    else:
         return candidate
 
-    direct = (candidate.parent / Path(normalized)).resolve()
-    if direct.exists():
-        return direct
-
-    gitdir = _discover_gitdir_from_worktree(candidate.parent)
     if gitdir is None:
         return candidate
-    suffix = normalized.split(".git/", 1)[1]
-    payload = (gitdir / Path(suffix)).resolve()
-    if payload.exists():
-        return payload
     key_name = Path(normalized).name
     annex_objects = gitdir / "annex" / "objects"
     if annex_objects.is_dir():
@@ -501,6 +522,74 @@ def resolve_windows_annex_pointer_payload_path(
         if matches:
             return matches[0]
     return candidate
+
+
+def is_windows_annex_pointer_stub(
+    path: str | Path,
+    *,
+    os_name: str | None = None,
+    max_pointer_bytes: int = 4096,
+) -> bool:
+    """Return True when a Windows worktree file still looks like an annex pointer stub."""
+    candidate = Path(path)
+    if (os_name or os.name) != "nt":
+        return False
+    try:
+        if not candidate.is_file():
+            return False
+        if candidate.stat().st_size > int(max_pointer_bytes):
+            return False
+        text = candidate.read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeDecodeError):
+        return False
+    if not text or "\n" in text or "\r" in text:
+        return False
+    normalized = text.replace("\\", "/")
+    return ".git/annex/" in normalized or normalized.startswith(
+        "/annex/objects/"
+    ) or normalized.startswith("annex/objects/")
+
+
+def materialize_annex_artifact_path(
+    path: str | Path,
+    *,
+    subprocess_run: Callable[..., subprocess.CompletedProcess[str]] | None = None,
+) -> Path | None:
+    """Run `git annex get` for a tracked worktree path and return a readable payload path."""
+    candidate = Path(path)
+    worktree_root = discover_git_worktree_root(candidate)
+    if worktree_root is None:
+        return None
+    try:
+        relative_path = candidate.relative_to(worktree_root)
+    except ValueError:
+        return None
+    runner = subprocess_run or subprocess.run
+    try:
+        result = runner(
+            [
+                "git",
+                "-C",
+                str(worktree_root),
+                "annex",
+                "get",
+                "--",
+                relative_path.as_posix(),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return None
+    if int(getattr(result, "returncode", 1) or 0) != 0:
+        return None
+    if candidate.exists() and not is_windows_annex_pointer_stub(candidate):
+        return candidate.resolve()
+    resolved = resolve_windows_annex_pointer_payload_path(candidate)
+    if resolved.exists():
+        return resolved
+    return None
 
 
 def _normalize_optional_str_list(value: object, *, field_name: str) -> list[str] | None:

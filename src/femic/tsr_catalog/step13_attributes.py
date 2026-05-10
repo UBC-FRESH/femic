@@ -31,6 +31,7 @@ from shapely.ops import linemerge, nearest_points, split, unary_union  # type: i
 from femic.bcdc_catalog import resolve_bcdc_candidates
 from femic.bcdc_fetch import BC_ALBERS_EPSG
 from femic.pipeline.bundle import tsa_curve_id_prefix
+from femic.pipeline.io import resolve_windows_annex_pointer_payload_path
 from femic.pipeline.tsa import (
     assign_au_ids_from_scsi,
     assign_si_levels_from_stratum_quantiles,
@@ -671,6 +672,7 @@ def _load_highway_97_geometry(*, instance_root: Path) -> tuple[Path, LineString]
     artifact_path = (instance_root / artifact_path_text).expanduser().resolve()
     if not artifact_path.exists():
         raise TsrRecipeError(f"Highway 97 artifact not found: {artifact_path}")
+    artifact_path = resolve_windows_annex_pointer_payload_path(artifact_path)
     layer = gpd.read_file(artifact_path)
     if layer.crs is None:
         layer = layer.set_crs(BC_ALBERS_EPSG)

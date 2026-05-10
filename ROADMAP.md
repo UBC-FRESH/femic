@@ -1396,15 +1396,16 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d1 Bind the checked-in TSA29 strict runbook to an explicit locked validation contract and fail fast if it still resolves the mutable live recipe.
     - [x] P53.1d2 Let the strict validation contract bind the checked-in TSA29 runbook to the required locked recipe path so the proof surface can execute against the right contract.
     - [x] P53.1d3 Validate strict named-pipeline run results against the locked-chain ledger immediately after execution so wrong-result runs fail as contract mismatches instead of looking superficially successful.
-    - [ ] P53.1d4 Rerun the checked-in TSA29 strict named pipeline against the locked recipe surface and record whether the validator reports a clean locked-chain match or the first specific parent-step mismatch.
+    - [x] P53.1d4 Rerun the checked-in TSA29 strict named pipeline against the locked recipe surface and record whether the validator reports a clean locked-chain match or the first specific parent-step mismatch.
     - [x] P53.1d5 Purge TSA29 legacy `ria_vri_vclr1p_checkpoint*.feather` fallback surfaces from active code/docs and delete the stale checkpoint files so strict validation cannot silently drift onto them.
     - [x] P53.1d6 Add always-on real-time user-observable runtime output for `femic pipelines run`, including parent-step events, compiled-step subevents, and mirrored live event logs under `runtime/logs/tsr/`.
     - [x] P53.1d7 Add a strict preflight seam-benchmark gate so TSA29 strict named-pipeline runs abort before execution when the selected start surface already disagrees with the locked-chain reference for that seam.
     - [x] P53.1d8 Wire the strict `scratch` seam to the raw-source GLB builder so named-pipeline step 001 validates from clipped VRI/TSA geometry and stops there before step 002.
-    - [ ] P53.1d9 Add a bounded strict row-2 named-pipeline runbook that materializes the GLB checkpoint from step 001, runs only `thlb_parent_002_*`, and validates that single step against the locked chain.
+    - [x] P53.1d9 Add a bounded strict row-2 named-pipeline runbook that materializes the GLB checkpoint from step 001, runs only `thlb_parent_002_*`, and validates that single step against the locked chain.
       - [x] P53.1d9a Normalize the materialized `glb_checkpoint.feather` area columns from clipped geometry so step-002 input area cannot drift back onto preserved source-layer area attributes.
       - [x] P53.1d9b Sequence strict scratch pipelines over the locked parent-step recipe order so milestone rows validate in place and each transformation row chains its bounded output checkpoint into the next locked step.
       - [x] P53.1d9c Add an explicit strict `glb` seam so step-002 validation can start from the saved validated GLB checkpoint without rebuilding row 1.
+      - [x] P53.1d9d Fix strict row-2 named-pipeline fallback accounting so the NStQ/Tsilhqot'in direct-target residual is not double-counted when the locked row-2 parent already carries the combined parent-level marginal contract.
     - [x] P53.1d10 Rebuild `tsr.thlb_strict` to execute only locked validated step logic.
       - [x] P53.1d10a Replace strict transformation-step execution with a dedicated locked-step executor that uses only the locked recipe parent-step contract and explicit checkpoints.
       - [x] P53.1d10b Hard-ban the old broad parent-step runner from `tsr.thlb_strict` and fail immediately if strict execution tries to reach it.
@@ -1415,6 +1416,57 @@ Notes: `planning/phase53_named_pipeline_notes.md`
     - [x] P53.1d10g Make strict LU cache reuse schema-aware so `tsr.thlb_strict` refuses stale chunk caches unless they match the current checkpoint column set, including strict-state columns such as `thlb_fact`.
     - [x] P53.1d10h Sync locked row-2 aspatial fallback metadata and stop falsely blocking production full-TSA F_OWN overlays on LU bundles.
     - [x] P53.1d10i Correct strict row-2 parent-step accounting to use the true before/after net change so direct-target aspatial deductions are included in marginal validation.
+    - [x] P53.1d11 Preserve strict-chain checkpoint THLB state across locked parent-step handoff so each step starts from the previous step's managed-area state instead of reinitializing to GLB.
+    - [x] P53.1d12 Validate strict row 4 from the row-3 checkpoint and record the first roads-and-landings mismatch.
+    - [x] P53.1d13 Persist strict row-4 aspatial area fallback deductions into chained THLB state before any row-5 validation.
+    - [x] P53.1d14 Validate strict row 5 as a reference-only milestone from the validated row-4 checkpoint and record the first checkpoint-area helper mismatch before advancing to row 6.
+    - [x] P53.1d15 Make strict reference-only checkpoint-area validation honor carried `thlb_fact` state when `_stand_area_sqm` is absent, then rerun row 5 only.
+    - [x] P53.1d16 Validate the production strict named-pipeline GLB -> AFLB single-pass runbook through row 5 before advancing into AFLB -> LHLB.
+    - [x] P53.1d17 Validate the production strict named-pipeline AFLB -> LHLB stage through row 12 and record the first row-6 locked-state blocker before advancing into LHLB -> THLB.
+    - [x] P53.1d18 Reconcile strict row-6 locked recipe approval/ratchet-state semantics and validate AFLB -> LHLB from the validated AFLB checkpoint without replaying GLB -> AFLB.
+    - [x] P53.1d19 Repair or materialize the strict row-7 OGMA source/removal path, then rerun only the AFLB -> LHLB suffix from the row-6 strict-chain checkpoint.
+    - [x] P53.1d20 Validate strict row 8 from the relocked post-row-7 checkpoint before advancing farther through AFLB -> LHLB.
+    - [x] P53.1d21 Reconcile or relock strict row 8 to the reproducible chained wildlife-habitat result before advancing to row 9.
+    - [x] P53.1d22 Validate strict row 9 from the relocked post-row-8 checkpoint before advancing farther through AFLB -> LHLB.
+    - [x] P53.1d23 Reconcile or relock strict row 9 to the reproducible chained critical-fish-habitat result before advancing to row 10.
+    - [x] P53.1d24 Validate strict row 10 from the relocked post-row-9 checkpoint before advancing farther through AFLB -> LHLB.
+    - [x] P53.1d25a Reuse SHA-verified LU partition caches across content-identical strict-chain checkpoint aliases before rerunning row 11.
+    - [x] P53.1d25b Preserve LU-parallel output partitions as the next strict-chain checkpoint cache before rerunning row 11.
+    - [x] P53.1d25c Normalize row-11 legal-planning attribute-slot filters and narrow the Community Areas of Special Concern source selection before advancing to row 12.
+    - [x] P53.1d25d Adjudicate the repaired row-11 CASC result against the locked and TSR benchmarks before advancing to row 12.
+    - [x] P53.1d25 Validate strict row 11 from the row-10 reviewed-skip checkpoint before advancing farther through AFLB -> LHLB.
+    - [x] P53.1d26 Convert row 12 into an explicit aspatial PRA bridge sized to land the AFLB -> LHLB stage on the TSR cumulative target, then validate row 12 only from the relocked post-row-11 checkpoint.
+    - [x] P53.1d27 Validate strict row 13 from the zero-delta post-row-12 checkpoint before advancing farther through LHLB -> THLB.
+    - [x] P53.1d28 Reconcile or relock strict row 13 to the reproducible zero-delta-post-row-12 result before advancing to row 14.
+    - [x] P53.1d29 Repair strict LHLB seam publication so row 13 auto-publishes the official `lhlb_checkpoint` / `lhlb_curve_ready_checkpoint` restart artifacts, then resume row 14 from that seam.
+    - [x] P53.1d30 Validate strict row 14 from the official `lhlb_curve_ready_checkpoint` restart seam before advancing to row 15.
+    - [x] P53.1d31 Relock strict row 14 to the reproducible official curve-ready seam result before advancing to row 15.
+    - [x] P53.1d32 Probe strict row 15 from the official `lhlb_curve_ready_checkpoint` restart seam and record whether the late-stage runner reproduces the locked contract or exposes the next seam defect.
+    - [x] P53.1d33 Relock strict row 15 to the reproducible official curve-ready seam rerun result before advancing to row 16.
+    - [x] P53.1d34 Backtrack to the last clean chained point and relock row 14 to the true chained step-13 -> step-14 result before advancing to a true chained row 15.
+    - [x] P53.1d35 Validate the true chained step-15 result by deriving curve-ready fields onto the rebuilt step-14 output and running only step 15.
+    - [x] P53.1d36 Relock row 15 to the true chained step-14 -> step-15 result before any row-16 execution.
+    - [x] P53.1d37 Validate the true chained step-16 result by deriving the needed curve-ready fields onto the rebuilt step-15 output and running only step 16.
+    - [x] P53.1d38 Harden TSR source-artifact materialization checks so annex pointer stubs are treated as unmaterialized blockers before GIS reads, then return to the row-16 rerun.
+    - [x] P53.1d39 Relock row 16 to the true chained step-15 -> step-16 result before any row-17 execution.
+    - [x] P53.1d40 Validate the true chained step-17 result by running only step 17 from the rebuilt row-16 output.
+    - [x] P53.1d42 Add strict parent-step source-artifact auto-materialization/preflight so annex-backed GIS inputs are materialized before LU work starts and only hard-fail when materialization still cannot produce a readable payload (`#184`).
+    - [x] P53.1d41 Materialize the PSP source artifact required by row 17 and rerun only step 17 from the rebuilt row-16 output.
+    - [x] P53.1d43 Audit and repair the row-17 PSP overlay input/filter surface so the chained strict deduction does not undercut the previous benchmark because of a shrunken source geometry contract.
+    - [x] P53.1d44 Search for a broader benchmark-equivalent public/materializable row-17 geometry surface and confirm whether it is admissible in the reproducible pipeline.
+    - [x] P53.1d45 Relock row 17 to the current public/materializable chained PSP result when no broader admissible public geometry surface can be found.
+    - [x] P53.1d46 Run only step 18 from the rebuilt row-17 output.
+    - [x] P53.1d47 Preserve true LU-granular cache records across chained strict late-stage steps so downstream runs do not warm-start from worker-bundle mega-chunks.
+    - [x] P53.1d48 Relock row 18 to the true chained step-17 -> step-18 result after rebuilding the row-17 LU cache to true LU chunks.
+    - [x] P53.1d49 Run only step 19 from the rebuilt row-18 output.
+    - [x] P53.1d50 Relock row 19 to the true chained step-18 -> step-19 result before any row-20 execution.
+    - [x] P53.1d51 Run only step 20 from the rebuilt row-19 output.
+    - [x] P53.1d52 Relock row 20 to the true chained step-19 -> step-20 result before any row-21 execution.
+    - [x] P53.1d53 Run only step 21 from the rebuilt row-20 output.
+    - [x] P53.1d54 Relock row 21 to the true chained step-20 -> step-21 result before any row-23 execution.
+    - [x] P53.1d55 Run only step 23 from the rebuilt row-21 output.
+    - [x] P53.1d56 Relock row 23 to the true chained step-21 -> step-23 result before any downstream execution.
+    - [x] P53.1d59 Normalize the `femic-public-data` parent pointer to the current canonical submodule head and purge the TSA29 generated runtime/output noise so downstream work starts from a clean tracked state.
 - [x] P53.2 Add the first explicit interruption/resume seam inside the THLB workflow (`#164`)
   - [x] P53.2a Formalize AFLB as the expected checkpoint where THLB pauses to derive strata/AUs and yield-model artifacts.
   - [x] P53.2b Add a user-parameterizable top-N strata coverage rule with `80%` default.
@@ -1816,6 +1868,370 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - representative rebuilt track checks confirmed constant-gap arithmetic for
       lower and higher CT buckets; and
   - the intended release boundary for this redesign remains `v0.0.2a1`.
+- Phase 53 TSA29 strict named-pipeline validation remains the active resumed lane:
+  - `#169` / `P53.1d9` is now complete: the bounded `glb -> step 002`
+    runbook validates cleanly against the locked chain from the materialized
+    GLB checkpoint and materialized LU GeoPackage;
+  - inspected rebuilt outputs show row 2
+    `thlb_parent_002_land_not_administered_by_the_province` removed
+    `696,781.324 ha`, left `4,236,882.888 ha`, and reported maximum marginal
+    and cumulative locked-chain deltas of `0.000 ha`;
+  - the strict executor now treats the NStQ/Tsilhqot'in fallback residual as
+    non-additive when the locked row-2 parent-level marginal already carries
+    the combined contract; and
+  - `P53.1d4` is now recorded: the checked-in scratch-to-final strict runbook
+    reaches row 3, where the row-3 marginal matches the locked chain but the
+    cumulative result is high by exactly the row-2 deduction because row 3
+    reinitializes THLB state after loading the row-2 strict-chain checkpoint;
+    and
+  - `P53.1d11` is complete: the strict locked-step executor now preserves
+    incoming `thlb_fact` / `thlb` state, LU partition cache reuse is bound to
+    checkpoint file content, and the bounded scratch-to-row-3 validation now
+    lands exactly on the locked row-3 cumulative area `3,161,010.671 ha`; and
+  - `P53.1d12` is recorded: row 4 runs from the row-3 checkpoint and reports
+    a near-target roads-and-landings aspatial fallback, but the rebuilt feather
+    does not carry the row-4 deduction in `thlb_fact`, so the next bounded
+    repair is to make row-4 aspatial area fallback update the chained output
+    state before advancing to row 5.
+  - `P53.1d13` is complete: strict `aspatial_area_reduction` now persists
+    fallback area deductions into chained `thlb_fact` / `thlb` state, row 4
+    rerun from the row-3 checkpoint removes the locked `50,434.000 ha`, and
+    the rebuilt row-4 feather carries `3,110,576.671 ha` weighted area; and
+  - `P53.1d14` is complete: row 5 was validated as a reference-only
+    milestone from the row-4 checkpoint and failed before any row-6
+    transformation because `_managed_area_ha_from_checkpoint(...)` fell back to
+    full GLB geometry area when `_stand_area_sqm` was absent, even though the
+    checkpoint carries the chained state in `FEATURE_AREA_SQM * thlb_fact`;
+  - `P53.1d15` is complete: strict reference-only checkpoint-area validation
+    now honors carried `thlb_fact` state using `FEATURE_AREA_SQM` when
+    `_stand_area_sqm` is absent, and row 5 validates cleanly from the row-4
+    checkpoint with only `0.000359 ha` source-precision residual; and
+  - before moving into AFLB -> LHLB, the next bounded validation move is
+    complete: `P53.1d16` ran the production strict named-pipeline GLB -> AFLB
+    stage in one pass from the validated GLB seam through row 5, inspected the
+    rebuilt row-2 through row-4 JSON/feather outputs, and confirmed the run
+    lands on locked row 5 at `3,110,576.671 ha` with `0.000 ha` reported
+    maximum locked-chain delta; and
+  - `P53.1d17` is complete: the production strict named-pipeline AFLB -> LHLB
+    stage run reached row 5 cleanly, then failed at row 6 before any row-6
+    output was written because
+    `thlb_parent_006_parks_protected_areas_area_base_tenures` has
+    `ratchet_state: benchmarked` while the strict executor accepted only
+    explicitly approved locked transformation steps; and
+  - `P53.1d18` is complete: benchmarked locked rows with compiled logic now
+    execute, the `aflb` strict seam is routed through the locked-step sequence
+    instead of the generic broad runner, and the corrected AFLB -> LHLB suffix
+    run starts from
+    `data/tsr/strict_chain/04_thlb_parent_004_roads_and_landings.feather`;
+    row 6 writes
+    `data/tsr/strict_chain/06_thlb_parent_006_parks_protected_areas_area_base_tenures.feather`
+    at `2,804,249.671 ha`, then row 7 fails strict validation because OGMA
+    source/removal logic removes `0.000 ha` against the locked row-7 marginal
+    `223,638.262 ha`; and
+  - the active bounded repair is `P53.1d19`: reconcile the row-7 OGMA
+    strict-step delta after materializing the PERM/ROT legal OGMA source.
+    Row 7 now executes from the row-6 strict-chain checkpoint, but removes
+    about `166,228 ha` instead of the locked `223,638.262 ha`; the next
+    action is to prove restart stability by running locked step 6 from the
+    validated AFLB checkpoint, saving the post-step-6 checkpoint, then running
+    locked step 7 twice from that exact checkpoint and comparing output hashes
+    and managed-area totals before advancing to row 8.
+  - the row-6/row-7 restart-stability check is complete: row 6 rerun from the
+    AFLB checkpoint writes a post-step-6 checkpoint at `2,804,249.671 ha`, and
+    two row-7 reruns from that exact checkpoint both write identical feather
+    output SHA-256
+    `7f826f88e4d52cd48706a841a32e35b85951d0a6395c0b5c618474d7fb4c1037`,
+    remove `166,228.034 ha`, and leave `2,638,021.638 ha`; the remaining
+    issue is not restart instability but the stable row-7 area gap vs TSR /
+    locked-chain expectations.
+  - `P53.1d19` is complete: row 7 is now relocked to the reproducible chained
+    PERM/ROT legal OGMA result from the post-step-6 checkpoint, and the older
+    `223,638.262 ha` row-7 value is superseded as non-chain-comparable because
+    repo notes show it was produced from an AFLB-start bounded row-7 rerun;
+    the next bounded validation is `P53.1d20`, row 8 from the relocked
+    post-row-7 checkpoint only.
+  - `P53.1d20` is complete: after materializing the row-8 UWR/WHA BCDC
+    GeoPackages from annex, locked row 8 was run once from
+    `data/tsr/strict_chain/07_thlb_parent_007_old_growth_management_areas.feather`.
+    The inspected result JSON and rebuilt feather report input
+    `2,638,021.638 ha`, removal `113,733.548 ha`, and remaining
+    `2,524,288.089 ha`, with output SHA-256
+    `1b371d721920be081946ad00680e962faee2abebe032a50543f3d74ba7934bc2`.
+    This is a reproducible chained row-8 result from the relocked row-7
+    checkpoint, but it does not match the previous locked row-8 ledger values
+    (`131,567.592 ha` removed and `2,449,043.817 ha` remaining), so the next
+    bounded move is `P53.1d21`: reconcile or relock row 8 before running row 9.
+  - Active user-directed next move: relock row 8 to the reproducible chained
+    result (`113,733.548 ha` removed, `2,524,288.089 ha` remaining), then run
+    row 9 only from the relocked row-8 checkpoint under `P53.1d22`.
+  - `P53.1d21` is complete: the TSA29 locked-chain ledger now locks row 8 to
+    `113,733.548 ha` removed, `2,524,288.089 ha` remaining, and
+    `97,222.089 ha` cumulative delta, with a source note explaining that this
+    supersedes the older row-8 lock after the row-7 relock changed the chained
+    input state.
+  - `P53.1d22` is complete: after materializing the row-9 legal-planning
+    GeoPackage from annex and verifying the CRITFISH filter, locked row 9 was
+    run once from
+    `data/tsr/strict_chain/08_thlb_parent_008_wildlife_habitat_areas.feather`.
+    The inspected result JSON and rebuilt feather report input
+    `2,524,288.089 ha`, removal `20,965.006 ha`, and remaining
+    `2,503,323.083 ha`, with output SHA-256
+    `9191a8d80e62d39e3f3efcb3835c370caa93dd39242ee3b16f2eb4940386f14e`.
+    This does not match the previous locked row-9 ledger values
+    (`25,974.994 ha` removed and `2,423,068.823 ha` remaining), so the next
+    bounded move is `P53.1d23`: reconcile or relock row 9 before running row 10.
+  - Active user-directed next move: relock row 9 to the reproducible chained
+    result (`20,965.006 ha` removed, `2,503,323.083 ha` remaining), then run
+    row 10 only from the relocked row-9 checkpoint under `P53.1d24`.
+  - `P53.1d23` is complete: the TSA29 locked-chain ledger now locks row 9 to
+    `20,965.006 ha` removed, `2,503,323.083 ha` remaining, and
+    `87,778.083 ha` cumulative delta, with a source note explaining that this
+    supersedes the older row-9 lock after the row-8 relock changed the chained
+    input state.
+  - `P53.1d24` is complete: the locked parent-step executor now
+    short-circuits reviewed zero-removal manual rows instead of entering LU
+    partitioning. Row 10 (`thlb_parent_010_lakeshore_management`) now runs as
+    `execution_mode = reviewed_skip`, with `0` workers, `0` LU chunks,
+    `0.000 ha` removed, and `2,503,323.083 ha` remaining. The row-10 feather
+    SHA-256 is
+    `9191a8d80e62d39e3f3efcb3835c370caa93dd39242ee3b16f2eb4940386f14e`,
+    matching the row-9 carried-forward checkpoint as expected. The row-10
+    ledger now records the same carried-forward cumulative area and notes that
+    no trusted Class A lake discriminator is available.
+  - `P53.1d25a` is complete: the LU partition cache loader now allows a cache
+    hit for a different strict-chain checkpoint path only when the caller
+    supplies the expected checkpoint SHA-256 and the cached checkpoint SHA-256
+    matches. Without that SHA guard, checkpoint path equality remains required.
+    This prevents byte-identical reviewed-skip checkpoint aliases from forcing
+    repeated LU partition materialization while preserving the old conservative
+    path check for unverified cache lookups. The next bounded validation
+    remains `P53.1d25`: row 11 only from the row-10 checkpoint.
+  - `P53.1d25b` is complete: LU-parallel locked parent-step runs now register
+    their worker output partitions as the reusable LU partition cache for the
+    newly written strict-chain checkpoint, while final strict-chain feathers
+    still omit internal prepared-state columns. Reviewed zero-removal
+    pass-through rows also carry an input checkpoint partition cache forward
+    when one exists. The next bounded validation remains `P53.1d25`: row 11
+    only from the row-10 checkpoint.
+  - `P53.1d25c` is complete: row 11 now materializes filterable fields from the
+    legal-planning `LEGAL_FEAT_ATRB_*` name/value slots and narrows CASC
+    execution to `SOURCE_HARV_CAT in {ART, IR, STR}` rather than excluding the
+    full CASC polygon set. A bounded rerun from the row-10 checkpoint now
+    removes `69,716.086 ha` and leaves `2,433,606.997 ha`, down from the prior
+    `238,553.790 ha` overcut.
+  - `P53.1d25d` is complete: row 11 is now relocked to the repaired chained
+    CASC result from the row-10 reviewed-skip checkpoint, with locked marginal
+    `69,716.086 ha` and locked cumulative `2,433,606.997 ha`. This supersedes
+    the older `78,593.956 ha` row-11 lock.
+  - `P53.1d26` is complete: row 12 is now an explicit aspatial PRA bridge that
+    absorbs the relocked row-11 residual and lands the AFLB -> LHLB stage at
+    `0.000 ha` cumulative delta versus the TSR row-12 benchmark. The bounded
+    row-12 rerun removed `149,249.997 ha` and left `2,284,357.000 ha`.
+  - `P53.1d27` is complete: row 13 from the zero-delta post-row-12 checkpoint
+    removes `31,974.000 ha` and leaves `2,252,383.000 ha`. The exact terrain
+    overlay contributes `0.000 ha`; the entire deduction comes from the steep
+    slope aspatial rollback.
+  - `P53.1d28` is complete: row 13 is now relocked to the reproducible
+    zero-delta-post-row-12 result (`31,974.000 ha` removed;
+    `2,252,383.000 ha` remaining).
+  - `P53.1d29` is complete: the strict locked-step runner now detects the last
+    `aflb_to_lhlb` parent step, publishes the official
+    `lhlb_checkpoint`/`lhlb_curve_ready_checkpoint` restart artifacts, and
+    resolves Windows git-annex pointer stubs to their payload paths before
+    reading TSA29 source artifacts during curve-ready promotion.
+  - The first live row-12 rerun wrote `data/tsr/lhlb_checkpoint.feather` but
+    exposed a real source-materialization bug during direct curve-ready
+    promotion: the Highway 97 GeoPackage resolved to a Windows annex pointer
+    stub rather than a readable payload path.
+  - After resolving source-artifact reads through the annex payload path, the
+    active TSA29 instance now has a valid
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` restart seam with the
+    required late-stage columns (`curve1`, `curve2`, `stratum`, `au`).
+  - `P53.1d30` is complete: row 14 now runs from the official
+    `data/tsr/lhlb_curve_ready_checkpoint.feather` seam and produces
+    `293,847.203 ha` removed / `1,990,509.797 ha` remaining in `87.9 s` using
+    `8` workers.
+  - The rebuilt row-14 result is materially below both comparison baselines:
+    - versus current locked row 14 (`314,591.438 ha` removed;
+      `1,926,393.594 ha` remaining), the new run under-removes by
+      `20,744.235 ha` and stays `64,116.203 ha` high cumulatively; and
+    - versus the TSR row-14 benchmark (`321,044.000 ha` removed;
+      `1,929,780.000 ha` remaining), it under-removes by `27,196.797 ha` and
+      stays `60,729.797 ha` high cumulatively.
+  - `P53.1d34` is complete: after backtracking to the last clean chained point
+    (step 13), row 14 has now been rerun on the correct surface:
+    - compile a fresh curve-ready checkpoint from the actual step-13 output;
+    - run only step 14 from that step-13-derived checkpoint; and
+    - inspect the rebuilt row-14 JSON and feather directly.
+  - That true chained step-14 result is:
+    - `289,734.243 ha` removed;
+    - `1,962,648.757 ha` remaining; and
+    - `8` workers on the derived step-13 curve-ready input.
+  - This replaces the earlier raw-seam row-14 relock and narrows the row-14
+    cumulative delta versus TSR from `60,729.797 ha` down to `32,868.757 ha`.
+  - `P53.1d35` is complete: the true chained row 15 has now been run from the
+    rebuilt step-14 output rather than from the raw late-stage seam.
+  - Corrected execution shape:
+    - start from
+      `data/tsr/strict_chain/14_thlb_parent_014_sites_with_low_growing_timber_potential.feather`;
+    - compile a fresh step-14-derived curve-ready checkpoint to
+      `runtime/scratch/tsa29_step14_output_curve_ready.feather`; and
+    - run only `thlb_parent_015_non_merchantable_timber_profiles` from that
+      derived checkpoint.
+  - The true chained step-15 result is:
+    - `32,067.965 ha` removed;
+    - `1,930,580.793 ha` remaining; and
+    - `8` workers on the derived step-14 curve-ready input.
+  - Versus the currently locked row 15 (`33,535.732 ha` removed /
+    `2,250,821.268 ha` remaining), the corrected chained row-15 run is:
+    - `-1,467.767 ha` marginal; and
+    - `-320,240.475 ha` cumulative.
+  - Versus the TSR row-15 benchmark (`49,052.000 ha` removed /
+    `1,880,728.000 ha` remaining), the corrected chained row-15 run is:
+    - `-16,984.035 ha` marginal; and
+    - `+49,852.793 ha` cumulative.
+  - `P53.1d36` is complete: row 15 is now relocked to that true chained
+    step-14 -> step-15 result.
+  - Row 15 is now locked at:
+    - `32,067.965 ha` removed;
+    - `1,930,580.793 ha` remaining; and
+    - `+49,852.793 ha` cumulative delta versus TSR.
+  - The next bounded move is to derive the needed curve-ready fields onto the
+    rebuilt step-15 output and run only step 16 from that true chained input.
+  - Row 16 exposed the broader source-materialization defect again: the
+    recreation layer path existed in the source recipe, but the `.gpkg` on disk
+    was still an annex pointer stub rather than a readable payload.
+  - `P53.1d38` is therefore the next bounded move before another row-16 rerun:
+    - teach the annex-pointer resolver the `/annex/objects/...` stub form used
+      by these Windows submodule worktrees; and
+    - make TSR source-artifact resolution treat unresolved pointer stubs as
+      unmaterialized blockers rather than passing them through to GeoPandas as
+      if they were real vector payloads.
+  - `P53.1d38` is complete:
+    - `resolve_windows_annex_pointer_payload_path(...)` now resolves both the
+      historical `.git/annex/...` pointer form and the `/annex/objects/...`
+      stub form used by the current TSA29 instance worktree;
+    - `_resolve_source_artifact_path(...)` now returns `None` for unresolved
+      Windows annex pointer stubs instead of handing the stub path to GeoPandas
+      as if it were a real vector artifact; and
+    - targeted regressions now cover both the new pointer form and the
+      unresolved-stub rejection path.
+  - `P53.1d37` is complete: row 16 has now been rerun on the true chained
+    surface from the rebuilt step-15 output after materializing the recreation
+    GeoPackage.
+  - The true chained step-16 result is:
+    - `6,427.221 ha` removed;
+    - `1,924,153.572 ha` remaining; and
+    - `8` workers on the rebuilt step-15 input.
+  - Versus the TSR row-16 benchmark (`9,598.000 ha` removed /
+    `1,871,130.000 ha` remaining), the corrected chained row-16 run is:
+    - `-3,170.779 ha` marginal; and
+    - `+53,023.572 ha` cumulative.
+  - `P53.1d39` is complete: row 16 is now relocked to that true chained
+    step-15 -> step-16 result.
+  - `P53.1d40` is complete: row 17 has now been run from the rebuilt row-16
+    output on the true chained surface.
+  - The row-17 result is blocked on a missing materialized PSP source:
+    - `whse_forest_vegetation_gry_psp_status`
+    - current row-17 run removed `0.000 ha` and left `1,924,153.572 ha`
+      remaining;
+    - versus the TSR row-17 benchmark (`3,577.000 ha` removed /
+      `1,867,553.000 ha` remaining), the blocked run is `-3,577.000 ha`
+      marginal and `+56,600.572 ha` cumulative.
+  - `P53.1d42` is complete: strict parent-step source resolution now attempts
+    `git annex get` for required annex-backed GIS artifacts before LU
+    partitioning starts and only hard-fails if the source still cannot be
+    resolved as readable vector input after that materialization attempt.
+  - `P53.1d41` is complete: the strict locked row-17 rerun now auto-materializes
+    `GRY_PSP_STATUS_ACTIVE.gpkg` and produces a real chained deduction instead
+    of another blocked missing-source no-op.
+  - Current row-17 chained result:
+    - removed `837.174 ha`;
+    - remaining `1,923,316.398 ha`; and
+    - versus the TSR row-17 benchmark (`3,577.000 ha` removed /
+      `1,867,553.000 ha` remaining), the strict result is `-2,739.826 ha`
+      marginal and `+55,763.398 ha` cumulative.
+  - `P53.1d43` is complete:
+    - the materialized PSP layer is not a tiny clipped shard; its bounds span
+      almost the full TSA checkpoint extent;
+    - the concrete contract defect is semantic, not gross extent loss:
+      `whse_forest_vegetation_gry_psp_status` was still labeled/querying the
+      broader `GRY_PSP_STATUS` / “All Status” surface while actually using the
+      narrower `GRY_PSP_STATUS_ACTIVE.gpkg` payload; and
+    - the source contract now stays explicit that row 17 is using the
+      active-status public PSP surface, not a broader all-status benchmark
+      overlay.
+  - `P53.1d47` is complete:
+    strict late-stage cache handoff now preserves real LU-granular partition
+    records instead of collapsing chained outputs back to `worker_01` style
+    bundle labels.
+  - Current row-18 chained result:
+    - removed `73,011.241 ha`;
+    - remaining `1,850,305.157 ha`; and
+    - versus the TSR row-18 benchmark (`54,833.000 ha` removed /
+      `1,812,720.000 ha` remaining), the strict result is `+18,178.241 ha`
+      marginal and `+37,585.157 ha` cumulative.
+  - The row-18 relock now supersedes the older TSA29-only S4/W5 riparian hack
+    lock, but row-18 runtime is still far too slow at about `14.9 min` even on
+    the corrected LU-granular cache surface.
+  - `P53.1d49` is complete:
+    row 19 now runs cleanly from the rebuilt row-18 output on the corrected
+    LU-granular warm-start surface and no longer regresses to bundle-label
+    cache metadata.
+  - Current row-19 chained result:
+    - removed `11,806.113 ha`;
+    - remaining `1,838,499.044 ha`; and
+    - versus the TSR row-19 benchmark (`8,039.000 ha` removed /
+      `1,804,681.000 ha` remaining), the strict result is `+3,767.113 ha`
+      marginal and `+33,818.044 ha` cumulative.
+  - `P53.1d50` is complete:
+    row 19 is now relocked to the true chained step-18-to-step-19 result.
+  - `P53.1d51` is complete:
+    row 20 now runs cleanly from the rebuilt row-19 output and preserves the
+    LU-granular cache contract on the downstream output.
+  - Current row-20 chained result:
+    - removed `94,417.000 ha`;
+    - remaining `1,744,082.044 ha`; and
+    - versus the TSR row-20 benchmark (`94,417.000 ha` removed /
+      `1,710,264.000 ha` remaining), the strict result is `0.000 ha`
+      marginal and `+33,818.044 ha` cumulative.
+  - `P53.1d52` is complete:
+    row 20 is now relocked to the true chained step-19-to-step-20 result.
+  - `P53.1d53` is complete:
+    row 21 now runs cleanly from the rebuilt row-20 output and preserves the
+    LU-granular cache contract on the downstream output.
+  - Current row-21 chained result:
+    - removed `34,205.000 ha`;
+    - remaining `1,709,877.044 ha`; and
+    - versus the TSR row-21 benchmark (`34,205.000 ha` removed /
+      `1,676,059.000 ha` remaining), the strict result is `0.000 ha`
+      marginal and `+33,818.044 ha` cumulative.
+  - Row 21 is now relocked to the true chained step-20 -> step-21 result:
+    - removed `34,205.000 ha`;
+    - remaining `1,709,877.044 ha`; and
+    - versus the TSR row-21 benchmark (`34,205.000 ha` removed /
+      `1,676,059.000 ha` remaining), the strict result is `0.000 ha`
+      marginal and `+33,818.044 ha` cumulative.
+  - Current row-23 chained result:
+    - removed `49,824.044 ha`;
+    - remaining `1,660,053.000 ha`; and
+    - versus the TSR row-23 benchmark (`22,754.000 ha` removed /
+      `1,660,053.000 ha` remaining), the strict result is `+27,070.044 ha`
+      marginal and `0.000 ha` cumulative.
+  - `P53.1d56` is complete: row 23 is now an explicit stage-closing aspatial
+    bridge sized from the rebuilt row-21 state so the chained strict lane lands
+    on the TSR cumulative target after future roads.
+  - TSA29 THLB netdown is now locked through row 23 and parked for downstream
+    work. Do not reopen the late-stage netdown lane unless downstream work
+    surfaces a concrete contract break that requires revisiting the locked
+    chain.
+  - `P53.1d59` is complete:
+    - parent `external/femic-public-data` now points at canonical public-data
+      commit `aa67a3d` (`Replace 2024 VRI FileGDB with zip archive`); and
+    - TSA29 instance generated `data/tsr/strict_chain`, strict-chain runtime
+      logs, named-pipeline event logs, scratch outputs, and related BCDC/pipeline
+      runtime artifacts were purged so downstream work starts from a clean
+      tracked state.
 - Phase 65 archival-publication follow-up is complete:
   - `external/femic-mkrf-instance/data/legacy_mkrf/` is now published as a
     first-class repo-local archive/reference lane rather than only a scattered
