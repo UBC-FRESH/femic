@@ -4123,6 +4123,46 @@ def test_build_fragments_geodataframe_prefers_effective_area_field(
     assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(8.0)
 
 
+def test_build_fragments_geodataframe_drops_nonpositive_and_tiny_area_rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    au_table = pd.DataFrame([{"au_id": 985501000}])
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "29",
+                "au": 985501000,
+                "PROJ_AGE_1": 80,
+                "FEATURE_AREA_SQM": 1.0e-12,
+                "thlb_raw": 0.5,
+                "geometry": Polygon([(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]),
+            },
+            {
+                "tsa_code": "29",
+                "au": 985501000,
+                "PROJ_AGE_1": 90,
+                "FEATURE_AREA_SQM": 10000.0,
+                "thlb_raw": 0.5,
+                "geometry": Polygon([(2, 0), (3, 0), (3, 1), (2, 1), (2, 0)]),
+            },
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    gdf = build_fragments_geodataframe(
+        checkpoint_path=checkpoint_path,
+        au_table=au_table,
+        tsa_list=["29"],
+    )
+
+    assert gdf.shape[0] == 1
+    assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(1.0)
+    validate_fragments_geodataframe(fragments_gdf=gdf)
+
+
 def test_build_fragments_geodataframe_marks_age_60_as_planted(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

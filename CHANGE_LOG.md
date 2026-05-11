@@ -17603,3 +17603,17 @@
 - the new lane explicitly carries the requirement that past-top-N strata must
   receive deterministic AU assignment through lexicographical stratum-matching
   imputation so no surviving AFLB area is silently dropped from the model.
+## 2026-05-11 - Rebuilt the TSA29 Patchworks package on the recovered row-23 THLB surface
+- recovered and recommitted the strict row-23 THLB checkpoint surface needed by
+  downstream TSA29 Patchworks export;
+- patched `src/femic/fmg/patchworks.py` so zero/tiny-area checkpoint rows are
+  dropped before fragments shapefile serialization;
+- reran `femic export patchworks` successfully against
+  `data/tsr/strict_chain/23_thlb_parent_023_future_roads.feather`;
+- confirmed the rebuilt fragments shapefile round-trips with `0`
+  nonpositive `AREA_HA` rows;
+- reran `femic patchworks matrix-build` successfully on the rebuilt package,
+  with the new manifest reporting `returncode=0` and synced accounts
+  promotion; and
+- left the `patchworks-raster` topology hang in `build-blocks` open as the
+  remaining Phase 69 seam after `blocks.shp` had already been written.

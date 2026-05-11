@@ -43,6 +43,20 @@ Expected implementation bundle:
 - apply/verify lexicographical AU imputation for past-top-N strata if needed;
 - inspect the rebuilt Patchworks-facing outputs directly.
 
+Current progress:
+- recovered and recommitted the strict row-23 THLB checkpoint surface needed by
+  downstream Patchworks export;
+- patched `src/femic/fmg/patchworks.py` so zero/tiny-area checkpoint rows are
+  dropped before fragments export, which fixed the row-23 export failure;
+- reran `femic export patchworks` from
+  `data/tsr/strict_chain/23_thlb_parent_023_future_roads.feather`;
+- confirmed the written fragments shapefile now round-trips with `0`
+  nonpositive `AREA_HA` rows;
+- reran `femic patchworks matrix-build` successfully on the rebuilt package;
+- observed that `femic patchworks build-blocks --with-topology --topology-backend patchworks-raster`
+  still hangs in the raster-topology subprocess after writing `blocks.shp`, so
+  that seam remains open.
+
 ### P69.3
 
 Expected validation/publication bundle:

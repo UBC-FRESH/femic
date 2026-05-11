@@ -1931,5 +1931,9 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
   - `P68` complete
-  - next bounded move is `P69.1`: open the TSA29-instance Patchworks-rebuild
-    issue and branch lane before starting any rebuild work
+  - `P69.2` is in progress
+  - row-23 strict THLB recovery is locked and committed
+  - Patchworks export + Matrix Builder were rerun successfully against the
+    recovered row-23 checkpoint
+  - remaining open seam is the hanging `patchworks-raster` topology pass in
+    `build-blocks`
