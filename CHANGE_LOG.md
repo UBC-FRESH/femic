@@ -17500,3 +17500,20 @@
   - rebuilt the full `54` `external/femic-tsa29-instance/plots/tipsy_vdyp_tsa29-*.png`
     overlays, with the originally weak low-yield age-200 `TIPSY / VDYP`
     ratios now landing in a usable band of about `0.81 .. 1.18`.
+## 2026-05-11 - Removed the dead workbook dependency from the legacy post-TIPSY seam
+- `P68.1k` CSV-only 01b cleanup:
+  - removed the fallback-to-workbook logic from
+    `src/femic/resources/legacy/01b_run-tsa.py`;
+  - the legacy comparison seam now reconstructs its minimal input view
+    directly from the canonical `03_input-tsaXX.csv` surface and raises
+    clearly when that CSV is missing instead of silently reviving the dead
+    `tipsy_params_tsa29.xlsx` contract;
+  - added a focused regression in
+    `tests/test_legacy_01b_runtime.py` that runs the 01b seam successfully
+    with only `03_input-tsa29.csv` and `04_output-tsa29.csv` present; and
+  - revalidated the live CLI path with
+    `femic tsa btc-post-tipsy --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id p68_1k_legacy_post_tipsy_csv_20260511b`,
+    which completed successfully on the CSV-only lane and rebuilt:
+    - `54` AU rows,
+    - `108` curves, and
+    - `18,090` curve points.

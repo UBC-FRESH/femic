@@ -1890,7 +1890,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - rerun BTC/post-TIPSY only after those remaps are on the live builder surface and validated.
   - [x] P68.1i Remove the dead-end TSA29 workbook mirror from the active comparison/docs lane so Phase 68 uses only the canonical CSV handoff surface.
   - [x] P68.1j Apply narrow provisional treated-side SI uplift pins for the remaining weak low-yield TIPSY families, regenerate fresh `03_input-tsa29.csv`, rerun BTC/post-TIPSY, and compare the refreshed overlays on the CSV-only lane.
-  - [ ] P68.1k Remove the dead workbook dependency from the legacy post-TIPSY comparison-plot seam so `femic tsa btc-post-tipsy` can complete on the CSV-only TSA29 lane.
+  - [x] P68.1k Remove the dead workbook dependency from the legacy post-TIPSY comparison-plot seam so `femic tsa btc-post-tipsy` can complete on the CSV-only TSA29 lane.
 - [ ] P68.2 Reread and rebuild TSA29-instance docs/figure surfaces (`UBC-FRESH/femic-tsa29-instance#3`)
   - [ ] P68.2a Reread the instance docs with focus on pages that mention or embed yield-curve comparisons.
   - [ ] P68.2b Update figure references, galleries, counts, and narrative interpretation to match the accepted `30`-plot comparison library.
@@ -2023,15 +2023,23 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
         surfaces; and
       - the uplift pins remain explicitly provisional, but the refreshed
         overlays are now in the "good enough" comparison range for this lane.
-    - `P68.1k` is the next bounded cleanup:
-      - `femic tsa btc-post-tipsy` still drops into the legacy `01b` seam,
-        which tries to read the removed workbook mirror
+    - `P68.1k` is now complete:
+      - the legacy `01b_run-tsa.py` seam no longer falls back to
         `tipsy_params_tsa29.xlsx`;
-      - Phase 68 comparison artifacts are now rebuildable directly from the
-        canonical CSV/output pair, but the old legacy seam still needs to be
-        detached from the dead workbook so the CLI path matches the accepted
-        CSV-only contract; and
-      - do that cleanup before moving on to the Phase 68 docs reread lane.
+      - `01b` now reconstructs its minimal legacy comparison-input view
+        directly from the canonical `03_input-tsaXX.csv` handoff and raises
+        clearly if that CSV is missing instead of silently reviving the dead
+        workbook contract;
+      - a focused regression test now exercises the CSV-only 01b path without
+        any workbook present; and
+      - the live CLI seam was revalidated with:
+        `femic tsa btc-post-tipsy --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id p68_1k_legacy_post_tipsy_csv_20260511b`,
+        which completed successfully on the CSV-only lane with:
+        - `54` AU rows,
+        - `108` curves, and
+        - `18,090` curve points.
+    - the next clean move is now `P68.2a`: reread the TSA29 instance docs with
+      focus on pages that mention or embed yield-curve comparisons.
   - downstream Patchworks/model-input rebuild work is explicitly deferred to a
     later phase after Phase 68 plot/docs acceptance is complete.
 - Phase 67 smoothed AU-level first-growth promotion is now opened on `#187`

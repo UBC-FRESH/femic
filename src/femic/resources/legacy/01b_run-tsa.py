@@ -86,6 +86,83 @@ def run_tsa(
     outYield = str(outYield_path)
     outSPP = str(outSPP_path)
 
+    def _load_tipsy_input_df(*, tipsy_input_csv_path: str):
+        csv_path = Path(tipsy_input_csv_path)
+        if not csv_path.is_file():
+            raise FileNotFoundError(
+                "Missing canonical BatchTIPSY input CSV: "
+                f"{csv_path}. Regenerate 03_input-tsaXX.csv in Stage 01a before "
+                "running legacy 01b/post-TIPSY."
+            )
+
+        btc_df = pd.read_csv(csv_path)
+        if btc_df.empty:
+            return pd.DataFrame(
+                columns=[
+                    "AU",
+                    "TBLno",
+                    "SI",
+                    "Proportion",
+                    "SPP_1",
+                    "PCT_1",
+                    "SPP_2",
+                    "PCT_2",
+                    "SPP_3",
+                    "PCT_3",
+                    "SPP_4",
+                    "PCT_4",
+                    "SPP_5",
+                    "PCT_5",
+                ]
+            )
+
+        planted_density_cols = [
+            f"planted_density{i}"
+            for i in range(1, 6)
+            if f"planted_density{i}" in btc_df.columns
+        ]
+        species_si_cols = [col for col in btc_df.columns if col.endswith("_si")]
+
+        def _row_to_legacy(record: pd.Series) -> dict[str, object]:
+            planted_total = sum(
+                float(pd.to_numeric(record.get(col), errors="coerce") or 0.0)
+                for col in planted_density_cols
+            )
+            row: dict[str, object] = {
+                "AU": int(record["feature_id"]),
+                "TBLno": int(record["feature_id"]),
+                "SI": 0.0,
+                "Proportion": float(
+                    pd.to_numeric(record.get("planted_percent"), errors="coerce") or 0.0
+                )
+                / 100.0,
+            }
+            si_values = [
+                float(value)
+                for value in (
+                    pd.to_numeric(record.get(col), errors="coerce")
+                    for col in species_si_cols
+                )
+                if pd.notna(value) and float(value) > 0.0
+            ]
+            row["SI"] = max(si_values) if si_values else 0.0
+            for idx in range(1, 6):
+                spp = record.get(f"planted_species{idx}", "")
+                density = pd.to_numeric(
+                    record.get(f"planted_density{idx}"), errors="coerce"
+                )
+                row[f"SPP_{idx}"] = (
+                    str(spp).strip().upper() if pd.notna(spp) and str(spp).strip() else ""
+                )
+                if planted_total > 0 and pd.notna(density) and float(density) > 0.0:
+                    row[f"PCT_{idx}"] = (float(density) / planted_total) * 100.0
+                else:
+                    row[f"PCT_{idx}"] = 0.0
+            return row
+
+        legacy_rows = [_row_to_legacy(record) for _, record in btc_df.iterrows()]
+        return pd.DataFrame(legacy_rows)
+
     managed_curve_mode = (
         os.environ.get("FEMIC_MANAGED_CURVE_MODE", "tipsy").strip().lower()
     )
@@ -117,9 +194,7 @@ def run_tsa(
             % managed_curve_mode
         )
 
-    tipsy_input_df = pd.read_excel(
-        tipsy_excel, sheet_name="TIPSY_inputTBL", usecols="A:AF"
-    )
+    tipsy_input_df = _load_tipsy_input_df(tipsy_input_csv_path=tipsy_input_csv)
     tipsy_input_df = tipsy_input_df.query("SI > 0").copy()
     if tipsy_input_df.empty:
         print(
