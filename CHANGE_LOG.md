@@ -17374,3 +17374,27 @@
     non-canonical leftovers pending acceptance; and
   - recorded that downstream Patchworks/model-input rebuild work is deferred to
     a later phase after Phase 68 plot/docs acceptance is complete.
+## 2026-05-10 - Normalized BatchTIPSY/BTC handoff to the canonical CSV lane
+- `P68.1e` parent/runtime contract fix:
+  - switched the active BatchTIPSY/BTC handoff contract from DAT/`.out` to the
+    canonical CSV lane:
+    - `03_input-tsaXX.csv`
+    - `04_output-tsaXX.csv`;
+  - updated `src/femic/pipeline/tipsy.py`, legacy 01b runtime defaults, legacy
+    stage wiring, workflow defaults, yield-bridge metadata, and parent docs so
+    DAT is no longer the authoritative active runtime surface;
+  - changed BatchTIPSY freshness/fingerprint checks to hash the canonical
+    `03_input-tsaXX.csv` input surface instead of the old DAT artifact;
+  - patched `run_btc_and_post_tipsy_bundle_with_manifest(...)` so a successful
+    unattended BTC rebuild also refreshes the `04_output-tsaXX.csv.input_sha256`
+    sidecar before launching post-TIPSY work;
+  - validated the new contract with targeted parent tests plus a real TSA29
+    `femic tsa btc-post-tipsy` rebuild that:
+    - regenerated `04_output-tsa29.csv`;
+    - refreshed the input fingerprint sidecar to the current
+      `03_input-tsa29.csv` SHA256;
+    - rebuilt the TSA29 post-TIPSY bundle; and
+    - regenerated all `54` `tipsy_vdyp_tsa29-*.png` comparison plots on the
+      default path; and
+  - updated Phase 68 planning to reflect the actual canonical `54`-plot managed
+    comparison library rather than the stale `.out`-derived `30`-plot surface.

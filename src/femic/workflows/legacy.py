@@ -30,7 +30,11 @@ from femic.pipeline.manifest import (
     write_manifest,
 )
 from femic.pipeline.vri import is_conifer_species_code, is_deciduous_species_code
-from femic.pipeline.tipsy import BTCRunResult, run_btc_cli
+from femic.pipeline.tipsy import (
+    BTCRunResult,
+    run_btc_cli,
+    write_tipsy_output_input_fingerprint,
+)
 from femic.pipeline.stages import load_legacy_module, run_legacy_subprocess
 from femic.workflows.legacy_resources import (
     LEGACY_SCRIPT_FILENAMES,
@@ -671,7 +675,7 @@ def run_post_tipsy_bundle(
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
     yield_assumptions_path: Path | None = None,
-    tipsy_output_filename_template: str = "04_output-tsa{tsa}.out",
+    tipsy_output_filename_template: str = "04_output-tsa{tsa}.csv",
 ) -> PostTipsyBundleResult:
     """Run downstream 01b + bundle assembly from cached TSA artifacts only."""
     normalized_tsa_list = [str(tsa).zfill(2) for tsa in tsa_list]
@@ -946,7 +950,7 @@ def run_post_tipsy_bundle_with_manifest(
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
     yield_assumptions_path: Path | None = None,
-    tipsy_output_filename_template: str = "04_output-tsa{tsa}.out",
+    tipsy_output_filename_template: str = "04_output-tsa{tsa}.csv",
 ) -> PostTipsyBundleRunResult:
     """Run post-TIPSY downstream assembly and emit run-manifest metadata."""
     normalized_tsa_list = [str(tsa).zfill(2) for tsa in tsa_list]
@@ -1088,6 +1092,10 @@ def run_btc_and_post_tipsy_bundle_with_manifest(
             run_id=tsa_run_id,
         )
         btc_results.append(result)
+        write_tipsy_output_input_fingerprint(
+            btc_input_csv_path=input_csv,
+            tipsy_output_path=output_csv,
+        )
         message_fn(
             "btc completed tsa=%s mode=%s output=%s"
             % (tsa, result.mode, result.output_csv_path)

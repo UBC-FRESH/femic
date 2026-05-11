@@ -7,7 +7,11 @@ import pickle
 
 import pandas as pd
 
-from femic.pipeline.tipsy import BTCRunResult
+from femic.pipeline.tipsy import (
+    BTCRunResult,
+    compute_file_sha256,
+    tipsy_output_input_fingerprint_path,
+)
 from femic.workflows.legacy import (
     BTCPostTipsyRunResult,
     PostTipsyBundleResult,
@@ -54,7 +58,7 @@ def test_run_post_tipsy_bundle_builds_bundle_from_cached_artifacts(
         index=False,
         sheet_name="TIPSY_inputTBL",
     )
-    (data_root / f"04_output-tsa{tsa}.out").write_text(
+    (data_root / f"04_output-tsa{tsa}.csv").write_text(
         "placeholder\n", encoding="utf-8"
     )
 
@@ -492,7 +496,7 @@ def test_run_post_tipsy_bundle_sets_managed_curve_env_for_01b(
         index=False,
         sheet_name="TIPSY_inputTBL",
     )
-    (data_root / f"04_output-tsa{tsa}.out").write_text(
+    (data_root / f"04_output-tsa{tsa}.csv").write_text(
         "placeholder\n", encoding="utf-8"
     )
 
@@ -688,7 +692,7 @@ def test_run_post_tipsy_bundle_applies_broadleaf_volume_exclusion_to_conifer_lea
         index=False,
         sheet_name="TIPSY_inputTBL",
     )
-    (data_root / f"04_output-tsa{tsa}.out").write_text(
+    (data_root / f"04_output-tsa{tsa}.csv").write_text(
         "placeholder\n",
         encoding="utf-8",
     )
@@ -839,7 +843,7 @@ def test_run_post_tipsy_bundle_leaves_broadleaf_leading_untreated_aus_unchanged(
         index=False,
         sheet_name="TIPSY_inputTBL",
     )
-    (data_root / f"04_output-tsa{tsa}.out").write_text(
+    (data_root / f"04_output-tsa{tsa}.csv").write_text(
         "placeholder\n", encoding="utf-8"
     )
 
@@ -928,7 +932,7 @@ def test_run_post_tipsy_bundle_reports_noop_when_species_props_are_unavailable(
         index=False,
         sheet_name="TIPSY_inputTBL",
     )
-    (data_root / f"04_output-tsa{tsa}.out").write_text(
+    (data_root / f"04_output-tsa{tsa}.csv").write_text(
         "placeholder\n", encoding="utf-8"
     )
 
@@ -1138,6 +1142,13 @@ def test_run_btc_and_post_tipsy_bundle_with_manifest_orchestrates_paths(
     assert (
         post_tipsy_calls[0]["tipsy_output_filename_template"]
         == "04_output-tsa{tsa}.csv"
+    )
+    fingerprint_path = tipsy_output_input_fingerprint_path(
+        tipsy_output_path=data_root / "04_output-tsa29.csv"
+    )
+    assert fingerprint_path.is_file()
+    assert fingerprint_path.read_text(encoding="utf-8").strip() == compute_file_sha256(
+        data_root / "03_input-tsa29.csv"
     )
 
 

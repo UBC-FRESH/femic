@@ -16,7 +16,6 @@
       compute_vdyp_oaf1
       compute_vdyp_site_index
       evaluate_tipsy_candidate
-      tipsy_input_dat_path
       tipsy_output_input_fingerprint_path
       tipsy_params_excel_path
       tipsy_stage_output_paths
@@ -30,4 +29,3 @@
    
       TIPSYCandidateEvaluation
       TipsyInputOutputCoherence
-   

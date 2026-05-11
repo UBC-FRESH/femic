@@ -54,7 +54,7 @@ def run_tsa(
     from femic.pipeline.plots import tipsy_vdyp_ylim_for_tsa
     from femic.pipeline.tipsy import (
         parse_btc_tsr_transposed_output,
-        tipsy_input_dat_path,
+        btc_msyt_input_csv_path,
         tipsy_params_excel_path,
         tipsy_stage_output_paths,
         validate_tipsy_output_is_fresh,
@@ -79,7 +79,7 @@ def run_tsa(
         tipsy_output_root
         / runtime_config.tipsy_output_filename_template.format(tsa=tsa)
     )
-    tipsy_dat = str(tipsy_input_dat_path(tsa=tsa))
+    tipsy_input_csv = str(btc_msyt_input_csv_path(tsa=tsa))
     outYield_path, outSPP_path = tipsy_stage_output_paths(
         tsa=tsa, output_root=runtime_config.tipsy_output_root
     )
@@ -106,7 +106,7 @@ def run_tsa(
     if requires_batch_tipsy:
         validate_tipsy_output_is_fresh(
             tipsy_input_excel_path=tipsy_excel,
-            tipsy_input_dat_path=tipsy_dat,
+            btc_input_csv_path=tipsy_input_csv,
             tipsy_output_path=tipsyout,
             allow_stale=allow_stale_tipsy_output,
             strict_timestamp_mismatch=strict_timestamp_mismatch,
@@ -313,7 +313,7 @@ def run_tsa(
 
     if requires_batch_tipsy:
         write_tipsy_output_input_fingerprint(
-            tipsy_input_dat_path=tipsy_dat,
+            btc_input_csv_path=tipsy_input_csv,
             tipsy_output_path=tipsyout,
         )
 

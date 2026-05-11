@@ -3212,47 +3212,14 @@ def write_tipsy_input_exports(
     tipsy_table: Any,
     tsa: str,
     tipsy_params_path_prefix: str,
-    dat_path_template: str = "./data/02_input-tsa{tsa}.dat",
-) -> tuple[str, str]:
-    """Write TIPSY input exports to XLSX and DAT outputs for one TSA."""
+) -> str:
+    """Write the human-readable TIPSY parameter workbook for one TSA."""
     table = tipsy_table.copy()
     unnamed_cols = [col for col in table.columns if str(col).startswith("Unnamed:")]
     if unnamed_cols:
         table = table.drop(columns=unnamed_cols)
 
     tipsy_excel_path = f"{tipsy_params_path_prefix}{tsa}.xlsx"
-    tipsy_dat_path = dat_path_template.format(tsa=tsa)
-    ordered_cols = list(DEFAULT_TIPSY_DAT_ROW_STARTS.keys())
-    for col in ordered_cols:
-        if col not in table.columns:
-            table[col] = ""
-    row_starts = {col: DEFAULT_TIPSY_DAT_ROW_STARTS[col] for col in ordered_cols}
-    row_widths = {col: DEFAULT_TIPSY_DAT_ROW_WIDTHS[col] for col in ordered_cols}
-    header_starts = {col: DEFAULT_TIPSY_DAT_HEADER_STARTS[col] for col in ordered_cols}
-    header_widths = _tipsy_dat_widths_from_starts(header_starts)
-    lines = [
-        _render_tipsy_dat_line(
-            values={col: col for col in ordered_cols},
-            starts=header_starts,
-            widths=header_widths,
-            left_align_all=True,
-        )
-    ]
-    for row in table[ordered_cols].itertuples(index=False):
-        row_map = {col: val for col, val in zip(ordered_cols, row)}
-        row_line = _render_tipsy_dat_line(
-            values=row_map,
-            starts=row_starts,
-            widths=row_widths,
-        )
-        _validate_tipsy_dat_row(
-            line=row_line,
-            values=row_map,
-            starts=row_starts,
-            widths=row_widths,
-        )
-        lines.append(row_line)
-    Path(tipsy_dat_path).write_text("\n".join(lines) + "\n", encoding="utf-8")
     try:
         table.to_excel(
             tipsy_excel_path,
@@ -3271,7 +3238,7 @@ def write_tipsy_input_exports(
             sheet_name="TIPSY_inputTBL",
         )
         tipsy_excel_path = fallback_path
-    return tipsy_excel_path, tipsy_dat_path
+    return tipsy_excel_path
 
 
 def tipsy_params_excel_path(
@@ -3281,16 +3248,6 @@ def tipsy_params_excel_path(
 ) -> Path:
     """Build legacy per-TSA TIPSY parameter workbook path."""
     return Path(f"{tipsy_params_path_prefix}{tsa}.xlsx")
-
-
-def tipsy_input_dat_path(
-    *,
-    tsa: str,
-    input_root: str | Path = "data",
-    filename_template: str = "02_input-tsa{tsa}.dat",
-) -> Path:
-    """Build legacy per-TSA BatchTIPSY DAT handoff path."""
-    return Path(input_root) / filename_template.format(tsa=tsa)
 
 
 def btc_msyt_input_csv_path(
@@ -3319,36 +3276,28 @@ def tipsy_stage_output_paths(
 def validate_tipsy_output_is_fresh(
     *,
     tipsy_input_excel_path: str | Path,
-    tipsy_input_dat_path: str | Path | None = None,
+    btc_input_csv_path: str | Path | None = None,
     tipsy_output_path: str | Path,
     allow_stale: bool = False,
     strict_timestamp_mismatch: bool = False,
 ) -> None:
-    """Fail fast when BatchTIPSY output is stale against canonical input DAT.
-
-    Canonical operator contract uses ``02_input-tsaXX.dat`` as the real
-    BatchTIPSY input; ``tipsy_params_tsaXX.xlsx`` is a human-readable mirror.
-    This catches stale-output scenarios that would silently yield mismatched
-    treated-curve overlays and downstream artifacts, while allowing repeated
-    FEMIC reruns to reuse existing BatchTIPSY output when DAT content is
-    unchanged.
-    """
+    """Fail fast when BatchTIPSY output is stale against canonical BTC CSV input."""
     if allow_stale:
         return
     excel_path = Path(tipsy_input_excel_path)
-    dat_path = Path(tipsy_input_dat_path) if tipsy_input_dat_path else None
+    input_csv_path = Path(btc_input_csv_path) if btc_input_csv_path else None
     output_path = Path(tipsy_output_path)
     if not output_path.is_file():
         return
-    if dat_path is not None and not dat_path.is_file():
+    if input_csv_path is not None and not input_csv_path.is_file():
         raise RuntimeError(
-            "Missing canonical BatchTIPSY input DAT file: "
-            f"{dat_path}. Generate 02_input-tsaXX.dat in Stage 01a before "
+            "Missing canonical BatchTIPSY input CSV file: "
+            f"{input_csv_path}. Generate 03_input-tsaXX.csv in Stage 01a before "
             "running Stage 01b/post-TIPSY."
         )
 
-    if dat_path is not None:
-        dat_sha256 = compute_file_sha256(dat_path)
+    if input_csv_path is not None:
+        input_sha256 = compute_file_sha256(input_csv_path)
         fingerprint_path = tipsy_output_input_fingerprint_path(
             tipsy_output_path=output_path
         )
@@ -3358,17 +3307,17 @@ def validate_tipsy_output_is_fresh(
             else None
         )
         if known_sha:
-            if known_sha != dat_sha256:
+            if known_sha != input_sha256:
                 raise RuntimeError(
                     "Stale BatchTIPSY output detected: "
                     f"{output_path} was recorded against a different "
-                    f"02_input-tsaXX.dat fingerprint ({known_sha} != {dat_sha256}). "
-                    "Regenerate 04_output-tsaXX.out from the current "
-                    "02_input-tsaXX.dat handoff, then rerun FEMIC stage "
+                    f"03_input-tsaXX.csv fingerprint ({known_sha} != {input_sha256}). "
+                    "Regenerate 04_output-tsaXX.csv from the current "
+                    "03_input-tsaXX.csv handoff, then rerun FEMIC stage "
                     "01b/post-TIPSY."
                 )
             return
-        input_mtime = dat_path.stat().st_mtime
+        input_mtime = input_csv_path.stat().st_mtime
     elif excel_path.is_file():
         input_mtime = excel_path.stat().st_mtime
     else:
@@ -3388,13 +3337,13 @@ def validate_tipsy_output_is_fresh(
             if strict_timestamp_mismatch:
                 raise RuntimeError(
                     "Strict BatchTIPSY freshness is enabled and "
-                    f"{output_path} is older than {dat_path or excel_path}. "
-                    f"{detail} Regenerate 04_output-tsaXX.out from current "
-                    "02_input-tsaXX.dat before rerunning."
+                    f"{output_path} is older than {input_csv_path or excel_path}. "
+                    f"{detail} Regenerate 04_output-tsaXX.csv from current "
+                    "03_input-tsaXX.csv before rerunning."
                 )
             warnings.warn(
                 detail
-                + " Continuing with existing 04_output-tsaXX.out (default behavior). "
+                + " Continuing with existing 04_output-tsaXX.csv (default behavior). "
                 "Set FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1 to escalate this to an error.",
                 RuntimeWarning,
                 stacklevel=2,
@@ -3402,12 +3351,12 @@ def validate_tipsy_output_is_fresh(
             return
         raise RuntimeError(
             "Stale BatchTIPSY output detected: "
-            f"{output_path} is older than {dat_path or excel_path}. "
+            f"{output_path} is older than {input_csv_path or excel_path}. "
             f"Coherence check did not pass ({coherence.summary}). "
-            "Regenerate 04_output-tsaXX.out from the current "
-            "02_input-tsaXX.dat handoff (and matching workbook), then rerun "
+            "Regenerate 04_output-tsaXX.csv from the current "
+            "03_input-tsaXX.csv handoff (and matching workbook), then rerun "
             "FEMIC stage 01b/post-TIPSY. Future reruns can avoid repeated "
-            "manual prompts when DAT content is unchanged once a fingerprint "
+            "manual prompts when CSV content is unchanged once a fingerprint "
             "is recorded."
         )
 
@@ -3483,14 +3432,29 @@ def assess_tipsy_input_output_coherence(
     expected_aus = set(input_df["AU"].tolist())
 
     try:
-        output_df = pd.read_csv(
-            output_path,
-            low_memory=False,
-            header=None,
-            skiprows=4,
-            sep=r"\s+",
-            usecols=[0],
-        )
+        if output_path.suffix.lower() == ".csv":
+            output_df = pd.read_csv(output_path, low_memory=False)
+            observed_tables = set(
+                pd.to_numeric(output_df.get("feature_id"), errors="coerce")
+                .dropna()
+                .astype(int)
+                .tolist()
+            )
+        else:
+            output_df = pd.read_csv(
+                output_path,
+                low_memory=False,
+                header=None,
+                skiprows=4,
+                sep=r"\s+",
+                usecols=[0],
+            )
+            observed_tables = set(
+                pd.to_numeric(output_df.iloc[:, 0], errors="coerce")
+                .dropna()
+                .astype(int)
+                .tolist()
+            )
     except Exception as exc:  # pragma: no cover - defensive parse boundary
         return TipsyInputOutputCoherence(
             coherent=False,
@@ -3508,12 +3472,6 @@ def assess_tipsy_input_output_coherence(
             observed_table_count=0,
         )
 
-    observed_tables = set(
-        pd.to_numeric(output_df.iloc[:, 0], errors="coerce")
-        .dropna()
-        .astype(int)
-        .tolist()
-    )
     missing_tables = sorted(expected_tables - observed_tables)
     covered_aus = set(input_df[input_df["TBLno"].isin(observed_tables)]["AU"].tolist())
     missing_aus = sorted(expected_aus - covered_aus)
@@ -3537,7 +3495,7 @@ def assess_tipsy_input_output_coherence(
 
 
 def tipsy_output_input_fingerprint_path(*, tipsy_output_path: str | Path) -> Path:
-    """Return sidecar path storing the DAT fingerprint paired with TIPSY output."""
+    """Return sidecar path storing the canonical input fingerprint for TIPSY output."""
     output_path = Path(tipsy_output_path)
     return output_path.with_name(f"{output_path.name}.input_sha256")
 
@@ -3553,17 +3511,17 @@ def compute_file_sha256(path: str | Path) -> str:
 
 def write_tipsy_output_input_fingerprint(
     *,
-    tipsy_input_dat_path: str | Path | None,
+    btc_input_csv_path: str | Path | None,
     tipsy_output_path: str | Path,
 ) -> Path | None:
-    """Persist DAT SHA256 used for the accepted BatchTIPSY output."""
-    if tipsy_input_dat_path is None:
+    """Persist canonical input CSV SHA256 used for the accepted BatchTIPSY output."""
+    if btc_input_csv_path is None:
         return None
-    dat_path = Path(tipsy_input_dat_path)
+    input_csv_path = Path(btc_input_csv_path)
     output_path = Path(tipsy_output_path)
-    if not dat_path.is_file() or not output_path.is_file():
+    if not input_csv_path.is_file() or not output_path.is_file():
         return None
-    digest = compute_file_sha256(dat_path)
+    digest = compute_file_sha256(input_csv_path)
     fingerprint_path = tipsy_output_input_fingerprint_path(
         tipsy_output_path=output_path
     )

@@ -1865,13 +1865,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 ## Phase 68: TSA29 Comparison Plot Refresh and Instance Docs Rebuild
 
 - [ ] P68.1 Review and lock the TSA29 TIPSY-vs-VDYP comparison plot library (`UBC-FRESH/femic-tsa29-instance#4`)
-  - [ ] P68.1a Confirm the accepted comparison family is the refreshed `30`-plot set:
-    - `plots/tipsy_vdyp_tsa29-21000..21009.png`
-    - `plots/tipsy_vdyp_tsa29-22000..22009.png`
-    - `plots/tipsy_vdyp_tsa29-23000..23009.png`
-  - [ ] P68.1b Explicitly retire/remove stale `21010..23017` overlays as non-canonical leftovers.
+  - [ ] P68.1a Confirm the accepted comparison family is the refreshed `54`-plot set:
+    - `plots/tipsy_vdyp_tsa29-21000..21017.png`
+    - `plots/tipsy_vdyp_tsa29-22000..22017.png`
+    - `plots/tipsy_vdyp_tsa29-23000..23017.png`
+  - [ ] P68.1b Explicitly retire the stale `.out`-derived `30`-plot assumption from Phase 68 notes, docs, and acceptance checks.
   - [ ] P68.1c Keep the comparison-plot acceptance work isolated on `external/femic-tsa29-instance` branch `feature/tsa29-tipsy-vdyp-comparison-refresh`.
   - [ ] P68.1d Lock the accepted comparison plot set with an instance commit, issue update, and PR.
+  - [x] P68.1e Normalize the parent/runtime handoff contract to make BTC CSV the only canonical TIPSY input/output lane (`#190`), then remove TSA29 DAT/`.out` trap artifacts.
 - [ ] P68.2 Reread and rebuild TSA29-instance docs/figure surfaces (`UBC-FRESH/femic-tsa29-instance#3`)
   - [ ] P68.2a Reread the instance docs with focus on pages that mention or embed yield-curve comparisons.
   - [ ] P68.2b Update figure references, galleries, counts, and narrative interpretation to match the accepted `30`-plot comparison library.
@@ -1890,12 +1891,22 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - `UBC-FRESH/femic-tsa29-instance#3` for the child docs reread/rebuild lane;
   - the current isolated instance branch is
     `external/femic-tsa29-instance:feature/tsa29-tipsy-vdyp-comparison-refresh`;
-  - the intended accepted comparison library is the refreshed `30`-plot set:
-    - `tipsy_vdyp_tsa29-21000..21009.png`
-    - `tipsy_vdyp_tsa29-22000..22009.png`
-    - `tipsy_vdyp_tsa29-23000..23009.png`;
-  - stale `21010..23017` overlays should be treated as non-canonical leftovers
-    unless the docs reread proves they are still required; and
+  - the current canonical comparison-library target is the refreshed `54`-plot
+    set aligned to the full managed/TIPSY AU surface:
+    - `tipsy_vdyp_tsa29-21000..21017.png`
+    - `tipsy_vdyp_tsa29-22000..22017.png`
+    - `tipsy_vdyp_tsa29-23000..23017.png`;
+  - the earlier `30`-plot assumption came from the stale `.out` lane and is no
+    longer admissible as a Phase 68 acceptance surface; and
+  - `P68.1e` is complete:
+    - parent issue `#190` tracks the CSV-canonical handoff normalization;
+    - parent/runtime code now treats `03_input-tsaXX.csv` ->
+      `04_output-tsaXX.csv` as the only canonical BatchTIPSY/BTC handoff lane;
+    - the BTC -> post-TIPSY workflow now refreshes the input fingerprint sidecar
+      after unattended BTC rebuilds so the downstream freshness guard accepts
+      the newly rebuilt `04_output-tsaXX.csv` surface; and
+    - Phase 68 plot acceptance should continue from the CSV-canonical lane and
+      should not reintroduce DAT / `.out` trap artifacts; and
   - downstream Patchworks/model-input rebuild work is explicitly deferred to a
     later phase after Phase 68 plot/docs acceptance is complete.
 - Phase 67 smoothed AU-level first-growth promotion is now opened on `#187`

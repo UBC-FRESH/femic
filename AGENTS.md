@@ -56,9 +56,9 @@ the repo root:
 6. Before Stage 00/01 runs, confirm external runtime boundaries are explicit:
    - ArcRasterRescue: use the existing patched fork workflow; if auto-discovery
      fails, set `FEMIC_ARC_RASTER_RESCUE_EXE` to the compiled executable path.
-   - BatchTIPSY freshness: treat `02_input-tsaXX.dat` as canonical; XLSX is a
+   - BatchTIPSY freshness: treat `03_input-tsaXX.csv` as canonical; XLSX is a
      mirror only. Do not assume a stale block means rerun is required without
-     checking whether DAT content actually changed.
+     checking whether CSV content actually changed.
    - BatchTIPSY/BTC runtime install:
      - if `TIPSYbtc.exe` is missing from the current Windows dev environment,
        install TIPSY 4.7 from:

@@ -51,7 +51,7 @@ stage boundary instead of passing anonymous dictionaries into legacy code:
    runtime_config = build_legacy_01b_runtime_config(
        tipsy_params_path_prefix="data/tipsy_params_tsa",
        tipsy_output_root="data",
-       tipsy_output_filename_template="04_output-tsa{tsa}.out",
+       tipsy_output_filename_template="04_output-tsa{tsa}.csv",
    )
 
 How This Fits Into The Pipeline

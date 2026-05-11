@@ -938,8 +938,8 @@ def test_tsa29_instance_docs_advertise_btc_first_rebuild_contract() -> None:
         assert "04_error-tsa29.csv" in text
         assert "femic tsa btc-post-tipsy" in text
 
-    assert "02_input-tsa29" in readme_text
-    assert "04_output-tsa29.out" in readme_text
+    assert "03_input-tsa29.csv" in readme_text
+    assert "04_output-tsa29.csv" in readme_text
     assert "legacy" in readme_text.lower()
     assert "btc_post_tipsy_bundle" in rebuild_spec_text
 
