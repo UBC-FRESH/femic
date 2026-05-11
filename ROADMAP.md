@@ -1879,7 +1879,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - lowering the residual fallback plantation density to `1100` stems/ha; and
     - resetting the TSA29 treated SI transform to the user-requested `SI_c1=1.0`, `SI_c2=0.0` for the next clean shape-read rerun.
   - [x] P68.1h Re-anchor the TSA29 TIPSY comparison rerun on current live builder output, not stale exported workbook/CSV artifacts, and verify there are no inverted `L/M/H` SI ladders in the rebuilt managed AU surface before regenerating comparison plots.
-    - use fresh regenerated TIPSY input artifacts (`tipsy_params_tsa29.xlsx`, `03_input-tsa29.csv`) as the only admissible rerun input surface;
+    - use fresh regenerated canonical TIPSY input artifact (`03_input-tsa29.csv`) as the only admissible rerun input surface;
     - apply the additional agreed remaps before rerun:
       - explicit remaps:
         - expand the ICH cedar proxy to match the `HW` alias that appears on live TSA29 cedar rows;
@@ -1888,6 +1888,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
       - provisional remap notes:
         - `ESSF_PL`, `ESSF_PLI`, `ICH_SX`, and `SBPS_SX` remain unresolved local-extension families and should stay out of any silent auto-remap in this bounded move;
     - rerun BTC/post-TIPSY only after those remaps are on the live builder surface and validated.
+  - [x] P68.1i Remove the dead-end TSA29 workbook mirror from the active comparison/docs lane so Phase 68 uses only the canonical CSV handoff surface.
 - [ ] P68.2 Reread and rebuild TSA29-instance docs/figure surfaces (`UBC-FRESH/femic-tsa29-instance#3`)
   - [ ] P68.2a Reread the instance docs with focus on pages that mention or embed yield-curve comparisons.
   - [ ] P68.2b Update figure references, galleries, counts, and narrative interpretation to match the accepted `30`-plot comparison library.
@@ -1954,9 +1955,8 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
         while preserving `0` inverted `L/M/H` SI ladders in the live builder
         surface; and
     - `P68.1h`: verify the rerun uses the current live builder surface rather
-      than stale exported TSA29 TIPSY artifacts, because the current tracked
-      `tipsy_params_tsa29.xlsx` / `03_input-tsa29.csv` surfaces still show
-      inverted `L/M/H` SI ladders that are not present in the live
+      than stale exported TSA29 TIPSY artifacts, because the tracked
+      `03_input-tsa29.csv` surface must match the live
       `build_tipsy_params_for_tsa(...)` output;
       - the agreed additional remaps for that rerun are:
         - explicit:
@@ -1972,9 +1972,9 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
         - `btc-post-tipsy` was confirmed to be a consumer-only seam that does
           not regenerate Stage 01a TIPSY inputs;
         - the stale input problem was resolved by rebuilding
-          `tipsy_params_tsa29.xlsx` and `03_input-tsa29.csv` directly from the
-          current cached TSA29 PKL/feather surfaces and live
-          `build_tipsy_params_for_tsa(...)` logic before rerunning BTC;
+          `03_input-tsa29.csv` directly from the current cached TSA29
+          PKL/feather surfaces and live `build_tipsy_params_for_tsa(...)`
+          logic before rerunning BTC;
         - the rebuilt exported TSA29 TIPSY input surfaces now carry sane
           monotone SI ladders, for example:
           - `ESSF_SE`: `7.4 / 9.3 / 12.3`,
@@ -1989,6 +1989,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
         - the regenerated comparison library now contains the full `54`
           `plots/tipsy_vdyp_tsa29-*.png` overlays rebuilt from the fresh
           Stage 01a handoff rather than the stale exported input surface; and
+    - `P68.1i` is now complete:
+      - `external/femic-tsa29-instance/data/tipsy_params_tsa29.xlsx` has been
+        removed from the active TSA29 Phase 68 lane;
+      - TSA29 instance docs, rebuild metadata, and runbooks now describe
+        `03_input-tsa29.csv` as the only live BatchTIPSY handoff artifact for
+        this lane; and
+      - future Phase 68 reruns should not regenerate or inspect the dead-end
+        workbook mirror when answering comparison-plot questions.
   - downstream Patchworks/model-input rebuild work is explicitly deferred to a
     later phase after Phase 68 plot/docs acceptance is complete.
 - Phase 67 smoothed AU-level first-growth promotion is now opened on `#187`

@@ -17470,3 +17470,12 @@
   - regenerated the full `54` `plots/tipsy_vdyp_tsa29-*.png` comparison
     overlays from the fresh Stage 01a handoff rather than the stale exported
     TIPSY input surface.
+## 2026-05-10 - Removed the dead-end TSA29 workbook mirror from the active Phase 68 lane
+- `P68.1i` TSA29 lane cleanup:
+  - removed `external/femic-tsa29-instance/data/tipsy_params_tsa29.xlsx` from
+    the active TSA29 comparison/docs lane;
+  - updated the TSA29 instance docs, rebuild spec, checksum manifest, and
+    runbook surfaces so they no longer present the workbook mirror as part of
+    the live rerun surface; and
+  - narrowed the Phase 68 acceptance contract to the canonical BatchTIPSY CSV
+    handoff only: `03_input-tsa29.csv`.
