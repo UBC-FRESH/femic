@@ -1239,7 +1239,7 @@ def test_preflight_checks_fails_for_specific_missing_required_file(
 ) -> None:
     repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
     _create_preflight_required_layout(repo_root)
-    missing_required = repo_root / "data" / "tipsy_params_columns"
+    missing_required = repo_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
     missing_required.unlink()
 
     messages: list[str] = []
@@ -1248,7 +1248,7 @@ def test_preflight_checks_fails_for_specific_missing_required_file(
 
     with pytest.raises(typer.Exit) as exc_info:
         cli_main._preflight_checks(
-            resume=False,
+            resume=True,
             instance_context=SimpleNamespace(root=repo_root),
         )
 

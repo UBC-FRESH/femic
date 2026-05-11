@@ -408,10 +408,23 @@ print(
 
 raster_pxw = raster_pxh = 100
 
-tipsy_params_columns = [
-    line.strip()
-    for line in _legacy_data_paths.tipsy_params_columns_path.read_text().splitlines()
-]
+_tipsy_params_columns_path = _legacy_data_paths.tipsy_params_columns_path
+if not _tipsy_params_columns_path.exists():
+    _femic_source_root = os.environ.get("FEMIC_SOURCE_ROOT")
+    if _femic_source_root:
+        _source_candidate = Path(_femic_source_root) / "data" / "tipsy_params_columns"
+        if _source_candidate.exists():
+            _tipsy_params_columns_path = _source_candidate
+if _tipsy_params_columns_path.exists():
+    tipsy_params_columns = [
+        line.strip() for line in _tipsy_params_columns_path.read_text().splitlines()
+    ]
+else:
+    print(
+        "warning: tipsy_params_columns schema file missing; 01a will infer the "
+        "TIPSY handoff columns directly from generated parameter tables"
+    )
+    tipsy_params_columns = []
 
 # --- cell 11 ---
 species_spruce = ["S", "SB", "SE", "SN", "SS", "SW", "SX", "SXE", "SXL", "SXW"]
