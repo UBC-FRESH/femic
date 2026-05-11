@@ -1864,14 +1864,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 
 ## Phase 68: TSA29 Comparison Plot Refresh and Instance Docs Rebuild
 
-- [ ] P68.1 Review and lock the TSA29 TIPSY-vs-VDYP comparison plot library (`UBC-FRESH/femic-tsa29-instance#4`)
-  - [ ] P68.1a Confirm the accepted comparison family is the refreshed `54`-plot set:
+- [x] P68.1 Review and lock the TSA29 TIPSY-vs-VDYP comparison plot library (`UBC-FRESH/femic-tsa29-instance#4`)
+  - [x] P68.1a Confirm the accepted comparison family is the refreshed `54`-plot set:
     - `plots/tipsy_vdyp_tsa29-21000..21017.png`
     - `plots/tipsy_vdyp_tsa29-22000..22017.png`
     - `plots/tipsy_vdyp_tsa29-23000..23017.png`
-  - [ ] P68.1b Explicitly retire the stale `.out`-derived `30`-plot assumption from Phase 68 notes, docs, and acceptance checks.
-  - [ ] P68.1c Keep the comparison-plot acceptance work isolated on `external/femic-tsa29-instance` branch `feature/tsa29-tipsy-vdyp-comparison-refresh`.
-  - [ ] P68.1d Lock the accepted comparison plot set with an instance commit, issue update, and PR.
+  - [x] P68.1b Explicitly retire the stale `.out`-derived `30`-plot assumption from Phase 68 notes, docs, and acceptance checks.
+  - [x] P68.1c Keep the comparison-plot acceptance work isolated on `external/femic-tsa29-instance` branch `feature/tsa29-tipsy-vdyp-comparison-refresh`.
+  - [x] P68.1d Lock the accepted comparison plot set with the committed instance artifact refresh and issue updates; defer the final branch/PR bundle to overall Phase 68 closeout rather than treating the plot contract itself as still open.
   - [x] P68.1e Normalize the parent/runtime handoff contract to make BTC CSV the only canonical TIPSY input/output lane (`#190`), then remove TSA29 DAT/`.out` trap artifacts.
   - [x] P68.1f Audit the official TSR 2024 managed-AU taxonomy against the current TSA29 managed/TIPSY lane and build a cross-reference table for rule coverage and catchall hits.
   - [x] P68.1g Reduce `tsa29_all_aus_catchall` dominance before the next TSA29 BTC/TIPSY rerun by:
@@ -1892,8 +1892,8 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P68.1j Apply narrow provisional treated-side SI uplift pins for the remaining weak low-yield TIPSY families, regenerate fresh `03_input-tsa29.csv`, rerun BTC/post-TIPSY, and compare the refreshed overlays on the CSV-only lane.
   - [x] P68.1k Remove the dead workbook dependency from the legacy post-TIPSY comparison-plot seam so `femic tsa btc-post-tipsy` can complete on the CSV-only TSA29 lane.
 - [ ] P68.2 Reread and rebuild TSA29-instance docs/figure surfaces (`UBC-FRESH/femic-tsa29-instance#3`)
-  - [ ] P68.2a Reread the instance docs with focus on pages that mention or embed yield-curve comparisons.
-  - [ ] P68.2b Update figure references, galleries, counts, and narrative interpretation to match the accepted `30`-plot comparison library.
+  - [x] P68.2a Reread the instance docs with focus on pages that mention or embed yield-curve comparisons.
+  - [ ] P68.2b Update figure references, galleries, counts, and narrative interpretation to match the accepted `54`-plot comparison library.
   - [ ] P68.2c Refresh any docs pages that should surface the accepted comparison plots, including yield-curve and figure-appendix style pages if present.
   - [ ] P68.2d Run the TSA29-instance Sphinx build and keep it warning-clean.
   - [ ] P68.2e Lock the docs refresh with an instance commit, issue update, and PR.
@@ -1901,145 +1901,20 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 ### Detailed Next Steps Notes
 
 - Phase 68 is now the active TSA29-instance downstream publication/docs lane:
-  - parent coordination lives only in this `ROADMAP.md` phase; do not open a
-    duplicate parent-docs/default-selector lane for this work;
-  - the active instance issues are:
-    - `UBC-FRESH/femic-tsa29-instance#4` for the comparison-plot refresh and
-      acceptance lane; and
-    - `UBC-FRESH/femic-tsa29-instance#3` for the child docs reread/rebuild lane;
-  - the current isolated instance branch is
+  - keep this section compact; detailed Phase 68 execution notes now live in
+    `planning/phase68_tsa29_comparison_docs_notes.md`;
+  - active issues:
+    - `UBC-FRESH/femic-tsa29-instance#4` for the comparison-plot lane; and
+    - `UBC-FRESH/femic-tsa29-instance#3` for the docs reread/rebuild lane;
+  - active isolated instance branch:
     `external/femic-tsa29-instance:feature/tsa29-tipsy-vdyp-comparison-refresh`;
-  - the current canonical comparison-library target is the refreshed `54`-plot
-    set aligned to the full managed/TIPSY AU surface:
-    - `tipsy_vdyp_tsa29-21000..21017.png`
-    - `tipsy_vdyp_tsa29-22000..22017.png`
-    - `tipsy_vdyp_tsa29-23000..23017.png`;
-  - the earlier `30`-plot assumption came from the stale `.out` lane and is no
-    longer admissible as a Phase 68 acceptance surface; and
-  - `P68.1e` is complete:
-    - parent issue `#190` tracks the CSV-canonical handoff normalization;
-    - parent/runtime code now treats `03_input-tsaXX.csv` ->
-      `04_output-tsaXX.csv` as the only canonical BatchTIPSY/BTC handoff lane;
-    - the BTC -> post-TIPSY workflow now refreshes the input fingerprint sidecar
-      after unattended BTC rebuilds so the downstream freshness guard accepts
-      the newly rebuilt `04_output-tsaXX.csv` surface; and
-    - Phase 68 plot acceptance should continue from the CSV-canonical lane and
-      should not reintroduce DAT / `.out` trap artifacts; and
-  - `P68.1f` is complete:
-    - the official TSR 2024 data package managed-AU surface was re-anchored to
-      Table 40 in `reference/29ts_dpkg_2024.pdf` and treated as the
-      authoritative managed analysis-unit taxonomy for this audit;
-    - an instance evidence table was built at
-      `external/femic-tsa29-instance/evidence/managed_au_rule_audit-tsa29-p68_1f_20260510a.csv`;
-    - that audit table shows:
-      - `54` current TSA29 managed/TIPSY AUs;
-      - `24` AUs currently hitting the literal
-        `tsa29_all_aus_catchall` fallback rule; and
-      - `27` AUs whose source stratum/BEC/site-productivity combination does
-        not map cleanly to any official Table 40 managed AU; and
-    - the active comparison-plot analysis should now use that audit table to
-      separate:
-      - official Table 40-aligned cases,
-      - non-Table-40 local extensions, and
-      - literal catchall-rule artifacts
-      before any plot-family lock decision; and
-  - the next gating work before any refreshed BTC/TIPSY rerun is now:
-    - `P68.1g` is complete:
-      - the TSA29 treated SI transform now uses the user-requested
-        `SI_c1=1.0`, `SI_c2=0.0`;
-      - the obvious Table 40-aligned managed families were promoted out of
-        literal catchall into explicit TSA29 proxy rules for:
-        - non-IDF fir,
-        - SBS spruce, and
-        - ICH cedar; and
-      - literal `tsa29_all_aus_catchall` usage in live
-        `build_tipsy_params_for_tsa(...)` output dropped from `24` AUs to `17`
-        while preserving `0` inverted `L/M/H` SI ladders in the live builder
-        surface; and
-    - `P68.1h`: verify the rerun uses the current live builder surface rather
-      than stale exported TSA29 TIPSY artifacts, because the tracked
-      `03_input-tsa29.csv` surface must match the live
-      `build_tipsy_params_for_tsa(...)` output;
-      - the agreed additional remaps for that rerun are:
-        - explicit:
-          - ICH cedar `HW` alias expansion,
-          - `MS_PL` low-site pin back into the MS pine proxy, and
-          - `SBPS_PL` / `SBPS_PLI` high-site pins back into the SBPS pine proxy;
-        - intentionally deferred provisional families:
-          - `ESSF_PL`,
-          - `ESSF_PLI`,
-          - `ICH_SX`, and
-        - `SBPS_SX`; and
-      - `P68.1h` is now complete:
-        - `btc-post-tipsy` was confirmed to be a consumer-only seam that does
-          not regenerate Stage 01a TIPSY inputs;
-        - the stale input problem was resolved by rebuilding
-          `03_input-tsa29.csv` directly from the current cached TSA29
-          PKL/feather surfaces and live `build_tipsy_params_for_tsa(...)`
-          logic before rerunning BTC;
-        - the rebuilt exported TSA29 TIPSY input surfaces now carry sane
-          monotone SI ladders, for example:
-          - `ESSF_SE`: `7.4 / 9.3 / 12.3`,
-          - `ICH_CW`: `9.4 / 12.0 / 16.3`, and
-          - `SBS_SX`: `14.3 / 17.4 / 19.6`;
-        - the rebuilt `btc-post-tipsy` run manifest at
-          `runtime/logs/run_manifest-p68_1h_tipsy_remap_refresh_20260510c.json`
-          reports:
-          - `54` AU rows,
-          - `108` curves, and
-          - `18,090` curve points; and
-        - the regenerated comparison library now contains the full `54`
-          `plots/tipsy_vdyp_tsa29-*.png` overlays rebuilt from the fresh
-          Stage 01a handoff rather than the stale exported input surface; and
-    - `P68.1i` is now complete:
-      - `external/femic-tsa29-instance/data/tipsy_params_tsa29.xlsx` has been
-        removed from the active TSA29 Phase 68 lane;
-      - TSA29 instance docs, rebuild metadata, and runbooks now describe
-        `03_input-tsa29.csv` as the only live BatchTIPSY handoff artifact for
-        this lane; and
-      - future Phase 68 reruns should not regenerate or inspect the dead-end
-        workbook mirror when answering comparison-plot questions.
-    - `P68.1j` is now complete:
-      - the config-driven TIPSY builder seam was patched so
-        `build_tipsy_params_for_tsa(...)` passes both `stratum_code` and
-        `si_level` into the config-driven rule matcher; this fixed the bug
-        where all `si_level_in: [...]` uplift pins were silently missing and
-        broader fallback rules were winning instead;
-      - narrow provisional treated-side SI uplift pins were then tuned on the
-        live builder surface for:
-        - `SBPS_PL` / `SBPS_PLI` low and medium,
-        - `MS_PL` medium, and
-        - `ESSF_PL` / `ESSF_PLI` low, medium, and high;
-      - fresh `03_input-tsa29.csv` was regenerated directly from the cached
-        TSA29 PKL/feather inputs and the fixed live builder surface;
-      - unattended BTC was rerun against that fresh CSV handoff and the
-        refreshed `04_output-tsa29.csv` was reparsed into:
-        - `external/femic-tsa29-instance/data/tipsy_curves_tsa29.csv`, and
-        - the full `54` `external/femic-tsa29-instance/plots/tipsy_vdyp_tsa29-*.png`
-          comparison overlays;
-      - on the originally weak low-yield comparison families, the refreshed
-        age-200 `TIPSY / VDYP` ratios now land in a usable band of roughly
-        `0.81 .. 1.18` instead of the earlier substantially under-shot
-        surfaces; and
-      - the uplift pins remain explicitly provisional, but the refreshed
-        overlays are now in the "good enough" comparison range for this lane.
-    - `P68.1k` is now complete:
-      - the legacy `01b_run-tsa.py` seam no longer falls back to
-        `tipsy_params_tsa29.xlsx`;
-      - `01b` now reconstructs its minimal legacy comparison-input view
-        directly from the canonical `03_input-tsaXX.csv` handoff and raises
-        clearly if that CSV is missing instead of silently reviving the dead
-        workbook contract;
-      - a focused regression test now exercises the CSV-only 01b path without
-        any workbook present; and
-      - the live CLI seam was revalidated with:
-        `femic tsa btc-post-tipsy --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id p68_1k_legacy_post_tipsy_csv_20260511b`,
-        which completed successfully on the CSV-only lane with:
-        - `54` AU rows,
-        - `108` curves, and
-        - `18,090` curve points.
-    - the next clean move is now `P68.2a`: reread the TSA29 instance docs with
-      focus on pages that mention or embed yield-curve comparisons.
+  - accepted comparison-library contract:
+    - refreshed `54`-plot set only;
+    - stale `.out`-derived `30`-plot subset is retired; and
+  - current edge:
+    - `P68.1` complete;
+    - `P68.2a` complete; and
+    - next bounded move is `P68.2b`.
   - downstream Patchworks/model-input rebuild work is explicitly deferred to a
     later phase after Phase 68 plot/docs acceptance is complete.
 - Phase 67 smoothed AU-level first-growth promotion is now opened on `#187`

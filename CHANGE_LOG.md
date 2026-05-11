@@ -17517,3 +17517,31 @@
     - `54` AU rows,
     - `108` curves, and
     - `18,090` curve points.
+## 2026-05-11 - Corrected Phase 68 control-surface drift and completed the TSA29 docs audit
+- Phase 68 planning/control cleanup:
+  - reconciled the roadmap so the accepted TSA29 comparison library is
+    consistently treated as the refreshed `54`-plot set, not the stale
+    `.out`-derived `30`-plot subset;
+  - marked `P68.1` complete on the accepted comparison-library contract while
+    keeping any later branch/PR work attached to full Phase 68 closeout rather
+    than leaving the comparison task falsely open; and
+  - completed `P68.2a` by rereading the TSA29 instance docs surfaces that
+    mention or imply yield-curve comparisons.
+- `P68.2a` docs-audit findings:
+  - active drift was confirmed in:
+    - `external/femic-tsa29-instance/docs/figure-appendix.rst`
+    - `external/femic-tsa29-instance/docs/data-and-provenance.rst`
+    - `external/femic-tsa29-instance/docs/rebuild-and-qa.rst`
+    - `external/femic-tsa29-instance/docs/getting-started.rst`
+    - `external/femic-tsa29-instance/docs/troubleshooting.rst`
+    - `external/femic-tsa29-instance/README.md`
+    - `external/femic-tsa29-instance/runbooks/REBUILD_RUNBOOK.md`
+  - the main stale themes are:
+    - lingering DAT / `.out` / workbook-era seam references after the CSV-only
+      handoff cleanup; and
+    - missing or stale figure/count/narrative coverage for the accepted
+      `54`-plot `tipsy_vdyp_tsa29-*.png` comparison library.
+  - moved the bulky Phase 68 execution narrative out of
+    `ROADMAP.md` `Detailed Next Steps Notes` into
+    `planning/phase68_tsa29_comparison_docs_notes.md` so the roadmap remains a
+    compact control surface.
