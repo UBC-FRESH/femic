@@ -17545,3 +17545,19 @@
     `ROADMAP.md` `Detailed Next Steps Notes` into
     `planning/phase68_tsa29_comparison_docs_notes.md` so the roadmap remains a
     compact control surface.
+## 2026-05-11 - Updated TSA29 docs references to the accepted 54-plot comparison library
+- `P68.2b` docs-reference refresh:
+  - updated TSA29 docs/runbook/README surfaces to remove lingering DAT /
+    `.out` / workbook-era seam references from the active comparison lane;
+  - normalized active rebuild wording to the CSV-only
+    `03_input-tsa29.csv` -> `04_output-tsa29.csv` BatchTIPSY/BTC seam; and
+  - updated figure/count/narrative references to the accepted refreshed
+    `54`-plot `plots/tipsy_vdyp_tsa29-*.png` comparison library across:
+    - `external/femic-tsa29-instance/README.md`
+    - `external/femic-tsa29-instance/docs/getting-started.rst`
+    - `external/femic-tsa29-instance/docs/troubleshooting.rst`
+    - `external/femic-tsa29-instance/docs/data-and-provenance.rst`
+    - `external/femic-tsa29-instance/docs/rebuild-and-qa.rst`
+    - `external/femic-tsa29-instance/docs/figure-appendix.rst`
+    - `external/femic-tsa29-instance/docs/land-base-and-assumptions.rst`
+    - `external/femic-tsa29-instance/runbooks/REBUILD_RUNBOOK.md`

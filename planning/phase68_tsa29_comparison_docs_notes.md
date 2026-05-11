@@ -170,5 +170,29 @@ Main stale themes:
 
 ## Next Bounded Move
 
-`P68.2b`: update the identified docs surfaces to the accepted `54`-plot
-comparison contract before running the TSA29-instance Sphinx build.
+### P68.2b
+
+`P68.2b` is complete.
+
+Updated surfaces:
+- `external/femic-tsa29-instance/README.md`
+- `external/femic-tsa29-instance/docs/getting-started.rst`
+- `external/femic-tsa29-instance/docs/troubleshooting.rst`
+- `external/femic-tsa29-instance/docs/data-and-provenance.rst`
+- `external/femic-tsa29-instance/docs/rebuild-and-qa.rst`
+- `external/femic-tsa29-instance/docs/figure-appendix.rst`
+- `external/femic-tsa29-instance/docs/land-base-and-assumptions.rst`
+- `external/femic-tsa29-instance/runbooks/REBUILD_RUNBOOK.md`
+
+What changed:
+- retired lingering DAT / `.out` / workbook-era seam references from the active
+  TSA29 comparison/docs lane;
+- normalized rebuild/runbook/getting-started language to the CSV-only
+  `03_input-tsa29.csv` -> `04_output-tsa29.csv` seam; and
+- updated comparison-surface narrative and counts to the accepted refreshed
+  `54`-plot `tipsy_vdyp_tsa29-*.png` library.
+
+## Next Bounded Move
+
+`P68.2c`: refresh the TSA29 docs pages that should directly surface the
+accepted comparison plots, then run the warning-clean Sphinx build in `P68.2d`.
