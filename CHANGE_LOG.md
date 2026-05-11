@@ -17362,3 +17362,15 @@
     `54` TSA29 AU/stratum-SI rows; and
   - recorded that there are currently no TSA29
     `insufficient_source_stands` rows under the accepted selector contract.
+## 2026-05-10 - Recorded the TSA29 comparison-plot and docs refresh follow-on lane
+- `P68` planning/governance update:
+  - added Phase 68 to `ROADMAP.md` as the active TSA29-instance downstream
+    publication/docs lane after Phase 67 closeout;
+  - anchored that phase to `UBC-FRESH/femic-tsa29-instance#4` (comparison-plot
+    refresh/acceptance) and child issue `UBC-FRESH/femic-tsa29-instance#3`
+    (instance docs reread/rebuild);
+  - recorded the intended accepted comparison library as the refreshed `30`
+    `tipsy_vdyp_tsa29-*.png` overlays and marked stale `21010..23017` plots as
+    non-canonical leftovers pending acceptance; and
+  - recorded that downstream Patchworks/model-input rebuild work is deferred to
+    a later phase after Phase 68 plot/docs acceptance is complete.

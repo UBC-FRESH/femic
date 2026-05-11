@@ -1862,8 +1862,42 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P67.3b Patch the promoted selector to suppress low-age humps, far-right tail bumps, excess wobble, and bad toe shape, then rerun TSA29 diagnostics/outputs.
   - [x] P67.3c Validate TSA29 residual/shape diagnostics against AU binned medians and record explicit insufficient-support AU treatment.
 
+## Phase 68: TSA29 Comparison Plot Refresh and Instance Docs Rebuild
+
+- [ ] P68.1 Review and lock the TSA29 TIPSY-vs-VDYP comparison plot library (`UBC-FRESH/femic-tsa29-instance#4`)
+  - [ ] P68.1a Confirm the accepted comparison family is the refreshed `30`-plot set:
+    - `plots/tipsy_vdyp_tsa29-21000..21009.png`
+    - `plots/tipsy_vdyp_tsa29-22000..22009.png`
+    - `plots/tipsy_vdyp_tsa29-23000..23009.png`
+  - [ ] P68.1b Explicitly retire/remove stale `21010..23017` overlays as non-canonical leftovers.
+  - [ ] P68.1c Keep the comparison-plot acceptance work isolated on `external/femic-tsa29-instance` branch `feature/tsa29-tipsy-vdyp-comparison-refresh`.
+  - [ ] P68.1d Lock the accepted comparison plot set with an instance commit, issue update, and PR.
+- [ ] P68.2 Reread and rebuild TSA29-instance docs/figure surfaces (`UBC-FRESH/femic-tsa29-instance#3`)
+  - [ ] P68.2a Reread the instance docs with focus on pages that mention or embed yield-curve comparisons.
+  - [ ] P68.2b Update figure references, galleries, counts, and narrative interpretation to match the accepted `30`-plot comparison library.
+  - [ ] P68.2c Refresh any docs pages that should surface the accepted comparison plots, including yield-curve and figure-appendix style pages if present.
+  - [ ] P68.2d Run the TSA29-instance Sphinx build and keep it warning-clean.
+  - [ ] P68.2e Lock the docs refresh with an instance commit, issue update, and PR.
+
 ### Detailed Next Steps Notes
 
+- Phase 68 is now the active TSA29-instance downstream publication/docs lane:
+  - parent coordination lives only in this `ROADMAP.md` phase; do not open a
+    duplicate parent-docs/default-selector lane for this work;
+  - the active instance issues are:
+    - `UBC-FRESH/femic-tsa29-instance#4` for the comparison-plot refresh and
+      acceptance lane; and
+    - `UBC-FRESH/femic-tsa29-instance#3` for the child docs reread/rebuild lane;
+  - the current isolated instance branch is
+    `external/femic-tsa29-instance:feature/tsa29-tipsy-vdyp-comparison-refresh`;
+  - the intended accepted comparison library is the refreshed `30`-plot set:
+    - `tipsy_vdyp_tsa29-21000..21009.png`
+    - `tipsy_vdyp_tsa29-22000..22009.png`
+    - `tipsy_vdyp_tsa29-23000..23009.png`;
+  - stale `21010..23017` overlays should be treated as non-canonical leftovers
+    unless the docs reread proves they are still required; and
+  - downstream Patchworks/model-input rebuild work is explicitly deferred to a
+    later phase after Phase 68 plot/docs acceptance is complete.
 - Phase 67 smoothed AU-level first-growth promotion is now opened on `#187`
   with TSA29 child issue `#188`:
   - the accepted evidence basis is the recent MKRF curve-quality lane under
