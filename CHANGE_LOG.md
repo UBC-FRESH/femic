@@ -17583,3 +17583,10 @@
   - confirmed the rendered output includes the new
     `yield-curve-comparisons` page and copies the full accepted refreshed
     `54`-plot `tipsy_vdyp_tsa29-*.png` library into `_build/html`.
+## 2026-05-11 - Locked the Phase 68 TSA29 docs-refresh lane for PR review
+- `P68.2e` closeout:
+  - marked the full `P68.2` docs-refresh task complete in the parent roadmap;
+  - recorded the finished Phase 68 docs lane in
+    `planning/phase68_tsa29_comparison_docs_notes.md`; and
+  - prepared the TSA29-instance and parent feature branches for PR review so
+    the next move is review/merge rather than further local docs churn.

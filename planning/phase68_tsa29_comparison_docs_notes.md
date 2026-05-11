@@ -230,5 +230,20 @@ Outcome:
 
 ## Next Bounded Move
 
-`P68.2e`: lock the docs refresh lane with the committed instance docs changes,
-issue updates, and the final Phase 68 docs-closeout bookkeeping.
+### P68.2e
+
+`P68.2e` is complete.
+
+Lock/closeout work:
+- Phase 68 docs-refresh planning is now marked complete in the parent roadmap;
+- the TSA29-instance issue trail has the matching progress comments for
+  `P68.2b`, `P68.2c`, and `P68.2d`;
+- the instance docs-refresh branch is the authoritative implementation surface:
+  `feature/tsa29-tipsy-vdyp-comparison-refresh`; and
+- the corresponding parent coordination branch is:
+  `feature/canonical-btc-csv-handoff`.
+
+## Next Bounded Move
+
+Phase 68 implementation is complete locally. The next move is review/merge of
+the Phase 68 PRs rather than further local docs edits.
