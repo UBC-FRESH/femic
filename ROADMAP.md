@@ -1898,16 +1898,38 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P68.2d Run the TSA29-instance Sphinx build and keep it warning-clean.
   - [x] P68.2e Lock the docs refresh with an instance commit, issue update, and PR.
 
+## Phase 69: Rebuild the TSA29 Patchworks Model on the New THLB and Yield Surfaces
+
+- [x] P69.1 Record and initialize the TSA29 Patchworks-rebuild lane (`UBC-FRESH/femic-tsa29-instance#6`)
+  - [x] P69.1a Open the TSA29-instance feature issue for rebuilding the
+    Patchworks model on the newly accepted THLB and yield surfaces.
+  - [x] P69.1b Create the dedicated parent/submodule feature branches for that
+    rebuild lane.
+  - [x] P69.1c Record the requirement that past-top-N strata must receive AU
+    assignment through the lexicographical stratum-matching imputation logic so
+    no surviving AFLB area is silently left out of the model.
+- [ ] P69.2 Rebuild TSA29 model-input and Patchworks package surfaces on the new inputs
+  - [ ] P69.2a Regenerate the TSA29 model-input bundle from the current locked
+    THLB and accepted curve libraries.
+  - [ ] P69.2b Rebuild the TSA29 Patchworks package on that regenerated bundle,
+    including any required past-top-N AU imputation.
+  - [ ] P69.2c Inspect the rebuilt Patchworks-facing outputs directly rather
+    than treating command success as proof.
+- [ ] P69.3 Validate and publish the refreshed TSA29 model package
+  - [ ] P69.3a Run the necessary Patchworks-facing validation checks on the
+    rebuilt package.
+  - [ ] P69.3b Update TSA29 instance docs/evidence surfaces for the refreshed
+    package if the rebuild is accepted.
+  - [ ] P69.3c Close the governing issue and publish the resulting branch/PR
+    updates.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase69_tsa29_patchworks_rebuild_notes.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P68.1` complete
-  - `P68.2a` complete
-  - `P68.2b` complete
-  - `P68.2c` complete
-  - `P68.2d` complete
-  - `P68.2e` complete
-  - Phase 68 implementation surface is locked on feature branches and in PRs; next work is review/merge rather than more local docs churn
+  - `P68` complete
+  - next bounded move is `P69.1`: open the TSA29-instance Patchworks-rebuild
+    issue and branch lane before starting any rebuild work

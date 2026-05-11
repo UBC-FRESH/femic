@@ -17590,3 +17590,16 @@
     `planning/phase68_tsa29_comparison_docs_notes.md`; and
   - prepared the TSA29-instance and parent feature branches for PR review so
     the next move is review/merge rather than further local docs churn.
+## 2026-05-11 - Closed issue #190 and opened the TSA29 Patchworks rebuild lane
+- closed parent issue `#190` after the CSV-only BTC handoff work was merged and
+  no longer represented an active lane;
+- opened new TSA29-instance feature issue `#6` to rebuild the Patchworks model
+  on the newly accepted THLB and yield surfaces;
+- created the dedicated parent and instance branches:
+  - `feature/tsa29-patchworks-rebuild-new-inputs`; and
+- recorded the new lane in:
+  - `ROADMAP.md`
+  - `planning/phase69_tsa29_patchworks_rebuild_notes.md`
+- the new lane explicitly carries the requirement that past-top-N strata must
+  receive deterministic AU assignment through lexicographical stratum-matching
+  imputation so no surviving AFLB area is silently dropped from the model.
