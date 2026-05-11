@@ -557,6 +557,7 @@ def run_tsa(
         or bool(runtime_config.vdyp_two_pass_rebin)
     )
     if should_rebuild_smooth_curves:
+        use_au_first_growth_selector = str(tsa).strip().zfill(2) == "29"
         smooth_plot_cfg = build_curve_smoothing_plot_config(sns_module=sns)
         smoothed_runs = execute_curve_smoothing_runs(
             tsa=tsa,
@@ -573,6 +574,7 @@ def run_tsa(
             body_fit_func_bounds_func=body_fit_func_bounds_func,
             toe_fit_func=toe_fit_func,
             toe_fit_func_bounds_func=toe_fit_func_bounds_func,
+            use_au_first_growth_selector=use_au_first_growth_selector,
             message_fn=print,
         )
         plot_curve_overlays(

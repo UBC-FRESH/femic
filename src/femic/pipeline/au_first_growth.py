@@ -7,16 +7,33 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 from scipy.interpolate import PchipInterpolator
+from scipy.optimize import curve_fit
 
-from femic.pipeline.vdyp_curves import build_observed_bins_for_fit
+from femic.pipeline.vdyp_curves import (
+    build_observed_bins_for_fit,
+    legacy_fit_func1,
+    legacy_fit_func1_bounds_func,
+)
 
 
 _TAIL_START_AGE = 150.0
 _CURVE_MAX_AGE = 300
-_SMOOTHING_WEIGHTS = np.asarray([1.0, 2.0, 3.0, 2.0, 1.0], dtype=float)
+_MAX_SOURCE_BIN_AGE = 300
+_MIN_BIN_AGE = 60
+_SMOOTHING_WEIGHTS = np.asarray([1.0, 2.0, 3.0, 4.0, 3.0, 2.0, 1.0], dtype=float)
 _SMOOTHING_WEIGHTS = _SMOOTHING_WEIGHTS / _SMOOTHING_WEIGHTS.sum()
-_SMOOTHING_PASSES = 2
+_SMOOTHING_PASSES = 4
 _DEFAULT_MIN_SOURCE_STANDS = 2
+_EARLY_LOCAL_WINDOW_BINS = 8
+_EARLY_LOCAL_MIN_SEGMENT_BINS = 4
+_EARLY_LOCAL_MAX_PRUNE_BINS = 8
+_EARLY_LOCAL_MAX_START_AGE = 120.0
+_EARLY_LOCAL_MAX_NEGATIVE_STEPS = 1
+_EARLY_LOCAL_NEGATIVE_DROP_TOLERANCE = 2.0
+_TOE_SPLICE_SKIP_BINS = 2
+_TOE_SPLICE_DI = 20
+_TOE_SPLICE_CY = 0.1
+_TOE_SPLICE_BLEND_MIN = 6
 
 
 @dataclass(frozen=True)
@@ -29,6 +46,42 @@ class AuFirstGrowthSelectionResult:
     y_curve: np.ndarray
     binned: pd.DataFrame
     metrics: dict[str, float]
+
+
+def _prune_bad_leading_anchors(anchors: pd.DataFrame) -> pd.DataFrame:
+    """Drop only the locally inconsistent early anchor block.
+
+    This is intentionally local. We never compare early anchors against the full
+    future tail because legitimate senescent decline would otherwise delete the
+    valid body of the curve. Instead, search for the earliest start in the left
+    window whose next few bins are locally close to non-decreasing.
+    """
+    cleaned = anchors.copy()
+    if cleaned.empty:
+        return cleaned
+    window_bins = min(_EARLY_LOCAL_WINDOW_BINS, len(cleaned))
+    min_segment_bins = min(_EARLY_LOCAL_MIN_SEGMENT_BINS, len(cleaned))
+    max_prune = max(0, min(_EARLY_LOCAL_MAX_PRUNE_BINS, len(cleaned) - min_segment_bins))
+    best_start = 0
+    best_score = float("inf")
+    for start_idx in range(max_prune + 1):
+        start_age = float(cleaned.iloc[start_idx]["age_bin"])
+        if start_age > _EARLY_LOCAL_MAX_START_AGE:
+            break
+        segment = cleaned.iloc[start_idx : start_idx + window_bins]["median_volume"].to_numpy(
+            dtype=float
+        )
+        if segment.size < min_segment_bins:
+            continue
+        diffs = np.diff(segment)
+        negative_drops = -diffs[diffs < 0.0]
+        negative_steps = int(negative_drops.size)
+        negative_drop_sum = float(negative_drops.sum()) if negative_steps else 0.0
+        score = negative_steps * 1000.0 + negative_drop_sum + start_idx * 0.5
+        if score < best_score:
+            best_score = score
+            best_start = start_idx
+    return cleaned.iloc[best_start:].reset_index(drop=True)
 
 
 def fit_au_first_growth_quality(
@@ -59,12 +112,63 @@ def fit_au_first_growth_quality(
     }
 
 
+def _splice_exponential_toe(
+    *,
+    x_curve: np.ndarray,
+    y_curve: np.ndarray,
+    first_anchor_age: float,
+    skip_bins: int = _TOE_SPLICE_SKIP_BINS,
+    di: int = _TOE_SPLICE_DI,
+    cy: float = _TOE_SPLICE_CY,
+) -> np.ndarray:
+    """Replace the left edge with the legacy exponential toe splice."""
+    x_ = np.asarray(x_curve, dtype=float).copy()
+    y_ = np.asarray(y_curve, dtype=float).copy()
+    anchor_idx = int(np.searchsorted(x_, float(first_anchor_age), side="left"))
+    if anchor_idx <= 0 or anchor_idx >= y_.size:
+        return y_
+    join_idx = int(min(max(anchor_idx + int(skip_bins), 1), max(y_.size - 1, 1)))
+    fit_end = int(min(join_idx + int(di), y_.size))
+    if fit_end - join_idx < 4:
+        return y_
+    x_fit = np.concatenate(([1.0, 2.0, 3.0], x_[join_idx:fit_end]))
+    y_fit = np.concatenate(([1.0 * cy, 2.0 * cy, 3.0 * cy], y_[join_idx:fit_end]))
+    try:
+        bounds = legacy_fit_func1_bounds_func(x_fit)
+        popt, _ = curve_fit(
+            legacy_fit_func1,
+            x_fit,
+            y_fit,
+            maxfev=10000,
+            bounds=bounds,
+        )
+    except Exception:
+        return y_
+    x_left = np.asarray(x_[:join_idx], dtype=float)
+    body_left = np.asarray(y_[:join_idx], dtype=float)
+    y_left = legacy_fit_func1(x_left, *popt)
+    y_left = np.nan_to_num(np.asarray(y_left, dtype=float), nan=0.0, posinf=0.0, neginf=0.0)
+    if y_left.size == 0:
+        return y_
+    join_value = float(y_[join_idx])
+    y_left = np.clip(y_left, 0.0, max(join_value, 0.0))
+    y_left = np.maximum.accumulate(y_left)
+    blend_width = min(int(y_left.size), max(_TOE_SPLICE_BLEND_MIN, int(skip_bins) + 4))
+    if blend_width > 1:
+        blend_start = int(y_left.size - blend_width)
+        w = np.linspace(0.0, 1.0, blend_width)
+        y_left[blend_start:] = (1.0 - w) * y_left[blend_start:] + w * body_left[blend_start:]
+    y_out = y_.copy()
+    y_out[:join_idx] = y_left
+    return y_out
+
+
 def build_smoothed_bin_pchip_curve(
     *,
     binned: pd.DataFrame,
     smoothing_passes: int = _SMOOTHING_PASSES,
     curve_max_age: int = _CURVE_MAX_AGE,
-    min_anchor_age: float = 30.0,
+    min_anchor_age: float = _MIN_BIN_AGE,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Build a strongly smoothed observed-bin PCHIP curve."""
     anchors = binned.loc[:, ["age_bin", "median_volume"]].copy()
@@ -72,22 +176,35 @@ def build_smoothed_bin_pchip_curve(
     anchors["median_volume"] = pd.to_numeric(anchors["median_volume"], errors="coerce")
     anchors = anchors.dropna().sort_values("age_bin", kind="stable")
     anchors = anchors.loc[anchors["age_bin"] >= float(min_anchor_age)].copy()
+    anchors = _prune_bad_leading_anchors(anchors)
     if anchors.empty:
         return np.asarray([], dtype=float), np.asarray([], dtype=float)
 
     smoothed = anchors["median_volume"].to_numpy(dtype=float).copy()
-    if len(smoothed) >= 5:
+    half_window = len(_SMOOTHING_WEIGHTS) // 2
+    if len(smoothed) >= len(_SMOOTHING_WEIGHTS):
         for _ in range(int(smoothing_passes)):
             updated = smoothed.copy()
-            for idx in range(2, len(smoothed) - 2):
-                updated[idx] = float(np.dot(_SMOOTHING_WEIGHTS, smoothed[idx - 2 : idx + 3]))
+            for idx in range(half_window, len(smoothed) - half_window):
+                updated[idx] = float(
+                    np.dot(
+                        _SMOOTHING_WEIGHTS,
+                        smoothed[idx - half_window : idx + half_window + 1],
+                    )
+                )
             smoothed = updated
 
     anchor_ages = np.concatenate([[1.0], anchors["age_bin"].to_numpy(dtype=float)])
     anchor_volumes = np.concatenate([[1e-6], smoothed])
-    pchip = PchipInterpolator(anchor_ages, anchor_volumes, extrapolate=True)
+    pchip = PchipInterpolator(anchor_ages, anchor_volumes, extrapolate=False)
     curve_x = np.arange(1, int(curve_max_age), dtype=float)
-    curve_y = np.asarray(pchip(curve_x), dtype=float)
+    clamped_x = np.minimum(curve_x, float(anchor_ages[-1]))
+    curve_y = np.asarray(pchip(clamped_x), dtype=float)
+    curve_y = _splice_exponential_toe(
+        x_curve=curve_x,
+        y_curve=curve_y,
+        first_anchor_age=float(anchors["age_bin"].iloc[0]),
+    )
     curve_y = np.nan_to_num(curve_y, nan=0.0, posinf=0.0, neginf=0.0)
     curve_y = np.maximum(curve_y, 1e-6)
     return curve_x, curve_y
@@ -97,8 +214,8 @@ def select_au_first_growth_curve(
     *,
     vdyp_out: dict[int, pd.DataFrame],
     min_source_stands: int = _DEFAULT_MIN_SOURCE_STANDS,
-    min_age: int = 30,
-    max_age: int = 350,
+    min_age: int = _MIN_BIN_AGE,
+    max_age: int = _MAX_SOURCE_BIN_AGE,
     bin_years: int = 5,
     smoothing_passes: int = _SMOOTHING_PASSES,
 ) -> AuFirstGrowthSelectionResult:

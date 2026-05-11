@@ -1907,6 +1907,119 @@ def test_execute_curve_smoothing_runs_builds_output_and_logs_missing(
     assert len(fallback_events) == 1
 
 
+def test_execute_curve_smoothing_runs_can_use_smoothed_bin_pchip_selector(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    def failing_process(
+        _vdyp_out: object, **_kwargs: object
+    ) -> tuple[list[float], list[float]]:
+        raise AssertionError("legacy NLLS smoother should not run in selector mode")
+
+    stand_a = pd.DataFrame(
+        {
+            "Vdwb": [15.0, 18.0, 22.0, 26.0, 210.0, 220.0, 225.0, 230.0],
+        },
+        index=pd.Index([30, 35, 40, 45, 150, 155, 160, 165], name="Age"),
+    )
+    stand_b = pd.DataFrame(
+        {
+            "Vdwb": [14.0, 17.0, 21.0, 25.0, 205.0, 215.0, 220.0, 226.0],
+        },
+        index=pd.Index([30, 35, 40, 45, 150, 155, 160, 165], name="Age"),
+    )
+
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-au-selector",
+        results_for_tsa=[(1, "MS_PLI", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: stand_a, 102: stand_b}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=failing_process,
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        use_au_first_growth_selector=True,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert len(smoothed_runs) == 1
+    assert smoothed_runs[0].stratum_code == "MS_PLI"
+    assert smoothed_runs[0].si_level == "L"
+    assert np.all(np.diff(np.asarray(smoothed_runs[0].x, dtype=float)) > 0)
+    assert np.all(np.asarray(smoothed_runs[0].y, dtype=float) >= 1e-6)
+    selection_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert selection_events
+    assert selection_events[-1].get("selected_path") == "smoothed_bin_pchip"
+
+
+def test_execute_curve_smoothing_runs_logs_insufficient_support_in_selector_mode(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    events: list[dict[str, object]] = []
+
+    def append_event(_path: str | Path, payload: object) -> None:
+        assert isinstance(payload, dict)
+        events.append(payload)
+
+    single_stand = pd.DataFrame(
+        {
+            "Vdwb": [15.0, 18.0, 22.0, 26.0, 210.0, 220.0, 225.0, 230.0],
+        },
+        index=pd.Index([30, 35, 40, 45, 150, 155, 160, 165], name="Age"),
+    )
+
+    smoothed_runs = execute_curve_smoothing_runs(
+        tsa="29",
+        run_id="run-au-selector-insufficient",
+        results_for_tsa=[(1, "MS_PLI", {})],
+        si_levels=["L"],
+        vdyp_results_for_tsa={1: {"L": {101: single_stand}}},
+        kwarg_overrides_for_tsa={},
+        process_vdyp_out_fn=lambda *_a, **_k: (_ for _ in ()).throw(
+            AssertionError("legacy NLLS smoother should not run in selector mode")
+        ),
+        append_jsonl_fn=append_event,
+        vdyp_curve_events_path="curve.jsonl",
+        curve_fit_fn=lambda *_a, **_k: None,
+        body_fit_func=lambda *_a, **_k: None,
+        body_fit_func_bounds_func=lambda *_a, **_k: None,
+        toe_fit_func=lambda *_a, **_k: None,
+        toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        use_au_first_growth_selector=True,
+        message_fn=lambda *_args, **_kwargs: None,
+    )
+
+    assert smoothed_runs == []
+    selection_events = [
+        event
+        for event in events
+        if event.get("stage") == "fallback_policy"
+        and event.get("reason") == "curve_selected"
+    ]
+    assert selection_events
+    assert selection_events[-1].get("selected_path") == "insufficient_source_stands"
+
+
 def test_execute_curve_smoothing_runs_prefers_tail_blend_for_k3z_output(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

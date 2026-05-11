@@ -17342,3 +17342,23 @@
     default and NLLS is clearly legacy/fallback; and
   - added a focused docs-contract test to keep that default-method framing from
     drifting back.
+## 2026-05-10 - Locked the accepted smoothed AU first-growth selector and TSA29 curve library
+- `#187` / `#188` / `P67.3a-P67.3c` selector-and-artifact lock:
+  - switched the TSA29 unmanaged VDYP smoothing lane onto the shared
+    AU-level selector in `src/femic/pipeline/au_first_growth.py` and
+    kept that selector as the promoted shared/default surface in the parent repo;
+  - locked the accepted selector contract at:
+    - minimum trusted source-bin age `60`;
+    - maximum trusted source-bin age `300`;
+    - seven-point / four-pass smoothing;
+    - local early-window left-bin censoring; and
+    - legacy exponential toe splice blended into the smoothed PCHIP body;
+  - regenerated and accepted the TSA29 curve artifact library:
+    - `data/vdyp_curves_smooth-tsa29.feather`;
+    - `plots/vdyp_fitdiag_tsa29-*.png`;
+    - `plots/vdyp_lmh_tsa29-*.png`; and
+    - `evidence/curve_selection_summary-tsa29-p67_3b_tsa29_smoothed_default_20260510g.csv`;
+  - confirmed the accepted selector still chooses `smoothed_bin_pchip` for all
+    `54` TSA29 AU/stratum-SI rows; and
+  - recorded that there are currently no TSA29
+    `insufficient_source_stands` rows under the accepted selector contract.
