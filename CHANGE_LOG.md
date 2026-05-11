@@ -17423,7 +17423,7 @@
 ## 2026-05-10 - Reduced TSA29 TIPSY catchall dominance before the next BTC rerun
 - `P68.1g` TSA29 managed-rule normalization:
   - reset the TSA29 treated SI transform to the requested clean-read surface
-    of `SI_c1=1.0`, `SI_c2=1.0`;
+    of `SI_c1=1.0`, `SI_c2=0.0`;
   - promoted the obvious Table 40-aligned managed families out of literal
     catchall into explicit TSA29 proxy rules for:
     - non-IDF fir (`ICH` / `SBS` fir-leading cases),
@@ -17437,3 +17437,36 @@
     - literal `tsa29_all_aus_catchall` usage dropped from `24` AUs to `17`; and
     - the live builder still produces `0` inverted `L/M/H` SI ladders across
       the current TSA29 managed/TIPSY AU surface.
+- `P68.1h` rerun prerequisites were then narrowed further before any BTC rerun:
+  - explicit remaps accepted for the next bounded move:
+    - ICH cedar `HW` alias expansion,
+    - `MS_PL` low-site pin back into the MS pine proxy, and
+    - `SBPS_PL` / `SBPS_PLI` high-site pins back into the SBPS pine proxy; and
+  - provisional local-extension families intentionally held back from silent
+    auto-remap in this move:
+    - `ESSF_PL`,
+    - `ESSF_PLI`,
+    - `ICH_SX`, and
+    - `SBPS_SX`.
+## 2026-05-10 - Re-anchored TSA29 BTC/TIPSY rerun on fresh Stage 01a inputs
+- `P68.1h` fresh-input rerun and plot refresh:
+  - confirmed that `femic tsa btc-post-tipsy` is a consumer-only seam and does
+    not regenerate `tipsy_params_tsa29.xlsx` or `03_input-tsa29.csv`;
+  - regenerated the TSA29 Stage 01a TIPSY handoff artifacts directly from the
+    current cached TSA29 PKL/feather surfaces and live
+    `build_tipsy_params_for_tsa(...)` logic:
+    - `external/femic-tsa29-instance/data/tipsy_params_tsa29.xlsx`
+    - `external/femic-tsa29-instance/data/03_input-tsa29.csv`;
+  - reran `femic tsa btc-post-tipsy --instance-root external/femic-tsa29-instance --run-config config/run_profile.tsa29.yaml --tsa 29 --run-id p68_1h_tipsy_remap_refresh_20260510c`;
+  - verified the rebuilt exported TSA29 TIPSY input surfaces now carry sane
+    monotone SI ladders, including:
+    - `ESSF_SE`: `7.4 / 9.3 / 12.3`,
+    - `ICH_CW`: `9.4 / 12.0 / 16.3`, and
+    - `SBS_SX`: `14.3 / 17.4 / 19.6`;
+  - verified the rebuilt run manifest reports:
+    - `54` AU rows,
+    - `108` curves, and
+    - `18,090` curve points; and
+  - regenerated the full `54` `plots/tipsy_vdyp_tsa29-*.png` comparison
+    overlays from the fresh Stage 01a handoff rather than the stale exported
+    TIPSY input surface.

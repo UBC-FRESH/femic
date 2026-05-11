@@ -1877,8 +1877,17 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P68.1g Reduce `tsa29_all_aus_catchall` dominance before the next TSA29 BTC/TIPSY rerun by:
     - promoting the obvious Table 40-aligned managed-AU families out of catchall into explicit TSA29 proxy rules;
     - lowering the residual fallback plantation density to `1100` stems/ha; and
-    - resetting the TSA29 treated SI transform to the user-requested `SI_c1=1.0`, `SI_c2=1.0` for the next clean shape-read rerun.
-  - [ ] P68.1h Re-anchor the TSA29 TIPSY comparison rerun on current live builder output, not stale exported workbook/CSV artifacts, and verify there are no inverted `L/M/H` SI ladders in the rebuilt managed AU surface before regenerating comparison plots.
+    - resetting the TSA29 treated SI transform to the user-requested `SI_c1=1.0`, `SI_c2=0.0` for the next clean shape-read rerun.
+  - [x] P68.1h Re-anchor the TSA29 TIPSY comparison rerun on current live builder output, not stale exported workbook/CSV artifacts, and verify there are no inverted `L/M/H` SI ladders in the rebuilt managed AU surface before regenerating comparison plots.
+    - use fresh regenerated TIPSY input artifacts (`tipsy_params_tsa29.xlsx`, `03_input-tsa29.csv`) as the only admissible rerun input surface;
+    - apply the additional agreed remaps before rerun:
+      - explicit remaps:
+        - expand the ICH cedar proxy to match the `HW` alias that appears on live TSA29 cedar rows;
+        - pin `MS_PL` low-site rows back into the existing MS pine proxy; and
+        - pin `SBPS_PL` / `SBPS_PLI` high-site rows back into the existing poor-site SBPS pine proxy; and
+      - provisional remap notes:
+        - `ESSF_PL`, `ESSF_PLI`, `ICH_SX`, and `SBPS_SX` remain unresolved local-extension families and should stay out of any silent auto-remap in this bounded move;
+    - rerun BTC/post-TIPSY only after those remaps are on the live builder surface and validated.
 - [ ] P68.2 Reread and rebuild TSA29-instance docs/figure surfaces (`UBC-FRESH/femic-tsa29-instance#3`)
   - [ ] P68.2a Reread the instance docs with focus on pages that mention or embed yield-curve comparisons.
   - [ ] P68.2b Update figure references, galleries, counts, and narrative interpretation to match the accepted `30`-plot comparison library.
@@ -1934,7 +1943,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - the next gating work before any refreshed BTC/TIPSY rerun is now:
     - `P68.1g` is complete:
       - the TSA29 treated SI transform now uses the user-requested
-        `SI_c1=1.0`, `SI_c2=1.0`;
+        `SI_c1=1.0`, `SI_c2=0.0`;
       - the obvious Table 40-aligned managed families were promoted out of
         literal catchall into explicit TSA29 proxy rules for:
         - non-IDF fir,
@@ -1948,7 +1957,38 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
       than stale exported TSA29 TIPSY artifacts, because the current tracked
       `tipsy_params_tsa29.xlsx` / `03_input-tsa29.csv` surfaces still show
       inverted `L/M/H` SI ladders that are not present in the live
-      `build_tipsy_params_for_tsa(...)` output; and
+      `build_tipsy_params_for_tsa(...)` output;
+      - the agreed additional remaps for that rerun are:
+        - explicit:
+          - ICH cedar `HW` alias expansion,
+          - `MS_PL` low-site pin back into the MS pine proxy, and
+          - `SBPS_PL` / `SBPS_PLI` high-site pins back into the SBPS pine proxy;
+        - intentionally deferred provisional families:
+          - `ESSF_PL`,
+          - `ESSF_PLI`,
+          - `ICH_SX`, and
+        - `SBPS_SX`; and
+      - `P68.1h` is now complete:
+        - `btc-post-tipsy` was confirmed to be a consumer-only seam that does
+          not regenerate Stage 01a TIPSY inputs;
+        - the stale input problem was resolved by rebuilding
+          `tipsy_params_tsa29.xlsx` and `03_input-tsa29.csv` directly from the
+          current cached TSA29 PKL/feather surfaces and live
+          `build_tipsy_params_for_tsa(...)` logic before rerunning BTC;
+        - the rebuilt exported TSA29 TIPSY input surfaces now carry sane
+          monotone SI ladders, for example:
+          - `ESSF_SE`: `7.4 / 9.3 / 12.3`,
+          - `ICH_CW`: `9.4 / 12.0 / 16.3`, and
+          - `SBS_SX`: `14.3 / 17.4 / 19.6`;
+        - the rebuilt `btc-post-tipsy` run manifest at
+          `runtime/logs/run_manifest-p68_1h_tipsy_remap_refresh_20260510c.json`
+          reports:
+          - `54` AU rows,
+          - `108` curves, and
+          - `18,090` curve points; and
+        - the regenerated comparison library now contains the full `54`
+          `plots/tipsy_vdyp_tsa29-*.png` overlays rebuilt from the fresh
+          Stage 01a handoff rather than the stale exported input surface; and
   - downstream Patchworks/model-input rebuild work is explicitly deferred to a
     later phase after Phase 68 plot/docs acceptance is complete.
 - Phase 67 smoothed AU-level first-growth promotion is now opened on `#187`
