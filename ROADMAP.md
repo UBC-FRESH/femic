@@ -1874,6 +1874,11 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [ ] P68.1d Lock the accepted comparison plot set with an instance commit, issue update, and PR.
   - [x] P68.1e Normalize the parent/runtime handoff contract to make BTC CSV the only canonical TIPSY input/output lane (`#190`), then remove TSA29 DAT/`.out` trap artifacts.
   - [x] P68.1f Audit the official TSR 2024 managed-AU taxonomy against the current TSA29 managed/TIPSY lane and build a cross-reference table for rule coverage and catchall hits.
+  - [x] P68.1g Reduce `tsa29_all_aus_catchall` dominance before the next TSA29 BTC/TIPSY rerun by:
+    - promoting the obvious Table 40-aligned managed-AU families out of catchall into explicit TSA29 proxy rules;
+    - lowering the residual fallback plantation density to `1100` stems/ha; and
+    - resetting the TSA29 treated SI transform to the user-requested `SI_c1=1.0`, `SI_c2=1.0` for the next clean shape-read rerun.
+  - [ ] P68.1h Re-anchor the TSA29 TIPSY comparison rerun on current live builder output, not stale exported workbook/CSV artifacts, and verify there are no inverted `L/M/H` SI ladders in the rebuilt managed AU surface before regenerating comparison plots.
 - [ ] P68.2 Reread and rebuild TSA29-instance docs/figure surfaces (`UBC-FRESH/femic-tsa29-instance#3`)
   - [ ] P68.2a Reread the instance docs with focus on pages that mention or embed yield-curve comparisons.
   - [ ] P68.2b Update figure references, galleries, counts, and narrative interpretation to match the accepted `30`-plot comparison library.
@@ -1926,6 +1931,24 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
       - non-Table-40 local extensions, and
       - literal catchall-rule artifacts
       before any plot-family lock decision; and
+  - the next gating work before any refreshed BTC/TIPSY rerun is now:
+    - `P68.1g` is complete:
+      - the TSA29 treated SI transform now uses the user-requested
+        `SI_c1=1.0`, `SI_c2=1.0`;
+      - the obvious Table 40-aligned managed families were promoted out of
+        literal catchall into explicit TSA29 proxy rules for:
+        - non-IDF fir,
+        - SBS spruce, and
+        - ICH cedar; and
+      - literal `tsa29_all_aus_catchall` usage in live
+        `build_tipsy_params_for_tsa(...)` output dropped from `24` AUs to `17`
+        while preserving `0` inverted `L/M/H` SI ladders in the live builder
+        surface; and
+    - `P68.1h`: verify the rerun uses the current live builder surface rather
+      than stale exported TSA29 TIPSY artifacts, because the current tracked
+      `tipsy_params_tsa29.xlsx` / `03_input-tsa29.csv` surfaces still show
+      inverted `L/M/H` SI ladders that are not present in the live
+      `build_tipsy_params_for_tsa(...)` output; and
   - downstream Patchworks/model-input rebuild work is explicitly deferred to a
     later phase after Phase 68 plot/docs acceptance is complete.
 - Phase 67 smoothed AU-level first-growth promotion is now opened on `#187`

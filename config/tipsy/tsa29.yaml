@@ -48,7 +48,7 @@ defaults:
     GW_age_5: null
   f:
     SI_c1: 1.0
-    SI_c2: 2.0
+    SI_c2: 1.0
     OAF2: 0.95
     FIZ: "I"
     Regen_Method: "P"
@@ -274,6 +274,111 @@ rules:
         GW_age_1: 12
         Util_DBH_cm: 17.5
 
+  # Table 40-aligned proxy: FD all-zone managed families outside the IDF lane.
+  - id: "tsa29_fir_allzone_proxy"
+    when:
+      bec_in: ["ICH", "SBS"]
+      leading_species_in: ["F", "FD", "FDC", "FDI"]
+    assign:
+      e:
+        Proportion: 0.10
+        Regen_Method: "N"
+        Regen_Delay: 3
+        Density: 1139
+        SPP_1: "PL"
+        PCT_1: 42
+        SPP_2: "FD"
+        PCT_2: 24
+        SPP_3: "AT"
+        PCT_3: 17
+        SPP_4: "SX"
+        PCT_4: 15
+        SPP_5: "BL"
+        PCT_5: 3
+        Util_DBH_cm: 17.5
+      f:
+        Proportion: 0.90
+        Regen_Method: "P"
+        Regen_Delay: 2
+        Density: 1139
+        SPP_1: "FD"
+        PCT_1: 24
+        SPP_2: "PLI"
+        PCT_2: 42
+        SPP_3: "AT"
+        PCT_3: 17
+        SPP_4: "SX"
+        PCT_4: 15
+        SPP_5: "BL"
+        PCT_5: 3
+        GW_1: 9.0
+        GW_age_1: 12
+        Util_DBH_cm: 17.5
+
+  # Table 40-aligned proxy: SBS spruce managed families.
+  - id: "tsa29_spruce_sbs_proxy"
+    when:
+      bec_in: ["SBS"]
+      leading_species_in: ["S", "SB", "SE", "SN", "SS", "SW", "SX", "SXE", "SXL", "SXW"]
+    assign:
+      e:
+        Proportion: 0.00
+        Regen_Method: "N"
+        Regen_Delay: 2
+        Density: 1255
+        SPP_1: "SX"
+        PCT_1: 49
+        SPP_2: "PL"
+        PCT_2: 28
+        SPP_3: "AT"
+        PCT_3: 9
+        SPP_4: "BL"
+        PCT_4: 8
+        SPP_5: "FD"
+        PCT_5: 6
+        Util_DBH_cm: 17.5
+      f:
+        Proportion: 1.00
+        Regen_Method: "P"
+        Regen_Delay: 2
+        Density: 1255
+        SPP_1: "SW"
+        PCT_1: 49
+        SPP_2: "PL"
+        PCT_2: 28
+        SPP_3: "AT"
+        PCT_3: 9
+        SPP_4: "BL"
+        PCT_4: 8
+        SPP_5: "FD"
+        PCT_5: 6
+        GW_1: 12.8
+        GW_age_1: 12
+        Util_DBH_cm: 17.5
+
+  # Table 40-aligned proxy: ICH cedar managed families.
+  - id: "tsa29_cedar_ich_proxy"
+    when:
+      bec_in: ["ICH"]
+      leading_species_in: ["C", "CW", "YC"]
+    assign:
+      e:
+        Proportion: 0.00
+        Regen_Method: "N"
+        Regen_Delay: 2
+        Density: 1100
+        SPP_1: "HW"
+        PCT_1: 100
+        Util_DBH_cm: 17.5
+      f:
+        Proportion: 1.00
+        Regen_Method: "P"
+        Regen_Delay: 2
+        Density: 1100
+        SPP_1: "HW"
+        PCT_1: 100
+        Util_DBH_cm: 17.5
+
   - id: "tsa29_all_aus_catchall"
     when: {}
     assign:
@@ -285,7 +390,7 @@ rules:
         Util_DBH_cm: 17.5
       f:
         Regen_Delay: 1
-        Density: 1400
+        Density: 1100
         SPP_1: "$leading_species_tipsy"
         PCT_1: 100
         Util_DBH_cm: 17.5

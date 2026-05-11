@@ -17420,3 +17420,20 @@
   - narrowed the active Phase 68 analysis problem from a vague “hot TIPSY
     curves” concern to a concrete rule-coverage and managed-AU taxonomy
     mismatch.
+## 2026-05-10 - Reduced TSA29 TIPSY catchall dominance before the next BTC rerun
+- `P68.1g` TSA29 managed-rule normalization:
+  - reset the TSA29 treated SI transform to the requested clean-read surface
+    of `SI_c1=1.0`, `SI_c2=1.0`;
+  - promoted the obvious Table 40-aligned managed families out of literal
+    catchall into explicit TSA29 proxy rules for:
+    - non-IDF fir (`ICH` / `SBS` fir-leading cases),
+    - `SBS` spruce-leading cases, and
+    - `ICH` cedar-leading cases;
+  - lowered the residual TSA29 fallback plantation density from `1400` to
+    `1100` stems/ha;
+  - validated the updated config with targeted `tests/test_tipsy_config.py`
+    coverage; and
+  - verified on the live `build_tipsy_params_for_tsa(...)` surface that:
+    - literal `tsa29_all_aus_catchall` usage dropped from `24` AUs to `17`; and
+    - the live builder still produces `0` inverted `L/M/H` SI ladders across
+      the current TSA29 managed/TIPSY AU surface.
