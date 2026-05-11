@@ -17574,3 +17574,12 @@
   - moved the comparison library from “mentioned in prose” to “directly
     rendered in the standalone docs” ahead of the warning-clean Sphinx rebuild
     step.
+## 2026-05-11 - Validated the refreshed TSA29 docs surface with a warning-clean Sphinx build
+- `P68.2d` docs validation:
+  - ran `..\\..\\.venv\\Scripts\\python.exe -m sphinx -b html docs _build/html -W`
+    from `external/femic-tsa29-instance`;
+  - confirmed the TSA29-instance docs now build warning-clean on the refreshed
+    comparison/docs surface; and
+  - confirmed the rendered output includes the new
+    `yield-curve-comparisons` page and copies the full accepted refreshed
+    `54`-plot `tipsy_vdyp_tsa29-*.png` library into `_build/html`.

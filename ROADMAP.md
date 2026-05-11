@@ -1895,7 +1895,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P68.2a Reread the instance docs with focus on pages that mention or embed yield-curve comparisons.
   - [x] P68.2b Update figure references, galleries, counts, and narrative interpretation to match the accepted `54`-plot comparison library.
   - [x] P68.2c Refresh any docs pages that should surface the accepted comparison plots, including yield-curve and figure-appendix style pages if present.
-  - [ ] P68.2d Run the TSA29-instance Sphinx build and keep it warning-clean.
+  - [x] P68.2d Run the TSA29-instance Sphinx build and keep it warning-clean.
   - [ ] P68.2e Lock the docs refresh with an instance commit, issue update, and PR.
 
 ### Detailed Next Steps Notes
@@ -1908,4 +1908,5 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P68.2a` complete
   - `P68.2b` complete
   - `P68.2c` complete
-  - next bounded move is `P68.2d`
+  - `P68.2d` complete
+  - next bounded move is `P68.2e`

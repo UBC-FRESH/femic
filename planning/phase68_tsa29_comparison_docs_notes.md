@@ -212,5 +212,23 @@ What changed:
 
 ## Next Bounded Move
 
-`P68.2d`: run the warning-clean TSA29-instance Sphinx build against the
-refreshed docs surface.
+### P68.2d
+
+`P68.2d` is complete.
+
+Validation run:
+- `..\..\.venv\Scripts\python.exe -m sphinx -b html docs _build/html -W`
+  from `external/femic-tsa29-instance`
+
+Outcome:
+- the TSA29-instance Sphinx build completed warning-clean on the refreshed
+  docs surface;
+- the rendered build included the new `yield-curve-comparisons` page and copied
+  the full accepted `54`-plot `tipsy_vdyp_tsa29-*.png` gallery into
+  `_build/html`; and
+- no additional doc fixes were required to satisfy the warning gate.
+
+## Next Bounded Move
+
+`P68.2e`: lock the docs refresh lane with the committed instance docs changes,
+issue updates, and the final Phase 68 docs-closeout bookkeeping.
