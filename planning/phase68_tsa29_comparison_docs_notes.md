@@ -192,7 +192,25 @@ What changed:
 - updated comparison-surface narrative and counts to the accepted refreshed
   `54`-plot `tipsy_vdyp_tsa29-*.png` library.
 
+### P68.2c
+
+`P68.2c` is complete.
+
+Updated docs surfaces:
+- `external/femic-tsa29-instance/docs/index.rst`
+- `external/femic-tsa29-instance/docs/getting-started.rst`
+- `external/femic-tsa29-instance/docs/rebuild-and-qa.rst`
+- `external/femic-tsa29-instance/docs/figure-appendix.rst`
+- `external/femic-tsa29-instance/docs/yield-curve-comparisons.rst`
+
+What changed:
+- added a dedicated TSA29 `yield-curve-comparisons` page that renders the
+  accepted refreshed `54`-plot `tipsy_vdyp_tsa29-*.png` gallery inline;
+- wired that page into the instance docs toctree and guide flow; and
+- updated figure-appendix/rebuild/getting-started references so the accepted
+  comparison plots are directly surfaced rather than only mentioned in prose.
+
 ## Next Bounded Move
 
-`P68.2c`: refresh the TSA29 docs pages that should directly surface the
-accepted comparison plots, then run the warning-clean Sphinx build in `P68.2d`.
+`P68.2d`: run the warning-clean TSA29-instance Sphinx build against the
+refreshed docs surface.

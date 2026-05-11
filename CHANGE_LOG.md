@@ -17561,3 +17561,16 @@
     - `external/femic-tsa29-instance/docs/figure-appendix.rst`
     - `external/femic-tsa29-instance/docs/land-base-and-assumptions.rst`
     - `external/femic-tsa29-instance/runbooks/REBUILD_RUNBOOK.md`
+## 2026-05-11 - Surfaced the TSA29 accepted comparison plots directly in the docs
+- `P68.2c` docs-surface refresh:
+  - added `external/femic-tsa29-instance/docs/yield-curve-comparisons.rst`
+    to render the accepted refreshed `54`-plot `tipsy_vdyp_tsa29-*.png`
+    library inline;
+  - wired that page into the TSA29 instance guide toctree and guide flow via:
+    - `external/femic-tsa29-instance/docs/index.rst`
+    - `external/femic-tsa29-instance/docs/getting-started.rst`
+    - `external/femic-tsa29-instance/docs/rebuild-and-qa.rst`
+    - `external/femic-tsa29-instance/docs/figure-appendix.rst`; and
+  - moved the comparison library from “mentioned in prose” to “directly
+    rendered in the standalone docs” ahead of the warning-clean Sphinx rebuild
+    step.
