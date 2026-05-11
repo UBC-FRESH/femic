@@ -17475,7 +17475,28 @@
   - removed `external/femic-tsa29-instance/data/tipsy_params_tsa29.xlsx` from
     the active TSA29 comparison/docs lane;
   - updated the TSA29 instance docs, rebuild spec, checksum manifest, and
-    runbook surfaces so they no longer present the workbook mirror as part of
-    the live rerun surface; and
+  runbook surfaces so they no longer present the workbook mirror as part of
+  the live rerun surface; and
   - narrowed the Phase 68 acceptance contract to the canonical BatchTIPSY CSV
     handoff only: `03_input-tsa29.csv`.
+## 2026-05-10 - Tuned TSA29 low-yield TIPSY uplift pins against the rebuilt VDYP lane
+- `P68.1j` TSA29 uplift retune and rerun:
+  - fixed the config-driven rule-selection seam in
+    `build_tipsy_params_for_tsa(...)` so the builder now passes both
+    `stratum_code` and `si_level` into the config-driven TIPSY matcher;
+  - applied narrow provisional treated-side SI uplift pins for the weak
+    low-yield families that still retained meaningful THLB area:
+    - `SBPS_PL` / `SBPS_PLI` low and medium,
+    - `MS_PL` medium, and
+    - `ESSF_PL` / `ESSF_PLI` low, medium, and high;
+  - regenerated the live Stage 01a TSA29 BatchTIPSY handoff directly from the
+    cached PKL/feather inputs into
+    `external/femic-tsa29-instance/data/03_input-tsa29.csv`;
+  - reran unattended BTC to the canonical CSV output surface:
+    - `external/femic-tsa29-instance/data/04_output-tsa29.csv`
+    - `external/femic-tsa29-instance/data/04_output-tsa29.csv.input_sha256`;
+  - reparsed the refreshed BTC output into
+    `external/femic-tsa29-instance/data/tipsy_curves_tsa29.csv`; and
+  - rebuilt the full `54` `external/femic-tsa29-instance/plots/tipsy_vdyp_tsa29-*.png`
+    overlays, with the originally weak low-yield age-200 `TIPSY / VDYP`
+    ratios now landing in a usable band of about `0.81 .. 1.18`.

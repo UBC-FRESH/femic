@@ -2674,6 +2674,66 @@ def test_build_tipsy_params_for_tsa_logs_missing_vdyp_output_warning() -> None:
     assert events[0]["reason"] == "missing_vdyp_output"
 
 
+def test_build_tipsy_params_for_tsa_passes_si_level_to_builder() -> None:
+    captured: list[dict[str, object]] = []
+    results_for_tsa = [
+        (
+            0,
+            "SBS_7A",
+            {
+                "L": {
+                    "ss": pd.DataFrame(
+                        {
+                            "SITE_INDEX": [18.0],
+                            "siteprod": [17.0],
+                            "BEC_ZONE_CODE": ["SBS"],
+                        }
+                    ),
+                    "species": {"SW": {"pct": 60.0}},
+                }
+            },
+        )
+    ]
+    vdyp_curves_smooth_tsa = pd.DataFrame(
+        {
+            "stratum_code": ["SBS_7A", "SBS_7A"],
+            "si_level": ["L", "L"],
+            "age": [30, 120],
+            "volume": [160.0, 220.0],
+        }
+    )
+    exclusion = {
+        "min_vol": lambda _code: 140.0,
+        "min_si": lambda _species: 10.0,
+        "excl_leading_species": [],
+        "excl_bec": [],
+    }
+
+    def _builder(
+        au_id: int,
+        au_data: object,
+        _vdyp_out: object,
+    ) -> dict[str, dict[str, object]]:
+        captured.append(dict(au_data))
+        return {"f": {"TBLno": 20000 + au_id}}
+
+    _ = build_tipsy_params_for_tsa(
+        tsa="08",
+        results_for_tsa=results_for_tsa,
+        si_levels=["L"],
+        vdyp_curves_smooth_tsa=vdyp_curves_smooth_tsa,
+        vdyp_results_for_tsa={0: {"L": {"dummy": 1}}},
+        exclusion=exclusion,
+        tipsy_param_builder=_builder,
+        verbose=False,
+        message_fn=lambda *_args: None,
+    )
+
+    assert len(captured) == 1
+    assert captured[0]["stratum_code"] == "SBS_7A"
+    assert captured[0]["si_level"] == "L"
+
+
 def test_build_tipsy_params_for_tsa_skips_missing_fit_si_level() -> None:
     results_for_tsa = [
         (

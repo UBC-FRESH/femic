@@ -73,6 +73,87 @@ defaults:
     GW_age_5: null
 
 rules:
+  # Provisional Phase 68 tuning pin: low/medium SBPS pine families remain
+  # materially below the rebuilt VDYP lane on the comparison plots, so apply
+  # a narrow treated-side SI uplift before the broader poor-site pine proxy.
+  - id: "tsa29_sbps_pli_lm_uplift"
+    when:
+      stratum_code_in: ["SBPS_PLI"]
+      si_level_in: ["L", "M"]
+    assign:
+      e:
+        Proportion: 0.70
+        Regen_Method: "N"
+        Regen_Delay: 4
+        Density: 1001
+        SPP_1: "PL"
+        PCT_1: 87
+        SPP_2: "AT"
+        PCT_2: 10
+        SPP_3: "FD"
+        PCT_3: 1
+        SPP_4: "SX"
+        PCT_4: 1
+        Util_DBH_cm: 12.5
+      f:
+        SI_c1: 1.18
+        SI_c2: 0.0
+        Proportion: 0.30
+        Regen_Method: "P"
+        Regen_Delay: 4
+        Density: 1001
+        SPP_1: "PL"
+        PCT_1: 87
+        SPP_2: "AT"
+        PCT_2: 10
+        SPP_3: "FD"
+        PCT_3: 1
+        SPP_4: "SX"
+        PCT_4: 1
+        GW_1: 3.0
+        GW_age_1: 12
+        Util_DBH_cm: 12.5
+
+  # Provisional Phase 68 tuning pin: low/medium SBPS pure-pine families are
+  # still below the rebuilt VDYP lane, but less severely than the PLI family.
+  - id: "tsa29_sbps_pl_lm_uplift"
+    when:
+      stratum_code_in: ["SBPS_PL"]
+      si_level_in: ["L", "M"]
+    assign:
+      e:
+        Proportion: 0.70
+        Regen_Method: "N"
+        Regen_Delay: 4
+        Density: 1001
+        SPP_1: "PL"
+        PCT_1: 87
+        SPP_2: "AT"
+        PCT_2: 10
+        SPP_3: "FD"
+        PCT_3: 1
+        SPP_4: "SX"
+        PCT_4: 1
+        Util_DBH_cm: 12.5
+      f:
+        SI_c1: 1.14
+        SI_c2: 0.0
+        Proportion: 0.30
+        Regen_Method: "P"
+        Regen_Delay: 4
+        Density: 1001
+        SPP_1: "PL"
+        PCT_1: 87
+        SPP_2: "AT"
+        PCT_2: 10
+        SPP_3: "FD"
+        PCT_3: 1
+        SPP_4: "SX"
+        PCT_4: 1
+        GW_1: 3.0
+        GW_age_1: 12
+        Util_DBH_cm: 12.5
+
   # TSR 2013 Table 23 proxy: PL poor sites (30% treated / 70% untreated).
   - id: "tsa29_pine_poor_sbps"
     when:
@@ -149,6 +230,48 @@ rules:
         Util_DBH_cm: 12.5
 
   # TSR 2013 Table 23 proxy: PL medium/good sites (85% treated / 15% untreated).
+  - id: "tsa29_ms_pl_medium_uplift"
+    when:
+      stratum_code_in: ["MS_PL"]
+      si_level_in: ["M"]
+    assign:
+      e:
+        Proportion: 0.15
+        Regen_Method: "N"
+        Regen_Delay: 2
+        Density: 1133
+        SPP_1: "PL"
+        PCT_1: 62
+        SPP_2: "AT"
+        PCT_2: 17
+        SPP_3: "SX"
+        PCT_3: 10
+        SPP_4: "FD"
+        PCT_4: 8
+        SPP_5: "BL"
+        PCT_5: 3
+        Util_DBH_cm: 12.5
+      f:
+        SI_c1: 1.16
+        SI_c2: 0.0
+        Proportion: 0.85
+        Regen_Method: "P"
+        Regen_Delay: 2
+        Density: 1133
+        SPP_1: "PL"
+        PCT_1: 62
+        SPP_2: "AT"
+        PCT_2: 17
+        SPP_3: "SX"
+        PCT_3: 10
+        SPP_4: "FD"
+        PCT_4: 8
+        SPP_5: "BL"
+        PCT_5: 3
+        GW_1: 3.0
+        GW_age_1: 12
+        Util_DBH_cm: 12.5
+
   - id: "tsa29_pine_ms_sbps_idf"
     when:
       bec_in: ["MS", "IDF"]
@@ -457,6 +580,73 @@ rules:
         Regen_Delay: 2
         Density: 1100
         SPP_1: "HW"
+        PCT_1: 100
+        Util_DBH_cm: 17.5
+
+  # Provisional Phase 68 local-extension rule: ESSF pine families are not
+  # official Table 40 classes, but enough of their area survives the THLB low
+  # productivity filter that a modest treated-side SI uplift is warranted for
+  # shape comparison against the rebuilt VDYP lane.
+  - id: "tsa29_essf_pl_lm_uplift"
+    when:
+      stratum_code_in: ["ESSF_PL"]
+      si_level_in: ["L", "M"]
+    assign:
+      e:
+        Regen_Delay: 2
+        Density: 1100
+        SPP_1: "$leading_species_tipsy"
+        PCT_1: 100
+        Util_DBH_cm: 17.5
+      f:
+        SI_c1: 1.12
+        SI_c2: 0.0
+        Regen_Delay: 1
+        Density: 1100
+        SPP_1: "$leading_species_tipsy"
+        PCT_1: 100
+        Util_DBH_cm: 17.5
+
+  # Provisional Phase 68 local-extension rule: ESSF_PLI remains below the
+  # rebuilt VDYP lane even after the broader remap cleanup, with a stronger
+  # gap on L/M than on H.
+  - id: "tsa29_essf_pli_lm_uplift"
+    when:
+      stratum_code_in: ["ESSF_PLI"]
+      si_level_in: ["L", "M"]
+    assign:
+      e:
+        Regen_Delay: 2
+        Density: 1100
+        SPP_1: "$leading_species_tipsy"
+        PCT_1: 100
+        Util_DBH_cm: 17.5
+      f:
+        SI_c1: 1.19
+        SI_c2: 0.0
+        Regen_Delay: 1
+        Density: 1100
+        SPP_1: "$leading_species_tipsy"
+        PCT_1: 100
+        Util_DBH_cm: 17.5
+
+  - id: "tsa29_essf_pli_h_uplift"
+    when:
+      stratum_code_in: ["ESSF_PLI"]
+      si_level_in: ["H"]
+    assign:
+      e:
+        Regen_Delay: 2
+        Density: 1100
+        SPP_1: "$leading_species_tipsy"
+        PCT_1: 100
+        Util_DBH_cm: 17.5
+      f:
+        SI_c1: 1.11
+        SI_c2: 0.0
+        Regen_Delay: 1
+        Density: 1100
+        SPP_1: "$leading_species_tipsy"
         PCT_1: 100
         Util_DBH_cm: 17.5
 

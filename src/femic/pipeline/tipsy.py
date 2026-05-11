@@ -3975,6 +3975,7 @@ def build_tipsy_params_for_tsa(
             au_scsi_tsa[au] = (sc, rep_level)
             builder_au_data = dict(result_si)
             builder_au_data.setdefault("stratum_code", sc)
+            builder_au_data.setdefault("si_level", rep_level)
             tipsy_params_tsa[au] = tipsy_param_builder(au, builder_au_data, vdyp_result)
             message_fn()
     return scsi_au_tsa, au_scsi_tsa, tipsy_params_tsa
