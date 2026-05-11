@@ -19,6 +19,7 @@ from femic.pipeline.bundle import (
     BundleAssemblyResult,
     build_bundle_tables_from_curves,
     resolve_bundle_paths,
+    validate_complete_au_curve_mappings,
     write_bundle_tables,
 )
 from femic.pipeline.io import PipelineRunConfig, build_legacy_execution_plan
@@ -828,6 +829,10 @@ def run_post_tipsy_bundle(
         tipsy_species_proportions=tipsy_sppcomp,
         pd_module=pd,
         message_fn=message_fn,
+    )
+    validate_complete_au_curve_mappings(
+        missing_df=bundle.missing_au_curve_mappings,
+        top_n=10,
     )
     yield_assumptions_summary: dict[str, Any] | None = None
     if resolved_yield_assumptions_path is not None:

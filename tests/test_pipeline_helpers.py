@@ -42,6 +42,7 @@ from femic.pipeline.tsa import (
     assign_stratum_matches_from_au_table,
     apply_stratum_alias_map,
     build_au_assignment_null_summary,
+    build_missing_au_assignment_summary,
     build_strata_summary,
     build_stratum_lexmatch_alias_map,
     emit_missing_au_mapping_warning,
@@ -52,6 +53,7 @@ from femic.pipeline.tsa import (
     target_nstrata_for,
     normalize_tsa_code,
     select_tsa_slice,
+    validate_complete_au_assignment,
     validate_nonempty_au_assignment,
 )
 
@@ -579,8 +581,29 @@ def test_summarize_missing_au_mappings_and_null_summary() -> None:
     summary = build_au_assignment_null_summary(f_table=frame)
     assert summary["rows"] == 3
     assert summary["site_index_null"] == 2
+    missing_summary = build_missing_au_assignment_summary(f_table=frame, top_n=1)
+    assert missing_summary["rows"] == 3
+    assert missing_summary["top_missing"][0]["tsa_code"] == "08"
     with pytest.raises(ValueError, match="AU assignment produced no rows"):
         validate_nonempty_au_assignment(f_table=frame)
+
+
+def test_validate_complete_au_assignment_raises_on_residual_missing_rows() -> None:
+    frame = pd.DataFrame(
+        {
+            "tsa_code": ["29", "29"],
+            "stratum_matched": ["IDF_FD", "IDF_FD"],
+            "si_level": ["L", "M"],
+            "SITE_INDEX": [12.0, 18.0],
+            "FEATURE_AREA_SQM": [1000.0, 2000.0],
+            "au": [2900001, None],
+        }
+    )
+
+    with pytest.raises(
+        ValueError, match="residual AFLB rows unmapped after lexicographical"
+    ):
+        validate_complete_au_assignment(f_table=frame)
 
 
 def test_emit_missing_au_mapping_warning_emits_header_and_summary() -> None:

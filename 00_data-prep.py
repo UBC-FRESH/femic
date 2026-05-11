@@ -41,11 +41,11 @@ try:
         assign_curve_ids_from_au_table,
         build_bundle_tables_from_curves,
         bundle_tables_ready,
-        emit_missing_au_curve_mapping_warning,
         ensure_au_table_index,
         ensure_scsi_au_from_table,
         load_bundle_tables,
         resolve_bundle_paths,
+        validate_complete_au_curve_mappings,
         write_bundle_tables,
     )
     from femic.pipeline.legacy_runtime import (
@@ -84,9 +84,7 @@ try:
         assign_thlb_area_and_flag,
         assign_si_levels_from_stratum_quantiles,
         assign_stratum_matches_from_au_table,
-        emit_missing_au_mapping_warning,
-        summarize_missing_au_mappings,
-        validate_nonempty_au_assignment,
+        validate_complete_au_assignment,
     )
     from femic.pipeline.tipsy import (
         tipsy_input_dat_path,
@@ -108,11 +106,11 @@ except ModuleNotFoundError:
         assign_curve_ids_from_au_table,
         build_bundle_tables_from_curves,
         bundle_tables_ready,
-        emit_missing_au_curve_mapping_warning,
         ensure_au_table_index,
         ensure_scsi_au_from_table,
         load_bundle_tables,
         resolve_bundle_paths,
+        validate_complete_au_curve_mappings,
         write_bundle_tables,
     )
     from femic.pipeline.legacy_runtime import (
@@ -151,9 +149,7 @@ except ModuleNotFoundError:
         assign_thlb_area_and_flag,
         assign_si_levels_from_stratum_quantiles,
         assign_stratum_matches_from_au_table,
-        emit_missing_au_mapping_warning,
-        summarize_missing_au_mappings,
-        validate_nonempty_au_assignment,
+        validate_complete_au_assignment,
     )
     from femic.pipeline.tipsy import (
         tipsy_input_dat_path,
@@ -815,9 +811,7 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
             message_fn=print,
         )
         _missing_df = _bundle_assembly.missing_au_curve_mappings
-        emit_missing_au_curve_mapping_warning(
-            missing_df=_missing_df, message_fn=print, top_n=10
-        )
+        validate_complete_au_curve_mappings(missing_df=_missing_df, top_n=10)
         au_table = _bundle_assembly.au_table
         curve_table = _bundle_assembly.curve_table
         curve_points_table = _bundle_assembly.curve_points_table
@@ -910,22 +904,15 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
         si_level_col="si_level",
         au_col="au",
     )
-    if f_["au"].isnull().any():
-        _missing = summarize_missing_au_mappings(
-            f_table=f_,
-            au_col="au",
-            tsa_col="tsa_code",
-            stratum_matched_col="stratum_matched",
-            si_level_col="si_level",
-            top_n=10,
-        )
-        emit_missing_au_mapping_warning(summary=_missing, message_fn=print)
-    validate_nonempty_au_assignment(
+    validate_complete_au_assignment(
         f_table=f_,
         au_col="au",
+        tsa_col="tsa_code",
         site_index_col="SITE_INDEX",
         stratum_matched_col="stratum_matched",
         si_level_col="si_level",
+        area_col="FEATURE_AREA_SQM",
+        top_n=10,
     )
     f_ = f_[~f_.au.isnull()]
     f_.to_feather(checkpoint6_path)

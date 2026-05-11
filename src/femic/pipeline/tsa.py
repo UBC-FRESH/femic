@@ -467,6 +467,44 @@ def build_au_assignment_null_summary(
     }
 
 
+def build_missing_au_assignment_summary(
+    *,
+    f_table: Any,
+    au_col: str = "au",
+    tsa_col: str = "tsa_code",
+    stratum_matched_col: str = "stratum_matched",
+    si_level_col: str = "si_level",
+    area_col: str = "FEATURE_AREA_SQM",
+    top_n: int = 10,
+) -> dict[str, Any]:
+    """Summarize residual unmapped AU rows after the imputation pass."""
+    missing = f_table.loc[f_table[au_col].isnull()].copy()
+    summary: dict[str, Any] = {
+        "rows": int(len(missing)),
+        "area_sqm": 0.0,
+        "top_missing": [],
+    }
+    if missing.empty:
+        return summary
+    if area_col in missing.columns:
+        summary["area_sqm"] = float(missing[area_col].fillna(0.0).sum())
+    grouped = (
+        missing.loc[:, [tsa_col, stratum_matched_col, si_level_col]]
+        .value_counts(dropna=False)
+        .head(top_n)
+    )
+    summary["top_missing"] = [
+        {
+            "tsa_code": idx[0],
+            "stratum_matched": idx[1],
+            "si_level": idx[2],
+            "count": int(count),
+        }
+        for idx, count in grouped.items()
+    ]
+    return summary
+
+
 def validate_nonempty_au_assignment(
     *,
     f_table: Any,
@@ -487,6 +525,43 @@ def validate_nonempty_au_assignment(
     raise ValueError(
         "AU assignment produced no rows; check SITE_INDEX/stratum matching and "
         f"si_level assignment. Summary: {null_summary}"
+    )
+
+
+def validate_complete_au_assignment(
+    *,
+    f_table: Any,
+    au_col: str = "au",
+    tsa_col: str = "tsa_code",
+    stratum_matched_col: str = "stratum_matched",
+    si_level_col: str = "si_level",
+    site_index_col: str = "SITE_INDEX",
+    area_col: str = "FEATURE_AREA_SQM",
+    top_n: int = 10,
+) -> None:
+    """Raise when any post-imputation AFLB rows still lack AU assignment."""
+    validate_nonempty_au_assignment(
+        f_table=f_table,
+        au_col=au_col,
+        site_index_col=site_index_col,
+        stratum_matched_col=stratum_matched_col,
+        si_level_col=si_level_col,
+    )
+    missing = f_table.loc[f_table[au_col].isnull()]
+    if missing.empty:
+        return
+    summary = build_missing_au_assignment_summary(
+        f_table=f_table,
+        au_col=au_col,
+        tsa_col=tsa_col,
+        stratum_matched_col=stratum_matched_col,
+        si_level_col=si_level_col,
+        area_col=area_col,
+        top_n=top_n,
+    )
+    raise ValueError(
+        "AU assignment left residual AFLB rows unmapped after lexicographical "
+        f"stratum-matching imputation. Summary: {summary}"
     )
 
 
