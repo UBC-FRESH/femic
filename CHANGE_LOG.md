@@ -17299,3 +17299,66 @@
     BCDC/pipeline runtime artifacts; and
   - reduced the parent worktree back to the intentional tracked public-data
     pointer update instead of hundreds of untracked TSA29 runtime files.
+## 2026-05-10 - Opened the smoothed AU-level VDYP first-growth promotion lane
+- `#187` / `#188` planning and tracker kickoff:
+  - opened parent feature issue `#187` to promote `smoothed_bin_pchip` as the
+    official default for AU-level first-growth / unmanaged VDYP synthesis,
+    using the accepted MKRF evidence from `#177` / `#173`;
+  - opened TSA29-only child issue `#188` to adopt that promoted default on the
+    `femic-tsa29-instance` lane after the shared/default promotion lands; and
+  - updated `ROADMAP.md` so Phase 67 now governs the shared/default promotion
+    and TSA29 follow-on sequence.
+## 2026-05-10 - Audited where AU first-growth default-selection actually lives
+- `#187` / `P67.2a` audit checkpoint:
+  - confirmed `src/femic/pipeline/mkrf_first_growth.py` already hard-codes the
+    AU-level direct-fit selection to `smoothed_bin_pchip`;
+  - confirmed `src/femic/workflows/mkrf.py` already publishes that family into
+    MKRF runtime/metadata surfaces as the explicit first-growth curve family;
+  - confirmed `src/femic/pipeline/vdyp_stage.py` is still the older
+    stratum-level NLLS-oriented smoothing/fallback engine rather than a shared
+    AU-level first-growth default-selection seam; and
+  - recorded that the next implementation move must be a real shared/default
+    surface introduction under `P67.2b`, not a cosmetic flag flip in the
+    legacy stratum smoother.
+## 2026-05-10 - Added a reusable AU-level first-growth default-selection seam
+- `#187` / `P67.2b` shared-surface implementation:
+  - added `src/femic/pipeline/au_first_growth.py` as the reusable AU-level
+    first-growth selector implementing the promoted `smoothed_bin_pchip`
+    default path and explicit `insufficient_source_stands` fallback;
+  - switched `src/femic/pipeline/mkrf_first_growth.py` to consume that shared
+    selector instead of carrying the default-selection logic only as MKRF-local
+    private helpers;
+  - exported the new shared surface through `src/femic/pipeline/__init__.py`;
+  - added focused regression coverage in `tests/test_au_first_growth.py`; and
+  - kept `src/femic/pipeline/vdyp_stage.py` unchanged so the older
+    stratum-level NLLS-oriented smoothing path remains available for legacy
+    callers while the AU-level default-promotion lane moves forward.
+## 2026-05-10 - Updated docs/contracts framing for the promoted AU first-growth default
+- `#187` / `P67.2c` docs/contracts/test update:
+  - corrected the stale MKRF planning contract language that still described
+    AU-level first-growth synthesis as an NLLS-default lane;
+  - updated the diagnostics and pipeline guide surfaces so
+    `smoothed_bin_pchip` is described as the official AU-level first-growth
+    default and NLLS is clearly legacy/fallback; and
+  - added a focused docs-contract test to keep that default-method framing from
+    drifting back.
+## 2026-05-10 - Locked the accepted smoothed AU first-growth selector and TSA29 curve library
+- `#187` / `#188` / `P67.3a-P67.3c` selector-and-artifact lock:
+  - switched the TSA29 unmanaged VDYP smoothing lane onto the shared
+    AU-level selector in `src/femic/pipeline/au_first_growth.py` and
+    kept that selector as the promoted shared/default surface in the parent repo;
+  - locked the accepted selector contract at:
+    - minimum trusted source-bin age `60`;
+    - maximum trusted source-bin age `300`;
+    - seven-point / four-pass smoothing;
+    - local early-window left-bin censoring; and
+    - legacy exponential toe splice blended into the smoothed PCHIP body;
+  - regenerated and accepted the TSA29 curve artifact library:
+    - `data/vdyp_curves_smooth-tsa29.feather`;
+    - `plots/vdyp_fitdiag_tsa29-*.png`;
+    - `plots/vdyp_lmh_tsa29-*.png`; and
+    - `evidence/curve_selection_summary-tsa29-p67_3b_tsa29_smoothed_default_20260510g.csv`;
+  - confirmed the accepted selector still chooses `smoothed_bin_pchip` for all
+    `54` TSA29 AU/stratum-SI rows; and
+  - recorded that there are currently no TSA29
+    `insufficient_source_stands` rows under the accepted selector contract.

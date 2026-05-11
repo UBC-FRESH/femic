@@ -1848,8 +1848,89 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P66.3b Regenerate the canonical runtime package, rerun Matrix Builder, and rerun the canonical `100000`-iteration even-flow smoke.
   - [x] P66.3c Inspect representative lower-bucket and higher-bucket CT outputs, confirm CT-vs-no-CT full-rotation harvested-volume behavior, rebuild parent/instance docs warning-clean, and record the `v0.0.2a1` framing in repo/GitHub surfaces.
 
+## Phase 67: Promote Smoothed AU-Level VDYP First-Growth Curves Beyond MKRF
+
+- [x] P67.1 Record the shared/default promotion lane for AU-level first-growth VDYP synthesis (`#187`)
+  - [x] P67.1a Open the parent feature issue with the accepted MKRF evidence basis, rationale, and default-method acceptance criteria.
+  - [x] P67.1b Open the TSA29-only child issue and record the downstream adoption boundary (`#188`).
+- [x] P67.2 Promote `smoothed_bin_pchip` to the default AU-level first-growth / unmanaged VDYP synthesis method (`#187`)
+  - [x] P67.2a Audit where first-growth default-selection currently lives across the MKRF-specific builder and reusable VDYP-stage machinery.
+  - [x] P67.2b Expose the promoted default without breaking legacy callers that still rely on older NLLS-oriented behavior.
+  - [x] P67.2c Update docs/contracts/tests so `smoothed_bin_pchip` is the official default and NLLS is clearly legacy/fallback.
+- [x] P67.3 Adopt the promoted default on the TSA29 instance lane (`#188`)
+  - [x] P67.3a Switch the TSA29 AU-level first-growth build path to the promoted default and regenerate the relevant instance outputs.
+  - [x] P67.3b Patch the promoted selector to suppress low-age humps, far-right tail bumps, excess wobble, and bad toe shape, then rerun TSA29 diagnostics/outputs.
+  - [x] P67.3c Validate TSA29 residual/shape diagnostics against AU binned medians and record explicit insufficient-support AU treatment.
+
 ### Detailed Next Steps Notes
 
+- Phase 67 smoothed AU-level first-growth promotion is now opened on `#187`
+  with TSA29 child issue `#188`:
+  - the accepted evidence basis is the recent MKRF curve-quality lane under
+    `#177` / `#173`, where AU-local `smoothed_bin_pchip` curves were adopted as
+    the accepted direct first-growth family;
+  - the promotion scope is intentionally limited to AU-level first-growth /
+    unmanaged VDYP synthesis, not the managed lane;
+  - `P67.2a` is complete:
+    - `src/femic/pipeline/mkrf_first_growth.py` already hard-codes the
+      AU-level first-growth direct-fit selection to `smoothed_bin_pchip`;
+    - `src/femic/workflows/mkrf.py` already publishes that family explicitly
+      into the MKRF runtime/metadata surfaces via
+      `firstGrowthCurveFamily = smoothed_bin_pchip`;
+    - `src/femic/pipeline/vdyp_stage.py` is not a shared AU-level
+      first-growth-default seam today; it is still the legacy stratum-level
+      smoothing/fallback engine with NLLS-first selection paths such as
+      `primary_nlls`, `reparameterized_nlls`, `censored_refit`,
+      `tail_blend`, and `merchantable_floor`; and
+    - therefore the shared/default promotion could not be implemented as a
+      simple one-line flag flip in `vdyp_stage.py`; and
+  - `P67.2b` is complete:
+    - added `src/femic/pipeline/au_first_growth.py` as the explicit reusable
+      AU-level first-growth default-selection seam;
+    - moved the generic `smoothed_bin_pchip` selection behavior into that new
+      shared helper instead of leaving it implicit inside the MKRF-only module;
+    - switched `src/femic/pipeline/mkrf_first_growth.py` to consume the shared
+      selector so MKRF now rides the same reusable default-selection surface we
+      intend to promote more broadly; and
+    - kept the older `src/femic/pipeline/vdyp_stage.py` stratum-level
+      NLLS-oriented smoothing engine unchanged, so legacy callers are not
+      broken by this promotion seam extraction; and
+  - `P67.2c` is complete:
+    - corrected the stale MKRF planning contract text that still described
+      AU-level first-growth as an NLLS-default lane;
+    - updated the relevant diagnostics/pipeline guide text so
+      `smoothed_bin_pchip` is described as the official default first-growth
+      method and NLLS as legacy/fallback; and
+    - added a focused docs-contract test so those surfaces must keep the
+      promoted default framing in future changes; and
+  - `P67.3a` is complete:
+    - TSA29 now routes the legacy unmanaged VDYP smoothing lane through the
+      shared AU-level first-growth selector for TSA 29 only;
+    - the regenerated TSA29 curve-selection summary moved all `54`
+      stratum/SI rows from the older mixed NLLS/fallback family onto
+      `smoothed_bin_pchip`; and
+    - the downstream TSA29 `model_input_bundle` regeneration now runs cleanly
+      from the rebuilt untreated curve table; and
+  - `P67.3b` and `P67.3c` are complete:
+    - the accepted shared selector parameters now use:
+      - minimum trusted source-bin age `60`;
+      - maximum trusted source-bin age `300`;
+      - stronger seven-point / four-pass local smoothing;
+      - a local early-window left-bin censor rather than the rejected global
+        leading-anchor prune; and
+      - the legacy exponential toe splice on the left merged into the smoothed
+        PCHIP body;
+    - the accepted TSA29 instance curve library is the regenerated
+      `data/vdyp_curves_smooth-tsa29.feather` plus the paired fit-diagnostic
+      and L/M/H overlay plots under `plots/`;
+    - the accepted reviewer surface is
+      `evidence/curve_selection_summary-tsa29-p67_3b_tsa29_smoothed_default_20260510g.csv`;
+    - all `54` TSA29 AU/stratum-SI rows still select
+      `smoothed_bin_pchip`; and
+    - there are no current TSA29 `insufficient_source_stands` rows under the
+      accepted selector contract; and
+  - Phase 67 is now at the lock/commit surface for the accepted parent logic
+    and TSA29 artifact library on `#187` / `#188`.
 - Phase 66 bucketed CT redesign is now implemented on `#182`:
   - the canonical MKRF lane now emits `CT40`, `CT50`, `CT60`, ... bucket
     treatments with per-bucket `thn040_`, `thn050_`, ... thinned lanes;

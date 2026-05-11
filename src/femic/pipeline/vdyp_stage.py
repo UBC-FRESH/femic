@@ -20,6 +20,7 @@ from typing import Any, cast
 
 import numpy as np
 
+from femic.pipeline.au_first_growth import select_au_first_growth_curve
 from femic.pipeline.diagnostics import (
     build_contextual_error_message,
     build_timestamped_event,
@@ -2314,6 +2315,7 @@ def execute_curve_smoothing_runs(
     body_fit_func_bounds_func: Callable[..., Any],
     toe_fit_func: Callable[..., Any],
     toe_fit_func_bounds_func: Callable[..., Any],
+    use_au_first_growth_selector: bool = False,
     message_fn: Callable[..., Any] = print,
 ) -> list[SmoothedCurveResult]:
     """Build smoothed VDYP curves for each stratum/SI combination."""
@@ -3125,6 +3127,67 @@ def execute_curve_smoothing_runs(
                         reason="missing_vdyp_output",
                         context=curve_context,
                     ),
+                )
+                continue
+            if use_au_first_growth_selector:
+                selection = select_au_first_growth_curve(vdyp_out=vdyp_out)
+                plot_binned = selection.binned.copy()
+                for column_name in ("p25", "p75", "n"):
+                    if column_name not in plot_binned.columns:
+                        if column_name == "n":
+                            plot_binned[column_name] = 1
+                        else:
+                            plot_binned[column_name] = plot_binned["median_volume"]
+                append_jsonl_fn(
+                    vdyp_curve_events_path,
+                    build_timestamped_event(
+                        event="vdyp_curve_fit",
+                        status="info",
+                        stage="fallback_policy",
+                        reason="curve_selected",
+                        context=curve_context,
+                        selected_path=selection.selected_path,
+                        available_candidates=[],
+                        selected_metrics=dict(selection.metrics),
+                        selected_gate_fail_reasons=[],
+                    ),
+                )
+                if (
+                    not selection.accepted
+                    or selection.x_curve.size == 0
+                    or selection.y_curve.size == 0
+                ):
+                    message_fn(
+                        "  insufficient AU first-growth support for",
+                        sc,
+                        si_level,
+                    )
+                    continue
+                _emit_fit_diagnostic_plot(
+                    tsa_code=tsa,
+                    stratumi=int(stratumi),
+                    stratum_code=sc,
+                    si_level=si_level,
+                    vdyp_out=vdyp_out,
+                    binned=plot_binned,
+                    x_fit=selection.x_curve,
+                    y_fit=selection.y_curve,
+                    selected_x=selection.x_curve,
+                    selected_y=selection.y_curve,
+                    selected_path=selection.selected_path,
+                    tail_blend_meta=None,
+                    candidate_curves={},
+                    fit_metrics={selection.selected_path: dict(selection.metrics)},
+                )
+                smoothed_runs.append(
+                    SmoothedCurveResult(
+                        stratumi=int(stratumi),
+                        stratum_code=sc,
+                        si_level=si_level,
+                        x=selection.x_curve,
+                        y=selection.y_curve,
+                        vdyp_out=vdyp_out,
+                    )
                 )
                 continue
             x, y = process_vdyp_out_fn(

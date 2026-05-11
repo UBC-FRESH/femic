@@ -113,6 +113,9 @@ Operator Interpretation Callouts
   before curve fitting is trusted.
 - ``vdyp_fitdiag_*.png`` should track binned medians; large early-age spikes
   or inverted SI ordering are red flags.
+- AU-level first-growth synthesis should default to the smoothed observed-bin
+  PCHIP family (``smoothed_bin_pchip``); treat older NLLS-oriented fits as
+  legacy/fallback behavior rather than the default story.
 - ``tipsy_vdyp_*.png`` should be coherent with intended untreated/treated story;
   if not, tune TIPSY config or use configured managed-curve transform mode.
 

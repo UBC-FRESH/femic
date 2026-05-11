@@ -9,20 +9,15 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from scipy.interpolate import PchipInterpolator
 
+from femic.pipeline.au_first_growth import select_au_first_growth_curve
 from femic.pipeline.mkrf_au import build_mkrf_assignment_rows
 from femic.pipeline.tsa import build_stratum_lexmatch_alias_map
-from femic.pipeline.vdyp_curves import build_observed_bins_for_fit, process_vdyp_out
+from femic.pipeline.vdyp_curves import process_vdyp_out
 
 
-_TAIL_START_AGE = 150.0
 _MIN_FIRST_GROWTH_AGE = 80.0
 _MIN_FIRST_GROWTH_SOURCE_STANDS = 2
-_CURVE_MAX_AGE = 300
-_SMOOTHING_WEIGHTS = np.asarray([1.0, 2.0, 3.0, 2.0, 1.0], dtype=float)
-_SMOOTHING_WEIGHTS = _SMOOTHING_WEIGHTS / _SMOOTHING_WEIGHTS.sum()
-_SMOOTHING_PASSES = 2
 
 
 @dataclass(frozen=True)
@@ -124,63 +119,6 @@ def _build_feature_tables(vdyp_yields: pd.DataFrame) -> dict[int, pd.DataFrame]:
             .copy()
         )
     return feature_tables
-
-
-def _fit_quality(
-    *,
-    binned: pd.DataFrame,
-    x_curve: np.ndarray,
-    y_curve: np.ndarray,
-) -> dict[str, float]:
-    observed_age = np.asarray(binned["age_bin"].values, dtype=float)
-    observed_volume = np.asarray(binned["median_volume"].values, dtype=float)
-    fitted = np.interp(observed_age, x_curve, y_curve)
-    residual = fitted - observed_volume
-    abs_obs = np.maximum(np.abs(observed_volume), 1e-6)
-    rmse = float(np.sqrt(np.mean(np.square(residual))))
-    mape = float(np.mean(np.abs(residual) / abs_obs))
-    tail_mask = observed_age >= _TAIL_START_AGE
-    if np.any(tail_mask):
-        tail_rmse = float(np.sqrt(np.mean(np.square(residual[tail_mask]))))
-    else:
-        tail_rmse = rmse
-    return {
-        "rmse": rmse,
-        "mape": mape,
-        "tail_rmse": tail_rmse,
-    }
-
-
-def _build_smoothed_bin_pchip_curve(
-    *,
-    binned: pd.DataFrame,
-    smoothing_passes: int = _SMOOTHING_PASSES,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Build a strongly smoothed observed-bin PCHIP curve."""
-    anchors = binned.loc[:, ["age_bin", "median_volume"]].copy()
-    anchors["age_bin"] = pd.to_numeric(anchors["age_bin"], errors="coerce")
-    anchors["median_volume"] = pd.to_numeric(anchors["median_volume"], errors="coerce")
-    anchors = anchors.dropna().sort_values("age_bin", kind="stable")
-    anchors = anchors.loc[anchors["age_bin"] >= 30.0].copy()
-    if anchors.empty:
-        return np.asarray([], dtype=float), np.asarray([], dtype=float)
-
-    smoothed = anchors["median_volume"].to_numpy(dtype=float).copy()
-    if len(smoothed) >= 5:
-        for _ in range(int(smoothing_passes)):
-            updated = smoothed.copy()
-            for idx in range(2, len(smoothed) - 2):
-                updated[idx] = float(np.dot(_SMOOTHING_WEIGHTS, smoothed[idx - 2 : idx + 3]))
-            smoothed = updated
-
-    anchor_ages = np.concatenate([[1.0], anchors["age_bin"].to_numpy(dtype=float)])
-    anchor_volumes = np.concatenate([[1e-6], smoothed])
-    pchip = PchipInterpolator(anchor_ages, anchor_volumes, extrapolate=True)
-    curve_x = np.arange(1, _CURVE_MAX_AGE, dtype=float)
-    curve_y = np.asarray(pchip(curve_x), dtype=float)
-    curve_y = np.nan_to_num(curve_y, nan=0.0, posinf=0.0, neginf=0.0)
-    curve_y = np.maximum(curve_y, 1e-6)
-    return curve_x, curve_y
 
 
 def _build_au_lexmatch_alias_map(
@@ -377,26 +315,17 @@ def build_mkrf_first_growth_curves(
         lexmatch_count = int(assignment_status.eq("lexmatch_assigned").sum())
         lexmatch_alias_count = int(lexmatch_used.astype(bool).sum())
         sparse_warning = len(feature_ids) < 5
-        binned = pd.DataFrame(columns=["age_bin", "median_volume"])
-        if len(feature_ids) < min_source_stands:
-            x_curve = np.asarray([], dtype=float)
-            y_curve = np.asarray([], dtype=float)
-            metrics = {"rmse": np.nan, "mape": np.nan, "tail_rmse": np.nan}
-            selected_path = "insufficient_source_stands"
-            accepted = False
-        else:
-            vdyp_out = {feature_id: feature_tables[feature_id] for feature_id in feature_ids}
-            binned = build_observed_bins_for_fit(
-                vdyp_out_concat=pd.concat(vdyp_out.values()),
-                volume_flavour="Vdwb",
-                min_age=30,
-                max_age=350,
-                bin_years=5,
-            )
-            x_curve, y_curve = _build_smoothed_bin_pchip_curve(binned=binned)
-            metrics = _fit_quality(binned=binned, x_curve=x_curve, y_curve=y_curve)
-            selected_path = "smoothed_bin_pchip"
-            accepted = True
+        vdyp_out = {feature_id: feature_tables[feature_id] for feature_id in feature_ids}
+        selection = select_au_first_growth_curve(
+            vdyp_out=vdyp_out,
+            min_source_stands=min_source_stands,
+        )
+        binned = selection.binned
+        x_curve = selection.x_curve
+        y_curve = selection.y_curve
+        metrics = selection.metrics
+        selected_path = selection.selected_path
+        accepted = selection.accepted
 
         for age, volume in zip(np.asarray(x_curve, dtype=float), np.asarray(y_curve, dtype=float)):
             if not math.isfinite(float(volume)) or float(volume) <= 0.0:
