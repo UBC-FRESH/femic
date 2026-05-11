@@ -2,39 +2,25 @@
 
 # --- cell 3 ---
 import os
-import matplotlib.pyplot as plt
 
 # import datatable
 
 import pandas as pd
 import geopandas as gpd
-import pickle
-import seaborn as sns
-from shapely.ops import unary_union, Polygon
+from shapely.ops import unary_union
 import numpy as np
-from numpy.polynomial import Polynomial
-import csv
-from scipy.optimize import curve_fit
 import rasterio as rio
-from rasterio.plot import show
 from rasterio.mask import mask
-from rasterio.io import MemoryFile
-from geocube.api.core import make_geocube
 import subprocess
-from rasterio.plot import show, show_hist
 import warnings
-from pympler import asizeof
 
 # import ipcmagic
 import ipyparallel as ipp
-import mapply
 
 try:
     import fiona  # noqa: F401
 except ModuleNotFoundError:
     fiona = None
-
-import affine
 
 # from osgeo import gdal
 from scipy.optimize import curve_fit as _curve_fit
@@ -97,7 +83,7 @@ try:
         validate_nonempty_au_assignment,
     )
     from femic.pipeline.tipsy import (
-        tipsy_input_dat_path,
+        btc_msyt_input_csv_path,
         tipsy_params_excel_path,
         tipsy_stage_output_paths,
     )
@@ -167,7 +153,7 @@ except ModuleNotFoundError:
         validate_nonempty_au_assignment,
     )
     from femic.pipeline.tipsy import (
-        tipsy_input_dat_path,
+        btc_msyt_input_csv_path,
         tipsy_params_excel_path,
         tipsy_stage_output_paths,
     )
@@ -708,7 +694,7 @@ def _should_skip_01a(tsa):
     return should_skip_if_outputs_exist(
         resume_effective=_femic_resume_effective,
         output_paths=(
-            tipsy_input_dat_path(tsa=tsa),
+            btc_msyt_input_csv_path(tsa=tsa),
             tipsy_params_excel_path(
                 tsa=tsa,
                 tipsy_params_path_prefix=tipsy_params_path_prefix,

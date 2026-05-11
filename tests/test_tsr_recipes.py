@@ -228,7 +228,6 @@ def _fake_yield_bridge_execution_result(
         tipsy_params_excel_path=(
             instance_root / "data" / "tipsy_params_tsa29.xlsx"
         ).resolve(),
-        tipsy_input_dat_path=(instance_root / "data" / "02_input-tsa29.dat").resolve(),
         btc_input_csv_path=(instance_root / "data" / "03_input-tsa29.csv").resolve(),
         tipsy_output_path=(instance_root / "data" / "04_output-tsa29.csv").resolve(),
         tipsy_error_path=(instance_root / "data" / "04_error-tsa29.csv").resolve(),
@@ -12651,7 +12650,7 @@ def test_build_tsr_aflb_yield_bridge_cache_becomes_sufficient_with_matching_prio
     assert yield_ready_checkpoint["curve1"].notna().sum() >= 1
 
 
-def test_write_yield_bridge_tipsy_handoff_artifacts_writes_02_and_03_inputs(
+def test_write_yield_bridge_tipsy_handoff_artifacts_writes_excel_and_csv_inputs(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -12754,7 +12753,7 @@ def test_write_yield_bridge_tipsy_handoff_artifacts_writes_02_and_03_inputs(
         _fake_build_tipsy_input_table,
     )
 
-    excel_path, dat_path, btc_path = (
+    excel_path, btc_path = (
         tsr_recipes._write_yield_bridge_tipsy_handoff_artifacts(
             instance_root=instance_root,
             tsa="29",
@@ -12763,9 +12762,7 @@ def test_write_yield_bridge_tipsy_handoff_artifacts_writes_02_and_03_inputs(
     )
 
     assert excel_path.is_file()
-    assert dat_path.is_file()
     assert btc_path.is_file()
-    assert "TBLno" in dat_path.read_text(encoding="utf-8")
     btc_table = pd.read_csv(btc_path)
     assert "feature_id" in btc_table.columns
     assert len(btc_table) == 1
@@ -12807,7 +12804,6 @@ def test_execute_yield_bridge_from_vdyp_cache_uses_btc_post_tipsy_for_tipsy_mode
         "_write_yield_bridge_tipsy_handoff_artifacts",
         lambda **_kwargs: (
             (instance_root / "data" / "tipsy_params_tsa29.xlsx").resolve(),
-            (instance_root / "data" / "02_input-tsa29.dat").resolve(),
             (instance_root / "data" / "03_input-tsa29.csv").resolve(),
         ),
     )
@@ -12945,7 +12941,6 @@ def test_execute_yield_bridge_from_vdyp_cache_uses_post_tipsy_for_non_tipsy_mode
         "_write_yield_bridge_tipsy_handoff_artifacts",
         lambda **_kwargs: (
             (instance_root / "data" / "tipsy_params_tsa29.xlsx").resolve(),
-            (instance_root / "data" / "02_input-tsa29.dat").resolve(),
             (instance_root / "data" / "03_input-tsa29.csv").resolve(),
         ),
     )

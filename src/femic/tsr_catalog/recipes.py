@@ -818,7 +818,6 @@ class TsrAflbYieldBridgeExecutionResult:
 
     execution_path: str
     tipsy_params_excel_path: Path
-    tipsy_input_dat_path: Path
     btc_input_csv_path: Path
     tipsy_output_path: Path | None
     tipsy_error_path: Path | None
@@ -6202,7 +6201,6 @@ def _inspect_yield_bridge_cache_sufficiency(
     curve_table_path = bundle_root / "curve_table.csv"
     curve_points_table_path = bundle_root / "curve_points_table.csv"
     tipsy_input_path = data_root / f"03_input-tsa{tsa}.csv"
-    tipsy_output_out_path = data_root / f"04_output-tsa{tsa}.out"
     tipsy_output_csv_path = data_root / f"04_output-tsa{tsa}.csv"
     tipsy_error_path = data_root / f"04_error-tsa{tsa}.csv"
     runtime_logs_root = instance_root / "runtime" / "logs"
@@ -6216,11 +6214,9 @@ def _inspect_yield_bridge_cache_sufficiency(
         if runtime_logs_root.exists()
         else ()
     )
-    selected_tipsy_output_path = None
-    for candidate in (tipsy_output_out_path, tipsy_output_csv_path):
-        if candidate.exists():
-            selected_tipsy_output_path = candidate
-            break
+    selected_tipsy_output_path = (
+        tipsy_output_csv_path if tipsy_output_csv_path.exists() else None
+    )
 
     evidence_paths = {
         "prior_manifest_path": _render_instance_relative_path(
@@ -6254,7 +6250,7 @@ def _inspect_yield_bridge_cache_sufficiency(
         ),
         "tipsy_output_candidates": _render_instance_relative_paths(
             instance_root=instance_root,
-            candidates=(tipsy_output_out_path, tipsy_output_csv_path),
+            candidates=(tipsy_output_csv_path,),
         ),
         "tipsy_error_path": _render_instance_relative_path(
             instance_root=instance_root,
@@ -6621,7 +6617,7 @@ def _write_yield_bridge_tipsy_handoff_artifacts(
     instance_root: Path,
     tsa: str,
     au_checkpoint: gpd.GeoDataFrame,
-) -> tuple[Path, Path, Path]:
+) -> tuple[Path, Path]:
     resolved_tsa = normalize_tsa_code(tsa)
     data_root = instance_root / "data"
     filtered_results_for_tsa = _filter_yield_bridge_vdyp_prep_results(
@@ -6702,7 +6698,7 @@ def _write_yield_bridge_tipsy_handoff_artifacts(
             )
         )
         natural_tipsy_table = pd.DataFrame(columns=list(tipsy_table.columns))
-    tipsy_params_excel_path_str, tipsy_input_dat_path_str = write_tipsy_input_exports(
+    tipsy_params_excel_path_str = write_tipsy_input_exports(
         tipsy_table=tipsy_table,
         tsa=resolved_tsa,
         tipsy_params_path_prefix=str(data_root / "tipsy_params_tsa"),
@@ -6722,7 +6718,6 @@ def _write_yield_bridge_tipsy_handoff_artifacts(
     )
     return (
         Path(tipsy_params_excel_path_str).resolve(),
-        Path(tipsy_input_dat_path_str).resolve(),
         btc_input_csv_path.resolve(),
     )
 
@@ -6737,7 +6732,7 @@ def _execute_yield_bridge_from_vdyp_cache(
     run_profile, managed_curve_mode = _resolve_yield_bridge_run_profile(
         run_config_path=run_config_path
     )
-    tipsy_params_excel_path, tipsy_input_dat_path, btc_input_csv_path = (
+    tipsy_params_excel_path, btc_input_csv_path = (
         _write_yield_bridge_tipsy_handoff_artifacts(
             instance_root=instance_root,
             tsa=tsa,
@@ -6830,7 +6825,6 @@ def _execute_yield_bridge_from_vdyp_cache(
     return TsrAflbYieldBridgeExecutionResult(
         execution_path=execution_path,
         tipsy_params_excel_path=tipsy_params_excel_path,
-        tipsy_input_dat_path=tipsy_input_dat_path,
         btc_input_csv_path=btc_input_csv_path,
         tipsy_output_path=tipsy_output_path,
         tipsy_error_path=tipsy_error_path,
@@ -7177,14 +7171,6 @@ def build_tsr_aflb_yield_bridge(
                 instance_root=resolved_instance_root,
                 candidate=(
                     bridge_execution.tipsy_params_excel_path
-                    if bridge_execution is not None
-                    else None
-                ),
-            ),
-            "tipsy_input_dat_path": _render_instance_relative_path(
-                instance_root=resolved_instance_root,
-                candidate=(
-                    bridge_execution.tipsy_input_dat_path
                     if bridge_execution is not None
                     else None
                 ),

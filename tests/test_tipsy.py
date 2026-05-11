@@ -37,7 +37,6 @@ from femic.pipeline.tipsy import (
     prepare_btc_runtime,
     resolve_btc_executable,
     run_btc_cli,
-    tipsy_input_dat_path,
     tipsy_output_input_fingerprint_path,
     tipsy_params_excel_path,
     tipsy_stage_output_paths,
@@ -342,21 +341,16 @@ def test_write_btc_msyt_input_csv_writes_canonical_path(tmp_path: Path) -> None:
     assert "feature_id" in output_path.read_text(encoding="utf-8")
 
 
-def test_write_tipsy_input_exports_writes_excel_and_dat(tmp_path: Path) -> None:
+def test_write_tipsy_input_exports_writes_excel_only(tmp_path: Path) -> None:
     table = pd.DataFrame({"AU": [1001], "SI": [18.0]})
     prefix = str(tmp_path / "tipsy_params_tsa")
-    dat_template = str(tmp_path / "02_input-tsa{tsa}.dat")
-    excel_path, dat_path = write_tipsy_input_exports(
+    excel_path = write_tipsy_input_exports(
         tipsy_table=table,
         tsa="08",
         tipsy_params_path_prefix=prefix,
-        dat_path_template=dat_template,
     )
     assert excel_path == str(tmp_path / "tipsy_params_tsa08.xlsx")
-    assert dat_path == str(tmp_path / "02_input-tsa08.dat")
     assert Path(excel_path).is_file()
-    assert Path(dat_path).is_file()
-    assert "AU" in Path(dat_path).read_text()
 
 
 def test_parse_btc_tsr_transposed_output_maps_feature_rows_to_managed_curve_ids(
@@ -2365,47 +2359,20 @@ def test_prepare_btc_runtime_tsr_preset_applies_industrial_logs_indicator_bank(
     assert "Industrial_Logs_D152\t\tIndustrial_Logs_D152\t{yr}" in rendered
 
 
-def test_write_tipsy_input_exports_fails_fast_on_width_overflow(tmp_path: Path) -> None:
-    table = pd.DataFrame(
-        {
-            "AU": [1001],
-            "TBLno": [1001],
-            "Proportion": [0.85],
-            "Regen_Delay": [2],
-            "Density": [900],
-            "Regen_Method": ["P"],
-            "Util_DBH_cm": [12.5],
-            "OAF1": [0.7],
-            "OAF2": [0.95],
-            "FIZ": ["INVALID"],  # width is 1 char by BatchTIPSY mapping
-            "SPP_1": ["PL"],
-            "PCT_1": [100],
-            "SI": [20.0],
-        }
-    )
-    with pytest.raises(ValueError, match="value overflow.*FIZ"):
-        write_tipsy_input_exports(
-            tipsy_table=table,
-            tsa="08",
-            tipsy_params_path_prefix=str(tmp_path / "tipsy_params_tsa"),
-            dat_path_template=str(tmp_path / "02_input-tsa{tsa}.dat"),
-        )
-
-
 def test_validate_tipsy_output_is_fresh_raises_on_stale_output(tmp_path: Path) -> None:
     tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
-    tipsy_dat = tmp_path / "02_input-tsa29.dat"
-    tipsy_output = tmp_path / "04_output-tsa29.out"
+    input_csv = tmp_path / "03_input-tsa29.csv"
+    tipsy_output = tmp_path / "04_output-tsa29.csv"
     tipsy_output.write_text("old\n", encoding="utf-8")
-    tipsy_dat.write_text("newer-dat\n", encoding="utf-8")
+    input_csv.write_text("newer-csv\n", encoding="utf-8")
     tipsy_input.write_text("new\n", encoding="utf-8")
-    older = min(tipsy_input.stat().st_mtime, tipsy_dat.stat().st_mtime) - 10
+    older = min(tipsy_input.stat().st_mtime, input_csv.stat().st_mtime) - 10
     os.utime(tipsy_output, (older, older))
 
     with pytest.raises(RuntimeError, match="Stale BatchTIPSY output detected"):
         validate_tipsy_output_is_fresh(
             tipsy_input_excel_path=tipsy_input,
-            tipsy_input_dat_path=tipsy_dat,
+            btc_input_csv_path=input_csv,
             tipsy_output_path=tipsy_output,
         )
 
@@ -2414,8 +2381,8 @@ def test_validate_tipsy_output_is_fresh_warns_and_continues_on_coherent_stale_pa
     tmp_path: Path,
 ) -> None:
     tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
-    tipsy_dat = tmp_path / "02_input-tsa29.dat"
-    tipsy_output = tmp_path / "04_output-tsa29.out"
+    input_csv = tmp_path / "03_input-tsa29.csv"
+    tipsy_output = tmp_path / "04_output-tsa29.csv"
     pd.DataFrame(
         {
             "AU": [2001, 2002],
@@ -2423,15 +2390,15 @@ def test_validate_tipsy_output_is_fresh_warns_and_continues_on_coherent_stale_pa
             "SI": [30, 32],
         }
     ).to_excel(tipsy_input, sheet_name="TIPSY_inputTBL", index=False)
-    tipsy_dat.write_text("newer-dat\n", encoding="utf-8")
-    tipsy_output.write_text("h1\nh2\nh3\nh4\n2001\n2002\n", encoding="utf-8")
-    older = tipsy_dat.stat().st_mtime - 10
+    input_csv.write_text("feature_id,MVcon_0\n2001,0\n2002,0\n", encoding="utf-8")
+    tipsy_output.write_text("feature_id,MVcon_0\n2001,0\n2002,0\n", encoding="utf-8")
+    older = input_csv.stat().st_mtime - 10
     os.utime(tipsy_output, (older, older))
 
     with pytest.warns(RuntimeWarning, match="appear coherent"):
         validate_tipsy_output_is_fresh(
             tipsy_input_excel_path=tipsy_input,
-            tipsy_input_dat_path=tipsy_dat,
+            btc_input_csv_path=input_csv,
             tipsy_output_path=tipsy_output,
         )
 
@@ -2440,8 +2407,8 @@ def test_validate_tipsy_output_is_fresh_strict_mode_raises_on_coherent_stale_pai
     tmp_path: Path,
 ) -> None:
     tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
-    tipsy_dat = tmp_path / "02_input-tsa29.dat"
-    tipsy_output = tmp_path / "04_output-tsa29.out"
+    input_csv = tmp_path / "03_input-tsa29.csv"
+    tipsy_output = tmp_path / "04_output-tsa29.csv"
     pd.DataFrame(
         {
             "AU": [2101, 2102],
@@ -2449,15 +2416,15 @@ def test_validate_tipsy_output_is_fresh_strict_mode_raises_on_coherent_stale_pai
             "SI": [25, 28],
         }
     ).to_excel(tipsy_input, sheet_name="TIPSY_inputTBL", index=False)
-    tipsy_dat.write_text("newer-dat\n", encoding="utf-8")
-    tipsy_output.write_text("h1\nh2\nh3\nh4\n2101\n2102\n", encoding="utf-8")
-    older = tipsy_dat.stat().st_mtime - 10
+    input_csv.write_text("feature_id,MVcon_0\n2101,0\n2102,0\n", encoding="utf-8")
+    tipsy_output.write_text("feature_id,MVcon_0\n2101,0\n2102,0\n", encoding="utf-8")
+    older = input_csv.stat().st_mtime - 10
     os.utime(tipsy_output, (older, older))
 
     with pytest.raises(RuntimeError, match="Strict BatchTIPSY freshness"):
         validate_tipsy_output_is_fresh(
             tipsy_input_excel_path=tipsy_input,
-            tipsy_input_dat_path=tipsy_dat,
+            btc_input_csv_path=input_csv,
             tipsy_output_path=tipsy_output,
             strict_timestamp_mismatch=True,
         )
@@ -2465,15 +2432,15 @@ def test_validate_tipsy_output_is_fresh_strict_mode_raises_on_coherent_stale_pai
 
 def test_validate_tipsy_output_is_fresh_allows_override(tmp_path: Path) -> None:
     tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
-    tipsy_dat = tmp_path / "02_input-tsa29.dat"
-    tipsy_output = tmp_path / "04_output-tsa29.out"
+    input_csv = tmp_path / "03_input-tsa29.csv"
+    tipsy_output = tmp_path / "04_output-tsa29.csv"
     tipsy_output.write_text("old\n", encoding="utf-8")
-    tipsy_dat.write_text("newer-dat\n", encoding="utf-8")
+    input_csv.write_text("newer-csv\n", encoding="utf-8")
     tipsy_input.write_text("new\n", encoding="utf-8")
 
     validate_tipsy_output_is_fresh(
         tipsy_input_excel_path=tipsy_input,
-        tipsy_input_dat_path=tipsy_dat,
+        btc_input_csv_path=input_csv,
         tipsy_output_path=tipsy_output,
         allow_stale=True,
     )
@@ -2483,7 +2450,7 @@ def test_assess_tipsy_input_output_coherence_reports_missing_table(
     tmp_path: Path,
 ) -> None:
     tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
-    tipsy_output = tmp_path / "04_output-tsa29.out"
+    tipsy_output = tmp_path / "04_output-tsa29.csv"
     pd.DataFrame(
         {
             "AU": [3001, 3002],
@@ -2491,7 +2458,7 @@ def test_assess_tipsy_input_output_coherence_reports_missing_table(
             "SI": [20, 21],
         }
     ).to_excel(tipsy_input, sheet_name="TIPSY_inputTBL", index=False)
-    tipsy_output.write_text("h1\nh2\nh3\nh4\n3001\n", encoding="utf-8")
+    tipsy_output.write_text("feature_id,MVcon_0\n3001,0\n", encoding="utf-8")
 
     coherence = assess_tipsy_input_output_coherence(
         tipsy_input_excel_path=tipsy_input,
@@ -2502,166 +2469,80 @@ def test_assess_tipsy_input_output_coherence_reports_missing_table(
     assert "missing_aus=1" in coherence.summary
 
 
-def test_validate_tipsy_output_is_fresh_requires_dat_when_provided(
+def test_validate_tipsy_output_is_fresh_requires_csv_when_provided(
     tmp_path: Path,
 ) -> None:
     tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
-    tipsy_output = tmp_path / "04_output-tsa29.out"
-    missing_dat = tmp_path / "02_input-tsa29.dat"
+    tipsy_output = tmp_path / "04_output-tsa29.csv"
+    missing_csv = tmp_path / "03_input-tsa29.csv"
     tipsy_output.write_text("old\n", encoding="utf-8")
     tipsy_input.write_text("new\n", encoding="utf-8")
 
     with pytest.raises(
-        RuntimeError, match="Missing canonical BatchTIPSY input DAT file"
+        RuntimeError, match="Missing canonical BatchTIPSY input CSV file"
     ):
         validate_tipsy_output_is_fresh(
             tipsy_input_excel_path=tipsy_input,
-            tipsy_input_dat_path=missing_dat,
+            btc_input_csv_path=missing_csv,
             tipsy_output_path=tipsy_output,
         )
 
 
-def test_validate_tipsy_output_is_fresh_accepts_known_dat_fingerprint(
+def test_validate_tipsy_output_is_fresh_accepts_known_csv_fingerprint(
     tmp_path: Path,
 ) -> None:
     tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
-    tipsy_dat = tmp_path / "02_input-tsa29.dat"
-    tipsy_output = tmp_path / "04_output-tsa29.out"
+    input_csv = tmp_path / "03_input-tsa29.csv"
+    tipsy_output = tmp_path / "04_output-tsa29.csv"
     tipsy_input.write_text("human-readable\n", encoding="utf-8")
-    tipsy_dat.write_text("same-dat-content\n", encoding="utf-8")
+    input_csv.write_text("same-csv-content\n", encoding="utf-8")
     tipsy_output.write_text("old-output\n", encoding="utf-8")
-    older = tipsy_dat.stat().st_mtime - 10
+    older = input_csv.stat().st_mtime - 10
     os.utime(tipsy_output, (older, older))
 
     fingerprint = tipsy_output_input_fingerprint_path(tipsy_output_path=tipsy_output)
-    fingerprint.write_text(f"{compute_file_sha256(tipsy_dat)}\n", encoding="utf-8")
+    fingerprint.write_text(f"{compute_file_sha256(input_csv)}\n", encoding="utf-8")
 
     validate_tipsy_output_is_fresh(
         tipsy_input_excel_path=tipsy_input,
-        tipsy_input_dat_path=tipsy_dat,
+        btc_input_csv_path=input_csv,
         tipsy_output_path=tipsy_output,
     )
 
 
-def test_validate_tipsy_output_is_fresh_raises_on_dat_fingerprint_mismatch(
+def test_validate_tipsy_output_is_fresh_raises_on_csv_fingerprint_mismatch(
     tmp_path: Path,
 ) -> None:
     tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
-    tipsy_dat = tmp_path / "02_input-tsa29.dat"
-    tipsy_output = tmp_path / "04_output-tsa29.out"
+    input_csv = tmp_path / "03_input-tsa29.csv"
+    tipsy_output = tmp_path / "04_output-tsa29.csv"
     tipsy_input.write_text("human-readable\n", encoding="utf-8")
-    tipsy_dat.write_text("new-dat-content\n", encoding="utf-8")
+    input_csv.write_text("new-csv-content\n", encoding="utf-8")
     tipsy_output.write_text("some-output\n", encoding="utf-8")
 
     fingerprint = tipsy_output_input_fingerprint_path(tipsy_output_path=tipsy_output)
     fingerprint.write_text("badfingerprint\n", encoding="utf-8")
 
-    with pytest.raises(RuntimeError, match="different 02_input-tsaXX.dat fingerprint"):
+    with pytest.raises(RuntimeError, match="different 03_input-tsaXX.csv fingerprint"):
         validate_tipsy_output_is_fresh(
             tipsy_input_excel_path=tipsy_input,
-            tipsy_input_dat_path=tipsy_dat,
+            btc_input_csv_path=input_csv,
             tipsy_output_path=tipsy_output,
         )
 
 
 def test_write_tipsy_output_input_fingerprint_writes_sidecar(tmp_path: Path) -> None:
-    tipsy_dat = tmp_path / "02_input-tsa29.dat"
-    tipsy_output = tmp_path / "04_output-tsa29.out"
-    tipsy_dat.write_text("dat-content\n", encoding="utf-8")
+    input_csv = tmp_path / "03_input-tsa29.csv"
+    tipsy_output = tmp_path / "04_output-tsa29.csv"
+    input_csv.write_text("csv-content\n", encoding="utf-8")
     tipsy_output.write_text("output\n", encoding="utf-8")
     path = write_tipsy_output_input_fingerprint(
-        tipsy_input_dat_path=tipsy_dat,
+        btc_input_csv_path=input_csv,
         tipsy_output_path=tipsy_output,
     )
     assert path == tipsy_output_input_fingerprint_path(tipsy_output_path=tipsy_output)
     assert path is not None
-    assert path.read_text(encoding="utf-8").strip() == compute_file_sha256(tipsy_dat)
-
-
-def test_tipsy_input_dat_path_default_layout() -> None:
-    assert tipsy_input_dat_path(tsa="29") == Path("data/02_input-tsa29.dat")
-
-
-def test_write_tipsy_input_exports_keeps_regen_method_column_aligned(
-    tmp_path: Path,
-) -> None:
-    table = pd.DataFrame(
-        {
-            "AU": [21001, 22001],
-            "TBLno": [21001, 22001],
-            "BEC": ["CWH", "BWBS"],
-            "Proportion": [1, 1],
-            "Regen_Delay": [2, 2],
-            "Density": [1400, 1400],
-            "Regen_Method": ["P", "P"],
-        }
-    )
-    _excel_path, dat_path = write_tipsy_input_exports(
-        tipsy_table=table,
-        tsa="k3z",
-        tipsy_params_path_prefix=str(tmp_path / "tipsy_params_tsa"),
-        dat_path_template=str(tmp_path / "02_input-tsa{tsa}.dat"),
-    )
-    lines = Path(dat_path).read_text().splitlines()
-    assert len(lines) >= 3
-    p_positions = [lines[1].index("P"), lines[2].index("P")]
-    assert p_positions[0] == p_positions[1]
-
-
-def test_write_tipsy_input_exports_uses_stable_reference_column_starts(
-    tmp_path: Path,
-) -> None:
-    table = pd.DataFrame(
-        {
-            "AU": [22008],
-            "TBLno": [22008],
-            "BEC": ["CWH"],
-            "Proportion": [1],
-            "Regen_Delay": [2],
-            "Density": [900],
-            "Regen_Method": ["P"],
-            "Util_DBH_cm": [12.5],
-            "OAF1": [0.73],
-            "OAF2": [0.95],
-            "FIZ": ["I"],
-            "SPP_1": ["PLC"],
-            "PCT_1": [70],
-            "SI": [9.7],
-            "GW_1": [""],
-            "GW_age_1": [""],
-            "SPP_2": ["HW"],
-            "PCT_2": [20],
-            "GW_2": [""],
-            "GW_age_2": [""],
-            "SPP_3": ["CW"],
-            "PCT_3": [10],
-            "GW_3": [""],
-            "GW_age_3": [""],
-            "SPP_4": [""],
-            "PCT_4": [""],
-            "GW_4": [""],
-            "GW_age_4": [""],
-            "SPP_5": [""],
-            "PCT_5": [""],
-            "GW_5": [""],
-            "GW_age_5": [""],
-        }
-    )
-    _excel_path, dat_path = write_tipsy_input_exports(
-        tipsy_table=table,
-        tsa="k3z",
-        tipsy_params_path_prefix=str(tmp_path / "tipsy_params_tsa"),
-        dat_path_template=str(tmp_path / "02_input-tsa{tsa}.dat"),
-    )
-    row = Path(dat_path).read_text().splitlines()[1]
-    # Validate against the configured fixed 1-based BatchTIPSY ranges.
-    assert row[96:99].strip() == "PLC"  # SPP_1 (97-99)
-    assert row[60:63].strip() == "70"  # PCT_1 (61-63)
-    assert row[107:111].strip() == "9.7"  # SI (108-111)
-    assert row[128:131].strip() == "HW"  # SPP_2 (129-131)
-    assert row[135:137].strip() == "20"  # PCT_2 (136-137)
-    assert row[154:157].strip() == "CW"  # SPP_3 (155-157)
-    assert row[161:163].strip() == "10"  # PCT_3 (162-163)
+    assert path.read_text(encoding="utf-8").strip() == compute_file_sha256(input_csv)
 
 
 def test_tipsy_stage_output_paths_uses_expected_naming(tmp_path: Path) -> None:
@@ -2791,6 +2672,66 @@ def test_build_tipsy_params_for_tsa_logs_missing_vdyp_output_warning() -> None:
     assert tipsy_params_tsa == {}
     assert len(events) == 1
     assert events[0]["reason"] == "missing_vdyp_output"
+
+
+def test_build_tipsy_params_for_tsa_passes_si_level_to_builder() -> None:
+    captured: list[dict[str, object]] = []
+    results_for_tsa = [
+        (
+            0,
+            "SBS_7A",
+            {
+                "L": {
+                    "ss": pd.DataFrame(
+                        {
+                            "SITE_INDEX": [18.0],
+                            "siteprod": [17.0],
+                            "BEC_ZONE_CODE": ["SBS"],
+                        }
+                    ),
+                    "species": {"SW": {"pct": 60.0}},
+                }
+            },
+        )
+    ]
+    vdyp_curves_smooth_tsa = pd.DataFrame(
+        {
+            "stratum_code": ["SBS_7A", "SBS_7A"],
+            "si_level": ["L", "L"],
+            "age": [30, 120],
+            "volume": [160.0, 220.0],
+        }
+    )
+    exclusion = {
+        "min_vol": lambda _code: 140.0,
+        "min_si": lambda _species: 10.0,
+        "excl_leading_species": [],
+        "excl_bec": [],
+    }
+
+    def _builder(
+        au_id: int,
+        au_data: object,
+        _vdyp_out: object,
+    ) -> dict[str, dict[str, object]]:
+        captured.append(dict(au_data))
+        return {"f": {"TBLno": 20000 + au_id}}
+
+    _ = build_tipsy_params_for_tsa(
+        tsa="08",
+        results_for_tsa=results_for_tsa,
+        si_levels=["L"],
+        vdyp_curves_smooth_tsa=vdyp_curves_smooth_tsa,
+        vdyp_results_for_tsa={0: {"L": {"dummy": 1}}},
+        exclusion=exclusion,
+        tipsy_param_builder=_builder,
+        verbose=False,
+        message_fn=lambda *_args: None,
+    )
+
+    assert len(captured) == 1
+    assert captured[0]["stratum_code"] == "SBS_7A"
+    assert captured[0]["si_level"] == "L"
 
 
 def test_build_tipsy_params_for_tsa_skips_missing_fit_si_level() -> None:
