@@ -1873,6 +1873,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [ ] P68.1c Keep the comparison-plot acceptance work isolated on `external/femic-tsa29-instance` branch `feature/tsa29-tipsy-vdyp-comparison-refresh`.
   - [ ] P68.1d Lock the accepted comparison plot set with an instance commit, issue update, and PR.
   - [x] P68.1e Normalize the parent/runtime handoff contract to make BTC CSV the only canonical TIPSY input/output lane (`#190`), then remove TSA29 DAT/`.out` trap artifacts.
+  - [x] P68.1f Audit the official TSR 2024 managed-AU taxonomy against the current TSA29 managed/TIPSY lane and build a cross-reference table for rule coverage and catchall hits.
 - [ ] P68.2 Reread and rebuild TSA29-instance docs/figure surfaces (`UBC-FRESH/femic-tsa29-instance#3`)
   - [ ] P68.2a Reread the instance docs with focus on pages that mention or embed yield-curve comparisons.
   - [ ] P68.2b Update figure references, galleries, counts, and narrative interpretation to match the accepted `30`-plot comparison library.
@@ -1907,6 +1908,24 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
       the newly rebuilt `04_output-tsaXX.csv` surface; and
     - Phase 68 plot acceptance should continue from the CSV-canonical lane and
       should not reintroduce DAT / `.out` trap artifacts; and
+  - `P68.1f` is complete:
+    - the official TSR 2024 data package managed-AU surface was re-anchored to
+      Table 40 in `reference/29ts_dpkg_2024.pdf` and treated as the
+      authoritative managed analysis-unit taxonomy for this audit;
+    - an instance evidence table was built at
+      `external/femic-tsa29-instance/evidence/managed_au_rule_audit-tsa29-p68_1f_20260510a.csv`;
+    - that audit table shows:
+      - `54` current TSA29 managed/TIPSY AUs;
+      - `24` AUs currently hitting the literal
+        `tsa29_all_aus_catchall` fallback rule; and
+      - `27` AUs whose source stratum/BEC/site-productivity combination does
+        not map cleanly to any official Table 40 managed AU; and
+    - the active comparison-plot analysis should now use that audit table to
+      separate:
+      - official Table 40-aligned cases,
+      - non-Table-40 local extensions, and
+      - literal catchall-rule artifacts
+      before any plot-family lock decision; and
   - downstream Patchworks/model-input rebuild work is explicitly deferred to a
     later phase after Phase 68 plot/docs acceptance is complete.
 - Phase 67 smoothed AU-level first-growth promotion is now opened on `#187`

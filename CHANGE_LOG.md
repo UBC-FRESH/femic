@@ -17398,3 +17398,25 @@
       default path; and
   - updated Phase 68 planning to reflect the actual canonical `54`-plot managed
     comparison library rather than the stale `.out`-derived `30`-plot surface.
+## 2026-05-10 - Audited TSA29 managed AU taxonomy against the current TIPSY lane
+- `P68.1f` managed-AU cross-reference audit:
+  - re-anchored the official managed analysis-unit surface to Table 40 of
+    `reference/29ts_dpkg_2024.pdf` and used that as the authoritative TSR 2024
+    managed-AU taxonomy for the audit;
+  - built
+    `external/femic-tsa29-instance/evidence/managed_au_rule_audit-tsa29-p68_1f_20260510a.csv`
+    on the isolated TSA29 instance branch;
+  - recorded, for each current TSA29 managed/TIPSY AU:
+    - source stratum and SI level;
+    - estimated baseline SI and current treated SI;
+    - official Table 40 match or `NO_MATCH`;
+    - actual matched TSA29 TIPSY rule id; and
+    - whether the AU is hitting `tsa29_all_aus_catchall`;
+  - found that the current lane contains:
+    - `54` managed/TIPSY AUs total;
+    - `24` AUs that currently hit the literal catchall fallback rule; and
+    - `27` AUs whose source stratum/BEC/site-productivity combination does not
+      map cleanly to any official Table 40 managed AU; and
+  - narrowed the active Phase 68 analysis problem from a vague “hot TIPSY
+    curves” concern to a concrete rule-coverage and managed-AU taxonomy
+    mismatch.
