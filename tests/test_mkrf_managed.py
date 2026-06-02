@@ -6,12 +6,14 @@ from pathlib import Path
 import pandas as pd
 
 from femic.pipeline.mkrf_managed import (
+    apply_hw_ingrowth_overlay,
     build_mkrf_managed_au_bootstrap_table,
     build_mkrf_managed_au_msyt_table,
     build_mkrf_stand_origin_assignment,
     classify_mkrf_origin,
     load_mkrf_managed_rule_config,
     parse_mkrf_managed_au_curves,
+    resolve_hw_ingrowth_pct,
 )
 from femic.workflows.mkrf import build_mkrf_managed_au_curves
 
@@ -116,6 +118,133 @@ def test_build_mkrf_stand_origin_assignment_publishes_origin_classes() -> None:
     assert out["forest_cover_id"].tolist() == [101, 102]
     assert out["origin_class"].tolist() == ["logging_origin", "fire_origin"]
     assert out["site_index"].tolist() == [24.0, 30.0]
+
+
+def test_hw_ingrowth_overlay_resolves_and_transfers_species_mix(tmp_path: Path) -> None:
+    rules_yaml = tmp_path / "tsamkrf.yaml"
+    rules_yaml.write_text(
+        """
+schema_version: 1
+case_code: "mkrf"
+hw_ingrowth_overlay:
+  enabled: true
+  landscape_default_pct: 10
+  au_overrides_pct:
+    cwh_vm_2_cw_hw: 20
+  stand_overrides_pct:
+    "202": 30
+families:
+  cwh_vm_1:
+    bec_zone: "cwh"
+    bec_subzone: "vm"
+    bec_variant: "1"
+    species_mix:
+      FD: 45
+      CW: 45
+      PW: 10
+  cwh_vm_2:
+    bec_zone: "cwh"
+    bec_subzone: "vm"
+    bec_variant: "2"
+    species_mix:
+      CW: 70
+      FD: 15
+      PW: 5
+      BA: 5
+      SS: 5
+""".strip(),
+        encoding="utf-8",
+    )
+    rule_config = load_mkrf_managed_rule_config(rules_yaml)
+
+    assert resolve_hw_ingrowth_pct(
+        rule_config=rule_config,
+        au_id="cwh_vm_1_cw_fdc",
+    ) == (10.0, "landscape_default")
+    assert resolve_hw_ingrowth_pct(
+        rule_config=rule_config,
+        au_id="cwh_vm_2_cw_hw",
+    ) == (20.0, "au_override")
+    assert resolve_hw_ingrowth_pct(
+        rule_config=rule_config,
+        au_id="cwh_vm_2_cw_hw",
+        stand_id=202,
+    ) == (30.0, "stand_override")
+
+    assert apply_hw_ingrowth_overlay(
+        species_mix={"CW": 80, "FD": 20},
+        hw_ingrowth_pct=10,
+    ) == {"CW": 72.0, "FD": 18.0, "HW": 10.0}
+
+
+def test_build_mkrf_managed_au_bootstrap_table_applies_hw_ingrowth_overlay(
+    tmp_path: Path,
+) -> None:
+    rules_yaml = tmp_path / "tsamkrf.yaml"
+    rules_yaml.write_text(
+        """
+schema_version: 1
+case_code: "mkrf"
+hw_ingrowth_overlay:
+  enabled: true
+  landscape_default_pct: 50
+families:
+  cwh_vm_2:
+    bec_zone: "cwh"
+    bec_subzone: "vm"
+    bec_variant: "2"
+    species_mix:
+      CW: 70
+      FD: 15
+      PW: 5
+      BA: 5
+      SS: 5
+""".strip(),
+        encoding="utf-8",
+    )
+    rule_config = load_mkrf_managed_rule_config(rules_yaml)
+    selected_au_table = pd.DataFrame(
+        [
+            {
+                "au_id": "cwh_vm_2_cw_hw",
+                "selected_rank": 1,
+                "covered_area_ha": 100.0,
+                "bec_zone": "cwh",
+                "bec_subzone": "vm",
+                "bec_variant": "2",
+                "leading_species_1": "cw",
+                "leading_species_2": "hw",
+            },
+        ]
+    )
+    stand_origin_assignment = pd.DataFrame(
+        [
+            {
+                "forest_cover_id": 201,
+                "au_id": "cwh_vm_2_cw_hw",
+                "origin_class": "logging_origin",
+                "site_index": 24.0,
+            },
+        ]
+    )
+
+    out = build_mkrf_managed_au_bootstrap_table(
+        selected_au_table=selected_au_table,
+        stand_origin_assignment=stand_origin_assignment,
+        rule_config=rule_config,
+    )
+
+    row = out.iloc[0]
+    assert row["base_managed_species_1"] == "CW"
+    assert row["base_managed_pct_1"] == 70.0
+    assert row["hw_ingrowth_pct"] == 50.0
+    assert row["hw_ingrowth_source"] == "landscape_default"
+    assert row["managed_species_1"] == "HW"
+    assert row["managed_pct_1"] == 52.5
+    assert row["managed_species_2"] == "CW"
+    assert row["managed_pct_2"] == 35.0
+    assert row["managed_species_overflow_to_hw_pct"] == 2.5
+    assert row["managed_species_overflow_to_hw_codes"] == "SS"
 
 
 def test_build_mkrf_managed_au_bootstrap_table_uses_expert_rules_and_si_fallback(
@@ -267,6 +396,44 @@ def test_build_mkrf_managed_au_msyt_table_supports_pw_ss_species() -> None:
     assert row["pw_si"] == 24.0
     assert row["ss_si"] == 24.0
     assert row["planted_density1"] == 1050
+
+
+def test_build_mkrf_managed_au_msyt_table_rebalances_fractional_density_rounding() -> None:
+    bootstrap_table = pd.DataFrame(
+        [
+            {
+                "au_id": "cwh_vm_1_cw_hw",
+                "selected_rank": 1,
+                "bec_zone": "cwh",
+                "bec_subzone": "vm",
+                "bec_variant": "1",
+                "managed_curve_id": 60001,
+                "included_in_msyt": True,
+                "managed_si": 24.0,
+                "regen_delay": 1,
+                "density_total": 1500,
+                "oaf1": 1.0,
+                "oaf2": 0.95,
+                "managed_species_1": "HW",
+                "managed_species_2": "CW",
+                "managed_species_3": "FD",
+                "managed_species_4": "PW",
+                "managed_species_5": "",
+                "managed_pct_1": 50.0,
+                "managed_pct_2": 22.5,
+                "managed_pct_3": 22.5,
+                "managed_pct_4": 5.0,
+                "managed_pct_5": 0.0,
+            }
+        ]
+    )
+
+    out = build_mkrf_managed_au_msyt_table(bootstrap_table=bootstrap_table)
+
+    row = out.iloc[0].to_dict()
+    densities = [row[f"planted_density{index}"] or 0 for index in range(1, 6)]
+    assert sum(densities) == 1500
+    assert densities[:4] == [750, 338, 337, 75]
 
 
 def test_parse_mkrf_managed_au_curves_maps_back_to_au_id(tmp_path: Path) -> None:

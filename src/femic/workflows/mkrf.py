@@ -99,9 +99,11 @@ def _normalize_species_bucket(species_code: str) -> str:
 
 
 _SPECIES_BUCKETS = ("Ba", "Cw", "Dec", "Dr", "Fd", "Hw", "Oth", "Yc")
-_MKRF_CT_BUCKET_ANCHORS = tuple(range(40, 151, 10))
-_MKRF_CT_BUCKET_WIDTH = 10
+_MKRF_CT_BUCKET_ANCHORS = (35, 40, 45)
+_MKRF_CT_BUCKET_WIDTH = 5
 _MKRF_CT_BUCKET_PREFIX_WIDTH = 3
+_MKRF_CT_TARGET_BA_REMOVAL_FRACTION = 0.45
+_MKRF_CT_MIN_CW_SHARE_PCT = 15.0
 
 
 def _build_lookup_expr(keys: list[str], values: list[str], *, key_expr: str) -> str:
@@ -117,29 +119,55 @@ def _mkrf_ct_bucket_prefix(anchor_age: int) -> str:
 
 
 def _mkrf_ct_bucket_specs() -> tuple[dict[str, int | str], ...]:
-    half_width = _MKRF_CT_BUCKET_WIDTH // 2
     return tuple(
         {
             "anchor_age": int(anchor_age),
             "label": _mkrf_ct_bucket_label(anchor_age),
             "prefix": _mkrf_ct_bucket_prefix(anchor_age),
-            "min_age": int(anchor_age) - half_width,
-            "max_age": int(anchor_age) + half_width - 1,
+            "min_age": int(anchor_age),
+            "max_age": int(anchor_age) + _MKRF_CT_BUCKET_WIDTH - 1,
         }
         for anchor_age in _MKRF_CT_BUCKET_ANCHORS
     )
 
 
+def _ct_product_species_fraction_expr(
+    share_column: str,
+    origin_share_lookup_exprs: dict[str, str],
+) -> str:
+    target = str(_MKRF_CT_TARGET_BA_REMOVAL_FRACTION)
+    hw_share = origin_share_lookup_exprs["share_hw"]
+    fd_share = origin_share_lookup_exprs["share_fd"]
+    if share_column == "share_cw":
+        return "0"
+    if share_column == "share_hw":
+        return f"if(({hw_share}) gt {target},1,({hw_share})/{target})"
+    if share_column == "share_fd":
+        return (
+            f"if(({hw_share}) gt {target},0,"
+            f"if(({hw_share})+({fd_share}) gt {target},"
+            f"({target}-({hw_share}))/{target},({fd_share})/{target}))"
+        )
+    if share_column == "share_oth":
+        return (
+            f"if(({hw_share})+({fd_share}) gt {target},0,"
+            f"({target}-({hw_share})-({fd_share}))/{target})"
+        )
+    return "0"
+
+
 def _build_managed_species_share_table(
     managed_bootstrap_table: pd.DataFrame,
+    *,
+    species_prefix: str = "managed",
 ) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
     for row in managed_bootstrap_table.itertuples(index=False):
         shares = {bucket: 0.0 for bucket in _SPECIES_BUCKETS}
         for index in range(1, 6):
-            species_code = getattr(row, f"managed_species_{index}", "")
+            species_code = getattr(row, f"{species_prefix}_species_{index}", "")
             pct_value = pd.to_numeric(
-                getattr(row, f"managed_pct_{index}", 0.0), errors="coerce"
+                getattr(row, f"{species_prefix}_pct_{index}", 0.0), errors="coerce"
             )
             if pd.isna(pct_value) or float(pct_value) <= 0:
                 continue
@@ -2087,6 +2115,17 @@ def initialize_mkrf_runtime_package(
     managed_species_shares = managed_species_shares.assign(
         au_id=lambda df: df["au_id"].astype(str)
     ).sort_values("au_id", kind="stable")
+    ct_eligibility_species_shares = _build_managed_species_share_table(
+        managed_bootstrap,
+        species_prefix=(
+            "base_managed"
+            if "base_managed_species_1" in managed_bootstrap.columns
+            else "managed"
+        ),
+    )
+    ct_eligibility_species_shares = ct_eligibility_species_shares.assign(
+        au_id=lambda df: df["au_id"].astype(str)
+    ).sort_values("au_id", kind="stable")
     unmanaged_share_assignment = stand_au_assignment.merge(
         normalized_assignment[["forest_cover_id", "au_id"]]
         .drop_duplicates(subset=["forest_cover_id"], keep="first")
@@ -2131,6 +2170,19 @@ def initialize_mkrf_runtime_package(
             key_expr=runtime_base_au_expr,
         )
         managed_share_lookup_exprs[share_column] = f"Number({lookup_expr})/100"
+    ct_eligibility_cw_values = [
+        str(float(value))
+        for value in ct_eligibility_species_shares["share_cw"].fillna(0.0).tolist()
+    ]
+    ct_eligibility_cw_lookup_expr = (
+        "Number("
+        + _build_lookup_expr(
+            ct_eligibility_species_shares["au_id"].tolist(),
+            ct_eligibility_cw_values,
+            key_expr=runtime_base_au_expr,
+        )
+        + ")/100"
+    )
     unmanaged_share_lookup_exprs: dict[str, str] = {}
     unmanaged_share_keys = unmanaged_species_shares["au_id"].tolist()
     for share_column in managed_share_label_map:
@@ -2189,8 +2241,16 @@ def initialize_mkrf_runtime_package(
             anchor_age = int(bucket_spec["anchor_age"])
             bucket_prefix = str(bucket_spec["prefix"])
             bucket_label = str(bucket_spec["label"])
-            natural_gap = round(_curve_group_value_at_age(natural_group, anchor_age) * 0.4, 6)
-            treated_gap = round(_curve_group_value_at_age(managed_group, anchor_age) * 0.4, 6)
+            natural_gap = round(
+                _curve_group_value_at_age(natural_group, anchor_age)
+                * _MKRF_CT_TARGET_BA_REMOVAL_FRACTION,
+                6,
+            )
+            treated_gap = round(
+                _curve_group_value_at_age(managed_group, anchor_age)
+                * _MKRF_CT_TARGET_BA_REMOVAL_FRACTION,
+                6,
+            )
             natural_residual_curve_id = f"THN{anchor_age:03d}_FG_{au_token}"
             treated_residual_curve_id = f"THN{anchor_age:03d}_MG_{au_token}"
             natural_extraction_curve_id = f"CT{anchor_age:03d}_FG_{au_token}"
@@ -2398,8 +2458,16 @@ def initialize_mkrf_runtime_package(
         natural_group = first_growth_by_au.get(str(row.au_id), managed_group)
         for bucket_spec in ct_bucket_specs:
             anchor_age = int(bucket_spec["anchor_age"])
-            natural_gap = round(_curve_group_value_at_age(natural_group, anchor_age) * 0.4, 6)
-            treated_gap = round(_curve_group_value_at_age(managed_group, anchor_age) * 0.4, 6)
+            natural_gap = round(
+                _curve_group_value_at_age(natural_group, anchor_age)
+                * _MKRF_CT_TARGET_BA_REMOVAL_FRACTION,
+                6,
+            )
+            treated_gap = round(
+                _curve_group_value_at_age(managed_group, anchor_age)
+                * _MKRF_CT_TARGET_BA_REMOVAL_FRACTION,
+                6,
+            )
             natural_residual_curve = et.SubElement(
                 forestmodel_root,
                 "curve",
@@ -2606,7 +2674,9 @@ def initialize_mkrf_runtime_package(
         {
             "statement": (
                 "status in managed and oper in operable and ct eq 'Y' "
-                "and not startswith(au,'thn')"
+                "and not startswith(au,'thn') "
+                f"and {ct_eligibility_cw_lookup_expr} gt "
+                f"{_MKRF_CT_MIN_CW_SHARE_PCT / 100.0}"
             )
         },
     )
@@ -2846,12 +2916,19 @@ def initialize_mkrf_runtime_package(
             "attribute",
             {"label": f"product.yield.managed.indsp.{species_label}"},
         )
+        ct_product_species_fraction_expr = _ct_product_species_fraction_expr(
+            share_column,
+            origin_share_lookup_exprs,
+        )
         et.SubElement(
             product_indsp_attr,
             "expression",
             {
                 "statement": (
-                    f"{product_curve_expr}*({origin_share_lookup_exprs[share_column]})"
+                    f"{product_curve_expr}*("
+                    f"if(startswith(treatment,'CT'),"
+                    f"{ct_product_species_fraction_expr},"
+                    f"{origin_share_lookup_exprs[share_column]}))"
                 ),
                 "by": "1",
                 "ignoreMissingAttributes": "false",
