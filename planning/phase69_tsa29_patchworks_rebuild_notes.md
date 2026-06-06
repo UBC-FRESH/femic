@@ -69,3 +69,28 @@ Expected validation/publication bundle:
 - run the necessary Patchworks-facing validation checks;
 - update docs/evidence only if the rebuilt package is accepted; and
 - close the issue and publish the resulting branch/PR state.
+
+Current progress:
+- rebuilt the validated TSA29 Patchworks export after raising the fragment
+  export area floor to `0.001 ha`, which reduced the fragments surface from
+  `447,022` block parts to `421,945`;
+- collapsed sub-`0.001 ha` managed/unmanaged retention splits onto the dominant
+  side during fragments export so Patchworks no longer emits block-area
+  precision-limit warnings at launch;
+- disabled Matrix Builder successful-output auto-close in the TSA29 Windows
+  runtime config so FEMIC no longer force-stops Patchworks while track files
+  are still being written;
+- reran:
+  - `femic export patchworks --tsa 29 --bundle-dir data/model_input_bundle --checkpoint data/tsr/strict_chain/23_thlb_parent_023_future_roads.feather --output-dir output/patchworks_tsa29_validated`
+  - `femic patchworks build-blocks --config config/patchworks.runtime.windows.yaml --no-topology`
+  - `femic patchworks matrix-build --config config/patchworks.runtime.windows.yaml --run-id p69_3a_tsa29_matrix_rebuild_20260606c`
+- verified the rebuilt `models/tsa29_patchworks_model/tracks/blocks.csv`
+  no longer truncates at the final row and now has `0` malformed records;
+- ran a real headless Patchworks launch smoke:
+  - `femic patchworks run-headless models/tsa29_patchworks_model/analysis/base.pin --config config/patchworks.runtime.windows.yaml --run-id p69_3a_tsa29_launch_smoke_20260606d --iterations 1 --improvement 0.0`
+- confirmed the rebuilt package now launches cleanly:
+  - headless manifest `returncode=0`
+  - terminal marker `[FEMIC headless] saveStage completed`
+  - saved stage directory with `543` output files
+  - no `blocks.csv` parse error and no block-area precision-limit warnings in
+    the launch stderr log.

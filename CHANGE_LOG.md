@@ -17625,3 +17625,21 @@
     the shared analysis/PIN lane already loads; and
 - reran `femic patchworks build-blocks --no-topology` successfully so the
   rebuilt blocks surface now completes without the topology subprocess hang.
+## 2026-06-06 - Validated the rebuilt TSA29 Patchworks package end to end
+- raised the Patchworks fragment export floor to `0.001 ha` so micro-sliver
+  checkpoint rows are dropped before fragments export rather than leaking into
+  Patchworks block-part warnings;
+- collapsed sub-`0.001 ha` managed/unmanaged retention splits onto the dominant
+  side during fragments export so the rebuilt Patchworks launch no longer emits
+  block-area precision warnings;
+- disabled Matrix Builder successful-output auto-close in the TSA29 Windows
+  runtime config so `tracks/blocks.csv` is no longer truncated mid-write;
+- reran the validated TSA29 Patchworks export, block build, and matrix build
+  from `data/tsr/strict_chain/23_thlb_parent_023_future_roads.feather`;
+- confirmed the rebuilt `models/tsa29_patchworks_model/tracks/blocks.csv` now
+  has `0` malformed rows and no trailing truncated record;
+- ran a real headless Patchworks launch smoke on
+  `models/tsa29_patchworks_model/analysis/base.pin`; and
+- confirmed the refreshed TSA29 model package now launches successfully with
+  headless `returncode=0`, saved-stage output, and no `blocks.csv` parse
+  failure in launch stderr.

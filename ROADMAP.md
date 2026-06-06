@@ -1916,7 +1916,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P69.2c Inspect the rebuilt Patchworks-facing outputs directly rather
     than treating command success as proof.
 - [ ] P69.3 Validate and publish the refreshed TSA29 model package
-  - [ ] P69.3a Run the necessary Patchworks-facing validation checks on the
+  - [x] P69.3a Run the necessary Patchworks-facing validation checks on the
     rebuilt package.
   - [ ] P69.3b Update TSA29 instance docs/evidence surfaces for the refreshed
     package if the rebuild is accepted.
@@ -1932,5 +1932,6 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 - Current edge:
   - `P68` complete
   - `P69.2` complete
-  - next bounded move is `P69.3a`: run the remaining Patchworks-facing
-    validation/publish checks on the rebuilt TSA29 package
+  - `P69.3a` complete
+  - next bounded move is `P69.3b`: record the accepted refreshed TSA29
+    package surface in the instance docs/evidence lane

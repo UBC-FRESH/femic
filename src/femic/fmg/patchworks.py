@@ -48,7 +48,7 @@ DEFAULT_CC_MIN_AGE = 0
 DEFAULT_CC_MAX_AGE = 1000
 DEFAULT_CC_TRANSITION_IFM: str | None = None
 DEFAULT_FRAGMENTS_CRS = "EPSG:3005"
-MIN_FRAGMENT_EXPORT_AREA_HA = 1.0e-15
+MIN_FRAGMENT_EXPORT_AREA_HA = 1.0e-3
 DEFAULT_IFM_MODE = "proportional"
 DEFAULT_IFM_SOURCE_COL: str | None = None
 DEFAULT_IFM_THRESHOLD: float | None = None
@@ -182,6 +182,47 @@ _LEGACY_MKRF_LOOKUP_FACTOR_PATTERN = re.compile(
 )
 _LEGACY_MKRF_LOOKUP_REF_PATTERN = re.compile(r"^=[A-Z]+(?P<row>\d+)$")
 _LEGACY_MKRF_THN_AU_PATTERN = re.compile(r'^="thn_"&N(?P<row>\d+)$')
+
+
+def _collapse_subprecision_retention_splits(
+    *,
+    area_ha: pd.Series,
+    ifm_values: pd.Series,
+    final_retention: np.ndarray,
+    precision_limit_ha: float = MIN_FRAGMENT_EXPORT_AREA_HA,
+) -> tuple[pd.Series, np.ndarray]:
+    """Collapse managed/unmanaged split parts below Patchworks precision."""
+
+    normalized_ifm = ifm_values.astype(str).copy()
+    normalized_retention = np.clip(
+        pd.to_numeric(pd.Series(final_retention), errors="coerce")
+        .fillna(0.0)
+        .to_numpy(dtype=float),
+        0.0,
+        1.0,
+    )
+    area_values = (
+        pd.to_numeric(area_ha, errors="coerce").fillna(0.0).clip(lower=0.0).to_numpy()
+    )
+    managed_mask = normalized_ifm.eq("managed").to_numpy(dtype=bool)
+    split_mask = managed_mask & (normalized_retention > 0.0) & (normalized_retention < 1.0)
+    if not split_mask.any():
+        return normalized_ifm, normalized_retention
+
+    managed_area = area_values * (1.0 - normalized_retention)
+    unmanaged_area = area_values * normalized_retention
+    subprecision_mask = split_mask & (
+        (managed_area < precision_limit_ha) | (unmanaged_area < precision_limit_ha)
+    )
+    if not subprecision_mask.any():
+        return normalized_ifm, normalized_retention
+
+    collapse_to_managed = subprecision_mask & (managed_area >= unmanaged_area)
+    collapse_to_unmanaged = subprecision_mask & ~collapse_to_managed
+    normalized_retention[collapse_to_managed] = 0.0
+    normalized_retention[collapse_to_unmanaged] = 0.0
+    normalized_ifm.loc[collapse_to_unmanaged] = "unmanaged"
+    return normalized_ifm, normalized_retention
 
 
 @dataclass(frozen=True)
@@ -6382,7 +6423,11 @@ def _resolve_ifm_and_retention(
         1.0 - final_managed_share,
         0.0,
     ).astype(float)
-    return ifm_values, final_retention
+    return _collapse_subprecision_retention_splits(
+        area_ha=total_area_ha,
+        ifm_values=ifm_values,
+        final_retention=final_retention,
+    )
 
 
 def validate_fragments_geodataframe(*, fragments_gdf: Any) -> None:
