@@ -385,8 +385,23 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert 'sourceRelative("../scripts/targets/flowtargets.bsh");' in analysis_pin_text
     assert 'block_shape = "../spatial/fragments.shp";' in analysis_pin_text
     assert "setupYieldFlowTargets(control, periods, tracks_path_prefix);" in analysis_pin_text
+    assert 'def.setCaption("Forest Outline");' in analysis_pin_text
+    assert "new PolygonSymbol(new Color(239, 239, 239))" in analysis_pin_text
+    assert (
+        'ageClassTheme.setFieldname("0.5 * (MANAGEDOFFSET + UNMANAGEDOFFSET)");'
+        in analysis_pin_text
+    )
+    assert 'ageClassTheme.setCaption("Age Class (20-year)");' in analysis_pin_text
+    assert '"age_000_019"' in analysis_pin_text
+    assert '"age_200plus"' in analysis_pin_text
+    assert "new PolygonSymbol(new Color(255, 255, 229))" in analysis_pin_text
+    assert "new PolygonSymbol(new Color(0, 69, 41))" in analysis_pin_text
     assert 'currTreatTheme.setFieldname("CURRENTTREATMENT");' in analysis_pin_text
     assert 'latestTreatTheme.setFieldname("LASTTREATMENT");' in analysis_pin_text
+    assert '"CT35"' in analysis_pin_text
+    assert '"CT40"' in analysis_pin_text
+    assert '"CT45"' in analysis_pin_text
+    assert '"CT",' not in analysis_pin_text
     assert 'patch0Theme.setFieldname("product.area.managed.treat.CC.size");' in analysis_pin_text
     assert 'patch1Theme.setFieldname("feature.area.managed.seral.le10.size");' in analysis_pin_text
     assert "femicQueueHeadlessStage();" in analysis_pin_text

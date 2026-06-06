@@ -3743,10 +3743,97 @@ def initialize_mkrf_runtime_package(
 
                   DefaultTheme def = new DefaultTheme(
                      blockData,
-                     new PolygonSymbol(new Color(204, 204, 255))
+                     new PolygonSymbol(new Color(239, 239, 239))
                   );
+                  def.setCaption("Forest Outline");
                   Layer defLayer = new GeoRelLayer(blockData, def);
                   layers.add(defLayer);
+
+                  NumericTheme ageClassTheme = new NumericTheme(blockData);
+                  ageClassTheme.setFieldname("0.5 * (MANAGEDOFFSET + UNMANAGEDOFFSET)");
+                  ageClassTheme.addElement(
+                     new ThemeElement(
+                        "age_000_019",
+                        new PolygonSymbol(new Color(255, 255, 229))
+                     ),
+                     "0 - 19"
+                  );
+                  ageClassTheme.addElement(
+                     new ThemeElement(
+                        "age_020_039",
+                        new PolygonSymbol(new Color(248, 252, 193))
+                     ),
+                     "20 - 39"
+                  );
+                  ageClassTheme.addElement(
+                     new ThemeElement(
+                        "age_040_059",
+                        new PolygonSymbol(new Color(229, 244, 171))
+                     ),
+                     "40 - 59"
+                  );
+                  ageClassTheme.addElement(
+                     new ThemeElement(
+                        "age_060_079",
+                        new PolygonSymbol(new Color(199, 232, 154))
+                     ),
+                     "60 - 79"
+                  );
+                  ageClassTheme.addElement(
+                     new ThemeElement(
+                        "age_080_099",
+                        new PolygonSymbol(new Color(162, 216, 137))
+                     ),
+                     "80 - 99"
+                  );
+                  ageClassTheme.addElement(
+                     new ThemeElement(
+                        "age_100_119",
+                        new PolygonSymbol(new Color(120, 198, 121))
+                     ),
+                     "100 - 119"
+                  );
+                  ageClassTheme.addElement(
+                     new ThemeElement(
+                        "age_120_139",
+                        new PolygonSymbol(new Color(76, 176, 98))
+                     ),
+                     "120 - 139"
+                  );
+                  ageClassTheme.addElement(
+                     new ThemeElement(
+                        "age_140_159",
+                        new PolygonSymbol(new Color(47, 147, 77))
+                     ),
+                     "140 - 159"
+                  );
+                  ageClassTheme.addElement(
+                     new ThemeElement(
+                        "age_160_179",
+                        new PolygonSymbol(new Color(20, 120, 62))
+                     ),
+                     "160 - 179"
+                  );
+                  ageClassTheme.addElement(
+                     new ThemeElement(
+                        "age_180_199",
+                        new PolygonSymbol(new Color(0, 97, 52))
+                     ),
+                     "180 - 199"
+                  );
+                  ageClassTheme.addElement(
+                     new ThemeElement(
+                        "age_200plus",
+                        new PolygonSymbol(new Color(0, 69, 41))
+                     ),
+                     "200 - 99999"
+                  );
+                  ageClassTheme.setCaption("Age Class (20-year)");
+                  ageClassTheme.setUnclassified(new ThemeElement("", PolygonSymbol.erase));
+                  blockData.addTheme(ageClassTheme);
+                  GeoRelLayer ageClassLayer = new GeoRelLayer(blockData, ageClassTheme);
+                  ageClassLayer.setVisible(false);
+                  layers.add(ageClassLayer);
 
                   UniqueValueTheme currTreatTheme = new UniqueValueTheme(blockData);
                   currTreatTheme.setFieldname("CURRENTTREATMENT");
@@ -3759,10 +3846,24 @@ def initialize_mkrf_runtime_package(
                   );
                   currTreatTheme.addElement(
                      new ThemeElement(
-                        "CT",
+                        "CT35",
                         PolygonSymbol.getDefault(Symbol.FILL, Symbol.GEMS, 1)
                      ),
-                     "CT"
+                     "CT35"
+                  );
+                  currTreatTheme.addElement(
+                     new ThemeElement(
+                        "CT40",
+                        PolygonSymbol.getDefault(Symbol.FILL, Symbol.GEMS, 2)
+                     ),
+                     "CT40"
+                  );
+                  currTreatTheme.addElement(
+                     new ThemeElement(
+                        "CT45",
+                        PolygonSymbol.getDefault(Symbol.FILL, Symbol.GEMS, 3)
+                     ),
+                     "CT45"
                   );
                   currTreatTheme.setCaption("Current Treatments");
                   currTreatTheme.setUnclassified(new ThemeElement("", PolygonSymbol.erase));
@@ -3782,10 +3883,24 @@ def initialize_mkrf_runtime_package(
                   );
                   latestTreatTheme.addElement(
                      new ThemeElement(
-                        "CT",
+                        "CT35",
                         PolygonSymbol.getDefault(Symbol.FILL, Symbol.GEMS, 1)
                      ),
-                     "CT"
+                     "CT35"
+                  );
+                  latestTreatTheme.addElement(
+                     new ThemeElement(
+                        "CT40",
+                        PolygonSymbol.getDefault(Symbol.FILL, Symbol.GEMS, 2)
+                     ),
+                     "CT40"
+                  );
+                  latestTreatTheme.addElement(
+                     new ThemeElement(
+                        "CT45",
+                        PolygonSymbol.getDefault(Symbol.FILL, Symbol.GEMS, 3)
+                     ),
+                     "CT45"
                   );
                   latestTreatTheme.setCaption("Latest Treatments");
                   latestTreatTheme.setUnclassified(new ThemeElement("", PolygonSymbol.erase));
