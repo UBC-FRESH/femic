@@ -361,6 +361,25 @@ def emit_missing_au_curve_mapping_warning(
     )
 
 
+def validate_complete_au_curve_mappings(
+    *,
+    missing_df: Any,
+    top_n: int = 10,
+) -> None:
+    """Raise when bundle assembly leaves any VDYP strata without AU mapping."""
+    if missing_df.empty:
+        return
+    summary = (
+        missing_df.value_counts(["tsa", "stratum_code", "si_level"])
+        .head(top_n)
+        .to_dict()
+    )
+    raise ValueError(
+        "Bundle assembly left VDYP curve combinations without AU mapping. "
+        f"rows={len(missing_df)} top_missing={summary}"
+    )
+
+
 def assign_curve_ids_from_au_table(
     *,
     f_table: Any,

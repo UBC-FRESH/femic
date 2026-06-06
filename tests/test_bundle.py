@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 import numpy as np
+import pytest
 
 from femic.pipeline.bundle import (
     assign_curve_ids_from_au_table,
@@ -14,6 +15,7 @@ from femic.pipeline.bundle import (
     ensure_scsi_au_from_table,
     load_bundle_tables,
     resolve_bundle_paths,
+    validate_complete_au_curve_mappings,
     write_bundle_tables,
 )
 
@@ -428,6 +430,15 @@ def test_emit_missing_au_curve_mapping_warning_emits_expected_lines() -> None:
         "Warning: skipped VDYP curve combos without AU mapping (2 rows). Top 1:"
     )
     assert "BWBS_AT" in messages[1]
+
+
+def test_validate_complete_au_curve_mappings_raises_on_missing_rows() -> None:
+    missing_df = pd.DataFrame(
+        [{"tsa": "08", "stratum_code": "BWBS_AT", "si_level": "L"}]
+    )
+
+    with pytest.raises(ValueError, match="without AU mapping"):
+        validate_complete_au_curve_mappings(missing_df=missing_df, top_n=1)
 
 
 def test_assign_curve_ids_from_au_table_assigns_managed_and_unmanaged() -> None:

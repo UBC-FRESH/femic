@@ -91,6 +91,7 @@ from femic.pipeline.bundle import (
     ensure_scsi_au_from_table,
     load_bundle_tables,
     resolve_bundle_paths,
+    validate_complete_au_curve_mappings,
     write_bundle_tables,
 )
 from femic.pipeline.vdyp_sampling import nsamples_from_curves
@@ -134,10 +135,12 @@ from femic.pipeline.tsa import (
     assign_si_levels_from_stratum_quantiles,
     assign_stratum_matches_from_au_table,
     build_au_assignment_null_summary,
+    build_missing_au_assignment_summary,
     mean_thlb_for_geometry,
     emit_missing_au_mapping_warning,
     lookup_scsi_au_base,
     summarize_missing_au_mappings,
+    validate_complete_au_assignment,
     validate_nonempty_au_assignment,
 )
 from femic.pipeline.tipsy_config import (
@@ -253,6 +256,7 @@ __all__ = [
     "build_bundle_tables_from_curves",
     "bundle_tables_ready",
     "emit_missing_au_curve_mapping_warning",
+    "validate_complete_au_curve_mappings",
     "ensure_au_table_index",
     "load_bundle_tables",
     "write_bundle_tables",
@@ -317,6 +321,8 @@ __all__ = [
     "summarize_missing_au_mappings",
     "emit_missing_au_mapping_warning",
     "build_au_assignment_null_summary",
+    "build_missing_au_assignment_summary",
+    "validate_complete_au_assignment",
     "validate_nonempty_au_assignment",
     "build_tipsy_params_for_tsa",
     "build_tipsy_warning_event",

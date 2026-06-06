@@ -17590,3 +17590,88 @@
     `planning/phase68_tsa29_comparison_docs_notes.md`; and
   - prepared the TSA29-instance and parent feature branches for PR review so
     the next move is review/merge rather than further local docs churn.
+## 2026-05-11 - Closed issue #190 and opened the TSA29 Patchworks rebuild lane
+- closed parent issue `#190` after the CSV-only BTC handoff work was merged and
+  no longer represented an active lane;
+- opened new TSA29-instance feature issue `#6` to rebuild the Patchworks model
+  on the newly accepted THLB and yield surfaces;
+- created the dedicated parent and instance branches:
+  - `feature/tsa29-patchworks-rebuild-new-inputs`; and
+- recorded the new lane in:
+  - `ROADMAP.md`
+  - `planning/phase71_tsa29_patchworks_rebuild_notes.md`
+- the new lane explicitly carries the requirement that past-top-N strata must
+  receive deterministic AU assignment through lexicographical stratum-matching
+  imputation so no surviving AFLB area is silently dropped from the model.
+## 2026-05-11 - Rebuilt the TSA29 Patchworks package on the recovered row-23 THLB surface
+- recovered and recommitted the strict row-23 THLB checkpoint surface needed by
+  downstream TSA29 Patchworks export;
+- patched `src/femic/fmg/patchworks.py` so zero/tiny-area checkpoint rows are
+  dropped before fragments shapefile serialization;
+- reran `femic export patchworks` successfully against
+  `data/tsr/strict_chain/23_thlb_parent_023_future_roads.feather`;
+- confirmed the rebuilt fragments shapefile round-trips with `0`
+  nonpositive `AREA_HA` rows;
+- reran `femic patchworks matrix-build` successfully on the rebuilt package,
+  with the new manifest reporting `returncode=0` and synced accounts
+  promotion; and
+- initially left the `patchworks-raster` topology hang in `build-blocks` open
+  after `blocks.shp` had already been written; then
+- replaced that seam by aligning the TSA29 rebuild contract to the shipped
+  dev-mode runtime surface:
+  - `femic patchworks build-blocks --config config/patchworks.runtime.windows.yaml --no-topology`
+  - preserve the tracked header-only
+    `models/tsa29_patchworks_model/blocks/topology_blocks_0r.csv` file that
+    the shared analysis/PIN lane already loads; and
+- reran `femic patchworks build-blocks --no-topology` successfully so the
+  rebuilt blocks surface now completes without the topology subprocess hang.
+## 2026-06-06 - Validated the rebuilt TSA29 Patchworks package end to end
+- raised the Patchworks fragment export floor to `0.001 ha` so micro-sliver
+  checkpoint rows are dropped before fragments export rather than leaking into
+  Patchworks block-part warnings;
+- collapsed sub-`0.001 ha` managed/unmanaged retention splits onto the dominant
+  side during fragments export so the rebuilt Patchworks launch no longer emits
+  block-area precision warnings;
+- disabled Matrix Builder successful-output auto-close in the TSA29 Windows
+  runtime config so `tracks/blocks.csv` is no longer truncated mid-write;
+- reran the validated TSA29 Patchworks export, block build, and matrix build
+  from `data/tsr/strict_chain/23_thlb_parent_023_future_roads.feather`;
+- confirmed the rebuilt `models/tsa29_patchworks_model/tracks/blocks.csv` now
+  has `0` malformed rows and no trailing truncated record;
+- ran a real headless Patchworks launch smoke on
+  `models/tsa29_patchworks_model/analysis/base.pin`; and
+- confirmed the refreshed TSA29 model package now launches successfully with
+  headless `returncode=0`, saved-stage output, and no `blocks.csv` parse
+  failure in launch stderr.
+## 2026-06-06 - Recorded accepted TSA29 Patchworks scenario evidence for the refreshed package
+- added `external/femic-tsa29-instance/evidence/patchworks_test01_scenario_20260606.md`
+  to summarize the accepted `analysis/scenarios/test01` interactive smoke run;
+- recorded that the rebuilt even-flow managed harvest level falls in roughly
+  the `1.4` to `1.6 million m3/year` band, based on
+  `targets/product_HarvestedVolume_managed_Total_CC.csv`;
+- recorded the direct published comparison points from the 2014 Williams Lake
+  TSA public discussion paper:
+  - Figure 4 base-case mid-term level `1,420,500 m3/year`
+  - Figure 6 alternative mid-term level `1,504,998 m3/year`; and
+- updated the TSA29 instance docs surfaces (`README.md`,
+  `docs/rebuild-and-qa.rst`, `docs/data-and-provenance.rst`) so the refreshed
+  package points directly at that accepted scenario evidence.
+## 2026-06-06 - Published TSA29 Phase 71 for PR review and closed issue #6
+- opened the TSA29 instance PR `UBC-FRESH/femic-tsa29-instance#7` for the
+  rebuilt package and accepted evidence surfaces;
+- opened the parent coordination PR `UBC-FRESH/femic#195` for the roadmap,
+  changelog, planning, and submodule-pointer updates;
+- posted the final governing issue closeout comment on
+  `UBC-FRESH/femic-tsa29-instance#6`; and
+- closed issue `#6` because the rebuilt TSA29 Patchworks package, launch
+  validation, and accepted `test01` scenario evidence are now published for
+  review.
+## 2026-06-06 - Opened the TSA29 `v1.0.0-alpha1` release lane
+- opened new TSA29-instance release issue `#8` to publish
+  `femic-tsa29-instance` `v1.0.0-alpha1`;
+- added Phase 72 to the parent roadmap and created
+  `planning/phase72_tsa29_release_notes.md`;
+- recorded the release gate that `v1.0.0-alpha1` must be cut from merged
+  `main`, not from `feature/tsa29-patchworks-rebuild-new-inputs`; and
+- anchored the release rationale on the now-accepted Phase 71 rebuilt package,
+  launch validation, and `test01` scenario evidence.

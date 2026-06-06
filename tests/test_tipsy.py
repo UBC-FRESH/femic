@@ -195,6 +195,23 @@ def test_build_tipsy_input_table_selects_table_key_and_columns() -> None:
     assert list(out["SI"]) == [18.0, 19.0]
 
 
+def test_build_tipsy_input_table_infers_columns_when_schema_missing() -> None:
+    tipsy_params_for_tsa = {
+        1001: {
+            "f": {"TBLno": 21, "AU": 1001, "SI": 18.0, "Density": 1200},
+        }
+    }
+    out = build_tipsy_input_table(
+        tipsy_params_for_tsa=tipsy_params_for_tsa,
+        tipsy_params_columns=[],
+        pd_module=pd,
+        table_key="f",
+    )
+
+    assert list(out.columns) == ["TBLno", "AU", "SI", "Density"]
+    assert int(out.iloc[0]["AU"]) == 1001
+
+
 def test_build_tipsy_input_table_raises_when_no_rows() -> None:
     tipsy_params_for_tsa = {1001: {"e": {"TBLno": 11, "AU": 1001, "SI": 16.0}}}
     with pytest.raises(RuntimeError, match="No TIPSY parameter tables generated"):

@@ -1933,14 +1933,56 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P70.4b Merge the instance/runtime PR, then merge the parent generator/submodule-pointer PR.
   - [x] P70.4c Close issue `UBC-FRESH/femic-mkrf-instance#21` after PR merge.
 
+## Phase 71: Rebuild the TSA29 Patchworks Model on the New THLB and Yield Surfaces
+
+- [x] P71.1 Record and initialize the TSA29 Patchworks-rebuild lane (`UBC-FRESH/femic-tsa29-instance#6`)
+  - [x] P71.1a Open the TSA29-instance feature issue for rebuilding the
+    Patchworks model on the newly accepted THLB and yield surfaces.
+  - [x] P71.1b Create the dedicated parent/submodule feature branches for that
+    rebuild lane.
+  - [x] P71.1c Record the requirement that past-top-N strata must receive AU
+    assignment through the lexicographical stratum-matching imputation logic so
+    no surviving AFLB area is silently left out of the model.
+- [x] P71.2 Rebuild TSA29 model-input and Patchworks package surfaces on the new inputs
+  - [x] P71.2a Regenerate the TSA29 model-input bundle from the current locked
+    THLB and accepted curve libraries.
+  - [x] P71.2b Rebuild the TSA29 Patchworks package on that regenerated bundle,
+    including any required past-top-N AU imputation.
+  - [x] P71.2c Inspect the rebuilt Patchworks-facing outputs directly rather
+    than treating command success as proof.
+- [x] P71.3 Validate and publish the refreshed TSA29 model package
+  - [x] P71.3a Run the necessary Patchworks-facing validation checks on the
+    rebuilt package.
+  - [x] P71.3b Update TSA29 instance docs/evidence surfaces for the refreshed
+    package if the rebuild is accepted.
+  - [x] P71.3c Close the governing issue and publish the resulting branch/PR
+    updates.
+
+## Phase 72: Publish the TSA29 `v1.0.0-alpha1` Release
+
+- [ ] P72.1 Prepare the TSA29 release lane and merge gate (`UBC-FRESH/femic-tsa29-instance#8`)
+  - [x] P72.1a Open the governing TSA29-instance release issue for the `v1.0.0-alpha1` milestone.
+  - [ ] P72.1b Treat the release boundary as post-merge only: do not cut the release from `feature/tsa29-patchworks-rebuild-new-inputs`; first merge:
+    - `UBC-FRESH/femic-tsa29-instance#7`
+    - `UBC-FRESH/femic#195`
+  - [ ] P72.1c Refresh the release-facing TSA29 docs/notes so the alpha milestone is described as:
+    - the first standalone TSA29 release where the Patchworks model rebuilds, launches, and produces sane output on the accepted THLB/yield lane; and
+    - an alpha-quality research/prototype milestone rather than a final production contract.
+- [ ] P72.2 Publish `femic-tsa29-instance` `v1.0.0-alpha1`
+  - [ ] P72.2a Fast-forward the TSA29 instance checkout to merged `main` and verify the merged release candidate surfaces directly.
+  - [ ] P72.2b Confirm the launch-critical DataLad/annex payloads and release-facing evidence/docs are in the intended published state.
+  - [ ] P72.2c Create the `v1.0.0-alpha1` tag and GitHub pre-release in `UBC-FRESH/femic-tsa29-instance`.
+  - [ ] P72.2d Record the release in the parent changelog/planning surfaces and publish the matching closeout comments.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase71_tsa29_patchworks_rebuild_notes.md`
+  - `planning/phase72_tsa29_release_notes.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P68.1` complete
-  - `P68.2` complete
+  - `P68` complete
   - `P69.1` complete
   - `P69.2` complete
   - `P69.3` complete
@@ -1949,3 +1991,8 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P70.2` complete
   - `P70.3` complete
   - `P70.4` complete: branch publication, PRs, merge, and issue closeout are handled for `UBC-FRESH/femic-mkrf-instance#21`
+  - `P71` complete locally and published for review via:
+    - `UBC-FRESH/femic-tsa29-instance#7`
+    - `UBC-FRESH/femic#195`
+  - `P72.1a` complete
+  - next bounded move is `P72.1b/P72.1c`: merge the active TSA29 Phase 71 review PRs and refresh the TSA29 release-facing notes for `v1.0.0-alpha1`

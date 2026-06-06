@@ -48,6 +48,7 @@ DEFAULT_CC_MIN_AGE = 0
 DEFAULT_CC_MAX_AGE = 1000
 DEFAULT_CC_TRANSITION_IFM: str | None = None
 DEFAULT_FRAGMENTS_CRS = "EPSG:3005"
+MIN_FRAGMENT_EXPORT_AREA_HA = 1.0e-3
 DEFAULT_IFM_MODE = "proportional"
 DEFAULT_IFM_SOURCE_COL: str | None = None
 DEFAULT_IFM_THRESHOLD: float | None = None
@@ -181,6 +182,47 @@ _LEGACY_MKRF_LOOKUP_FACTOR_PATTERN = re.compile(
 )
 _LEGACY_MKRF_LOOKUP_REF_PATTERN = re.compile(r"^=[A-Z]+(?P<row>\d+)$")
 _LEGACY_MKRF_THN_AU_PATTERN = re.compile(r'^="thn_"&N(?P<row>\d+)$')
+
+
+def _collapse_subprecision_retention_splits(
+    *,
+    area_ha: pd.Series,
+    ifm_values: pd.Series,
+    final_retention: np.ndarray,
+    precision_limit_ha: float = MIN_FRAGMENT_EXPORT_AREA_HA,
+) -> tuple[pd.Series, np.ndarray]:
+    """Collapse managed/unmanaged split parts below Patchworks precision."""
+
+    normalized_ifm = ifm_values.astype(str).copy()
+    normalized_retention = np.clip(
+        pd.to_numeric(pd.Series(final_retention), errors="coerce")
+        .fillna(0.0)
+        .to_numpy(dtype=float),
+        0.0,
+        1.0,
+    )
+    area_values = (
+        pd.to_numeric(area_ha, errors="coerce").fillna(0.0).clip(lower=0.0).to_numpy()
+    )
+    managed_mask = normalized_ifm.eq("managed").to_numpy(dtype=bool)
+    split_mask = managed_mask & (normalized_retention > 0.0) & (normalized_retention < 1.0)
+    if not split_mask.any():
+        return normalized_ifm, normalized_retention
+
+    managed_area = area_values * (1.0 - normalized_retention)
+    unmanaged_area = area_values * normalized_retention
+    subprecision_mask = split_mask & (
+        (managed_area < precision_limit_ha) | (unmanaged_area < precision_limit_ha)
+    )
+    if not subprecision_mask.any():
+        return normalized_ifm, normalized_retention
+
+    collapse_to_managed = subprecision_mask & (managed_area >= unmanaged_area)
+    collapse_to_unmanaged = subprecision_mask & ~collapse_to_managed
+    normalized_retention[collapse_to_managed] = 0.0
+    normalized_retention[collapse_to_unmanaged] = 0.0
+    normalized_ifm.loc[collapse_to_unmanaged] = "unmanaged"
+    return normalized_ifm, normalized_retention
 
 
 @dataclass(frozen=True)
@@ -6099,8 +6141,9 @@ def build_fragments_geodataframe(
     total_area_ha = (
         pd.to_numeric(total_area_ha, errors="coerce").fillna(0.0).clip(lower=0.0)
     )
-    fragment_ids = np.arange(1, len(scoped) + 1, dtype=int)
-    block_values = pd.Series(fragment_ids, index=scoped.index, dtype="int64")
+    block_values = pd.Series(
+        np.arange(1, len(scoped) + 1, dtype=int), index=scoped.index, dtype="int64"
+    )
     if live_input_attributes.get("block") != DEFAULT_INPUT_ATTRIBUTE_BLOCK:
         block_candidate = _evaluate_legacy_export_expression(
             expression=live_input_attributes["block"],
@@ -6126,6 +6169,16 @@ def build_fragments_geodataframe(
         area_values = (
             pd.to_numeric(area_candidate, errors="coerce").fillna(0.0).clip(lower=0.0)
         )
+    positive_area_mask = area_values.gt(MIN_FRAGMENT_EXPORT_AREA_HA)
+    if not positive_area_mask.any():
+        raise ValueError(
+            "no positive-area checkpoint rows matched selected TSA/AU export filters"
+        )
+    if not positive_area_mask.all():
+        scoped = scoped.loc[positive_area_mask].copy().reset_index(drop=True)
+        total_area_ha = total_area_ha.loc[positive_area_mask].copy().reset_index(drop=True)
+        block_values = block_values.loc[positive_area_mask].copy().reset_index(drop=True)
+        area_values = area_values.loc[positive_area_mask].copy().reset_index(drop=True)
     age_values = (
         pd.to_numeric(scoped["PROJ_AGE_1"], errors="coerce").fillna(0).astype(int)
     )
@@ -6141,6 +6194,7 @@ def build_fragments_geodataframe(
             )
         age_values = pd.to_numeric(age_candidate, errors="coerce").fillna(0).astype(int)
     au_values = scoped["au"].astype(int)
+    fragment_ids = np.arange(1, len(scoped) + 1, dtype=int)
     retention_overrides = _resolve_retention_overrides_by_au(
         au_table=au_table,
         silviculture_config=silviculture_config,
@@ -6369,7 +6423,11 @@ def _resolve_ifm_and_retention(
         1.0 - final_managed_share,
         0.0,
     ).astype(float)
-    return ifm_values, final_retention
+    return _collapse_subprecision_retention_splits(
+        area_ha=total_area_ha,
+        ifm_values=ifm_values,
+        final_retention=final_retention,
+    )
 
 
 def validate_fragments_geodataframe(*, fragments_gdf: Any) -> None:

@@ -4,6 +4,7 @@ from pathlib import Path
 import xml.etree.ElementTree as et
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import pytest
 from shapely.geometry import Polygon
@@ -16,6 +17,7 @@ from femic.fmg.core import (
     QmdSupportDefinition,
 )
 from femic.fmg.patchworks import (
+    _collapse_subprecision_retention_splits,
     _au_base_display_label,
     _build_compiled_log_grade_curve_points,
     _build_curve_with_post_thinning_gap,
@@ -4121,6 +4123,61 @@ def test_build_fragments_geodataframe_prefers_effective_area_field(
     )
 
     assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(8.0)
+
+
+def test_build_fragments_geodataframe_drops_nonpositive_and_tiny_area_rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    au_table = pd.DataFrame([{"au_id": 985501000}])
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "29",
+                "au": 985501000,
+                "PROJ_AGE_1": 80,
+                "FEATURE_AREA_SQM": 9.0,
+                "thlb_raw": 0.5,
+                "geometry": Polygon([(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]),
+            },
+            {
+                "tsa_code": "29",
+                "au": 985501000,
+                "PROJ_AGE_1": 90,
+                "FEATURE_AREA_SQM": 10000.0,
+                "thlb_raw": 0.5,
+                "geometry": Polygon([(2, 0), (3, 0), (3, 1), (2, 1), (2, 0)]),
+            },
+        ]
+    )
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    gdf = build_fragments_geodataframe(
+        checkpoint_path=checkpoint_path,
+        au_table=au_table,
+        tsa_list=["29"],
+    )
+
+    assert gdf.shape[0] == 1
+    assert float(gdf.loc[0, "AREA_HA"]) == pytest.approx(1.0)
+    validate_fragments_geodataframe(fragments_gdf=gdf)
+
+
+def test_collapse_subprecision_retention_splits_collapses_to_dominant_side() -> None:
+    area_ha = pd.Series([0.001318, 0.001318, 0.01], dtype=float)
+    ifm_values = pd.Series(["managed", "managed", "managed"])
+    retention = np.array([0.524996, 0.2, 0.2], dtype=float)
+
+    resolved_ifm, resolved_retention = _collapse_subprecision_retention_splits(
+        area_ha=area_ha,
+        ifm_values=ifm_values,
+        final_retention=retention,
+    )
+
+    assert resolved_ifm.tolist() == ["unmanaged", "managed", "managed"]
+    assert resolved_retention.tolist() == pytest.approx([0.0, 0.0, 0.2])
 
 
 def test_build_fragments_geodataframe_marks_age_60_as_planted(

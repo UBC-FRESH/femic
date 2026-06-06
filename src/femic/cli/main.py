@@ -1646,8 +1646,6 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
     warnings: list[str] = []
 
     data_root = repo_root / "data"
-    source_data_root = source_root / "data"
-
     def _resolve_required(primary: Path, fallback: Path | None = None) -> Path | None:
         if primary.exists():
             return primary
@@ -1659,12 +1657,7 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
         errors.append(f"Missing data directory: {data_root}")
     else:
         # Clean runs can regenerate checkpoint/boundary caches from source inputs.
-        required_files: list[tuple[Path, Path | None]] = [
-            (
-                data_root / "tipsy_params_columns",
-                source_data_root / "tipsy_params_columns",
-            ),
-        ]
+        required_files: list[tuple[Path, Path | None]] = []
         if resume:
             required_files.extend(
                 [

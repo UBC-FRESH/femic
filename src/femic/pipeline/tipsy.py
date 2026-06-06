@@ -2917,7 +2917,10 @@ def build_tipsy_input_table(
         rows.append(pd_module.DataFrame(table_map, index=[table_map["TBLno"]]))
     if not rows:
         raise RuntimeError("No TIPSY parameter tables generated.")
-    return pd_module.concat(rows)[list(tipsy_params_columns)]
+    table = pd_module.concat(rows)
+    if not tipsy_params_columns:
+        return table
+    return table[list(tipsy_params_columns)]
 
 
 def _btc_msyt_bec_fields(value: Any) -> tuple[str, str]:
