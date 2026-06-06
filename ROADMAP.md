@@ -1928,10 +1928,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 - [x] P70.3 Prove the map-layer fix against generated artifacts and runtime smoke (`UBC-FRESH/femic-mkrf-instance#21`)
   - [x] P70.3a Regenerate the canonical runtime package so ``models/mkrf_patchworks_model/analysis/base.pin`` carries the updated map layers.
   - [x] P70.3b Run targeted pytest, Patchworks preflight, default ``mkrf.base`` smoke, saved-stage sanity audit, and instance docs build.
-- [ ] P70.4 Publish the map-layer bugfix branch and close issue `UBC-FRESH/femic-mkrf-instance#21`
+- [x] P70.4 Publish the map-layer bugfix branch and close issue `UBC-FRESH/femic-mkrf-instance#21`
   - [x] P70.4a Push the instance and parent branches and open PRs.
-  - [ ] P70.4b Merge the instance/runtime PR, then merge the parent generator/submodule-pointer PR.
-  - [ ] P70.4c Close issue `UBC-FRESH/femic-mkrf-instance#21` after PR merge.
+  - [x] P70.4b Merge the instance/runtime PR, then merge the parent generator/submodule-pointer PR.
+  - [x] P70.4c Close issue `UBC-FRESH/femic-mkrf-instance#21` after PR merge.
 
 ### Detailed Next Steps Notes
 
@@ -1948,4 +1948,4 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P70.1` complete
   - `P70.2` complete
   - `P70.3` complete
-  - `P70.4` in progress: instance branch publication is done; follow-up color-ramp PR, parent PR update, merge, and issue closeout remain
+  - `P70.4` complete: branch publication, PRs, merge, and issue closeout are handled for `UBC-FRESH/femic-mkrf-instance#21`
