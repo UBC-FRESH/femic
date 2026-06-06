@@ -74,8 +74,11 @@ The practical handoff is:
 Commercial thinning follow-up
 -----------------------------
 
-The current post-release CT redesign is governed by ``#182`` rather than the
-earlier legacy-parity follow-up issue.
+The completed cedar-pole CT implementation is tracked in
+``UBC-FRESH/femic-mkrf-instance#8`` and landed in the canonical runtime after
+full Matrix Builder and Patchworks smoke validation. The next CT roadmap phase
+is the Anna/Sean follow-up issue set under
+``UBC-FRESH/femic-mkrf-instance#15``.
 
 Legacy and PoC CT behavior remains documented as benchmark/reference:
 
@@ -85,10 +88,13 @@ Legacy and PoC CT behavior remains documented as benchmark/reference:
 That is a constant proportional gap model, not the current canonical target.
 
 The active canonical redesign now uses bucketed CT treatments
-(``CT40``, ``CT50``, ``CT60``, ...) and bucket-specific thinned lanes so the
+(``CT35``, ``CT40``, ``CT45``) and bucket-specific thinned lanes so the
 canonical runtime can approximate a constant-absolute-gap response legally in
-ForestModel XML. The intended release boundary for that redesign is
-``v0.0.2a1`` so it is not conflated with the original ``v0.0.1a1`` alpha line.
+ForestModel XML. The follow-up phase broadens eligibility to
+``Cw + Fd >= 50%``, handles Fd-leading plantations explicitly, recalibrates
+planted Hw ingrowth to a ``30%`` landscape default, and keeps the full
+runtime QA gate: managed/runtime regeneration, Matrix Builder, Patchworks
+smoke, saved-stage sanity audit, and targeted pytest.
 
 Use the standalone instance treatment/state page for the exact current
 canonical CT wording, bucket layout, and evidence pointers.
