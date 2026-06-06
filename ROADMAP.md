@@ -1911,11 +1911,11 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P69.3a Change the landscape planted-Hw ingrowth default from `50%` to `30%` while preserving AU-level and stand-level override surfaces.
   - [x] P69.3b Document Anna's 18-survey MKRF evidence as the active parameter basis and Jaeck et al. 1984 as supporting context.
   - [x] P69.3c Regenerate managed inputs, runtime package, CT/Hw audit artifacts, Matrix Builder tracks, and the default `mkrf.base` smoke; run saved-stage sanity audit and targeted pytest.
-- [ ] P69.4 Publish the follow-up branch bundle and tracker closeout (`UBC-FRESH/femic-mkrf-instance#15`)
+- [x] P69.4 Publish the follow-up branch bundle and tracker closeout (`UBC-FRESH/femic-mkrf-instance#15`)
   - [x] P69.4a Post implementation/QA comments back to `#16`-`#19` and the parent `#15`.
   - [x] P69.4b Commit and push the instance and parent follow-up branches with the submodule pointer update.
   - [x] P69.4c Open the follow-up PRs for the instance/runtime package and parent FEMIC pointer/code changes.
-  - [ ] P69.4d Close the issue set once `UBC-FRESH/femic-mkrf-instance#20` and `UBC-FRESH/femic#193` are reviewed/merged.
+  - [x] P69.4d Close the issue set once `UBC-FRESH/femic-mkrf-instance#20` and `UBC-FRESH/femic#193` are reviewed/merged.
 
 ### Detailed Next Steps Notes
 
@@ -1928,4 +1928,4 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P69.1` complete
   - `P69.2` complete
   - `P69.3` complete
-  - `P69.4` in progress: PRs are open; final issue closeout waits for review/merge of `UBC-FRESH/femic-mkrf-instance#20` and `UBC-FRESH/femic#193`
+  - `P69.4` complete; follow-up PRs are merged and the issue set is closed
