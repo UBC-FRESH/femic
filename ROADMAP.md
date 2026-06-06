@@ -1898,58 +1898,101 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P68.2d Run the TSA29-instance Sphinx build and keep it warning-clean.
   - [x] P68.2e Lock the docs refresh with an instance commit, issue update, and PR.
 
-## Phase 69: Rebuild the TSA29 Patchworks Model on the New THLB and Yield Surfaces
+## Phase 69: MKRF CT Fd-Leading Follow-Up and Hw Ingrowth Recalibration
 
-- [x] P69.1 Record and initialize the TSA29 Patchworks-rebuild lane (`UBC-FRESH/femic-tsa29-instance#6`)
-  - [x] P69.1a Open the TSA29-instance feature issue for rebuilding the
+- [x] P69.1 Record the Anna/Sean CT follow-up contract (`UBC-FRESH/femic-mkrf-instance#15`)
+  - [x] P69.1a Open the follow-up parent and child issue set for broadened Cw/Fd eligibility, CT species priority, Hw ingrowth recalibration, and full runtime QA (`UBC-FRESH/femic-mkrf-instance#16`-`#19`).
+  - [x] P69.1b Update parent and instance planning surfaces so the follow-up is governed by `UBC-FRESH/femic-mkrf-instance#15`, not reopened under the closed CT implementation parent `#8`.
+- [x] P69.2 Broaden the canonical MKRF CT eligibility and prescription surface (`UBC-FRESH/femic-mkrf-instance#16`, `#17`)
+  - [x] P69.2a Replace the strict `Cw >15%` species gate with inclusive base planted `Cw + Fd >=50%` so Fd-leading and pure-Fd-style plantations are not excluded solely because `Cw == 0`.
+  - [x] P69.2b Document and implement CT retention/removal priority as retain Cw first, then Fd; remove Hw first, then Fd only as needed for the active removal target.
+  - [x] P69.2c Regenerate CT eligibility and intensity audits and sync the eligible-AU contract/config lists to the regenerated 26-of-31 AU result.
+- [x] P69.3 Recalibrate planted Hw ingrowth and prove the runtime (`UBC-FRESH/femic-mkrf-instance#18`, `#19`)
+  - [x] P69.3a Change the landscape planted-Hw ingrowth default from `50%` to `30%` while preserving AU-level and stand-level override surfaces.
+  - [x] P69.3b Document Anna's 18-survey MKRF evidence as the active parameter basis and Jaeck et al. 1984 as supporting context.
+  - [x] P69.3c Regenerate managed inputs, runtime package, CT/Hw audit artifacts, Matrix Builder tracks, and the default `mkrf.base` smoke; run saved-stage sanity audit and targeted pytest.
+- [x] P69.4 Publish the follow-up branch bundle and tracker closeout (`UBC-FRESH/femic-mkrf-instance#15`)
+  - [x] P69.4a Post implementation/QA comments back to `#16`-`#19` and the parent `#15`.
+  - [x] P69.4b Commit and push the instance and parent follow-up branches with the submodule pointer update.
+  - [x] P69.4c Open the follow-up PRs for the instance/runtime package and parent FEMIC pointer/code changes.
+  - [x] P69.4d Close the issue set once `UBC-FRESH/femic-mkrf-instance#20` and `UBC-FRESH/femic#193` are reviewed/merged.
+
+## Phase 70: MKRF Patchworks Map-Layer Presentation Fix
+
+- [x] P70.1 Record the Patchworks GUI map-layer bug (`UBC-FRESH/femic-mkrf-instance#21`)
+  - [x] P70.1a Open the bug issue for treatment legend labels, forest outline presentation, and age-class layer coverage.
+- [x] P70.2 Update the canonical MKRF ``base.pin`` map-layer generator (`UBC-FRESH/femic-mkrf-instance#21`)
+  - [x] P70.2a Replace generic CT legend entries with the active treatment labels ``CT35``, ``CT40``, and ``CT45`` for current/latest treatment layers.
+  - [x] P70.2b Rename/restyle the default block layer as a very light gray ``Forest Outline`` context layer.
+  - [x] P70.2c Add a hidden-by-default ``Age Class (20-year)`` layer keyed to dynamic mean fragment age via ``0.5 * (MANAGEDOFFSET + UNMANAGEDOFFSET)`` with an explicit yellow-green graduated color ramp.
+- [x] P70.3 Prove the map-layer fix against generated artifacts and runtime smoke (`UBC-FRESH/femic-mkrf-instance#21`)
+  - [x] P70.3a Regenerate the canonical runtime package so ``models/mkrf_patchworks_model/analysis/base.pin`` carries the updated map layers.
+  - [x] P70.3b Run targeted pytest, Patchworks preflight, default ``mkrf.base`` smoke, saved-stage sanity audit, and instance docs build.
+- [x] P70.4 Publish the map-layer bugfix branch and close issue `UBC-FRESH/femic-mkrf-instance#21`
+  - [x] P70.4a Push the instance and parent branches and open PRs.
+  - [x] P70.4b Merge the instance/runtime PR, then merge the parent generator/submodule-pointer PR.
+  - [x] P70.4c Close issue `UBC-FRESH/femic-mkrf-instance#21` after PR merge.
+
+## Phase 71: Rebuild the TSA29 Patchworks Model on the New THLB and Yield Surfaces
+
+- [x] P71.1 Record and initialize the TSA29 Patchworks-rebuild lane (`UBC-FRESH/femic-tsa29-instance#6`)
+  - [x] P71.1a Open the TSA29-instance feature issue for rebuilding the
     Patchworks model on the newly accepted THLB and yield surfaces.
-  - [x] P69.1b Create the dedicated parent/submodule feature branches for that
+  - [x] P71.1b Create the dedicated parent/submodule feature branches for that
     rebuild lane.
-  - [x] P69.1c Record the requirement that past-top-N strata must receive AU
+  - [x] P71.1c Record the requirement that past-top-N strata must receive AU
     assignment through the lexicographical stratum-matching imputation logic so
     no surviving AFLB area is silently left out of the model.
-- [x] P69.2 Rebuild TSA29 model-input and Patchworks package surfaces on the new inputs
-  - [x] P69.2a Regenerate the TSA29 model-input bundle from the current locked
+- [x] P71.2 Rebuild TSA29 model-input and Patchworks package surfaces on the new inputs
+  - [x] P71.2a Regenerate the TSA29 model-input bundle from the current locked
     THLB and accepted curve libraries.
-  - [x] P69.2b Rebuild the TSA29 Patchworks package on that regenerated bundle,
+  - [x] P71.2b Rebuild the TSA29 Patchworks package on that regenerated bundle,
     including any required past-top-N AU imputation.
-  - [x] P69.2c Inspect the rebuilt Patchworks-facing outputs directly rather
+  - [x] P71.2c Inspect the rebuilt Patchworks-facing outputs directly rather
     than treating command success as proof.
-- [x] P69.3 Validate and publish the refreshed TSA29 model package
-  - [x] P69.3a Run the necessary Patchworks-facing validation checks on the
+- [x] P71.3 Validate and publish the refreshed TSA29 model package
+  - [x] P71.3a Run the necessary Patchworks-facing validation checks on the
     rebuilt package.
-  - [x] P69.3b Update TSA29 instance docs/evidence surfaces for the refreshed
+  - [x] P71.3b Update TSA29 instance docs/evidence surfaces for the refreshed
     package if the rebuild is accepted.
-  - [x] P69.3c Close the governing issue and publish the resulting branch/PR
+  - [x] P71.3c Close the governing issue and publish the resulting branch/PR
     updates.
 
-## Phase 70: Publish the TSA29 `v1.0.0-alpha1` Release
+## Phase 72: Publish the TSA29 `v1.0.0-alpha1` Release
 
-- [ ] P70.1 Prepare the TSA29 release lane and merge gate (`UBC-FRESH/femic-tsa29-instance#8`)
-  - [x] P70.1a Open the governing TSA29-instance release issue for the `v1.0.0-alpha1` milestone.
-  - [ ] P70.1b Treat the release boundary as post-merge only: do not cut the release from `feature/tsa29-patchworks-rebuild-new-inputs`; first merge:
+- [ ] P72.1 Prepare the TSA29 release lane and merge gate (`UBC-FRESH/femic-tsa29-instance#8`)
+  - [x] P72.1a Open the governing TSA29-instance release issue for the `v1.0.0-alpha1` milestone.
+  - [ ] P72.1b Treat the release boundary as post-merge only: do not cut the release from `feature/tsa29-patchworks-rebuild-new-inputs`; first merge:
     - `UBC-FRESH/femic-tsa29-instance#7`
     - `UBC-FRESH/femic#195`
-  - [ ] P70.1c Refresh the release-facing TSA29 docs/notes so the alpha milestone is described as:
+  - [ ] P72.1c Refresh the release-facing TSA29 docs/notes so the alpha milestone is described as:
     - the first standalone TSA29 release where the Patchworks model rebuilds, launches, and produces sane output on the accepted THLB/yield lane; and
     - an alpha-quality research/prototype milestone rather than a final production contract.
-- [ ] P70.2 Publish `femic-tsa29-instance` `v1.0.0-alpha1`
-  - [ ] P70.2a Fast-forward the TSA29 instance checkout to merged `main` and verify the merged release candidate surfaces directly.
-  - [ ] P70.2b Confirm the launch-critical DataLad/annex payloads and release-facing evidence/docs are in the intended published state.
-  - [ ] P70.2c Create the `v1.0.0-alpha1` tag and GitHub pre-release in `UBC-FRESH/femic-tsa29-instance`.
-  - [ ] P70.2d Record the release in the parent changelog/planning surfaces and publish the matching closeout comments.
+- [ ] P72.2 Publish `femic-tsa29-instance` `v1.0.0-alpha1`
+  - [ ] P72.2a Fast-forward the TSA29 instance checkout to merged `main` and verify the merged release candidate surfaces directly.
+  - [ ] P72.2b Confirm the launch-critical DataLad/annex payloads and release-facing evidence/docs are in the intended published state.
+  - [ ] P72.2c Create the `v1.0.0-alpha1` tag and GitHub pre-release in `UBC-FRESH/femic-tsa29-instance`.
+  - [ ] P72.2d Record the release in the parent changelog/planning surfaces and publish the matching closeout comments.
 
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
-  - `planning/phase69_tsa29_patchworks_rebuild_notes.md`
-  - `planning/phase70_tsa29_release_notes.md`
+  - `planning/phase71_tsa29_patchworks_rebuild_notes.md`
+  - `planning/phase72_tsa29_release_notes.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
   - `P68` complete
-  - `P69` complete locally and published for review via:
+  - `P69.1` complete
+  - `P69.2` complete
+  - `P69.3` complete
+  - `P69.4` complete; follow-up PRs are merged and the issue set is closed
+  - `P70.1` complete
+  - `P70.2` complete
+  - `P70.3` complete
+  - `P70.4` complete: branch publication, PRs, merge, and issue closeout are handled for `UBC-FRESH/femic-mkrf-instance#21`
+  - `P71` complete locally and published for review via:
     - `UBC-FRESH/femic-tsa29-instance#7`
     - `UBC-FRESH/femic#195`
-  - `P70.1a` complete
-  - next bounded move is `P70.1b/P70.1c`: merge the active Phase 69 review PRs and refresh the TSA29 release-facing notes for `v1.0.0-alpha1`
+  - `P72.1a` complete
+  - next bounded move is `P72.1b/P72.1c`: merge the active TSA29 Phase 71 review PRs and refresh the TSA29 release-facing notes for `v1.0.0-alpha1`

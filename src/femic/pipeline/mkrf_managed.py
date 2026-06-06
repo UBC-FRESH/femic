@@ -57,7 +57,16 @@ class MkrfManagedRule:
 class MkrfManagedRuleConfig:
     path: Path
     fire_origin_min_age: float
+    hw_ingrowth_overlay: HwIngrowthOverlayConfig
     rules: tuple[MkrfManagedRule, ...]
+
+
+@dataclass(frozen=True)
+class HwIngrowthOverlayConfig:
+    enabled: bool
+    landscape_default_pct: float
+    au_overrides_pct: Mapping[str, float]
+    stand_overrides_pct: Mapping[str, float]
 
 
 def build_mkrf_legacy_managed_au_table(
@@ -92,6 +101,10 @@ def load_mkrf_managed_rule_config(path: Path) -> MkrfManagedRuleConfig:
     payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     origin_rules = payload.get("origin_rules", {}) or {}
     managed_defaults = payload.get("managed_defaults", {}) or {}
+    hw_ingrowth_overlay = _load_hw_ingrowth_overlay_config(
+        payload.get("hw_ingrowth_overlay", {}) or {},
+        path=path,
+    )
     raw_rules = payload.get(_DEFAULT_MANAGED_RULE_KEY, {}) or {}
     if not isinstance(raw_rules, Mapping) or not raw_rules:
         raise ValueError(f"Managed rule config has no families: {path}")
@@ -159,6 +172,7 @@ def load_mkrf_managed_rule_config(path: Path) -> MkrfManagedRuleConfig:
     return MkrfManagedRuleConfig(
         path=path,
         fire_origin_min_age=fire_origin_min_age,
+        hw_ingrowth_overlay=hw_ingrowth_overlay,
         rules=tuple(rules),
     )
 
@@ -338,7 +352,15 @@ def build_mkrf_managed_au_bootstrap_table(
                     "ct_eligible": False,
                     "ct_target_age": np.nan,
                     "ct_on_fire_origin": False,
+                    "hw_ingrowth_pct": 0.0,
+                    "hw_ingrowth_source": "unmatched",
                     "managed_rule_notes": "",
+                    **_managed_species_payload_dict(
+                        ManagedSpeciesPayload("", "", "", "", "", 0, 0, 0, 0, 0),
+                        prefix="base_managed",
+                    ),
+                    "managed_species_overflow_to_hw_pct": 0.0,
+                    "managed_species_overflow_to_hw_codes": "",
                     **_managed_species_payload_dict(
                         ManagedSpeciesPayload("", "", "", "", "", 0, 0, 0, 0, 0)
                     ),
@@ -346,6 +368,17 @@ def build_mkrf_managed_au_bootstrap_table(
             )
             continue
 
+        hw_ingrowth_pct, hw_ingrowth_source = resolve_hw_ingrowth_pct(
+            rule_config=rule_config,
+            au_id=au_id,
+        )
+        adjusted_species_mix = apply_hw_ingrowth_overlay(
+            species_mix=rule.species_mix,
+            hw_ingrowth_pct=hw_ingrowth_pct,
+        )
+        managed_payload, overflow_pct, overflow_codes = (
+            _managed_species_payload_from_mix_with_hw_overflow(adjusted_species_mix)
+        )
         included = not pd.isna(managed_si)
         rows.append(
             {
@@ -366,10 +399,16 @@ def build_mkrf_managed_au_bootstrap_table(
                 "ct_eligible": bool(rule.ct_eligible),
                 "ct_target_age": int(rule.ct_target_age),
                 "ct_on_fire_origin": bool(rule.ct_on_fire_origin),
+                "hw_ingrowth_pct": float(hw_ingrowth_pct),
+                "hw_ingrowth_source": hw_ingrowth_source,
                 "managed_rule_notes": rule.notes,
                 **_managed_species_payload_dict(
-                    _managed_species_payload_from_mix(rule.species_mix)
+                    _managed_species_payload_from_mix(rule.species_mix),
+                    prefix="base_managed",
                 ),
+                "managed_species_overflow_to_hw_pct": overflow_pct,
+                "managed_species_overflow_to_hw_codes": overflow_codes,
+                **_managed_species_payload_dict(managed_payload),
             }
         )
 
@@ -489,18 +528,71 @@ def _match_managed_rule(
     return None
 
 
-def _managed_species_payload_dict(payload: ManagedSpeciesPayload) -> dict[str, Any]:
+def resolve_hw_ingrowth_pct(
+    *,
+    rule_config: MkrfManagedRuleConfig,
+    au_id: str,
+    stand_id: str | int | None = None,
+) -> tuple[float, str]:
+    overlay = rule_config.hw_ingrowth_overlay
+    if not overlay.enabled:
+        return 0.0, "disabled"
+
+    if stand_id is not None and str(stand_id).strip():
+        stand_key = str(stand_id).strip()
+        if stand_key in overlay.stand_overrides_pct:
+            return float(overlay.stand_overrides_pct[stand_key]), "stand_override"
+
+    au_key = str(au_id).strip().lower()
+    if au_key in overlay.au_overrides_pct:
+        return float(overlay.au_overrides_pct[au_key]), "au_override"
+
+    return float(overlay.landscape_default_pct), "landscape_default"
+
+
+def apply_hw_ingrowth_overlay(
+    *,
+    species_mix: Mapping[str, float],
+    hw_ingrowth_pct: float,
+) -> dict[str, float]:
+    pct = _validate_percent(
+        hw_ingrowth_pct,
+        context="hw_ingrowth_pct",
+    )
+    fraction = pct / 100.0
+    adjusted: dict[str, float] = {}
+    hw_ingrowth_share = 0.0
+    for species, share_value in species_mix.items():
+        code = str(species).strip().upper()
+        share = float(share_value)
+        if code == "HW":
+            adjusted[code] = adjusted.get(code, 0.0) + share
+            continue
+        retained_share = share * (1.0 - fraction)
+        if retained_share > 0.0:
+            adjusted[code] = adjusted.get(code, 0.0) + retained_share
+        hw_ingrowth_share += share * fraction
+    if hw_ingrowth_share > 0.0:
+        adjusted["HW"] = adjusted.get("HW", 0.0) + hw_ingrowth_share
+    return adjusted
+
+
+def _managed_species_payload_dict(
+    payload: ManagedSpeciesPayload,
+    *,
+    prefix: str = "managed",
+) -> dict[str, Any]:
     return {
-        "managed_species_1": payload.species_1,
-        "managed_species_2": payload.species_2,
-        "managed_species_3": payload.species_3,
-        "managed_species_4": payload.species_4,
-        "managed_species_5": payload.species_5,
-        "managed_pct_1": payload.pct_1,
-        "managed_pct_2": payload.pct_2,
-        "managed_pct_3": payload.pct_3,
-        "managed_pct_4": payload.pct_4,
-        "managed_pct_5": payload.pct_5,
+        f"{prefix}_species_1": payload.species_1,
+        f"{prefix}_species_2": payload.species_2,
+        f"{prefix}_species_3": payload.species_3,
+        f"{prefix}_species_4": payload.species_4,
+        f"{prefix}_species_5": payload.species_5,
+        f"{prefix}_pct_1": payload.pct_1,
+        f"{prefix}_pct_2": payload.pct_2,
+        f"{prefix}_pct_3": payload.pct_3,
+        f"{prefix}_pct_4": payload.pct_4,
+        f"{prefix}_pct_5": payload.pct_5,
     }
 
 
@@ -527,6 +619,86 @@ def _managed_species_payload_from_mix(species_mix: Mapping[str, float]) -> Manag
         pct_4=ranked[3][1],
         pct_5=ranked[4][1],
     )
+
+
+def _managed_species_payload_from_mix_with_hw_overflow(
+    species_mix: Mapping[str, float],
+) -> tuple[ManagedSpeciesPayload, float, str]:
+    positive = {
+        str(species).strip().upper(): float(share)
+        for species, share in species_mix.items()
+        if float(share) > 0.0
+    }
+    if len(positive) <= 5 or "HW" not in positive:
+        return _managed_species_payload_from_mix(positive), 0.0, ""
+
+    non_hw_ranked = sorted(
+        ((species, share) for species, share in positive.items() if species != "HW"),
+        key=lambda item: (-item[1], item[0]),
+    )
+    kept = dict(non_hw_ranked[:4])
+    dropped = non_hw_ranked[4:]
+    overflow_pct = float(sum(share for _, share in dropped))
+    if overflow_pct > 0.0:
+        kept["HW"] = positive["HW"] + overflow_pct
+    else:
+        kept["HW"] = positive["HW"]
+    overflow_codes = ",".join(species for species, _ in dropped)
+    return _managed_species_payload_from_mix(kept), overflow_pct, overflow_codes
+
+
+def _load_hw_ingrowth_overlay_config(
+    raw_overlay: Mapping[str, Any],
+    *,
+    path: Path,
+) -> HwIngrowthOverlayConfig:
+    if not isinstance(raw_overlay, Mapping):
+        raise ValueError(f"hw_ingrowth_overlay must be a mapping in {path}")
+    enabled = bool(raw_overlay.get("enabled", False))
+    landscape_default_pct = _validate_percent(
+        raw_overlay.get("landscape_default_pct", 0.0),
+        context="hw_ingrowth_overlay.landscape_default_pct",
+    )
+    return HwIngrowthOverlayConfig(
+        enabled=enabled,
+        landscape_default_pct=landscape_default_pct,
+        au_overrides_pct=_parse_percent_mapping(
+            raw_overlay.get("au_overrides_pct", {}) or {},
+            context="hw_ingrowth_overlay.au_overrides_pct",
+            lowercase_keys=True,
+        ),
+        stand_overrides_pct=_parse_percent_mapping(
+            raw_overlay.get("stand_overrides_pct", {}) or {},
+            context="hw_ingrowth_overlay.stand_overrides_pct",
+            lowercase_keys=False,
+        ),
+    )
+
+
+def _parse_percent_mapping(
+    raw_mapping: Mapping[str, Any],
+    *,
+    context: str,
+    lowercase_keys: bool,
+) -> dict[str, float]:
+    if not isinstance(raw_mapping, Mapping):
+        raise ValueError(f"{context} must be a mapping")
+    parsed: dict[str, float] = {}
+    for raw_key, raw_value in raw_mapping.items():
+        key = str(raw_key).strip()
+        if not key:
+            raise ValueError(f"{context} contains an empty key")
+        if lowercase_keys:
+            key = key.lower()
+        parsed[key] = _validate_percent(raw_value, context=f"{context}.{key}")
+    return parsed
+
+
+def _validate_percent(value: Any, *, context: str) -> float:
+    pct = float(value)
+    if not np.isfinite(pct) or pct < 0.0 or pct > 100.0:
+        raise ValueError(f"{context} must be between 0 and 100, got {value!r}")
+    return pct
 
 
 def _tipsy_species_pair(row: pd.Series) -> tuple[str, str]:

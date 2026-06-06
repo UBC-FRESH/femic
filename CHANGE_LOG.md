@@ -17599,7 +17599,7 @@
   - `feature/tsa29-patchworks-rebuild-new-inputs`; and
 - recorded the new lane in:
   - `ROADMAP.md`
-  - `planning/phase69_tsa29_patchworks_rebuild_notes.md`
+  - `planning/phase71_tsa29_patchworks_rebuild_notes.md`
 - the new lane explicitly carries the requirement that past-top-N strata must
   receive deterministic AU assignment through lexicographical stratum-matching
   imputation so no surviving AFLB area is silently dropped from the model.
@@ -17656,7 +17656,7 @@
 - updated the TSA29 instance docs surfaces (`README.md`,
   `docs/rebuild-and-qa.rst`, `docs/data-and-provenance.rst`) so the refreshed
   package points directly at that accepted scenario evidence.
-## 2026-06-06 - Published TSA29 Phase 69 for PR review and closed issue #6
+## 2026-06-06 - Published TSA29 Phase 71 for PR review and closed issue #6
 - opened the TSA29 instance PR `UBC-FRESH/femic-tsa29-instance#7` for the
   rebuilt package and accepted evidence surfaces;
 - opened the parent coordination PR `UBC-FRESH/femic#195` for the roadmap,
@@ -17669,9 +17669,9 @@
 ## 2026-06-06 - Opened the TSA29 `v1.0.0-alpha1` release lane
 - opened new TSA29-instance release issue `#8` to publish
   `femic-tsa29-instance` `v1.0.0-alpha1`;
-- added Phase 70 to the parent roadmap and created
-  `planning/phase70_tsa29_release_notes.md`;
+- added Phase 72 to the parent roadmap and created
+  `planning/phase72_tsa29_release_notes.md`;
 - recorded the release gate that `v1.0.0-alpha1` must be cut from merged
   `main`, not from `feature/tsa29-patchworks-rebuild-new-inputs`; and
-- anchored the release rationale on the now-accepted Phase 69 rebuilt package,
+- anchored the release rationale on the now-accepted Phase 71 rebuilt package,
   launch validation, and `test01` scenario evidence.

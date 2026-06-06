@@ -1,4 +1,4 @@
-# Phase 69: TSA29 Patchworks Rebuild on the New THLB and Yield Surfaces
+# Phase 71: TSA29 Patchworks Rebuild on the New THLB and Yield Surfaces
 
 ## Governing Issue and Branches
 
@@ -26,7 +26,7 @@ is left without an AU by accident.
 
 ## Planned Execution Shape
 
-### P69.1
+### P71.1
 
 Initialization is in progress:
 - issue opened;
@@ -34,7 +34,7 @@ Initialization is in progress:
 - the remaining initialization task is to keep the lexicographical-imputation
   requirement explicit in the planning and implementation surfaces.
 
-### P69.2
+### P71.2
 
 Expected implementation bundle:
 - regenerate the TSA29 model-input bundle from the current locked THLB and
@@ -63,7 +63,7 @@ Current progress:
   confirmed the rebuilt `blocks.shp` surface now completes without the
   topology subprocess hang.
 
-### P69.3
+### P71.3
 
 Expected validation/publication bundle:
 - run the necessary Patchworks-facing validation checks;

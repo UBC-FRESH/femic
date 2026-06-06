@@ -1,4 +1,4 @@
-# Phase 70: Publish the TSA29 `v1.0.0-alpha1` Release
+# Phase 72: Publish the TSA29 `v1.0.0-alpha1` Release
 
 ## Governing Issue
 
@@ -42,13 +42,13 @@ TSA public-discussion mid-term reference values.
 
 ## Planned Execution Shape
 
-### P70.1
+### P72.1
 
 - merge the active Phase 69 review PRs
 - refresh the release-facing wording in the TSA29 docs/notes
 - keep the alpha boundary explicit
 
-### P70.2
+### P72.2
 
 - verify the merged release-candidate instance state on `main`
 - confirm the intended DataLad/annex publication state for launch-critical

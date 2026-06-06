@@ -152,6 +152,16 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
                 "managed_pct_3": 20.0,
                 "managed_pct_4": 0.0,
                 "managed_pct_5": 0.0,
+                "base_managed_species_1": "CW",
+                "base_managed_species_2": "FD",
+                "base_managed_species_3": "BA",
+                "base_managed_species_4": "",
+                "base_managed_species_5": "",
+                "base_managed_pct_1": 50.0,
+                "base_managed_pct_2": 30.0,
+                "base_managed_pct_3": 20.0,
+                "base_managed_pct_4": 0.0,
+                "base_managed_pct_5": 0.0,
             },
             {
                 "au_id": "cwh_vm_1_dr_hw",
@@ -165,6 +175,16 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
                 "managed_pct_3": 0.0,
                 "managed_pct_4": 0.0,
                 "managed_pct_5": 0.0,
+                "base_managed_species_1": "CW",
+                "base_managed_species_2": "FD",
+                "base_managed_species_3": "PW",
+                "base_managed_species_4": "",
+                "base_managed_species_5": "",
+                "base_managed_pct_1": 45.0,
+                "base_managed_pct_2": 45.0,
+                "base_managed_pct_3": 10.0,
+                "base_managed_pct_4": 0.0,
+                "base_managed_pct_5": 0.0,
             },
         ]
     ).to_csv(managed_bootstrap_csv, index=False)
@@ -365,8 +385,23 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert 'sourceRelative("../scripts/targets/flowtargets.bsh");' in analysis_pin_text
     assert 'block_shape = "../spatial/fragments.shp";' in analysis_pin_text
     assert "setupYieldFlowTargets(control, periods, tracks_path_prefix);" in analysis_pin_text
+    assert 'def.setCaption("Forest Outline");' in analysis_pin_text
+    assert "new PolygonSymbol(new Color(239, 239, 239))" in analysis_pin_text
+    assert (
+        'ageClassTheme.setFieldname("0.5 * (MANAGEDOFFSET + UNMANAGEDOFFSET)");'
+        in analysis_pin_text
+    )
+    assert 'ageClassTheme.setCaption("Age Class (20-year)");' in analysis_pin_text
+    assert '"age_000_019"' in analysis_pin_text
+    assert '"age_200plus"' in analysis_pin_text
+    assert "new PolygonSymbol(new Color(255, 255, 229))" in analysis_pin_text
+    assert "new PolygonSymbol(new Color(0, 69, 41))" in analysis_pin_text
     assert 'currTreatTheme.setFieldname("CURRENTTREATMENT");' in analysis_pin_text
     assert 'latestTreatTheme.setFieldname("LASTTREATMENT");' in analysis_pin_text
+    assert '"CT35"' in analysis_pin_text
+    assert '"CT40"' in analysis_pin_text
+    assert '"CT45"' in analysis_pin_text
+    assert '"CT",' not in analysis_pin_text
     assert 'patch0Theme.setFieldname("product.area.managed.treat.CC.size");' in analysis_pin_text
     assert 'patch1Theme.setFieldname("feature.area.managed.seral.le10.size");' in analysis_pin_text
     assert "femicQueueHeadlessStage();" in analysis_pin_text
@@ -414,9 +449,14 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert '<attribute label="product.yield.managed.total">' in forestmodel_text
     assert '<attribute label="product.yield.managed.indsp.Ba">' in forestmodel_text
     assert '<attribute label="\'product.yield.managed.treat.\'+treatment">' in forestmodel_text
+    assert "if(startswith(treatment,'CT'),0," in forestmodel_text
+    assert "/0.45" in forestmodel_text
+    assert "if(startswith(treatment,'CT'),if((" in forestmodel_text
     assert "if(origin eq 'natural' and hasnatcurve eq 'Y'," in forestmodel_text
     assert "lookupTable(treatment+'|'+if(startswith(au,'thn'),substring(au,7),au)," in forestmodel_text
-    assert "'CT40|cwh_vm_1_dr_hw,CT50|cwh_vm_1_dr_hw" in forestmodel_text
+    assert "'CT35|cwh_vm_1_dr_hw,CT40|cwh_vm_1_dr_hw,CT45|cwh_vm_1_dr_hw" in forestmodel_text
+    assert "CT50|" not in forestmodel_text
+    assert "CT150|" not in forestmodel_text
     assert "startswith(treatment,'CT')" in forestmodel_text
     assert "if(startswith(au,'thn'),curveId(" in forestmodel_text
     assert "),if(startswith(au,'thn'),curveId(" in forestmodel_text
@@ -427,14 +467,23 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert 'select statement="status in managed and oper in operable"' in forestmodel_text
     assert 'select statement="status in managed"' in forestmodel_text
     assert "not startswith(au,'thn')" in forestmodel_text
+    assert "share_cw" not in forestmodel_text
+    assert " ge 0.5" in forestmodel_text
+    assert " gt 0.15" not in forestmodel_text
+    assert "'cwh_vm_1_dr_hw,cwh_vm_1_hw_cw','90.0,80.0'" in forestmodel_text
+    assert "treatment label=\"CT35\" minage=\"35\" maxage=\"39\"" in forestmodel_text
+    assert "treatment label=\"CT40\" minage=\"40\" maxage=\"44\"" in forestmodel_text
+    assert "treatment label=\"CT45\" minage=\"45\" maxage=\"49\"" in forestmodel_text
     assert "'thn040_'+au" in forestmodel_text
-    assert "'thn150_'+au" in forestmodel_text
+    assert "'thn035_'+au" in forestmodel_text
+    assert "'thn045_'+au" in forestmodel_text
+    assert "'thn050_'+au" not in forestmodel_text
+    assert "'thn150_'+au" not in forestmodel_text
     assert 'field="statecode" value="\'THN\'"' not in forestmodel_text
     assert "<track>" in forestmodel_text
     assert 'treatment label="CC"' in forestmodel_text
     assert 'treatment label="CT"' not in forestmodel_text
-    assert 'treatment label="CT40" minage="35" maxage="44" retain="20"' in forestmodel_text
-    assert 'treatment label="CT150" minage="145" maxage="154" retain="20"' in forestmodel_text
+    assert 'treatment label="CT40" minage="40" maxage="44" retain="20"' in forestmodel_text
 
 
 def test_audit_mkrf_runtime_sanity_flags_zero_signal_with_nonzero_source_share(

@@ -3026,6 +3026,44 @@ def _btc_apply_species_payload(
         row[site_column] = _btc_numeric_or_blank(source_record.get("SI")) or 0
 
 
+def _btc_rebalance_species_densities(
+    *,
+    row: dict[str, Any],
+    source_record: Mapping[str, Any],
+    density_prefix: str,
+) -> None:
+    total = _btc_numeric_or_blank(source_record.get("Density"))
+    if total == "":
+        return
+    total_int = int(round(float(total)))
+    density_keys = [
+        f"{density_prefix}{index}"
+        for index in range(1, 6)
+        if row.get(f"{density_prefix}{index}") != ""
+    ]
+    if not density_keys:
+        return
+
+    exact: list[tuple[str, float]] = []
+    for index, density_key in enumerate(density_keys, start=1):
+        pct = _btc_numeric_or_blank(source_record.get(f"PCT_{index}"))
+        if pct == "":
+            return
+        exact_density = float(total) * (float(pct) / 100.0)
+        exact.append((density_key, exact_density))
+
+    floored = {density_key: int(np.floor(value)) for density_key, value in exact}
+    remainder = total_int - sum(floored.values())
+    ranked = sorted(
+        exact,
+        key=lambda item: (-(item[1] - np.floor(item[1])), item[0]),
+    )
+    for density_key, _ in ranked[: max(0, remainder)]:
+        floored[density_key] += 1
+    for density_key, density in floored.items():
+        row[density_key] = density
+
+
 def build_btc_msyt_input_table(
     *,
     tipsy_table: Any,
@@ -3070,6 +3108,11 @@ def build_btc_msyt_input_table(
             species_prefix="planted_species",
             density_prefix="planted_density",
             include_genetic_worth=True,
+        )
+        _btc_rebalance_species_densities(
+            row=row,
+            source_record=record,
+            density_prefix="planted_density",
         )
 
         planted_percent = row["planted_percent"]
