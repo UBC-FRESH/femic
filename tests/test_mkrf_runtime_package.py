@@ -453,8 +453,9 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert 'select statement="status in managed"' in forestmodel_text
     assert "not startswith(au,'thn')" in forestmodel_text
     assert "share_cw" not in forestmodel_text
-    assert " gt 0.15" in forestmodel_text
-    assert "'cwh_vm_1_dr_hw,cwh_vm_1_hw_cw','45.0,50.0'" in forestmodel_text
+    assert " ge 0.5" in forestmodel_text
+    assert " gt 0.15" not in forestmodel_text
+    assert "'cwh_vm_1_dr_hw,cwh_vm_1_hw_cw','90.0,80.0'" in forestmodel_text
     assert "treatment label=\"CT35\" minage=\"35\" maxage=\"39\"" in forestmodel_text
     assert "treatment label=\"CT40\" minage=\"40\" maxage=\"44\"" in forestmodel_text
     assert "treatment label=\"CT45\" minage=\"45\" maxage=\"49\"" in forestmodel_text

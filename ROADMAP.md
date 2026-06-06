@@ -1898,6 +1898,24 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P68.2d Run the TSA29-instance Sphinx build and keep it warning-clean.
   - [x] P68.2e Lock the docs refresh with an instance commit, issue update, and PR.
 
+## Phase 69: MKRF CT Fd-Leading Follow-Up and Hw Ingrowth Recalibration
+
+- [x] P69.1 Record the Anna/Sean CT follow-up contract (`UBC-FRESH/femic-mkrf-instance#15`)
+  - [x] P69.1a Open the follow-up parent and child issue set for broadened Cw/Fd eligibility, CT species priority, Hw ingrowth recalibration, and full runtime QA (`UBC-FRESH/femic-mkrf-instance#16`-`#19`).
+  - [x] P69.1b Update parent and instance planning surfaces so the follow-up is governed by `UBC-FRESH/femic-mkrf-instance#15`, not reopened under the closed CT implementation parent `#8`.
+- [x] P69.2 Broaden the canonical MKRF CT eligibility and prescription surface (`UBC-FRESH/femic-mkrf-instance#16`, `#17`)
+  - [x] P69.2a Replace the strict `Cw >15%` species gate with inclusive base planted `Cw + Fd >=50%` so Fd-leading and pure-Fd-style plantations are not excluded solely because `Cw == 0`.
+  - [x] P69.2b Document and implement CT retention/removal priority as retain Cw first, then Fd; remove Hw first, then Fd only as needed for the active removal target.
+  - [x] P69.2c Regenerate CT eligibility and intensity audits and sync the eligible-AU contract/config lists to the regenerated 26-of-31 AU result.
+- [x] P69.3 Recalibrate planted Hw ingrowth and prove the runtime (`UBC-FRESH/femic-mkrf-instance#18`, `#19`)
+  - [x] P69.3a Change the landscape planted-Hw ingrowth default from `50%` to `30%` while preserving AU-level and stand-level override surfaces.
+  - [x] P69.3b Document Anna's 18-survey MKRF evidence as the active parameter basis and Jaeck et al. 1984 as supporting context.
+  - [x] P69.3c Regenerate managed inputs, runtime package, CT/Hw audit artifacts, Matrix Builder tracks, and the default `mkrf.base` smoke; run saved-stage sanity audit and targeted pytest.
+- [ ] P69.4 Publish the follow-up branch bundle and tracker closeout (`UBC-FRESH/femic-mkrf-instance#15`)
+  - [ ] P69.4a Post implementation/QA comments back to `#16`-`#19` and the parent `#15`.
+  - [ ] P69.4b Commit and push the instance and parent follow-up branches with the submodule pointer update.
+  - [ ] P69.4c Open the follow-up PRs and close the issue set once reviewed/merged.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -1905,9 +1923,8 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
   - `P68.1` complete
-  - `P68.2a` complete
-  - `P68.2b` complete
-  - `P68.2c` complete
-  - `P68.2d` complete
-  - `P68.2e` complete
-  - Phase 68 implementation surface is locked on feature branches and in PRs; next work is review/merge rather than more local docs churn
+  - `P68.2` complete
+  - `P69.1` complete
+  - `P69.2` complete
+  - `P69.3` complete
+  - `P69.4` in progress: publish GitHub comments, branch commits, PRs, and final issue closeout once reviewed/merged

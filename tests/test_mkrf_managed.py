@@ -187,7 +187,7 @@ schema_version: 1
 case_code: "mkrf"
 hw_ingrowth_overlay:
   enabled: true
-  landscape_default_pct: 50
+  landscape_default_pct: 30
 families:
   cwh_vm_2:
     bec_zone: "cwh"
@@ -237,13 +237,15 @@ families:
     row = out.iloc[0]
     assert row["base_managed_species_1"] == "CW"
     assert row["base_managed_pct_1"] == 70.0
-    assert row["hw_ingrowth_pct"] == 50.0
+    assert row["hw_ingrowth_pct"] == 30.0
     assert row["hw_ingrowth_source"] == "landscape_default"
-    assert row["managed_species_1"] == "HW"
-    assert row["managed_pct_1"] == 52.5
-    assert row["managed_species_2"] == "CW"
-    assert row["managed_pct_2"] == 35.0
-    assert row["managed_species_overflow_to_hw_pct"] == 2.5
+    assert row["managed_species_1"] == "CW"
+    assert row["managed_pct_1"] == 49.0
+    assert row["managed_species_2"] == "HW"
+    assert row["managed_pct_2"] == 33.5
+    assert row["managed_species_3"] == "FD"
+    assert row["managed_pct_3"] == 10.5
+    assert row["managed_species_overflow_to_hw_pct"] == 3.5
     assert row["managed_species_overflow_to_hw_codes"] == "SS"
 
 

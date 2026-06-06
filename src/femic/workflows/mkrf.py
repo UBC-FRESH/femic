@@ -103,7 +103,7 @@ _MKRF_CT_BUCKET_ANCHORS = (35, 40, 45)
 _MKRF_CT_BUCKET_WIDTH = 5
 _MKRF_CT_BUCKET_PREFIX_WIDTH = 3
 _MKRF_CT_TARGET_BA_REMOVAL_FRACTION = 0.45
-_MKRF_CT_MIN_CW_SHARE_PCT = 15.0
+_MKRF_CT_MIN_CW_FD_SHARE_PCT = 50.0
 
 
 def _build_lookup_expr(keys: list[str], values: list[str], *, key_expr: str) -> str:
@@ -275,6 +275,321 @@ def _build_species_share_audit_table(
         ["origin_lane", "source_name", "au_id", "species_bucket"],
         kind="stable",
     )
+
+
+def _build_ct_eligibility_audit_table(
+    *,
+    selected_au_table: pd.DataFrame,
+    ct_eligibility_species_shares: pd.DataFrame,
+) -> pd.DataFrame:
+    selected = selected_au_table.copy()
+    selected["au_id"] = selected["au_id"].astype(str).str.strip()
+    if "leading_species_1" not in selected.columns or "leading_species_2" not in selected.columns:
+        parsed = selected["au_id"].map(_parse_mkrf_au_id)
+        selected["leading_species_1"] = [
+            parts[3] if parts is not None else "" for parts in parsed
+        ]
+        selected["leading_species_2"] = [
+            parts[4] if parts is not None else "" for parts in parsed
+        ]
+    selected = selected.drop_duplicates(subset=["au_id"], keep="first")
+    shares = ct_eligibility_species_shares.copy()
+    shares["au_id"] = shares["au_id"].astype(str).str.strip()
+    audit = selected[["au_id", "leading_species_1", "leading_species_2"]].merge(
+        shares[
+            [
+                "au_id",
+                "share_cw",
+                "share_fd",
+                "share_hw",
+                "share_cw_fd",
+            ]
+        ],
+        on="au_id",
+        how="left",
+        validate="one_to_one",
+    )
+    for column in ("share_cw", "share_fd", "share_hw", "share_cw_fd"):
+        audit[column] = pd.to_numeric(audit[column], errors="coerce").fillna(0.0)
+    leading_species = (
+        audit["leading_species_1"].astype(str).str.lower()
+        + "_"
+        + audit["leading_species_2"].astype(str).str.lower()
+    )
+    audit["runtime_operable_or_ground_candidate"] = ~leading_species.str.contains(
+        r"(?:^|_)ba(?:$|_)", regex=True
+    )
+    audit["runtime_ct_eligible_before_species_filter"] = audit[
+        "runtime_operable_or_ground_candidate"
+    ]
+    audit["cw_fd_threshold_pct"] = float(_MKRF_CT_MIN_CW_FD_SHARE_PCT)
+    audit["cw_fd_ge_threshold"] = audit["share_cw_fd"].ge(_MKRF_CT_MIN_CW_FD_SHARE_PCT)
+    audit["final_ct_eligible"] = (
+        audit["runtime_ct_eligible_before_species_filter"]
+        & audit["cw_fd_ge_threshold"]
+    )
+
+    def _reasons(row: pd.Series) -> str:
+        reasons: list[str] = []
+        if not bool(row["runtime_ct_eligible_before_species_filter"]):
+            reasons.append("runtime_ct_or_operability_seam")
+        if not bool(row["cw_fd_ge_threshold"]):
+            reasons.append("cw_fd_share_lt_50")
+        return ";".join(reasons)
+
+    audit["exclusion_reasons"] = audit.apply(_reasons, axis=1)
+    audit = audit.rename(
+        columns={
+            "share_cw": "base_cw_share_pct",
+            "share_fd": "base_fd_share_pct",
+            "share_hw": "base_hw_share_pct",
+            "share_cw_fd": "base_cw_fd_share_pct",
+        }
+    )
+    return audit[
+        [
+            "au_id",
+            "runtime_operable_or_ground_candidate",
+            "runtime_ct_eligible_before_species_filter",
+            "base_cw_share_pct",
+            "base_fd_share_pct",
+            "base_hw_share_pct",
+            "base_cw_fd_share_pct",
+            "cw_fd_threshold_pct",
+            "cw_fd_ge_threshold",
+            "final_ct_eligible",
+            "exclusion_reasons",
+        ]
+    ].sort_values("au_id", kind="stable")
+
+
+def _ct_product_fraction_values(*, hw_share: float, fd_share: float) -> dict[str, float]:
+    target = float(_MKRF_CT_TARGET_BA_REMOVAL_FRACTION)
+    hw_fraction = 1.0 if hw_share > target else hw_share / target
+    if hw_share > target:
+        fd_fraction = 0.0
+    elif hw_share + fd_share > target:
+        fd_fraction = (target - hw_share) / target
+    else:
+        fd_fraction = fd_share / target
+    other_fraction = (
+        0.0
+        if hw_share + fd_share > target
+        else (target - hw_share - fd_share) / target
+    )
+    return {
+        "cw": 0.0,
+        "hw": max(0.0, hw_fraction),
+        "fd": max(0.0, fd_fraction),
+        "other": max(0.0, other_fraction),
+    }
+
+
+def _build_ct_intensity_audit_tables(
+    *,
+    ct_eligibility_audit: pd.DataFrame,
+    treated_species_shares: pd.DataFrame,
+    ct_bucket_specs: tuple[dict[str, int | str], ...],
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    eligible = ct_eligibility_audit.loc[
+        ct_eligibility_audit["final_ct_eligible"].fillna(False).astype(bool)
+    ].copy()
+    treated = treated_species_shares.copy()
+    treated["au_id"] = treated["au_id"].astype(str).str.strip()
+    rows: list[dict[str, object]] = []
+    for eligible_row in eligible.itertuples(index=False):
+        share_row = treated.loc[treated["au_id"].eq(str(eligible_row.au_id))]
+        if share_row.empty:
+            continue
+        share = share_row.iloc[0]
+        treated_cw = float(pd.to_numeric(share.get("share_cw", 0.0), errors="coerce") or 0.0)
+        treated_hw = float(pd.to_numeric(share.get("share_hw", 0.0), errors="coerce") or 0.0)
+        treated_fd = float(pd.to_numeric(share.get("share_fd", 0.0), errors="coerce") or 0.0)
+        treated_other = max(0.0, 100.0 - treated_cw - treated_hw - treated_fd)
+        fractions = _ct_product_fraction_values(
+            hw_share=treated_hw / 100.0,
+            fd_share=treated_fd / 100.0,
+        )
+        for bucket_spec in ct_bucket_specs:
+            rows.append(
+                {
+                    "au_id": str(eligible_row.au_id),
+                    "treatment": str(bucket_spec["label"]),
+                    "ct_target_removal_fraction": float(
+                        _MKRF_CT_TARGET_BA_REMOVAL_FRACTION
+                    ),
+                    "base_cw_fd_share_pct": float(eligible_row.base_cw_fd_share_pct),
+                    "treated_cw_share_pct": treated_cw,
+                    "treated_hw_share_pct": treated_hw,
+                    "treated_fd_share_pct": treated_fd,
+                    "previous_composition_proportional_cw_product_fraction": treated_cw
+                    / 100.0,
+                    "previous_composition_proportional_hw_product_fraction": treated_hw
+                    / 100.0,
+                    "previous_composition_proportional_fd_product_fraction": treated_fd
+                    / 100.0,
+                    "previous_composition_proportional_other_product_fraction": treated_other
+                    / 100.0,
+                    "implemented_ct_cw_product_fraction": fractions["cw"],
+                    "implemented_ct_hw_product_fraction": fractions["hw"],
+                    "implemented_ct_fd_product_fraction": fractions["fd"],
+                    "implemented_ct_other_product_fraction": fractions["other"],
+                    "implemented_ct_product_fraction_sum": sum(fractions.values()),
+                    "prescription_note": "target_bounded_hw_first_fd_balancer_cw_retained_fd_secondary",
+                }
+            )
+    audit = pd.DataFrame(rows)
+    if audit.empty:
+        summary = pd.DataFrame(
+            columns=[
+                "treatment",
+                "au_count",
+                "max_implemented_cw_product_fraction",
+                "min_implemented_hw_product_fraction",
+                "max_implemented_hw_product_fraction",
+                "max_implemented_fd_product_fraction",
+            ]
+        )
+        return audit, summary
+    summary = (
+        audit.groupby("treatment", as_index=False)
+        .agg(
+            au_count=("au_id", "nunique"),
+            max_implemented_cw_product_fraction=(
+                "implemented_ct_cw_product_fraction",
+                "max",
+            ),
+            min_implemented_hw_product_fraction=(
+                "implemented_ct_hw_product_fraction",
+                "min",
+            ),
+            max_implemented_hw_product_fraction=(
+                "implemented_ct_hw_product_fraction",
+                "max",
+            ),
+            max_implemented_fd_product_fraction=(
+                "implemented_ct_fd_product_fraction",
+                "max",
+            ),
+        )
+        .sort_values("treatment", kind="stable")
+    )
+    return audit.sort_values(["au_id", "treatment"], kind="stable"), summary
+
+
+def _build_hw_ingrowth_overlay_audit_tables(
+    *,
+    managed_bootstrap: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    species_codes = ("BA", "CW", "DR", "FD", "HW", "PW", "SS", "YC")
+    rows: list[dict[str, object]] = []
+    if "included_in_msyt" in managed_bootstrap.columns:
+        included = managed_bootstrap.loc[
+            managed_bootstrap["included_in_msyt"].fillna(False).astype(bool)
+        ].copy()
+    else:
+        included = managed_bootstrap.copy()
+    for bootstrap_row in included.itertuples(index=False):
+        density_total = float(
+            pd.to_numeric(getattr(bootstrap_row, "density_total", 0.0), errors="coerce")
+            or 0.0
+        )
+        payload: dict[str, object] = {
+            "au_id": str(getattr(bootstrap_row, "au_id")),
+            "managed_family_id": str(getattr(bootstrap_row, "managed_family_id", "")),
+            "density_total": density_total,
+            "hw_ingrowth_pct": float(
+                pd.to_numeric(
+                    getattr(bootstrap_row, "hw_ingrowth_pct", 0.0),
+                    errors="coerce",
+                )
+                or 0.0
+            ),
+            "hw_ingrowth_source": str(
+                getattr(bootstrap_row, "hw_ingrowth_source", "")
+            ),
+            "managed_species_overflow_to_hw_pct": float(
+                pd.to_numeric(
+                    getattr(bootstrap_row, "managed_species_overflow_to_hw_pct", 0.0),
+                    errors="coerce",
+                )
+                or 0.0
+            ),
+            "managed_species_overflow_to_hw_codes": str(
+                getattr(bootstrap_row, "managed_species_overflow_to_hw_codes", "")
+            ),
+        }
+        for species_code in species_codes:
+            code = species_code.lower()
+            base_pct = 0.0
+            adjusted_pct = 0.0
+            for index in range(1, 6):
+                base_species = str(
+                    getattr(bootstrap_row, f"base_managed_species_{index}", "")
+                ).upper()
+                adjusted_species = str(
+                    getattr(bootstrap_row, f"managed_species_{index}", "")
+                ).upper()
+                base_value = pd.to_numeric(
+                    getattr(bootstrap_row, f"base_managed_pct_{index}", 0.0),
+                    errors="coerce",
+                )
+                adjusted_value = pd.to_numeric(
+                    getattr(bootstrap_row, f"managed_pct_{index}", 0.0),
+                    errors="coerce",
+                )
+                if base_species == species_code and not pd.isna(base_value):
+                    base_pct += float(base_value)
+                if adjusted_species == species_code and not pd.isna(adjusted_value):
+                    adjusted_pct += float(adjusted_value)
+            payload[f"base_{code}_pct"] = base_pct
+            payload[f"adjusted_{code}_pct"] = adjusted_pct
+            payload[f"delta_{code}_pct"] = adjusted_pct - base_pct
+            payload[f"base_{code}_sph"] = density_total * base_pct / 100.0
+            payload[f"adjusted_{code}_sph"] = density_total * adjusted_pct / 100.0
+            payload[f"delta_{code}_sph"] = density_total * (adjusted_pct - base_pct) / 100.0
+        payload["base_pct_total"] = sum(
+            float(payload[f"base_{species_code.lower()}_pct"])
+            for species_code in species_codes
+        )
+        payload["adjusted_pct_total"] = sum(
+            float(payload[f"adjusted_{species_code.lower()}_pct"])
+            for species_code in species_codes
+        )
+        payload["base_sph_total"] = density_total * float(payload["base_pct_total"]) / 100.0
+        payload["adjusted_sph_total"] = (
+            density_total * float(payload["adjusted_pct_total"]) / 100.0
+        )
+        rows.append(payload)
+    audit = pd.DataFrame(rows).sort_values("au_id", kind="stable")
+    if audit.empty:
+        return audit, pd.DataFrame(
+            columns=[
+                "managed_family_id",
+                "au_count",
+                "mean_hw_ingrowth_pct",
+                "mean_base_hw_sph",
+                "mean_adjusted_hw_sph",
+                "mean_delta_hw_sph",
+                "overflow_au_count",
+            ]
+        )
+    summary = (
+        audit.groupby("managed_family_id", as_index=False)
+        .agg(
+            au_count=("au_id", "nunique"),
+            mean_hw_ingrowth_pct=("hw_ingrowth_pct", "mean"),
+            mean_base_hw_sph=("base_hw_sph", "mean"),
+            mean_adjusted_hw_sph=("adjusted_hw_sph", "mean"),
+            mean_delta_hw_sph=("delta_hw_sph", "mean"),
+            overflow_au_count=(
+                "managed_species_overflow_to_hw_pct",
+                lambda values: int((pd.to_numeric(values, errors="coerce").fillna(0.0) > 0).sum()),
+            ),
+        )
+        .sort_values("managed_family_id", kind="stable")
+    )
+    return audit, summary
 
 
 def _normalize_runtime_au_assignments(
@@ -743,6 +1058,11 @@ class MkrfRuntimePackageInitResult:
     analysis_au_curve_refs_path: Path
     runtime_au_remap_audit_path: Path
     species_share_audit_path: Path
+    ct_eligibility_audit_path: Path
+    ct_intensity_audit_path: Path
+    ct_intensity_summary_path: Path
+    hw_ingrowth_overlay_audit_path: Path
+    hw_ingrowth_overlay_summary_path: Path
     analysis_pin_path: Path
     headless_runtime_common_path: Path
     flow_targets_script_path: Path
@@ -1889,6 +2209,13 @@ def initialize_mkrf_runtime_package(
     analysis_au_curve_refs_path = analysis_dir / "au_curve_refs.csv"
     runtime_au_remap_audit_path = analysis_dir / "runtime_au_remap_audit.csv"
     species_share_audit_path = analysis_dir / "runtime_species_share_audit.csv"
+    ct_eligibility_audit_path = analysis_dir / "ct_eligibility_audit.csv"
+    ct_intensity_audit_path = analysis_dir / "ct_intensity_audit.csv"
+    ct_intensity_summary_path = analysis_dir / "ct_intensity_summary.csv"
+    hw_ingrowth_overlay_audit_path = analysis_dir / "planted_hw_ingrowth_overlay_audit.csv"
+    hw_ingrowth_overlay_summary_path = (
+        analysis_dir / "planted_hw_ingrowth_overlay_summary.csv"
+    )
     xml_contract_path = xml_dir / "runtime_curve_contract.xml"
     xml_curve_bank_path = xml_dir / "runtime_curve_bank.xml"
     forestmodel_xml_path = xml_dir / "forestmodel.xml"
@@ -2170,15 +2497,21 @@ def initialize_mkrf_runtime_package(
             key_expr=runtime_base_au_expr,
         )
         managed_share_lookup_exprs[share_column] = f"Number({lookup_expr})/100"
-    ct_eligibility_cw_values = [
+    ct_eligibility_species_shares = ct_eligibility_species_shares.assign(
+        share_cw_fd=lambda df: pd.to_numeric(
+            df["share_cw"], errors="coerce"
+        ).fillna(0.0)
+        + pd.to_numeric(df["share_fd"], errors="coerce").fillna(0.0)
+    )
+    ct_eligibility_cw_fd_values = [
         str(float(value))
-        for value in ct_eligibility_species_shares["share_cw"].fillna(0.0).tolist()
+        for value in ct_eligibility_species_shares["share_cw_fd"].fillna(0.0).tolist()
     ]
-    ct_eligibility_cw_lookup_expr = (
+    ct_eligibility_cw_fd_lookup_expr = (
         "Number("
         + _build_lookup_expr(
             ct_eligibility_species_shares["au_id"].tolist(),
-            ct_eligibility_cw_values,
+            ct_eligibility_cw_fd_values,
             key_expr=runtime_base_au_expr,
         )
         + ")/100"
@@ -2201,6 +2534,23 @@ def initialize_mkrf_runtime_package(
         unmanaged_species_shares=unmanaged_species_shares,
     )
     species_share_audit.to_csv(species_share_audit_path, index=False)
+    ct_eligibility_audit = _build_ct_eligibility_audit_table(
+        selected_au_table=selected_au,
+        ct_eligibility_species_shares=ct_eligibility_species_shares,
+    )
+    ct_eligibility_audit.to_csv(ct_eligibility_audit_path, index=False)
+    ct_intensity_audit, ct_intensity_summary = _build_ct_intensity_audit_tables(
+        ct_eligibility_audit=ct_eligibility_audit,
+        treated_species_shares=managed_species_shares,
+        ct_bucket_specs=ct_bucket_specs,
+    )
+    ct_intensity_audit.to_csv(ct_intensity_audit_path, index=False)
+    ct_intensity_summary.to_csv(ct_intensity_summary_path, index=False)
+    hw_ingrowth_overlay_audit, hw_ingrowth_overlay_summary = (
+        _build_hw_ingrowth_overlay_audit_tables(managed_bootstrap=managed_bootstrap)
+    )
+    hw_ingrowth_overlay_audit.to_csv(hw_ingrowth_overlay_audit_path, index=False)
+    hw_ingrowth_overlay_summary.to_csv(hw_ingrowth_overlay_summary_path, index=False)
     origin_share_lookup_exprs = {
         share_column: (
             f"if(origin eq 'natural',{unmanaged_share_lookup_exprs[share_column]},"
@@ -2675,8 +3025,8 @@ def initialize_mkrf_runtime_package(
             "statement": (
                 "status in managed and oper in operable and ct eq 'Y' "
                 "and not startswith(au,'thn') "
-                f"and {ct_eligibility_cw_lookup_expr} gt "
-                f"{_MKRF_CT_MIN_CW_SHARE_PCT / 100.0}"
+                f"and {ct_eligibility_cw_fd_lookup_expr} ge "
+                f"{_MKRF_CT_MIN_CW_FD_SHARE_PCT / 100.0}"
             )
         },
     )
@@ -3549,6 +3899,15 @@ def initialize_mkrf_runtime_package(
             "analysis_au_curve_refs_csv": str(analysis_au_curve_refs_path.resolve()),
             "runtime_au_remap_audit_csv": str(runtime_au_remap_audit_path.resolve()),
             "runtime_species_share_audit_csv": str(species_share_audit_path.resolve()),
+            "ct_eligibility_audit_csv": str(ct_eligibility_audit_path.resolve()),
+            "ct_intensity_audit_csv": str(ct_intensity_audit_path.resolve()),
+            "ct_intensity_summary_csv": str(ct_intensity_summary_path.resolve()),
+            "hw_ingrowth_overlay_audit_csv": str(
+                hw_ingrowth_overlay_audit_path.resolve()
+            ),
+            "hw_ingrowth_overlay_summary_csv": str(
+                hw_ingrowth_overlay_summary_path.resolve()
+            ),
             "runtime_curve_contract_xml": str(xml_contract_path.resolve()),
             "runtime_curve_bank_xml": str(xml_curve_bank_path.resolve()),
             "forestmodel_xml": str(forestmodel_xml_path.resolve()),
@@ -3617,6 +3976,11 @@ def initialize_mkrf_runtime_package(
         analysis_au_curve_refs_path=analysis_au_curve_refs_path,
         runtime_au_remap_audit_path=runtime_au_remap_audit_path,
         species_share_audit_path=species_share_audit_path,
+        ct_eligibility_audit_path=ct_eligibility_audit_path,
+        ct_intensity_audit_path=ct_intensity_audit_path,
+        ct_intensity_summary_path=ct_intensity_summary_path,
+        hw_ingrowth_overlay_audit_path=hw_ingrowth_overlay_audit_path,
+        hw_ingrowth_overlay_summary_path=hw_ingrowth_overlay_summary_path,
         analysis_pin_path=analysis_pin_path,
         headless_runtime_common_path=headless_runtime_common_path,
         flow_targets_script_path=flow_targets_script_path,
