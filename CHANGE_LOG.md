@@ -17666,3 +17666,12 @@
 - closed issue `#6` because the rebuilt TSA29 Patchworks package, launch
   validation, and accepted `test01` scenario evidence are now published for
   review.
+## 2026-06-06 - Opened the TSA29 `v1.0.0-alpha1` release lane
+- opened new TSA29-instance release issue `#8` to publish
+  `femic-tsa29-instance` `v1.0.0-alpha1`;
+- added Phase 70 to the parent roadmap and created
+  `planning/phase70_tsa29_release_notes.md`;
+- recorded the release gate that `v1.0.0-alpha1` must be cut from merged
+  `main`, not from `feature/tsa29-patchworks-rebuild-new-inputs`; and
+- anchored the release rationale on the now-accepted Phase 69 rebuilt package,
+  launch validation, and `test01` scenario evidence.

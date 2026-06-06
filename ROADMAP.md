@@ -1923,18 +1923,33 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P69.3c Close the governing issue and publish the resulting branch/PR
     updates.
 
+## Phase 70: Publish the TSA29 `v1.0.0-alpha1` Release
+
+- [ ] P70.1 Prepare the TSA29 release lane and merge gate (`UBC-FRESH/femic-tsa29-instance#8`)
+  - [x] P70.1a Open the governing TSA29-instance release issue for the `v1.0.0-alpha1` milestone.
+  - [ ] P70.1b Treat the release boundary as post-merge only: do not cut the release from `feature/tsa29-patchworks-rebuild-new-inputs`; first merge:
+    - `UBC-FRESH/femic-tsa29-instance#7`
+    - `UBC-FRESH/femic#195`
+  - [ ] P70.1c Refresh the release-facing TSA29 docs/notes so the alpha milestone is described as:
+    - the first standalone TSA29 release where the Patchworks model rebuilds, launches, and produces sane output on the accepted THLB/yield lane; and
+    - an alpha-quality research/prototype milestone rather than a final production contract.
+- [ ] P70.2 Publish `femic-tsa29-instance` `v1.0.0-alpha1`
+  - [ ] P70.2a Fast-forward the TSA29 instance checkout to merged `main` and verify the merged release candidate surfaces directly.
+  - [ ] P70.2b Confirm the launch-critical DataLad/annex payloads and release-facing evidence/docs are in the intended published state.
+  - [ ] P70.2c Create the `v1.0.0-alpha1` tag and GitHub pre-release in `UBC-FRESH/femic-tsa29-instance`.
+  - [ ] P70.2d Record the release in the parent changelog/planning surfaces and publish the matching closeout comments.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
   - `planning/phase69_tsa29_patchworks_rebuild_notes.md`
+  - `planning/phase70_tsa29_release_notes.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
   - `P68` complete
-  - `P69.2` complete
-  - `P69.3a` complete
-  - `P69.3b` complete
-  - `P69.3c` complete
-  - TSA29 Phase 69 implementation is now published for review via:
+  - `P69` complete locally and published for review via:
     - `UBC-FRESH/femic-tsa29-instance#7`
     - `UBC-FRESH/femic#195`
+  - `P70.1a` complete
+  - next bounded move is `P70.1b/P70.1c`: merge the active Phase 69 review PRs and refresh the TSA29 release-facing notes for `v1.0.0-alpha1`
