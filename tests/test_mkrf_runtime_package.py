@@ -386,7 +386,7 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert 'block_shape = "../spatial/fragments.shp";' in analysis_pin_text
     assert "setupYieldFlowTargets(control, periods, tracks_path_prefix);" in analysis_pin_text
     assert 'def.setCaption("Forest Outline");' in analysis_pin_text
-    assert "new PolygonSymbol(new Color(128, 128, 128, 128))" in analysis_pin_text
+    assert "new PolygonSymbol(new Color(239, 239, 239))" in analysis_pin_text
     assert (
         'ageClassTheme.setFieldname("0.5 * (MANAGEDOFFSET + UNMANAGEDOFFSET)");'
         in analysis_pin_text
@@ -394,6 +394,8 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert 'ageClassTheme.setCaption("Age Class (20-year)");' in analysis_pin_text
     assert '"age_000_019"' in analysis_pin_text
     assert '"age_200plus"' in analysis_pin_text
+    assert "new PolygonSymbol(new Color(255, 255, 229))" in analysis_pin_text
+    assert "new PolygonSymbol(new Color(0, 69, 41))" in analysis_pin_text
     assert 'currTreatTheme.setFieldname("CURRENTTREATMENT");' in analysis_pin_text
     assert 'latestTreatTheme.setFieldname("LASTTREATMENT");' in analysis_pin_text
     assert '"CT35"' in analysis_pin_text
