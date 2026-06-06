@@ -17656,3 +17656,13 @@
 - updated the TSA29 instance docs surfaces (`README.md`,
   `docs/rebuild-and-qa.rst`, `docs/data-and-provenance.rst`) so the refreshed
   package points directly at that accepted scenario evidence.
+## 2026-06-06 - Published TSA29 Phase 69 for PR review and closed issue #6
+- opened the TSA29 instance PR `UBC-FRESH/femic-tsa29-instance#7` for the
+  rebuilt package and accepted evidence surfaces;
+- opened the parent coordination PR `UBC-FRESH/femic#195` for the roadmap,
+  changelog, planning, and submodule-pointer updates;
+- posted the final governing issue closeout comment on
+  `UBC-FRESH/femic-tsa29-instance#6`; and
+- closed issue `#6` because the rebuilt TSA29 Patchworks package, launch
+  validation, and accepted `test01` scenario evidence are now published for
+  review.

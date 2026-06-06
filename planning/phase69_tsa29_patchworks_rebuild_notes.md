@@ -108,3 +108,12 @@ Current progress:
     evidence; and
   - reran the TSA29 instance Sphinx build warning-clean after those docs
     updates.
+- published the resulting review surfaces:
+  - TSA29 instance PR `UBC-FRESH/femic-tsa29-instance#7`
+  - parent coordination PR `UBC-FRESH/femic#195`
+- closed the governing TSA29 instance issue `#6` after posting a final closeout
+  comment that summarized:
+  - the rebuilt row-23 THLB-based package surface;
+  - the accepted launch-validation evidence;
+  - the accepted `test01` scenario evidence note; and
+  - the remaining review path through the two PRs above.

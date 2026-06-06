@@ -1915,12 +1915,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     including any required past-top-N AU imputation.
   - [x] P69.2c Inspect the rebuilt Patchworks-facing outputs directly rather
     than treating command success as proof.
-- [ ] P69.3 Validate and publish the refreshed TSA29 model package
+- [x] P69.3 Validate and publish the refreshed TSA29 model package
   - [x] P69.3a Run the necessary Patchworks-facing validation checks on the
     rebuilt package.
   - [x] P69.3b Update TSA29 instance docs/evidence surfaces for the refreshed
     package if the rebuild is accepted.
-  - [ ] P69.3c Close the governing issue and publish the resulting branch/PR
+  - [x] P69.3c Close the governing issue and publish the resulting branch/PR
     updates.
 
 ### Detailed Next Steps Notes
@@ -1934,5 +1934,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P69.2` complete
   - `P69.3a` complete
   - `P69.3b` complete
-  - next bounded move is `P69.3c`: close the governing TSA29 issue and publish
-    the resulting branch/PR state
+  - `P69.3c` complete
+  - TSA29 Phase 69 implementation is now published for review via:
+    - `UBC-FRESH/femic-tsa29-instance#7`
+    - `UBC-FRESH/femic#195`
