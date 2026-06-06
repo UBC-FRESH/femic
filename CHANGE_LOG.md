@@ -17643,3 +17643,16 @@
 - confirmed the refreshed TSA29 model package now launches successfully with
   headless `returncode=0`, saved-stage output, and no `blocks.csv` parse
   failure in launch stderr.
+## 2026-06-06 - Recorded accepted TSA29 Patchworks scenario evidence for the refreshed package
+- added `external/femic-tsa29-instance/evidence/patchworks_test01_scenario_20260606.md`
+  to summarize the accepted `analysis/scenarios/test01` interactive smoke run;
+- recorded that the rebuilt even-flow managed harvest level falls in roughly
+  the `1.4` to `1.6 million m3/year` band, based on
+  `targets/product_HarvestedVolume_managed_Total_CC.csv`;
+- recorded the direct published comparison points from the 2014 Williams Lake
+  TSA public discussion paper:
+  - Figure 4 base-case mid-term level `1,420,500 m3/year`
+  - Figure 6 alternative mid-term level `1,504,998 m3/year`; and
+- updated the TSA29 instance docs surfaces (`README.md`,
+  `docs/rebuild-and-qa.rst`, `docs/data-and-provenance.rst`) so the refreshed
+  package points directly at that accepted scenario evidence.

@@ -93,4 +93,18 @@ Current progress:
   - terminal marker `[FEMIC headless] saveStage completed`
   - saved stage directory with `543` output files
   - no `blocks.csv` parse error and no block-area precision-limit warnings in
-    the launch stderr log.
+  the launch stderr log.
+- updated the TSA29 instance docs/evidence surfaces to record accepted package
+  evidence:
+  - added `external/femic-tsa29-instance/evidence/patchworks_test01_scenario_20260606.md`
+    summarizing the representative interactive `test01` scenario and its
+    harvest-level comparison against the 2014 Williams Lake TSA public
+    discussion paper;
+  - updated:
+    - `external/femic-tsa29-instance/README.md`
+    - `external/femic-tsa29-instance/docs/rebuild-and-qa.rst`
+    - `external/femic-tsa29-instance/docs/data-and-provenance.rst`
+    so the refreshed package points directly at that accepted scenario
+    evidence; and
+  - reran the TSA29 instance Sphinx build warning-clean after those docs
+    updates.

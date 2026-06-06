@@ -1918,7 +1918,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 - [ ] P69.3 Validate and publish the refreshed TSA29 model package
   - [x] P69.3a Run the necessary Patchworks-facing validation checks on the
     rebuilt package.
-  - [ ] P69.3b Update TSA29 instance docs/evidence surfaces for the refreshed
+  - [x] P69.3b Update TSA29 instance docs/evidence surfaces for the refreshed
     package if the rebuild is accepted.
   - [ ] P69.3c Close the governing issue and publish the resulting branch/PR
     updates.
@@ -1933,5 +1933,6 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P68` complete
   - `P69.2` complete
   - `P69.3a` complete
-  - next bounded move is `P69.3b`: record the accepted refreshed TSA29
-    package surface in the instance docs/evidence lane
+  - `P69.3b` complete
+  - next bounded move is `P69.3c`: close the governing TSA29 issue and publish
+    the resulting branch/PR state
