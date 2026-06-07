@@ -1962,10 +1962,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 
 - [ ] P72.1 Prepare the TSA29 release lane and merge gate (`UBC-FRESH/femic-tsa29-instance#8`)
   - [x] P72.1a Open the governing TSA29-instance release issue for the `v1.0.0-alpha1` milestone.
-  - [ ] P72.1b Treat the release boundary as post-merge only: do not cut the release from `feature/tsa29-patchworks-rebuild-new-inputs`; first merge:
+  - [x] P72.1b Treat the release boundary as post-merge only: do not cut the release from `feature/tsa29-patchworks-rebuild-new-inputs`; first merge:
     - `UBC-FRESH/femic-tsa29-instance#7`
     - `UBC-FRESH/femic#195`
-  - [ ] P72.1c Refresh the release-facing TSA29 docs/notes so the alpha milestone is described as:
+  - [x] P72.1c Refresh the release-facing TSA29 docs/notes so the alpha milestone is described as:
     - the first standalone TSA29 release where the Patchworks model rebuilds, launches, and produces sane output on the accepted THLB/yield lane; and
     - an alpha-quality research/prototype milestone rather than a final production contract.
 - [ ] P72.2 Publish `femic-tsa29-instance` `v1.0.0-alpha1`
@@ -1994,5 +1994,5 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P71` complete locally and published for review via:
     - `UBC-FRESH/femic-tsa29-instance#7`
     - `UBC-FRESH/femic#195`
-  - `P72.1a` complete
-  - next bounded move is `P72.1b/P72.1c`: merge the active TSA29 Phase 71 review PRs and refresh the TSA29 release-facing notes for `v1.0.0-alpha1`
+  - `P72.1` complete
+  - next bounded move is `P72.2`: run the cold-clone/DataLad publication proof for the merged `v1.0.0-alpha1` release candidate

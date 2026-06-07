@@ -17675,3 +17675,12 @@
   `main`, not from `feature/tsa29-patchworks-rebuild-new-inputs`; and
 - anchored the release rationale on the now-accepted Phase 71 rebuilt package,
   launch validation, and `test01` scenario evidence.
+## 2026-06-06 - Completed the TSA29 alpha release-prep and merge gate slice
+- merged the TSA29 Phase 71 review PRs:
+  - `UBC-FRESH/femic-tsa29-instance#7`
+  - `UBC-FRESH/femic#195`;
+- re-anchored both local repos on merged `main`;
+- updated parent `main` to pin the merged TSA29 instance `main` commit; and
+- refreshed the TSA29 release-facing docs so `v1.0.0-alpha1` is now described
+  as the active intended milestone and explicitly framed as an alpha-quality
+  research/prototype release.

@@ -17,14 +17,20 @@ release where the rebuilt Patchworks package:
 
 ## Current Gate
 
-Do not cut the release from the active feature branch. The release boundary is:
+Do not cut the release from an unmerged feature branch. The release boundary is:
 
-1. merge the Phase 69 review PRs:
+1. merge the TSA29 Phase 71 review PRs:
    - `UBC-FRESH/femic-tsa29-instance#7`
    - `UBC-FRESH/femic#195`
 2. refresh the local TSA29 instance checkout to merged `main`
 3. verify the merged release-candidate surfaces directly
 4. publish `v1.0.0-alpha1` as a GitHub pre-release
+
+Current status:
+
+- `#7` merged
+- `#195` merged
+- parent `main` now pins the merged TSA29 instance `main` commit
 
 ## Evidence Basis
 
@@ -44,9 +50,21 @@ TSA public-discussion mid-term reference values.
 
 ### P72.1
 
-- merge the active Phase 69 review PRs
+- merge the active TSA29 Phase 71 review PRs
 - refresh the release-facing wording in the TSA29 docs/notes
 - keep the alpha boundary explicit
+
+Current progress:
+
+- merged:
+  - `UBC-FRESH/femic-tsa29-instance#7`
+  - `UBC-FRESH/femic#195`
+- re-anchored both repos on `main`
+- updated the parent `main` submodule pointer so the parent now pins the
+  merged TSA29 instance `main` commit
+- refreshed the TSA29 release-facing wording so the docs now treat
+  `v1.0.0-alpha1` as the active intended milestone and explicitly frame it as
+  an alpha-quality research/prototype release
 
 ### P72.2
 
