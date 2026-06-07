@@ -17684,3 +17684,19 @@
 - refreshed the TSA29 release-facing docs so `v1.0.0-alpha1` is now described
   as the active intended milestone and explicitly framed as an alpha-quality
   research/prototype release.
+## 2026-06-06 - Completed the TSA29 cold-clone release proof
+- created a fresh thin clone at
+  `C:\Users\gep\Projects\tsa29_release_coldclone_20260606a` and enabled the
+  published `arbutus-s3` annex remote there;
+- found and repaired a release-critical publication gap where eight
+  launch-critical Patchworks package files had never been copied to
+  `arbutus-s3`;
+- pushed the updated `git-annex` branch metadata so the fresh clone could
+  discover those published keys;
+- verified from the cold clone that the launch-critical package surfaces under
+  `models/tsa29_patchworks_model/{blocks,tracks,analysis}/` and
+  `output/patchworks_tsa29_validated/` now materialize successfully;
+- built the TSA29 instance docs warning-clean from the cold clone; and
+- directly inspected the published package surfaces from the cold clone,
+  including a clean `tracks/blocks.csv` read with `646031` rows and `0`
+  malformed rows.

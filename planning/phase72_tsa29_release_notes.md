@@ -73,3 +73,32 @@ Current progress:
   payloads
 - create the `v1.0.0-alpha1` tag and GitHub pre-release
 - record the release in the parent planning/changelog surfaces
+
+Current progress:
+
+- cold-clone proof root: `C:\Users\gep\Projects\tsa29_release_coldclone_20260606a`
+- launch-critical package payloads under:
+  - `models/tsa29_patchworks_model/blocks/`
+  - `models/tsa29_patchworks_model/tracks/`
+  - `models/tsa29_patchworks_model/analysis/`
+  - `output/patchworks_tsa29_validated/`
+  now materialize successfully from `arbutus-s3`
+- the release blocker was a publication gap for eight annexed package files
+  that existed only in the authoritative TSA29 instance checkout; those keys
+  were copied to `arbutus-s3`, and the updated `git-annex` branch metadata was
+  pushed to `origin`
+- cold-clone validation passed:
+  - `git annex get` succeeded for the launch-critical package surfaces
+  - `git annex find --not --in arbutus-s3` returned clean for the targeted
+    release package surfaces after metadata refresh
+  - Sphinx built warning-clean from the cold clone
+  - direct package checks confirmed the published `base.pin`,
+    `base_variant_common.bsh`, `forestmodel.xml`, `blocks.shp`,
+    `fragments.shp`, and track CSVs are present and readable
+  - `tracks/blocks.csv` in the cold clone has `646031` rows and `0`
+    malformed rows
+
+Remaining work in `P72.2`:
+
+- create the `v1.0.0-alpha1` tag and GitHub pre-release
+- publish the matching closeout comments and final changelog note

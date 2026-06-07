@@ -1960,7 +1960,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 
 ## Phase 72: Publish the TSA29 `v1.0.0-alpha1` Release
 
-- [ ] P72.1 Prepare the TSA29 release lane and merge gate (`UBC-FRESH/femic-tsa29-instance#8`)
+- [x] P72.1 Prepare the TSA29 release lane and merge gate (`UBC-FRESH/femic-tsa29-instance#8`)
   - [x] P72.1a Open the governing TSA29-instance release issue for the `v1.0.0-alpha1` milestone.
   - [x] P72.1b Treat the release boundary as post-merge only: do not cut the release from `feature/tsa29-patchworks-rebuild-new-inputs`; first merge:
     - `UBC-FRESH/femic-tsa29-instance#7`
@@ -1969,8 +1969,8 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - the first standalone TSA29 release where the Patchworks model rebuilds, launches, and produces sane output on the accepted THLB/yield lane; and
     - an alpha-quality research/prototype milestone rather than a final production contract.
 - [ ] P72.2 Publish `femic-tsa29-instance` `v1.0.0-alpha1`
-  - [ ] P72.2a Fast-forward the TSA29 instance checkout to merged `main` and verify the merged release candidate surfaces directly.
-  - [ ] P72.2b Confirm the launch-critical DataLad/annex payloads and release-facing evidence/docs are in the intended published state.
+  - [x] P72.2a Fast-forward the TSA29 instance checkout to merged `main` and verify the merged release candidate surfaces directly.
+  - [x] P72.2b Confirm the launch-critical DataLad/annex payloads and release-facing evidence/docs are in the intended published state.
   - [ ] P72.2c Create the `v1.0.0-alpha1` tag and GitHub pre-release in `UBC-FRESH/femic-tsa29-instance`.
   - [ ] P72.2d Record the release in the parent changelog/planning surfaces and publish the matching closeout comments.
 
@@ -1995,4 +1995,6 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     - `UBC-FRESH/femic-tsa29-instance#7`
     - `UBC-FRESH/femic#195`
   - `P72.1` complete
-  - next bounded move is `P72.2`: run the cold-clone/DataLad publication proof for the merged `v1.0.0-alpha1` release candidate
+  - `P72.2a` complete
+  - `P72.2b` complete: a fresh thin clone at `C:\Users\gep\Projects\tsa29_release_coldclone_20260606a` now materializes the launch-critical Patchworks package from `arbutus-s3`, and the cold-clone docs build plus direct package-surface checks passed
+  - next bounded move is `P72.2c`: create the `v1.0.0-alpha1` tag and GitHub pre-release from `external/femic-tsa29-instance` `main`
