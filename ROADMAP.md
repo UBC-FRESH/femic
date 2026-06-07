@@ -1935,5 +1935,6 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - row-23 strict THLB recovery is locked and committed
   - Patchworks export + Matrix Builder were rerun successfully against the
     recovered row-23 checkpoint
-  - remaining open seam is the hanging `patchworks-raster` topology pass in
-    `build-blocks`
+  - `build-blocks` now uses the shipped no-topology TSA29 contract and
+    preserves the tracked `topology_blocks_0r.csv` analysis surface instead of
+    trying to regenerate a hanging topology pass

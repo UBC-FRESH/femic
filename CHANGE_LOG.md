@@ -17615,5 +17615,13 @@
 - reran `femic patchworks matrix-build` successfully on the rebuilt package,
   with the new manifest reporting `returncode=0` and synced accounts
   promotion; and
-- left the `patchworks-raster` topology hang in `build-blocks` open as the
-  remaining Phase 69 seam after `blocks.shp` had already been written.
+- initially left the `patchworks-raster` topology hang in `build-blocks` open
+  after `blocks.shp` had already been written; then
+- replaced that seam by aligning the TSA29 rebuild contract to the shipped
+  dev-mode runtime surface:
+  - `femic patchworks build-blocks --config config/patchworks.runtime.windows.yaml --no-topology`
+  - preserve the tracked header-only
+    `models/tsa29_patchworks_model/blocks/topology_blocks_0r.csv` file that
+    the shared analysis/PIN lane already loads; and
+- reran `femic patchworks build-blocks --no-topology` successfully so the
+  rebuilt blocks surface now completes without the topology subprocess hang.

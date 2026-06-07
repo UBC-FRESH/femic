@@ -53,9 +53,15 @@ Current progress:
 - confirmed the written fragments shapefile now round-trips with `0`
   nonpositive `AREA_HA` rows;
 - reran `femic patchworks matrix-build` successfully on the rebuilt package;
-- observed that `femic patchworks build-blocks --with-topology --topology-backend patchworks-raster`
-  still hangs in the raster-topology subprocess after writing `blocks.shp`, so
-  that seam remains open.
+- replaced the hanging topology rebuild seam by aligning the rebuild contract
+  to the shipped TSA29 analysis surface:
+  - `femic patchworks build-blocks --config config/patchworks.runtime.windows.yaml --no-topology`
+  - preserve the tracked header-only
+    `models/tsa29_patchworks_model/blocks/topology_blocks_0r.csv` file that
+    the shared analysis/PIN lane already loads;
+- reran `femic patchworks build-blocks --no-topology` successfully and
+  confirmed the rebuilt `blocks.shp` surface now completes without the
+  topology subprocess hang.
 
 ### P69.3
 
