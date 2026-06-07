@@ -17700,3 +17700,13 @@
 - directly inspected the published package surfaces from the cold clone,
   including a clean `tracks/blocks.csv` read with `646031` rows and `0`
   malformed rows.
+## 2026-06-06 - Published TSA29 `v1.0.0-alpha1`
+- created and published `UBC-FRESH/femic-tsa29-instance` pre-release
+  `v1.0.0-alpha1`;
+- cut the release from merged TSA29 instance `main` commit
+  `45af95c4dbb2ee0ff726188d246a5e4771ade902`;
+- anchored the release notes on the locked row-23 THLB basis, accepted
+  smoothed VDYP plus refreshed TIPSY yield surfaces, successful Matrix Builder
+  run, successful launch, accepted `test01` scenario evidence, and completed
+  cold-clone publication proof; and
+- advanced the parent release lane to final governing-issue closeout.

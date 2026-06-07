@@ -100,5 +100,16 @@ Current progress:
 
 Remaining work in `P72.2`:
 
-- create the `v1.0.0-alpha1` tag and GitHub pre-release
-- publish the matching closeout comments and final changelog note
+- completed `P72.2c`:
+  - published `UBC-FRESH/femic-tsa29-instance` pre-release `v1.0.0-alpha1`
+  - release URL:
+    `https://github.com/UBC-FRESH/femic-tsa29-instance/releases/tag/v1.0.0-alpha1`
+  - release tag points at merged `main` commit `45af95c4dbb2ee0ff726188d246a5e4771ade902`
+- completed `P72.2d`:
+  - recorded the release closeout in the parent planning/changelog surfaces
+  - published the final closeout comment on `UBC-FRESH/femic-tsa29-instance#8`
+  - closed issue `#8`
+
+Phase 72 status:
+
+- `P72` complete

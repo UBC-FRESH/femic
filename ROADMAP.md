@@ -1968,11 +1968,11 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P72.1c Refresh the release-facing TSA29 docs/notes so the alpha milestone is described as:
     - the first standalone TSA29 release where the Patchworks model rebuilds, launches, and produces sane output on the accepted THLB/yield lane; and
     - an alpha-quality research/prototype milestone rather than a final production contract.
-- [ ] P72.2 Publish `femic-tsa29-instance` `v1.0.0-alpha1`
+- [x] P72.2 Publish `femic-tsa29-instance` `v1.0.0-alpha1`
   - [x] P72.2a Fast-forward the TSA29 instance checkout to merged `main` and verify the merged release candidate surfaces directly.
   - [x] P72.2b Confirm the launch-critical DataLad/annex payloads and release-facing evidence/docs are in the intended published state.
-  - [ ] P72.2c Create the `v1.0.0-alpha1` tag and GitHub pre-release in `UBC-FRESH/femic-tsa29-instance`.
-  - [ ] P72.2d Record the release in the parent changelog/planning surfaces and publish the matching closeout comments.
+  - [x] P72.2c Create the `v1.0.0-alpha1` tag and GitHub pre-release in `UBC-FRESH/femic-tsa29-instance`.
+  - [x] P72.2d Record the release in the parent changelog/planning surfaces and publish the matching closeout comments.
 
 ### Detailed Next Steps Notes
 
@@ -1997,4 +1997,6 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P72.1` complete
   - `P72.2a` complete
   - `P72.2b` complete: a fresh thin clone at `C:\Users\gep\Projects\tsa29_release_coldclone_20260606a` now materializes the launch-critical Patchworks package from `arbutus-s3`, and the cold-clone docs build plus direct package-surface checks passed
-  - next bounded move is `P72.2c`: create the `v1.0.0-alpha1` tag and GitHub pre-release from `external/femic-tsa29-instance` `main`
+  - `P72.2c` complete: `UBC-FRESH/femic-tsa29-instance` pre-release `v1.0.0-alpha1` is published from merged `main` commit `45af95c`
+  - `P72.2d` complete: release closeout is recorded in the parent planning surfaces and governing TSA29 release issue `#8`
+  - `P72` complete
