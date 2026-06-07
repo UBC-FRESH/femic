@@ -1908,12 +1908,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P69.1c Record the requirement that past-top-N strata must receive AU
     assignment through the lexicographical stratum-matching imputation logic so
     no surviving AFLB area is silently left out of the model.
-- [ ] P69.2 Rebuild TSA29 model-input and Patchworks package surfaces on the new inputs
-  - [ ] P69.2a Regenerate the TSA29 model-input bundle from the current locked
+- [x] P69.2 Rebuild TSA29 model-input and Patchworks package surfaces on the new inputs
+  - [x] P69.2a Regenerate the TSA29 model-input bundle from the current locked
     THLB and accepted curve libraries.
-  - [ ] P69.2b Rebuild the TSA29 Patchworks package on that regenerated bundle,
+  - [x] P69.2b Rebuild the TSA29 Patchworks package on that regenerated bundle,
     including any required past-top-N AU imputation.
-  - [ ] P69.2c Inspect the rebuilt Patchworks-facing outputs directly rather
+  - [x] P69.2c Inspect the rebuilt Patchworks-facing outputs directly rather
     than treating command success as proof.
 - [ ] P69.3 Validate and publish the refreshed TSA29 model package
   - [ ] P69.3a Run the necessary Patchworks-facing validation checks on the
@@ -1931,10 +1931,6 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
   - `P68` complete
-  - `P69.2` is in progress
-  - row-23 strict THLB recovery is locked and committed
-  - Patchworks export + Matrix Builder were rerun successfully against the
-    recovered row-23 checkpoint
-  - `build-blocks` now uses the shipped no-topology TSA29 contract and
-    preserves the tracked `topology_blocks_0r.csv` analysis surface instead of
-    trying to regenerate a hanging topology pass
+  - `P69.2` complete
+  - next bounded move is `P69.3a`: run the remaining Patchworks-facing
+    validation/publish checks on the rebuilt TSA29 package
