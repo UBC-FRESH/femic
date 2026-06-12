@@ -1974,6 +1974,27 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P72.2c Create the `v1.0.0-alpha1` tag and GitHub pre-release in `UBC-FRESH/femic-tsa29-instance`.
   - [x] P72.2d Record the release in the parent changelog/planning surfaces and publish the matching closeout comments.
 
+## Phase 73: MKRF Stand Stratification Revisions
+
+- [x] P73.1 Record the MKRF stand-stratification revision issue set (`UBC-FRESH/femic-mkrf-instance#25`)
+  - [x] P73.1a Open separate child issues for minor-strata aggregation and major-strata site-series splitting (`UBC-FRESH/femic-mkrf-instance#26`, `#27`).
+  - [x] P73.1b Record the BEC field-guide reference and Anna's note that the major-stratum split logic remains TBD for the site-series child.
+- [x] P73.2 Implement the reviewed minor-strata aggregation pass (`UBC-FRESH/femic-mkrf-instance#26`)
+  - [x] P73.2a Add explicit raw-to-canonical AU aggregation before selected-AU publication for:
+    - `cwh_vm_2_ba_hw` -> `cwh_vm_2_hw_ba`
+    - `cwh_dm_x_dr_mb` -> `cwh_dm_x_dr_act`
+    - `cwh_dm_x_cw_dr` -> `cwh_dm_x_dr_cw`
+    - `cwh_vm_1_ba_hw` -> `cwh_vm_1_hw_ba`
+    - `cwh_vm_1_fdc_hw` -> `cwh_vm_1_fdc_x`
+  - [x] P73.2b Preserve raw AU lineage in `stand_au_assignment.csv` and add `au_aggregation_audit.csv` so the aggregation is reviewable.
+  - [x] P73.2c Regenerate AU inputs, selected AU table, managed inputs, managed curves, runtime package, Matrix Builder tracks, and the default `mkrf.base` smoke.
+  - [x] P73.2d Fix runtime first-growth summary counts so manifests/XML report the selected runtime AU surface after aggregation.
+  - [x] P73.2e Update MKRF docs/runbook surfaces for the AU aggregation audit and validation lane.
+- [ ] P73.3 Publish the aggregation branch bundle and close child issue `UBC-FRESH/femic-mkrf-instance#26`
+  - [ ] P73.3a Commit and push the instance and parent branches with the regenerated runtime artifacts and submodule pointer update.
+  - [ ] P73.3b Post QA commands, run IDs, and audit summary back to `#26`.
+  - [ ] P73.3c Open the instance and parent PRs for review.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2000,3 +2021,5 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P72.2c` complete: `UBC-FRESH/femic-tsa29-instance` pre-release `v1.0.0-alpha1` is published from merged `main` commit `45af95c`
   - `P72.2d` complete: release closeout is recorded in the parent planning surfaces and governing TSA29 release issue `#8`
   - `P72` complete
+  - `P73.1` complete
+  - `P73.2` complete locally for `UBC-FRESH/femic-mkrf-instance#26`; publication and issue closeout remain next

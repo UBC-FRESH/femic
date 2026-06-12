@@ -6,10 +6,18 @@ from dataclasses import dataclass
 import math
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 
 _SPECIES_SLOT_COUNT = 6
+_MKRF_AU_AGGREGATION_TARGETS: dict[str, str] = {
+    "cwh_vm_2_ba_hw": "cwh_vm_2_hw_ba",
+    "cwh_dm_x_dr_mb": "cwh_dm_x_dr_act",
+    "cwh_dm_x_cw_dr": "cwh_dm_x_dr_cw",
+    "cwh_vm_1_ba_hw": "cwh_vm_1_hw_ba",
+    "cwh_vm_1_fdc_hw": "cwh_vm_1_fdc_x",
+}
 
 
 def parse_mkrf_bec(value: object) -> tuple[str, str, str]:
@@ -120,6 +128,12 @@ def annotate_mkrf_au_keys(source_table: pd.DataFrame) -> pd.DataFrame:
         + "_"
         + table["leading_species_2"].astype(str)
     )
+    table["raw_au_id"] = table["au_id"]
+    table["au_id"] = table["raw_au_id"].map(
+        lambda value: _MKRF_AU_AGGREGATION_TARGETS.get(str(value), str(value))
+    )
+    table["au_aggregation_target"] = table["au_id"]
+    table["au_aggregation_applied"] = table["raw_au_id"] != table["au_id"]
     return table
 
 
@@ -150,7 +164,10 @@ def build_mkrf_assignment_rows(source_table: pd.DataFrame) -> pd.DataFrame:
             "shape_area_ha": (
                 pd.to_numeric(shape_area, errors="coerce").fillna(0.0) / 10000.0
             ),
+            "raw_au_id": table["raw_au_id"],
             "au_id": table["au_id"],
+            "au_aggregation_applied": table["au_aggregation_applied"].astype(bool),
+            "au_aggregation_target": table["au_aggregation_target"],
             "assignment_status": "assigned",
         }
     ).sort_values(["au_id", "res_key"], kind="stable")
@@ -166,15 +183,22 @@ def build_mkrf_au_tables(
         table = table.loc[table["CONTCLAS"] != "X"].copy()
 
     assignment = build_mkrf_assignment_rows(table)
+    canonical_parts = assignment["au_id"].astype(str).str.split("_", expand=True)
+    if canonical_parts.shape[1] != 5:
+        raise ValueError("MKRF AU aggregation produced non-canonical AU identifiers.")
+    assignment = assignment.copy()
+    assignment[["au_bec_zone", "au_bec_subzone", "au_bec_variant", "au_species_1", "au_species_2"]] = (
+        canonical_parts
+    )
     au_table = (
         assignment.groupby(
             [
                 "au_id",
-                "bec_zone",
-                "bec_subzone",
-                "bec_variant",
-                "leading_species_1",
-                "leading_species_2",
+                "au_bec_zone",
+                "au_bec_subzone",
+                "au_bec_variant",
+                "au_species_1",
+                "au_species_2",
             ],
             as_index=False,
             sort=True,
@@ -184,11 +208,76 @@ def build_mkrf_au_tables(
             tie_break_record_count=("tie_break_used", "sum"),
         )
         .sort_values("au_id", kind="stable")
+        .rename(
+            columns={
+                "au_bec_zone": "bec_zone",
+                "au_bec_subzone": "bec_subzone",
+                "au_bec_variant": "bec_variant",
+                "au_species_1": "leading_species_1",
+                "au_species_2": "leading_species_2",
+            }
+        )
     )
 
     au_table["tie_break_record_count"] = au_table["tie_break_record_count"].astype(int)
     au_table["stand_count"] = au_table["stand_count"].astype(int)
     return au_table.reset_index(drop=True), assignment
+
+
+def build_mkrf_au_aggregation_audit(assignment: pd.DataFrame) -> pd.DataFrame:
+    """Summarize raw-to-canonical AU aggregation decisions."""
+    required = {"raw_au_id", "au_id", "shape_area_ha", "forest_cover_id", "res_key"}
+    missing = sorted(required - set(assignment.columns))
+    if missing:
+        raise ValueError(
+            "MKRF assignment table missing aggregation audit columns: "
+            + ", ".join(missing)
+        )
+    audit = (
+        assignment.assign(
+            raw_au_id=lambda df: df["raw_au_id"].astype(str),
+            au_id=lambda df: df["au_id"].astype(str),
+            shape_area_ha=lambda df: pd.to_numeric(
+                df["shape_area_ha"], errors="coerce"
+            ).fillna(0.0),
+            forest_cover_id=lambda df: pd.to_numeric(
+                df["forest_cover_id"], errors="coerce"
+            ),
+        )
+        .groupby(["raw_au_id", "au_id"], as_index=False, dropna=False)
+        .agg(
+            source_fragment_count=("res_key", "count"),
+            forest_cover_id_count=("forest_cover_id", "nunique"),
+            covered_area_ha=("shape_area_ha", "sum"),
+        )
+        .sort_values(["au_id", "raw_au_id"], kind="stable")
+        .reset_index(drop=True)
+    )
+    audit["was_aggregated"] = audit["raw_au_id"] != audit["au_id"]
+    total_area = float(audit["covered_area_ha"].sum())
+    audit["covered_area_share"] = (
+        audit["covered_area_ha"] / total_area if total_area > 0.0 else 0.0
+    )
+    target_area = audit.groupby("au_id")["covered_area_ha"].transform("sum")
+    audit["target_area_ha"] = target_area
+    audit["raw_share_of_target_area"] = np.where(
+        target_area.gt(0.0),
+        audit["covered_area_ha"] / target_area,
+        0.0,
+    )
+    return audit[
+        [
+            "raw_au_id",
+            "au_id",
+            "was_aggregated",
+            "source_fragment_count",
+            "forest_cover_id_count",
+            "covered_area_ha",
+            "covered_area_share",
+            "target_area_ha",
+            "raw_share_of_target_area",
+        ]
+    ]
 
 
 def build_mkrf_selected_au_table(

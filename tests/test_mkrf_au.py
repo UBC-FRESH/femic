@@ -5,6 +5,7 @@ import pandas as pd
 from pathlib import Path
 
 from femic.pipeline.mkrf_au import (
+    build_mkrf_au_aggregation_audit,
     build_mkrf_au_tables,
     build_mkrf_selected_au_table,
     ordered_top_two_species,
@@ -74,6 +75,71 @@ def test_build_mkrf_au_tables_filters_non_forest_and_groups_assignments() -> Non
     assert list(assignment["au_id"].unique()) == ["cwh_vm_2_hw_cw"]
     assert list(au_table["au_id"]) == ["cwh_vm_2_hw_cw"]
     assert list(au_table["stand_count"]) == [2]
+
+
+def test_build_mkrf_au_tables_applies_minor_strata_aggregation_auditably() -> None:
+    source = pd.DataFrame(
+        [
+            {
+                "RES_KEY": 20,
+                "FOREST_COVER_ID": 200,
+                "BEC": "CWHvm2",
+                "CONTCLAS": "C",
+                "Shape_Area": 10000.0,
+                "TCL_1_TSP_1_TREE_SPECIES_CODE": "HW",
+                "TCL_1_TSP_1_SPECIES_PCT": 60,
+                "TCL_1_TSP_2_TREE_SPECIES_CODE": "BA",
+                "TCL_1_TSP_2_SPECIES_PCT": 30,
+            },
+            {
+                "RES_KEY": 21,
+                "FOREST_COVER_ID": 201,
+                "BEC": "CWHvm2",
+                "CONTCLAS": "C",
+                "Shape_Area": 20000.0,
+                "TCL_1_TSP_1_TREE_SPECIES_CODE": "BA",
+                "TCL_1_TSP_1_SPECIES_PCT": 55,
+                "TCL_1_TSP_2_TREE_SPECIES_CODE": "HW",
+                "TCL_1_TSP_2_SPECIES_PCT": 35,
+            },
+            {
+                "RES_KEY": 22,
+                "FOREST_COVER_ID": 202,
+                "BEC": "CWHdm",
+                "CONTCLAS": "C",
+                "Shape_Area": 30000.0,
+                "TCL_1_TSP_1_TREE_SPECIES_CODE": "CW",
+                "TCL_1_TSP_1_SPECIES_PCT": 50,
+                "TCL_1_TSP_2_TREE_SPECIES_CODE": "DR",
+                "TCL_1_TSP_2_SPECIES_PCT": 40,
+            },
+        ]
+    )
+
+    au_table, assignment = build_mkrf_au_tables(source)
+    audit = build_mkrf_au_aggregation_audit(assignment)
+
+    assert assignment.loc[assignment["res_key"].eq(21), "raw_au_id"].iloc[0] == (
+        "cwh_vm_2_ba_hw"
+    )
+    assert assignment.loc[assignment["res_key"].eq(21), "au_id"].iloc[0] == (
+        "cwh_vm_2_hw_ba"
+    )
+    assert assignment.loc[assignment["res_key"].eq(21), "leading_species_1"].iloc[0] == "ba"
+    assert assignment.loc[assignment["res_key"].eq(21), "leading_species_1_share"].iloc[0] == 55
+
+    assert au_table["au_id"].tolist() == ["cwh_dm_x_dr_cw", "cwh_vm_2_hw_ba"]
+    merged = au_table.loc[au_table["au_id"].eq("cwh_vm_2_hw_ba")].iloc[0]
+    assert merged["stand_count"] == 2
+    assert merged["leading_species_1"] == "hw"
+    assert merged["leading_species_2"] == "ba"
+
+    aggregated_row = audit.loc[audit["raw_au_id"].eq("cwh_vm_2_ba_hw")].iloc[0]
+    assert aggregated_row["au_id"] == "cwh_vm_2_hw_ba"
+    assert bool(aggregated_row["was_aggregated"]) is True
+    assert aggregated_row["covered_area_ha"] == 2.0
+    assert aggregated_row["target_area_ha"] == 3.0
+    assert aggregated_row["raw_share_of_target_area"] == 2.0 / 3.0
 
 
 def test_build_mkrf_selected_au_table_uses_smallest_prefix_meeting_coverage() -> None:
