@@ -11,6 +11,8 @@ import pandas as pd
 
 
 _SPECIES_SLOT_COUNT = 6
+_MKRF_SITE_SERIES_SPLIT_THRESHOLD = 0.04
+_MKRF_SITE_SERIES_SPLIT_SHARE_DECIMALS = 2
 _MKRF_AU_AGGREGATION_TARGETS: dict[str, str] = {
     "cwh_vm_2_ba_hw": "cwh_vm_2_hw_ba",
     "cwh_dm_x_dr_mb": "cwh_dm_x_dr_act",
@@ -18,6 +20,20 @@ _MKRF_AU_AGGREGATION_TARGETS: dict[str, str] = {
     "cwh_vm_1_ba_hw": "cwh_vm_1_hw_ba",
     "cwh_vm_1_fdc_hw": "cwh_vm_1_fdc_x",
 }
+
+
+def normalize_mkrf_site_series(value: object) -> str:
+    """Normalize MKRF site-series labels into stable AU-safe suffixes."""
+    text = "" if value is None else str(value).strip()
+    if not text or text.lower() == "nan":
+        return "ssx"
+
+    if "(" in text and ")" in text:
+        code = text.rsplit("(", 1)[-1].split(")", 1)[0].strip()
+    else:
+        code = text
+    code = "".join(ch.lower() for ch in code if ch.isalnum())
+    return f"ss{code}" if code else "ssx"
 
 
 def parse_mkrf_bec(value: object) -> tuple[str, str, str]:
@@ -117,7 +133,7 @@ def annotate_mkrf_au_keys(source_table: pd.DataFrame) -> pd.DataFrame:
     )
     table = pd.concat([table, species_frame], axis=1)
 
-    table["au_id"] = (
+    table["base_au_id"] = (
         table["bec_zone"].astype(str)
         + "_"
         + table["bec_subzone"].astype(str)
@@ -128,12 +144,55 @@ def annotate_mkrf_au_keys(source_table: pd.DataFrame) -> pd.DataFrame:
         + "_"
         + table["leading_species_2"].astype(str)
     )
-    table["raw_au_id"] = table["au_id"]
-    table["au_id"] = table["raw_au_id"].map(
+    table["raw_au_id"] = table["base_au_id"]
+    table["canonical_base_au_id"] = table["raw_au_id"].map(
         lambda value: _MKRF_AU_AGGREGATION_TARGETS.get(str(value), str(value))
     )
-    table["au_aggregation_target"] = table["au_id"]
-    table["au_aggregation_applied"] = table["raw_au_id"] != table["au_id"]
+
+    has_site_series = "SITE_SERIES" in table.columns
+    if has_site_series:
+        table["site_series_label"] = table["SITE_SERIES"].astype(str).str.strip()
+        table["site_series_id"] = table["SITE_SERIES"].map(normalize_mkrf_site_series)
+    else:
+        table["site_series_label"] = ""
+        table["site_series_id"] = "ssx"
+
+    shape_area = (
+        table["Shape_Area"]
+        if "Shape_Area" in table.columns
+        else pd.Series(0.0, index=table.index)
+    )
+    table["_shape_area_ha_for_split"] = (
+        pd.to_numeric(shape_area, errors="coerce").fillna(0.0) / 10000.0
+    )
+    base_area = table.groupby("canonical_base_au_id")[
+        "_shape_area_ha_for_split"
+    ].transform("sum")
+    total_area = float(table["_shape_area_ha_for_split"].sum())
+    table["base_au_area_share"] = np.where(
+        total_area > 0.0,
+        base_area / total_area,
+        0.0,
+    )
+    table["base_au_area_share_for_split"] = table["base_au_area_share"].round(
+        _MKRF_SITE_SERIES_SPLIT_SHARE_DECIMALS
+    )
+    table["site_series_split_applied"] = has_site_series & (
+        table["base_au_area_share_for_split"] >= _MKRF_SITE_SERIES_SPLIT_THRESHOLD
+    )
+    table["site_series_split_threshold"] = _MKRF_SITE_SERIES_SPLIT_THRESHOLD
+    table["au_id"] = np.where(
+        table["site_series_split_applied"],
+        table["canonical_base_au_id"].astype(str)
+        + "_"
+        + table["site_series_id"].astype(str),
+        table["canonical_base_au_id"].astype(str),
+    )
+    table["au_aggregation_target"] = table["canonical_base_au_id"]
+    table["au_aggregation_applied"] = (
+        table["raw_au_id"] != table["canonical_base_au_id"]
+    )
+    table = table.drop(columns=["_shape_area_ha_for_split"])
     return table
 
 
@@ -161,6 +220,15 @@ def build_mkrf_assignment_rows(source_table: pd.DataFrame) -> pd.DataFrame:
             "leading_species_2_share": table["leading_species_2_share"],
             "species_count": table["species_count"].astype(int),
             "tie_break_used": table["tie_break_used"].astype(bool),
+            "site_series_label": table["site_series_label"],
+            "site_series_id": table["site_series_id"],
+            "base_au_id": table["canonical_base_au_id"],
+            "base_au_area_share": table["base_au_area_share"],
+            "base_au_area_share_for_split": table["base_au_area_share_for_split"],
+            "site_series_split_applied": table["site_series_split_applied"].astype(
+                bool
+            ),
+            "site_series_split_threshold": table["site_series_split_threshold"],
             "shape_area_ha": (
                 pd.to_numeric(shape_area, errors="coerce").fillna(0.0) / 10000.0
             ),
@@ -183,13 +251,19 @@ def build_mkrf_au_tables(
         table = table.loc[table["CONTCLAS"] != "X"].copy()
 
     assignment = build_mkrf_assignment_rows(table)
-    canonical_parts = assignment["au_id"].astype(str).str.split("_", expand=True)
+    canonical_parts = assignment["base_au_id"].astype(str).str.split("_", expand=True)
     if canonical_parts.shape[1] != 5:
         raise ValueError("MKRF AU aggregation produced non-canonical AU identifiers.")
     assignment = assignment.copy()
-    assignment[["au_bec_zone", "au_bec_subzone", "au_bec_variant", "au_species_1", "au_species_2"]] = (
-        canonical_parts
-    )
+    assignment[
+        [
+            "au_bec_zone",
+            "au_bec_subzone",
+            "au_bec_variant",
+            "au_species_1",
+            "au_species_2",
+        ]
+    ] = canonical_parts
     au_table = (
         assignment.groupby(
             [
@@ -206,6 +280,23 @@ def build_mkrf_au_tables(
         .agg(
             stand_count=("res_key", "count"),
             tie_break_record_count=("tie_break_used", "sum"),
+            site_series_id=(
+                "site_series_id",
+                lambda values: "; ".join(
+                    sorted(
+                        {str(value).strip() for value in values if str(value).strip()}
+                    )
+                ),
+            ),
+            site_series_label=(
+                "site_series_label",
+                lambda values: "; ".join(
+                    sorted(
+                        {str(value).strip() for value in values if str(value).strip()}
+                    )
+                ),
+            ),
+            site_series_split_applied=("site_series_split_applied", "max"),
         )
         .sort_values("au_id", kind="stable")
         .rename(
@@ -222,6 +313,117 @@ def build_mkrf_au_tables(
     au_table["tie_break_record_count"] = au_table["tie_break_record_count"].astype(int)
     au_table["stand_count"] = au_table["stand_count"].astype(int)
     return au_table.reset_index(drop=True), assignment
+
+
+def build_mkrf_site_series_split_audit(assignment: pd.DataFrame) -> pd.DataFrame:
+    """Summarize provisional MKRF base-stratum site-series split membership."""
+    required = {
+        "base_au_id",
+        "au_id",
+        "site_series_id",
+        "site_series_label",
+        "site_series_split_applied",
+        "site_series_split_threshold",
+        "base_au_area_share_for_split",
+        "shape_area_ha",
+        "res_key",
+        "forest_cover_id",
+    }
+    missing = sorted(required - set(assignment.columns))
+    if missing:
+        raise ValueError(
+            "MKRF assignment table missing site-series split audit columns: "
+            + ", ".join(missing)
+        )
+
+    audit = (
+        assignment.assign(
+            shape_area_ha=lambda df: pd.to_numeric(
+                df["shape_area_ha"], errors="coerce"
+            ).fillna(0.0),
+            forest_cover_id=lambda df: pd.to_numeric(
+                df["forest_cover_id"], errors="coerce"
+            ),
+        )
+        .groupby(
+            [
+                "base_au_id",
+                "au_id",
+                "site_series_id",
+                "site_series_label",
+                "site_series_split_applied",
+                "site_series_split_threshold",
+                "base_au_area_share_for_split",
+            ],
+            as_index=False,
+            dropna=False,
+        )
+        .agg(
+            source_fragment_count=("res_key", "count"),
+            forest_cover_id_count=("forest_cover_id", "nunique"),
+            covered_area_ha=("shape_area_ha", "sum"),
+        )
+    )
+    total_area = float(audit["covered_area_ha"].sum())
+    audit["covered_area_share"] = (
+        audit["covered_area_ha"] / total_area if total_area > 0.0 else 0.0
+    )
+    audit["base_au_area_ha"] = audit.groupby("base_au_id")["covered_area_ha"].transform(
+        "sum"
+    )
+    audit["base_au_area_share"] = (
+        audit["base_au_area_ha"] / total_area if total_area > 0.0 else 0.0
+    )
+    audit["site_series_share_of_base_au"] = np.where(
+        audit["base_au_area_ha"].gt(0.0),
+        audit["covered_area_ha"] / audit["base_au_area_ha"],
+        0.0,
+    )
+    base_rank = (
+        audit[["base_au_id", "base_au_area_ha"]]
+        .drop_duplicates()
+        .sort_values(
+            ["base_au_area_ha", "base_au_id"], ascending=[False, True], kind="stable"
+        )
+        .reset_index(drop=True)
+    )
+    base_rank["base_au_rank"] = range(1, len(base_rank) + 1)
+    base_rank["base_au_cumulative_area_share"] = (
+        base_rank["base_au_area_ha"].cumsum() / total_area if total_area > 0.0 else 0.0
+    )
+    audit = audit.merge(
+        base_rank[["base_au_id", "base_au_rank", "base_au_cumulative_area_share"]],
+        on="base_au_id",
+        how="left",
+    )
+    return (
+        audit[
+            [
+                "base_au_rank",
+                "base_au_id",
+                "au_id",
+                "site_series_id",
+                "site_series_label",
+                "site_series_split_applied",
+                "site_series_split_threshold",
+                "base_au_area_share_for_split",
+                "source_fragment_count",
+                "forest_cover_id_count",
+                "covered_area_ha",
+                "covered_area_share",
+                "base_au_area_ha",
+                "base_au_area_share",
+                "base_au_cumulative_area_share",
+                "site_series_share_of_base_au",
+            ]
+        ]
+        .sort_values(
+            ["base_au_rank", "site_series_share_of_base_au", "site_series_id"],
+            ascending=[True, False, True],
+            kind="stable",
+        )
+        .reset_index(drop=True)
+    )
 
 
 def build_mkrf_au_aggregation_audit(assignment: pd.DataFrame) -> pd.DataFrame:

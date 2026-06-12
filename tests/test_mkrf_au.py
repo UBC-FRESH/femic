@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import pandas as pd
+import pytest
 
 from pathlib import Path
 
 from femic.pipeline.mkrf_au import (
     build_mkrf_au_aggregation_audit,
     build_mkrf_au_tables,
+    build_mkrf_site_series_split_audit,
     build_mkrf_selected_au_table,
+    normalize_mkrf_site_series,
     ordered_top_two_species,
     parse_mkrf_bec,
 )
@@ -18,6 +21,13 @@ def test_parse_mkrf_bec_splits_zone_subzone_variant() -> None:
     assert parse_mkrf_bec("CWHvm2") == ("cwh", "vm", "2")
     assert parse_mkrf_bec("CWHdm") == ("cwh", "dm", "x")
     assert parse_mkrf_bec(None) == ("x", "x", "x")
+
+
+def test_normalize_mkrf_site_series_extracts_stable_suffix() -> None:
+    assert normalize_mkrf_site_series("Cw - Swordfern (05)") == "ss05"
+    assert normalize_mkrf_site_series("BaCw - Foamflower (05)") == "ss05"
+    assert normalize_mkrf_site_series("Non-forested: aquatic") == "ssnonforestedaquatic"
+    assert normalize_mkrf_site_series(None) == "ssx"
 
 
 def test_ordered_top_two_species_uses_lexical_tie_break() -> None:
@@ -77,6 +87,74 @@ def test_build_mkrf_au_tables_filters_non_forest_and_groups_assignments() -> Non
     assert list(au_table["stand_count"]) == [2]
 
 
+def test_build_mkrf_au_tables_splits_large_strata_by_site_series() -> None:
+    source = pd.DataFrame(
+        [
+            {
+                "RES_KEY": 1,
+                "FOREST_COVER_ID": 101,
+                "BEC": "CWHvm1",
+                "CONTCLAS": "C",
+                "Shape_Area": 60000.0,
+                "SITE_SERIES": "Cw - Swordfern (05)",
+                "TCL_1_TSP_1_TREE_SPECIES_CODE": "CW",
+                "TCL_1_TSP_1_SPECIES_PCT": 60,
+                "TCL_1_TSP_2_TREE_SPECIES_CODE": "HW",
+                "TCL_1_TSP_2_SPECIES_PCT": 40,
+            },
+            {
+                "RES_KEY": 2,
+                "FOREST_COVER_ID": 102,
+                "BEC": "CWHvm1",
+                "CONTCLAS": "C",
+                "Shape_Area": 40000.0,
+                "SITE_SERIES": "BaCw - Foamflower (06)",
+                "TCL_1_TSP_1_TREE_SPECIES_CODE": "CW",
+                "TCL_1_TSP_1_SPECIES_PCT": 55,
+                "TCL_1_TSP_2_TREE_SPECIES_CODE": "HW",
+                "TCL_1_TSP_2_SPECIES_PCT": 45,
+            },
+            {
+                "RES_KEY": 3,
+                "FOREST_COVER_ID": 103,
+                "BEC": "CWHdm",
+                "CONTCLAS": "C",
+                "Shape_Area": 3000.0,
+                "SITE_SERIES": "Cw - Swordfern (05)",
+                "TCL_1_TSP_1_TREE_SPECIES_CODE": "DR",
+                "TCL_1_TSP_1_SPECIES_PCT": 70,
+                "TCL_1_TSP_2_TREE_SPECIES_CODE": "CW",
+                "TCL_1_TSP_2_SPECIES_PCT": 30,
+            },
+        ]
+    )
+
+    au_table, assignment = build_mkrf_au_tables(source)
+    audit = build_mkrf_site_series_split_audit(assignment)
+
+    assert set(assignment["au_id"]) == {
+        "cwh_vm_1_cw_hw_ss05",
+        "cwh_vm_1_cw_hw_ss06",
+        "cwh_dm_x_dr_cw",
+    }
+    assert assignment.loc[
+        assignment["res_key"].isin([1, 2]), "site_series_split_applied"
+    ].all()
+    assert not bool(
+        assignment.loc[assignment["res_key"].eq(3), "site_series_split_applied"].iloc[0]
+    )
+    split_aus = au_table.loc[
+        au_table["au_id"].str.startswith("cwh_vm_1_cw_hw")
+    ].sort_values("au_id")
+    assert split_aus["site_series_id"].tolist() == ["ss05", "ss06"]
+    assert split_aus["stand_count"].tolist() == [1, 1]
+
+    base_rows = audit.loc[audit["base_au_id"].eq("cwh_vm_1_cw_hw")]
+    assert base_rows["site_series_split_applied"].all()
+    assert base_rows["base_au_area_share"].iloc[0] == pytest.approx(100000.0 / 103000.0)
+    assert set(base_rows["site_series_share_of_base_au"]) == {0.6, 0.4}
+
+
 def test_build_mkrf_au_tables_applies_minor_strata_aggregation_auditably() -> None:
     source = pd.DataFrame(
         [
@@ -125,8 +203,14 @@ def test_build_mkrf_au_tables_applies_minor_strata_aggregation_auditably() -> No
     assert assignment.loc[assignment["res_key"].eq(21), "au_id"].iloc[0] == (
         "cwh_vm_2_hw_ba"
     )
-    assert assignment.loc[assignment["res_key"].eq(21), "leading_species_1"].iloc[0] == "ba"
-    assert assignment.loc[assignment["res_key"].eq(21), "leading_species_1_share"].iloc[0] == 55
+    assert (
+        assignment.loc[assignment["res_key"].eq(21), "leading_species_1"].iloc[0]
+        == "ba"
+    )
+    assert (
+        assignment.loc[assignment["res_key"].eq(21), "leading_species_1_share"].iloc[0]
+        == 55
+    )
 
     assert au_table["au_id"].tolist() == ["cwh_dm_x_dr_cw", "cwh_vm_2_hw_ba"]
     merged = au_table.loc[au_table["au_id"].eq("cwh_vm_2_hw_ba")].iloc[0]

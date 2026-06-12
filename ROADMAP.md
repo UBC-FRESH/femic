@@ -1990,10 +1990,17 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P73.2c Regenerate AU inputs, selected AU table, managed inputs, managed curves, runtime package, Matrix Builder tracks, and the default `mkrf.base` smoke.
   - [x] P73.2d Fix runtime first-growth summary counts so manifests/XML report the selected runtime AU surface after aggregation.
   - [x] P73.2e Update MKRF docs/runbook surfaces for the AU aggregation audit and validation lane.
-- [ ] P73.3 Publish the aggregation branch bundle and close child issue `UBC-FRESH/femic-mkrf-instance#26`
-  - [ ] P73.3a Commit and push the instance and parent branches with the regenerated runtime artifacts and submodule pointer update.
-  - [ ] P73.3b Post QA commands, run IDs, and audit summary back to `#26`.
-  - [ ] P73.3c Open the instance and parent PRs for review.
+- [x] P73.3 Publish the aggregation branch bundle and close child issue `UBC-FRESH/femic-mkrf-instance#26`
+  - [x] P73.3a Commit and push the instance and parent branches with the regenerated runtime artifacts and submodule pointer update.
+  - [x] P73.3b Post QA commands, run IDs, and audit summary back to `#26`.
+  - [x] P73.3c Open and merge the instance and parent PRs for review.
+- [ ] P73.4 Implement provisional site-series splitting for larger MKRF strata (`UBC-FRESH/femic-mkrf-instance#27`)
+  - [x] P73.4a Add `SITE_SERIES` normalization and split canonical base AUs whose two-decimal relative abundance is at least `0.04`, preserving smaller AUs unsplit.
+  - [x] P73.4b Add `site_series_split_audit.csv` and carry site-series metadata through `stand_au_assignment.csv`, `au_table.csv`, and `selected_au_table.csv`.
+  - [x] P73.4c Confirm the intended top 9 base AU families are split through `cwh_dm_x_cw_hw`; current split families cover `0.708450` of all assigned area, or about `0.746` relative to the 95% selected-AU coverage target.
+  - [x] P73.4d Regenerate AU inputs, selected AU table, managed inputs, managed curves, runtime package, Matrix Builder tracks, and Patchworks smoke/sanity outputs for the site-series branch.
+  - [x] P73.4e Update MKRF docs and lineage metadata for the site-series audit and provisional split rule.
+  - [ ] P73.4f Publish the issue #27 branch bundle, post QA commands/results to `#27`, and open the instance/parent PRs.
 
 ### Detailed Next Steps Notes
 
@@ -2022,4 +2029,5 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P72.2d` complete: release closeout is recorded in the parent planning surfaces and governing TSA29 release issue `#8`
   - `P72` complete
   - `P73.1` complete
-  - `P73.2` complete locally for `UBC-FRESH/femic-mkrf-instance#26`; publication and issue closeout remain next
+  - `P73.3` complete: issue `UBC-FRESH/femic-mkrf-instance#26` is merged and closed
+  - `P73.4` complete locally for `UBC-FRESH/femic-mkrf-instance#27`; publication and issue closeout remain next
