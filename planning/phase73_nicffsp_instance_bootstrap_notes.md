@@ -68,8 +68,14 @@ identifies three proposed FDUs/LUs: Holberg, Keogh, and Marble. The additional
 2024 amendment spatial names Nahwitti, Shushartie, and Tsulquate do not appear
 in the extracted 2020 FSP text.
 
-Next bounded move: continue `P1.2` / `#1` by resolving the source-version
-decision before accepting a runtime AOI/LU convention: follow the 2020 FSP
-three-FDU scope, the 2024 amendment six-FDU spatial payload, or a documented
-subset/dissolve. Do not start `P1.3` or `P1.4` implementation until the accepted
-source paths are recorded.
+Completed bounded move: `P1.2` accepted the 2024 amendment `NICF_FDU_2024`
+layer as the bootstrap AOI source because the project request identifies the
+amendment spatial payload as the new AOI. The six FDU/LU features are preserved
+as canonical source geometry semantics, while a dissolved whole-AOI polygon is
+treated as a generated runtime helper only.
+
+Next bounded move: continue `P1.2` / `#1` by extracting the accepted
+`NICF_FDU_2024` shapefile family into a stable lowercase tracked source path,
+then decide whether the full 27-feature BCGW LU layer is also canonical
+reference context. Do not start `P1.3` or `P1.4` implementation until the
+accepted source paths are recorded.

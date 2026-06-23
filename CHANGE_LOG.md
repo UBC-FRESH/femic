@@ -17765,3 +17765,10 @@
   amendment spatial payload but not the extracted 2020 FSP text; and
 - advanced the parent submodule pointer to the instance commit carrying the
   source-version decision evidence.
+## 2026-06-23 - Accepted the 2024 amendment layer as the NICF bootstrap AOI
+- recorded `NICF_FDU_2024.shp` as the accepted bootstrap AOI source in the
+  instance source inventory;
+- preserved all six FDU/LU features as canonical source geometry semantics;
+- kept the 2020 FSP three-FDU evidence as historical/context evidence; and
+- advanced the parent submodule pointer to the instance commit carrying the AOI
+  convention decision.
