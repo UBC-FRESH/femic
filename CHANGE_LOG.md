@@ -17742,3 +17742,11 @@
   linked child issue; and
 - advanced the parent submodule pointer to the instance commit carrying that
   contract.
+## 2026-06-23 - Recorded the NICF FSP amendment spatial inventory
+- inspected `external/femic-nicffsp-instance/data/source/nicf_fsp/nicf_fsp_amendment_3_spatial.zip`
+  for `P1.2a`;
+- recorded the single `NICF_FDU_2024` shapefile family, six EPSG:3005 polygon
+  features, feature labels, and measured areas in the instance source
+  inventory; and
+- advanced the parent submodule pointer to the instance commit carrying that
+  source-inventory evidence.

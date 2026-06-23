@@ -50,7 +50,13 @@ and recorded in stable paths.
 
 ## Current Edge
 
-Next bounded move: work `P1.2` / `#1` by inspecting
-`nicf_fsp_amendment_3_spatial.zip`, recording its layer inventory, and
-identifying the authoritative AOI boundary candidate. Do not start `P1.3` or
-`P1.4` implementation until the accepted source paths are recorded.
+Completed bounded move: `P1.2a` inspected
+`nicf_fsp_amendment_3_spatial.zip` and recorded the layer inventory in the
+instance source inventory. The zip contains one `NICF_FDU_2024` shapefile family
+with six valid EPSG:3005 polygon features labeled as FDU/LU records and a
+measured total area of about `204162.510 ha`.
+
+Next bounded move: continue `P1.2` / `#1` by cross-checking `NICF_FDU_2024`
+against the FSP document and separate LU boundary zip before accepting a runtime
+AOI convention. Do not start `P1.3` or `P1.4` implementation until the accepted
+source paths are recorded.
