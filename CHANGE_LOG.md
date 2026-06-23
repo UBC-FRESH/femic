@@ -17799,3 +17799,13 @@
 - recorded that the full 27-feature BCGW LU zip remains raw provenance; and
 - advanced the parent submodule pointer to the instance commit carrying the
   completed `P1.2d` source-layer decision.
+
+## 2026-06-23 - Completed NICF P1.2 source-path wiring
+- updated the NICF instance run profile so `selection.boundary_path` points to
+  the accepted AOI source
+  `external/femic-nicffsp-instance/data/source/nicf_fsp/aoi/nicf_fsp_aoi.shp`;
+- recorded the LU reference source path in the run profile at
+  `selection.source_context.lu_reference_path`;
+- marked `P1.2` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  run-profile source-path wiring.

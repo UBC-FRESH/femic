@@ -92,7 +92,12 @@ canonical LU reference source is
 valid EPSG:3005 polygon features for Holberg, Keogh, and Marble totaling
 `165588.857 ha`.
 
-Next bounded move: continue `P1.2` / `#1` by updating
-`config/run_profile.nicffsp.yaml` with the accepted AOI and LU reference source
-paths. Do not start `P1.3` or `P1.4` implementation until that source-path
-wiring is recorded.
+Completed bounded move: `P1.2` wired `config/run_profile.nicffsp.yaml` to the
+accepted source paths. `selection.boundary_path` now points to
+`data/source/nicf_fsp/aoi/nicf_fsp_aoi.shp`, and
+`selection.source_context.lu_reference_path` records
+`data/source/nicf_fsp/lu_reference/nicf_lu_reference.shp`.
+
+Next bounded move: start `P1.3` / `#3` by comparing the K3Z config,
+model-input bundle, docs, and Patchworks package structure against the accepted
+NICF FSP source boundary.
