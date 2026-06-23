@@ -74,8 +74,12 @@ amendment spatial payload as the new AOI. The six FDU/LU features are preserved
 as canonical source geometry semantics, while a dissolved whole-AOI polygon is
 treated as a generated runtime helper only.
 
-Next bounded move: continue `P1.2` / `#1` by extracting the accepted
-`NICF_FDU_2024` shapefile family into a stable lowercase tracked source path,
-then decide whether the full 27-feature BCGW LU layer is also canonical
-reference context. Do not start `P1.3` or `P1.4` implementation until the
-accepted source paths are recorded.
+Completed bounded move: `P1.2` extracted the accepted `NICF_FDU_2024` shapefile
+family into the lowercase tracked source path
+`data/source/nicf_fsp/aoi/nicf_fdu_2024.*` and verified it reads as six valid
+EPSG:3005 polygon features with the expected bounds and area.
+
+Next bounded move: continue `P1.2` / `#1` by deciding whether the full
+27-feature BCGW LU layer is also canonical reference context. Runtime config
+wiring should wait until that source-path decision is recorded. Do not start
+`P1.3` or `P1.4` implementation until the accepted source paths are recorded.

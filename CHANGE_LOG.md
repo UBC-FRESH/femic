@@ -17772,3 +17772,10 @@
 - kept the 2020 FSP three-FDU evidence as historical/context evidence; and
 - advanced the parent submodule pointer to the instance commit carrying the AOI
   convention decision.
+## 2026-06-23 - Extracted the NICF canonical AOI source layer
+- extracted the accepted `NICF_FDU_2024` shapefile family into
+  `external/femic-nicffsp-instance/data/source/nicf_fsp/aoi/nicf_fdu_2024.*`;
+- verified the extracted layer reads as six valid EPSG:3005 polygon features
+  with the expected bounds and measured area; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  extracted canonical AOI source.
