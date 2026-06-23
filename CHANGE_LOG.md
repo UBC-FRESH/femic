@@ -17809,3 +17809,13 @@
 - marked `P1.2` complete in the instance roadmap; and
 - advanced the parent submodule pointer to the instance commit carrying the
   run-profile source-path wiring.
+
+## 2026-06-23 - Recorded NICF P1.3a K3Z template comparison
+- added the K3Z-to-NICF comparison to
+  `external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`;
+- recorded that K3Z structure can carry forward, but generated bundle tables,
+  Patchworks tracks, treatment variants, TIPSY rules, and runtime paths are not
+  accepted NICF semantics;
+- marked `P1.3a` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  comparison note.

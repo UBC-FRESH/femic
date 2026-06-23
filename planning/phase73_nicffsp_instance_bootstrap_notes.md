@@ -101,3 +101,17 @@ accepted source paths. `selection.boundary_path` now points to
 Next bounded move: start `P1.3` / `#3` by comparing the K3Z config,
 model-input bundle, docs, and Patchworks package structure against the accepted
 NICF FSP source boundary.
+
+Completed bounded move: `P1.3a` compared the K3Z template surfaces against the
+NICF scaffold and recorded the findings in
+`external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`. K3Z can
+carry forward repository shape, rebuild-spec discipline, model-input bundle
+contract, and Patchworks package layout, but its generated bundle tables,
+Patchworks tracks, treatment variants, TIPSY rules, and runtime paths are not
+accepted NICF semantics. NICF still lacks a model-input bundle and Patchworks
+package, and `config/patchworks.runtime.windows.yaml` remains a K3Z-shaped
+placeholder until the P1.4 runtime-package lane.
+
+Next bounded move: continue `P1.3` / `#3` by defining the first NICF
+run-profile boundary beyond source paths, especially stratification, VDYP
+sampling/rebinning, and managed-curve defaults.
