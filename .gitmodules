@@ -14,3 +14,7 @@
 	path = external/femic-mkrf-instance
 	url = https://github.com/UBC-FRESH/femic-mkrf-instance.git
 	branch = main
+[submodule "external/femic-nicffsp-instance"]
+	path = external/femic-nicffsp-instance
+	url = https://github.com/UBC-FRESH/femic-nicffsp-instance.git
+	branch = main

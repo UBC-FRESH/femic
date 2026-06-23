@@ -17710,3 +17710,13 @@
   run, successful launch, accepted `test01` scenario evidence, and completed
   cold-clone publication proof; and
 - advanced the parent release lane to final governing-issue closeout.
+## 2026-06-23 - Bootstrapped the NICF FSP FRST 558 instance lane
+- opened parent coordination issue `UBC-FRESH/femic#199`;
+- created and pushed `UBC-FRESH/femic-nicffsp-instance` with FEMIC instance
+  scaffolding and modelwright-style workflow surfaces;
+- linked the new repo under `external/femic-nicffsp-instance` as a parent FEMIC
+  submodule;
+- tracked the initial NICF FSP AOI, LU, and FSP source payloads under lowercase
+  instance paths with hashes and provenance notes; and
+- opened `UBC-FRESH/femic-nicffsp-instance#1` for the next source-normalization
+  and K3Z-template build-boundary task.

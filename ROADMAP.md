@@ -1974,9 +1974,28 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P72.2c Create the `v1.0.0-alpha1` tag and GitHub pre-release in `UBC-FRESH/femic-tsa29-instance`.
   - [x] P72.2d Record the release in the parent changelog/planning surfaces and publish the matching closeout comments.
 
+## Phase 73: Bootstrap the NICF FSP FRST 558 Teaching Instance
+
+- [x] P73.1 Create and link the standalone NICF FSP instance repository (`#199`)
+  - [x] P73.1a Create `UBC-FRESH/femic-nicffsp-instance` as the standalone
+    teaching-instance repository.
+  - [x] P73.1b Add it under `external/femic-nicffsp-instance` as a FEMIC
+    submodule tracking `main`.
+  - [x] P73.1c Seed the repository with FEMIC instance scaffolding and the
+    modelwright-style workflow surfaces (`AGENTS.md`, `ROADMAP.md`,
+    `CHANGE_LOG.md`, and `planning/`).
+- [ ] P73.2 Record the FRST 558 source inventory and first build-plan boundary (`#199`)
+  - [x] P73.2a Inventory the uploaded NICF FSP AOI, LU, and FSP source payloads
+    without publishing machine-specific paths.
+  - [x] P73.2b Define the K3Z-template adaptation boundary for the scaled-up
+    Patchworks teaching model.
+  - [ ] P73.2c Split cedar-signal design and K3Z expansion candidate-area design
+    into explicit follow-on work items before model compilation starts.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase73_nicffsp_instance_bootstrap_notes.md`
   - `planning/phase71_tsa29_patchworks_rebuild_notes.md`
   - `planning/phase72_tsa29_release_notes.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
@@ -2000,3 +2019,11 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P72.2c` complete: `UBC-FRESH/femic-tsa29-instance` pre-release `v1.0.0-alpha1` is published from merged `main` commit `45af95c`
   - `P72.2d` complete: release closeout is recorded in the parent planning surfaces and governing TSA29 release issue `#8`
   - `P72` complete
+  - `P73.1` complete under `#199`: `UBC-FRESH/femic-nicffsp-instance` exists
+    and is linked under `external/femic-nicffsp-instance`.
+  - `P73.2a-b` complete: initial source inventory and K3Z-template adaptation
+    boundary are recorded in the instance repo and
+    `planning/phase73_nicffsp_instance_bootstrap_notes.md`.
+  - `P73.2c` remains the active edge: split cedar-signal design, K3Z expansion
+    candidate-area design, and Patchworks runtime-package work into follow-on
+    instance issues before model compilation starts.
