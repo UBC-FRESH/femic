@@ -17757,3 +17757,11 @@
   features, LU names, measured areas, and overlap with `NICF_FDU_2024`; and
 - advanced the parent submodule pointer to the instance commit carrying the LU
   inventory while leaving the relevant-LU decision open for FSP PDF cross-check.
+## 2026-06-23 - Recorded the NICF FSP PDF cross-check
+- extracted text from `external/femic-nicffsp-instance/data/source/nicf_fsp/nicf_forest_stewardship_plan_2020.pdf`;
+- confirmed the 2020 FSP names Holberg, Keogh, and Marble as the three proposed
+  FDUs/LUs;
+- recorded that Nahwitti, Shushartie, and Tsulquate appear in the 2024
+  amendment spatial payload but not the extracted 2020 FSP text; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  source-version decision evidence.

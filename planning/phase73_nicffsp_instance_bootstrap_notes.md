@@ -63,7 +63,13 @@ features. The six `NICF_FDU_2024` features overlap matching full BCGW LUs named
 Holberg, Keogh, Marble, Nahwitti, Shushartie, and Tsulquate, but each FDU
 candidate is smaller than the full LU.
 
-Next bounded move: continue `P1.2` / `#1` by cross-checking the FSP PDF against
-the six FDU/LU overlaps and resolving the initial three-LU expectation before
-accepting a runtime AOI/LU convention. Do not start `P1.3` or `P1.4`
-implementation until the accepted source paths are recorded.
+Completed bounded move: `P1.2` cross-checked the 2020 FSP PDF. The PDF
+identifies three proposed FDUs/LUs: Holberg, Keogh, and Marble. The additional
+2024 amendment spatial names Nahwitti, Shushartie, and Tsulquate do not appear
+in the extracted 2020 FSP text.
+
+Next bounded move: continue `P1.2` / `#1` by resolving the source-version
+decision before accepting a runtime AOI/LU convention: follow the 2020 FSP
+three-FDU scope, the 2024 amendment six-FDU spatial payload, or a documented
+subset/dissolve. Do not start `P1.3` or `P1.4` implementation until the accepted
+source paths are recorded.
