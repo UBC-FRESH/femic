@@ -17779,3 +17779,14 @@
   with the expected bounds and measured area; and
 - advanced the parent submodule pointer to the instance commit carrying the
   extracted canonical AOI source.
+
+## 2026-06-23 - Corrected the NICF FSP AOI to FDU 1-3 only
+- corrected the NICF source inventory after project clarification that the FSP
+  AOI is the provided amendment spatial boundary filtered to FDU 1 Holberg,
+  FDU 2 Keogh, and FDU 3 Marble;
+- replaced the instance canonical AOI extraction with
+  `external/femic-nicffsp-instance/data/source/nicf_fsp/aoi/nicf_fsp_aoi.*`;
+- verified the corrected AOI reads as three valid EPSG:3005 polygon features
+  totaling `147798.392 ha`; and
+- left the six-feature amendment zip as raw source provenance rather than the
+  runtime AOI boundary.

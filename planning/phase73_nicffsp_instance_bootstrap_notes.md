@@ -79,6 +79,12 @@ family into the lowercase tracked source path
 `data/source/nicf_fsp/aoi/nicf_fdu_2024.*` and verified it reads as six valid
 EPSG:3005 polygon features with the expected bounds and area.
 
+Correction: the canonical FSP AOI is the provided amendment spatial boundary
+filtered to FDU 1 Holberg, FDU 2 Keogh, and FDU 3 Marble only. The six-feature
+amendment shapefile remains raw provenance, but the tracked canonical AOI source
+is now `data/source/nicf_fsp/aoi/nicf_fsp_aoi.*`, verified as three valid
+EPSG:3005 polygon features totaling `147798.392 ha`.
+
 Next bounded move: continue `P1.2` / `#1` by deciding whether the full
 27-feature BCGW LU layer is also canonical reference context. Runtime config
 wiring should wait until that source-path decision is recorded. Do not start
