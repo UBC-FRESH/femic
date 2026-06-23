@@ -17863,3 +17863,12 @@
 - marked `P1.5a` complete in the instance roadmap; and
 - advanced the parent submodule pointer to the instance commit carrying the
   metadata snapshot.
+
+## 2026-06-23 - Materialized NICF 2025 VRI source archives
+- downloaded and annex-added the 2025 R1 and VDYP7 polygon/layer source
+  archives under `external/femic-public-data/data/bc/vri/2025/`;
+- verified both zip archives with CRC checks before accepting the local
+  materialization;
+- pushed public-data commit `348d9b60529e3a0160672048fc33e4083f2128fb`; and
+- marked `P1.5b` complete in the instance roadmap while leaving read-smoke,
+  CRS, and public-remote publication evidence open.

@@ -175,3 +175,15 @@ open for the materialization step.
 Next bounded move: continue `P1.5` / `#5` by materializing the two 2025 source
 archives under the accepted `external/femic-public-data/data/bc/vri/2025/`
 convention and recording checksum/read-smoke evidence.
+
+Completed bounded move: `P1.5b` materialized the two 2025 VRI source archives
+under `external/femic-public-data/data/bc/vri/2025/`. The R1 archive is
+`4168172794` bytes and the VDYP7 polygon/layer archive is `403304406` bytes.
+Both zip archives passed CRC validation. The public-data commit carrying the
+annex pointer files is `348d9b60529e3a0160672048fc33e4083f2128fb`; current
+`git annex whereis` reports one local copy for each archive. Arbutus/public
+remote publication and full geodatabase read-smoke evidence remain open.
+
+Next bounded move: continue `P1.5` / `#5` by running read smoke on the
+materialized 2025 geodatabases and recording layer names, feature-count
+evidence, CRS, and the extraction/runtime path decision.
