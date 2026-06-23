@@ -211,6 +211,16 @@ and `external/femic-nicffsp-instance/planning/tfl6_thlb_recipe_extraction.md`.
 Pivot hygiene update: reconciled the instance README, quickstart,
 `config/run_profile.nicffsp.yaml` comments, `planning/source_inventory.md`, and
 `planning/k3z_template_adaptation.md` so TFL 6 is consistently described as the
-active target AOI. The run profile deliberately still points at the existing
-FDU 1/2/3 bootstrap boundary because `P1.6a` has not yet materialized
-`data/source/tfl_6/aoi/tfl_6_boundary.gpkg`.
+active target AOI. At that checkpoint, the run profile deliberately still
+pointed at the existing FDU 1/2/3 bootstrap boundary until `P1.6a` could
+materialize `data/source/tfl_6/aoi/tfl_6_boundary.gpkg`.
+
+Completed bounded move: `P1.6a` materialized the active TFL 6 boundary at
+`external/femic-nicffsp-instance/data/source/tfl_6/aoi/tfl_6_boundary.gpkg`,
+layer `tfl_6_boundary`. The boundary was fetched from
+`WHSE_ADMIN_BOUNDARIES.FADM_TFL` with `FOREST_FILE_ID='TFL6'`, normalized to
+lowercase fields, and verified as 182 EPSG:3005 features with `217042.719 ha`
+union area and matching exploratory bounds. One source ring self-intersection
+was repaired with no rounded union-area change. The instance run profile now
+points to the TFL 6 boundary. Next bounded move is `P1.6b`: clip the 2025 VRI
+R1 polygon source to this boundary and record geometry QA.

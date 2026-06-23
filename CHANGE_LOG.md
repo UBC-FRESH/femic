@@ -17899,3 +17899,14 @@
   boundary until `P1.6a` materializes the TFL 6 boundary artifact; and
 - advanced the parent submodule pointer to the instance commit carrying the
   pivot-hygiene cleanup.
+
+## 2026-06-23 - Materialized NICF TFL 6 boundary
+- fetched and normalized `WHSE_ADMIN_BOUNDARIES.FADM_TFL` where
+  `FOREST_FILE_ID='TFL6'`;
+- added
+  `external/femic-nicffsp-instance/data/source/tfl_6/aoi/tfl_6_boundary.gpkg`;
+- verified 182 EPSG:3005 features, `217042.719 ha` union area, matching
+  bounds, and valid geometries after repairing one source ring
+  self-intersection; and
+- switched the instance run profile to the TFL 6 boundary and advanced the
+  parent submodule pointer.
