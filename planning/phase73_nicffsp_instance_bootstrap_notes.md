@@ -115,3 +115,15 @@ placeholder until the P1.4 runtime-package lane.
 Next bounded move: continue `P1.3` / `#3` by defining the first NICF
 run-profile boundary beyond source paths, especially stratification, VDYP
 sampling/rebinning, and managed-curve defaults.
+
+Completed bounded move: `P1.3b` defined the first NICF run-profile boundary in
+`external/femic-nicffsp-instance/config/run_profile.nicffsp.yaml`. The profile
+now uses subzone BEC grouping, two-species combinations, TM second-species
+fallback, `0.90` area coverage, clean first-compile mode (`resume: false`),
+complete VDYP sampling, two-pass rebinning, `10` minimum stands per SI bin, and
+`managed_curve_mode: tipsy`. The decision is recorded in
+`external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`.
+
+Next bounded move: continue `P1.3` / `#3` by separating K3Z assumptions into
+carry-forward versus FRST 558 review-required lists before any model-input
+bundle generation starts.

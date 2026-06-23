@@ -17819,3 +17819,12 @@
 - marked `P1.3a` complete in the instance roadmap; and
 - advanced the parent submodule pointer to the instance commit carrying the
   comparison note.
+
+## 2026-06-23 - Recorded NICF P1.3b run-profile boundary
+- updated the NICF instance run profile with the first accepted stratification,
+  VDYP, and managed-curve defaults beyond source paths;
+- recorded the P1.3b boundary in
+  `external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`;
+- marked `P1.3b` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  run-profile boundary decision.
