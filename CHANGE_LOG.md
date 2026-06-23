@@ -17836,3 +17836,11 @@
 - marked `P1.3c` complete in the instance roadmap; and
 - advanced the parent submodule pointer to the instance commit carrying the
   assumption split.
+
+## 2026-06-23 - Recorded NICF P1.3 adaptation-boundary acceptance
+- recorded the minimum source-derived model-input surfaces and P1.4 handoff
+  terms in
+  `external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`;
+- marked `P1.3` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  accepted adaptation boundary.

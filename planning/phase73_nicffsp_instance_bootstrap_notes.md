@@ -140,3 +140,15 @@ review before implementation.
 Next bounded move: continue `P1.3` / `#3` by identifying the minimum
 source-derived model-input surfaces needed before P1.4 runtime-package issue
 bodies can be finalized.
+
+Completed bounded move: `P1.3` accepted the first K3Z-to-NICF adaptation
+boundary. `external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`
+now records the minimum source-derived model-input surfaces needed before
+Patchworks runtime-package work: accepted AOI, LU/FDU context, AOI-clipped
+inventory checkpoint, AU diagnostics, bundle tables, managed/natural curve
+evidence, managed/unmanaged and origin fields, and baseline acceptance summary.
+It also records P1.4 handoff terms for cedar-signal, expansion-candidate, and
+runtime-package issue bodies.
+
+Next bounded move: start `P1.4` / `#2` by opening the cedar-signal design
+follow-on issue with the accepted source-boundary and minimum-model-input terms.
