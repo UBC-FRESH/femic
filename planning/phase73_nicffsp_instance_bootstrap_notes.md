@@ -207,3 +207,10 @@ management-plan/information-package review for FEMIC-style source-layer and
 THLB netdown recipe planning. Detailed notes live in
 `external/femic-nicffsp-instance/planning/tfl6_aoi_pivot_and_input_layers.md`
 and `external/femic-nicffsp-instance/planning/tfl6_thlb_recipe_extraction.md`.
+
+Pivot hygiene update: reconciled the instance README, quickstart,
+`config/run_profile.nicffsp.yaml` comments, `planning/source_inventory.md`, and
+`planning/k3z_template_adaptation.md` so TFL 6 is consistently described as the
+active target AOI. The run profile deliberately still points at the existing
+FDU 1/2/3 bootstrap boundary because `P1.6a` has not yet materialized
+`data/source/tfl_6/aoi/tfl_6_boundary.gpkg`.

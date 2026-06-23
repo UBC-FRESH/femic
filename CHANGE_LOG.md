@@ -17891,3 +17891,11 @@
 - updated the parent coordination notes and instance roadmap so the original
   FDU 1/2/3 boundary is retained as provenance but superseded as the active
   model extraction AOI.
+
+## 2026-06-23 - Reconciled NICF pre-pivot AOI planning surfaces
+- updated the instance README, quickstart, run-profile comments, and older
+  planning notes so TFL 6 is consistently the active target AOI;
+- kept `config/run_profile.nicffsp.yaml` pointed at the existing FDU bootstrap
+  boundary until `P1.6a` materializes the TFL 6 boundary artifact; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  pivot-hygiene cleanup.
