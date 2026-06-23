@@ -17750,3 +17750,10 @@
   inventory; and
 - advanced the parent submodule pointer to the instance commit carrying that
   source-inventory evidence.
+## 2026-06-23 - Recorded the NICF BCGW landscape-unit inventory
+- inspected `external/femic-nicffsp-instance/data/source/nicf_fsp/bcgw_lu_clip_2026_06.zip`
+  for `P1.2`;
+- recorded the `RMP_LU_SVW_polygon` shapefile family, 27 EPSG:3005 polygon
+  features, LU names, measured areas, and overlap with `NICF_FDU_2024`; and
+- advanced the parent submodule pointer to the instance commit carrying the LU
+  inventory while leaving the relevant-LU decision open for FSP PDF cross-check.

@@ -56,7 +56,14 @@ instance source inventory. The zip contains one `NICF_FDU_2024` shapefile family
 with six valid EPSG:3005 polygon features labeled as FDU/LU records and a
 measured total area of about `204162.510 ha`.
 
-Next bounded move: continue `P1.2` / `#1` by cross-checking `NICF_FDU_2024`
-against the FSP document and separate LU boundary zip before accepting a runtime
-AOI convention. Do not start `P1.3` or `P1.4` implementation until the accepted
-source paths are recorded.
+Completed bounded move: `P1.2` also inspected `bcgw_lu_clip_2026_06.zip` and
+recorded the BCGW LU layer inventory. The zip contains one
+`RMP_LU_SVW_polygon` shapefile family with `27` valid EPSG:3005 polygon
+features. The six `NICF_FDU_2024` features overlap matching full BCGW LUs named
+Holberg, Keogh, Marble, Nahwitti, Shushartie, and Tsulquate, but each FDU
+candidate is smaller than the full LU.
+
+Next bounded move: continue `P1.2` / `#1` by cross-checking the FSP PDF against
+the six FDU/LU overlaps and resolving the initial three-LU expectation before
+accepting a runtime AOI/LU convention. Do not start `P1.3` or `P1.4`
+implementation until the accepted source paths are recorded.
