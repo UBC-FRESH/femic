@@ -17729,3 +17729,9 @@
   and runtime-package follow-on issue split; and
 - updated the instance roadmap and parent Phase 73 notes so the active edge is
   source normalization before model design or compilation work.
+## 2026-06-23 - Added the NICF FSP Phase 1 parent issue
+- opened `UBC-FRESH/femic-nicffsp-instance#4` as the Phase 1 parent issue;
+- linked child task issues `#1`, `#3`, and `#2` from the parent issue body;
+- added child-issue backlinks to the parent phase issue; and
+- updated parent and instance planning surfaces to match the modelwright-style
+  parent-per-phase, child-per-task workflow.

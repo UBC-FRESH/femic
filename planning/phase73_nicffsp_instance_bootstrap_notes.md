@@ -3,7 +3,10 @@
 ## Governing Issues
 
 - Parent FEMIC coordination: `UBC-FRESH/femic#199`
-- Instance Phase 1 task issues:
+- Instance Phase 1 parent issue:
+  - `UBC-FRESH/femic-nicffsp-instance#4`: Phase 1 bootstrap repository and
+    build plan
+- Instance Phase 1 child task issues:
   - `UBC-FRESH/femic-nicffsp-instance#1`: `P1.2` source-payload inspection
     and normalization
   - `UBC-FRESH/femic-nicffsp-instance#3`: `P1.3` K3Z-to-NICF adaptation

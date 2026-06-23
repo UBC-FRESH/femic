@@ -2025,6 +2025,8 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     boundary are recorded in the instance repo and
     `planning/phase73_nicffsp_instance_bootstrap_notes.md`.
   - `P73` Phase 1 task issues are now split in the instance tracker:
+    - parent phase issue `UBC-FRESH/femic-nicffsp-instance#4`: bootstrap
+      repository and build plan
     - `P1.2` / `UBC-FRESH/femic-nicffsp-instance#1`: source-payload
       inspection and normalization
     - `P1.3` / `UBC-FRESH/femic-nicffsp-instance#3`: K3Z-to-NICF adaptation
