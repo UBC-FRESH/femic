@@ -17735,3 +17735,10 @@
 - added child-issue backlinks to the parent phase issue; and
 - updated parent and instance planning surfaces to match the modelwright-style
   parent-per-phase, child-per-task workflow.
+## 2026-06-23 - Hardened the NICF instance agent workflow contract
+- amended `external/femic-nicffsp-instance/AGENTS.md` so future roadmap phase
+  expansions must follow the modelwright-style issue hierarchy;
+- recorded that each phase gets one parent issue and each phase task gets one
+  linked child issue; and
+- advanced the parent submodule pointer to the instance commit carrying that
+  contract.

@@ -30,6 +30,11 @@ Patchworks model package. It includes:
 - raw source payloads under `data/source/nicf_fsp/`; and
 - provenance notes for the uploaded AOI, LU, and FSP files.
 
+The instance `AGENTS.md` now makes the modelwright-style issue hierarchy a
+hard workflow rule for future phase expansions: one GitHub parent issue per
+roadmap phase, one linked child issue per phase task, and third-level
+implementation issues only when a task is too large to manage as one child.
+
 ## Source Payload Boundary
 
 The uploaded source files are now tracked in the instance repository with
