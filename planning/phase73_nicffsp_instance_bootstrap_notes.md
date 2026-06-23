@@ -3,8 +3,13 @@
 ## Governing Issues
 
 - Parent FEMIC coordination: `UBC-FRESH/femic#199`
-- Instance source-normalization/build-boundary task:
-  `UBC-FRESH/femic-nicffsp-instance#1`
+- Instance Phase 1 task issues:
+  - `UBC-FRESH/femic-nicffsp-instance#1`: `P1.2` source-payload inspection
+    and normalization
+  - `UBC-FRESH/femic-nicffsp-instance#3`: `P1.3` K3Z-to-NICF adaptation
+    contract
+  - `UBC-FRESH/femic-nicffsp-instance#2`: `P1.4` cedar, expansion, and
+    runtime-package follow-on issue split
 
 ## Bootstrap Result
 
@@ -37,5 +42,7 @@ and recorded in stable paths.
 
 ## Current Edge
 
-Next bounded move: inspect `nicf_fsp_amendment_3_spatial.zip`, record its layer
-inventory, and identify the authoritative AOI boundary candidate.
+Next bounded move: work `P1.2` / `#1` by inspecting
+`nicf_fsp_amendment_3_spatial.zip`, recording its layer inventory, and
+identifying the authoritative AOI boundary candidate. Do not start `P1.3` or
+`P1.4` implementation until the accepted source paths are recorded.

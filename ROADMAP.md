@@ -2024,6 +2024,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P73.2a-b` complete: initial source inventory and K3Z-template adaptation
     boundary are recorded in the instance repo and
     `planning/phase73_nicffsp_instance_bootstrap_notes.md`.
-  - `P73.2c` remains the active edge: split cedar-signal design, K3Z expansion
-    candidate-area design, and Patchworks runtime-package work into follow-on
-    instance issues before model compilation starts.
+  - `P73` Phase 1 task issues are now split in the instance tracker:
+    - `P1.2` / `UBC-FRESH/femic-nicffsp-instance#1`: source-payload
+      inspection and normalization
+    - `P1.3` / `UBC-FRESH/femic-nicffsp-instance#3`: K3Z-to-NICF adaptation
+      contract
+    - `P1.4` / `UBC-FRESH/femic-nicffsp-instance#2`: cedar, expansion, and
+      runtime-package follow-on issue split
+  - Current active edge remains `P1.2` / `#1`: inspect and normalize the AOI/LU
+    source payloads before model-design or compilation work starts.

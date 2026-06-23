@@ -17720,3 +17720,12 @@
   instance paths with hashes and provenance notes; and
 - opened `UBC-FRESH/femic-nicffsp-instance#1` for the next source-normalization
   and K3Z-template build-boundary task.
+## 2026-06-23 - Split NICF FSP Phase 1 into task-wise instance issues
+- narrowed `UBC-FRESH/femic-nicffsp-instance#1` to `P1.2` source-payload
+  inspection and normalization;
+- opened `UBC-FRESH/femic-nicffsp-instance#3` for the `P1.3` K3Z-to-NICF
+  adaptation contract;
+- opened `UBC-FRESH/femic-nicffsp-instance#2` for the `P1.4` cedar, expansion,
+  and runtime-package follow-on issue split; and
+- updated the instance roadmap and parent Phase 73 notes so the active edge is
+  source normalization before model design or compilation work.
