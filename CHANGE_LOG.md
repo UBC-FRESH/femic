@@ -17881,3 +17881,13 @@
 - verified the PDF page count, checksum, and title text; and
 - advanced the parent submodule pointer to the instance commit carrying the
   reference PDF and source-inventory provenance.
+
+## 2026-06-23 - Queued NICF TFL 6 AOI pivot and THLB recipe planning
+- opened instance issue `#6` for pivoting the active AOI to TFL 6 and building
+  TFL 6-clipped 2025 VRI input layers;
+- opened instance issue `#7` for planning source-layer and THLB netdown recipe
+  extraction from the 2011 TFL 6 documents;
+- added detailed instance planning notes for both lanes; and
+- updated the parent coordination notes and instance roadmap so the original
+  FDU 1/2/3 boundary is retained as provenance but superseded as the active
+  model extraction AOI.

@@ -196,3 +196,14 @@ The PDF verifies as 126 pages, `2183218` bytes, SHA-256
 `302b4ce948a2cb765ec6a451157963422e9b8f102647d6b71864235e3bdb38e7`, with
 extracted text confirming TFL 6, Management Plan #10, Timber Supply Analysis
 Information Package, and February 2011.
+
+AOI pivot planning update: the active NICF teaching-case AOI is now TFL 6 rather
+than the original FDU 1/2/3 bootstrap boundary. Instance issue
+`UBC-FRESH/femic-nicffsp-instance#6` now tracks fetching the TFL 6 boundary from
+`WHSE_ADMIN_BOUNDARIES.FADM_TFL`, clipping the 2025 R1 VRI polygon source, and
+filtering the VDYP7 polygon/layer tables to the TFL 6 feature-id set. Instance
+issue `UBC-FRESH/femic-nicffsp-instance#7` tracks the later 2011 TFL 6
+management-plan/information-package review for FEMIC-style source-layer and
+THLB netdown recipe planning. Detailed notes live in
+`external/femic-nicffsp-instance/planning/tfl6_aoi_pivot_and_input_layers.md`
+and `external/femic-nicffsp-instance/planning/tfl6_thlb_recipe_extraction.md`.
