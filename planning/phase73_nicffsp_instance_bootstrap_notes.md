@@ -127,3 +127,16 @@ complete VDYP sampling, two-pass rebinning, `10` minimum stands per SI bin, and
 Next bounded move: continue `P1.3` / `#3` by separating K3Z assumptions into
 carry-forward versus FRST 558 review-required lists before any model-input
 bundle generation starts.
+
+Completed bounded move: `P1.3c` separated K3Z carry-forward assumptions from
+FRST 558 review-required assumptions in
+`external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`. K3Z
+structure, run-profile mechanics, bundle table contracts, and package layout
+are accepted as structural carry-forward assumptions. K3Z TIPSY rules,
+treatment variants, cedar signals, expansion candidate rules, seral objectives,
+product/account targets, and baseline acceptance metrics require FRST 558
+review before implementation.
+
+Next bounded move: continue `P1.3` / `#3` by identifying the minimum
+source-derived model-input surfaces needed before P1.4 runtime-package issue
+bodies can be finalized.

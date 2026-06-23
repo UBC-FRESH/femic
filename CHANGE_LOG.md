@@ -17828,3 +17828,11 @@
 - marked `P1.3b` complete in the instance roadmap; and
 - advanced the parent submodule pointer to the instance commit carrying the
   run-profile boundary decision.
+
+## 2026-06-23 - Recorded NICF P1.3c assumption split
+- recorded K3Z structural carry-forward assumptions and FRST 558
+  review-required assumptions in
+  `external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`;
+- marked `P1.3c` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  assumption split.
