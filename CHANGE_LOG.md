@@ -17872,3 +17872,12 @@
 - pushed public-data commit `348d9b60529e3a0160672048fc33e4083f2128fb`; and
 - marked `P1.5b` complete in the instance roadmap while leaving read-smoke,
   CRS, and public-remote publication evidence open.
+
+## 2026-06-23 - Added NICF TFL 6 MP10 information-package reference
+- found the BC-hosted copy of the TFL 6 Management Plan 10 timber supply
+  analysis information package requested for NICF source context;
+- downloaded it to
+  `external/femic-nicffsp-instance/data/source/nicf_fsp/reference/tfl_6_management_plan_10_information_package_2011.pdf`;
+- verified the PDF page count, checksum, and title text; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  reference PDF and source-inventory provenance.

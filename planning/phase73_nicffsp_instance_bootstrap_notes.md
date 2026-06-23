@@ -187,3 +187,12 @@ remote publication and full geodatabase read-smoke evidence remain open.
 Next bounded move: continue `P1.5` / `#5` by running read smoke on the
 materialized 2025 geodatabases and recording layer names, feature-count
 evidence, CRS, and the extraction/runtime path decision.
+
+Source lookup: found the requested TFL 6 Management Plan 10 timber supply
+analysis information package at the BC TFL management-plan document surface and
+stored a local copy at
+`external/femic-nicffsp-instance/data/source/nicf_fsp/reference/tfl_6_management_plan_10_information_package_2011.pdf`.
+The PDF verifies as 126 pages, `2183218` bytes, SHA-256
+`302b4ce948a2cb765ec6a451157963422e9b8f102647d6b71864235e3bdb38e7`, with
+extracted text confirming TFL 6, Management Plan #10, Timber Supply Analysis
+Information Package, and February 2011.
