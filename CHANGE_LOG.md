@@ -17790,3 +17790,12 @@
   totaling `147798.392 ha`; and
 - left the six-feature amendment zip as raw source provenance rather than the
   runtime AOI boundary.
+
+## 2026-06-23 - Recorded the NICF LU reference extraction
+- extracted the FSP-relevant BCGW LU subset to
+  `external/femic-nicffsp-instance/data/source/nicf_fsp/lu_reference/nicf_lu_reference.*`;
+- verified the LU reference source reads as three valid EPSG:3005 polygon
+  features for Holberg, Keogh, and Marble totaling `165588.857 ha`;
+- recorded that the full 27-feature BCGW LU zip remains raw provenance; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  completed `P1.2d` source-layer decision.

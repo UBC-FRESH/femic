@@ -85,7 +85,14 @@ amendment shapefile remains raw provenance, but the tracked canonical AOI source
 is now `data/source/nicf_fsp/aoi/nicf_fsp_aoi.*`, verified as three valid
 EPSG:3005 polygon features totaling `147798.392 ha`.
 
-Next bounded move: continue `P1.2` / `#1` by deciding whether the full
-27-feature BCGW LU layer is also canonical reference context. Runtime config
-wiring should wait until that source-path decision is recorded. Do not start
-`P1.3` or `P1.4` implementation until the accepted source paths are recorded.
+Completed bounded move: `P1.2` extracted the canonical LU reference context.
+The full 27-feature BCGW LU zip remains raw provenance, and the tracked
+canonical LU reference source is
+`data/source/nicf_fsp/lu_reference/nicf_lu_reference.*`, verified as three
+valid EPSG:3005 polygon features for Holberg, Keogh, and Marble totaling
+`165588.857 ha`.
+
+Next bounded move: continue `P1.2` / `#1` by updating
+`config/run_profile.nicffsp.yaml` with the accepted AOI and LU reference source
+paths. Do not start `P1.3` or `P1.4` implementation until that source-path
+wiring is recorded.
