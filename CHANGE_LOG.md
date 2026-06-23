@@ -17856,3 +17856,10 @@
   data-collection task is a linked child issue; and
 - kept the task boundary to source materialization and verification, with no
   model-input bundle or Patchworks runtime-package build started.
+
+## 2026-06-23 - Recorded NICF P1.5a 2025 VRI package metadata
+- recorded the official 2025 R1 and VDYP7 polygon/layer package metadata in
+  `external/femic-nicffsp-instance/planning/vri_2025_data_collection.md`;
+- marked `P1.5a` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  metadata snapshot.

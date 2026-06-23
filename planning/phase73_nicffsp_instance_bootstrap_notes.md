@@ -163,3 +163,15 @@ Next bounded move: start `P1.5` / `#5` by recording official package metadata
 and confirming the accepted public-data materialization convention. Resume
 `P1.4` / `#2` follow-on issue splitting after the new source-data dependency is
 explicit.
+
+Completed bounded move: `P1.5a` recorded the official 2025 VRI source metadata
+in `external/femic-nicffsp-instance/planning/vri_2025_data_collection.md`. The
+metadata snapshot includes BCDC titles, package ids, package UUIDs, resource
+ids, resource names, modified timestamps, formats, and direct package URLs for
+the 2025 R1 polygon package and the 2025 VDYP7 polygon/layer package. Package
+size, checksum, read-smoke, and DataLad/git-annex/publication status remain
+open for the materialization step.
+
+Next bounded move: continue `P1.5` / `#5` by materializing the two 2025 source
+archives under the accepted `external/femic-public-data/data/bc/vri/2025/`
+convention and recording checksum/read-smoke evidence.
