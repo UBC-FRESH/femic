@@ -13,6 +13,8 @@
     contract
   - `UBC-FRESH/femic-nicffsp-instance#2`: `P1.4` cedar, expansion, and
     runtime-package follow-on issue split
+  - `UBC-FRESH/femic-nicffsp-instance#5`: `P1.5` 2025 VRI source-data
+    collection for the NICF base inventory
 
 ## Bootstrap Result
 
@@ -150,5 +152,14 @@ evidence, managed/unmanaged and origin fields, and baseline acceptance summary.
 It also records P1.4 handoff terms for cedar-signal, expansion-candidate, and
 runtime-package issue bodies.
 
-Next bounded move: start `P1.4` / `#2` by opening the cedar-signal design
-follow-on issue with the accepted source-boundary and minimum-model-input terms.
+Queued bounded move: `P1.5` / `#5` now tracks materialization of the latest
+2025 provincial VRI source packages before NICF base AOI inventory extraction
+depends on them. The required sources are the 2025 VRI layer 1 rank 1 polygon
+package and the 2025 VDYP7 input polygon/layer package, targeted under
+`external/femic-public-data/data/bc/vri/2025/` following the existing 2019 and
+2024 public-data convention.
+
+Next bounded move: start `P1.5` / `#5` by recording official package metadata
+and confirming the accepted public-data materialization convention. Resume
+`P1.4` / `#2` follow-on issue splitting after the new source-data dependency is
+explicit.

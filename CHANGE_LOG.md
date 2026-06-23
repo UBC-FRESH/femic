@@ -17844,3 +17844,15 @@
 - marked `P1.3` complete in the instance roadmap; and
 - advanced the parent submodule pointer to the instance commit carrying the
   accepted adaptation boundary.
+
+## 2026-06-23 - Queued NICF 2025 VRI source-data collection
+- opened `external/femic-nicffsp-instance` issue `#5` as `P1.5` for
+  materializing the latest 2025 provincial VRI R1 and VDYP7 polygon/layer
+  source packages before NICF base AOI inventory extraction depends on them;
+- added `external/femic-nicffsp-instance/planning/vri_2025_data_collection.md`
+  with package ids, expected source package names, public-data target paths,
+  and acceptance criteria;
+- updated the instance Phase 1 roadmap and parent issue so the new
+  data-collection task is a linked child issue; and
+- kept the task boundary to source materialization and verification, with no
+  model-input bundle or Patchworks runtime-package build started.
