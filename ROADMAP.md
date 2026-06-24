@@ -2040,7 +2040,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     workflow-comparison input, especially for protected/designated lands,
     forestry restriction classes, overlap handling, and source CSV metadata.
 - [ ] P75.2 Run the `bcdata` versus FEMIC comparison (`#201`)
-  - [ ] P75.2a Capture baseline FEMIC resolver outputs for the comparison
+  - [x] P75.2a Capture baseline FEMIC resolver outputs for the comparison
     corpus.
   - [ ] P75.2b Capture equivalent `bcdata` outputs with a reproducible R
     script or CLI harness.
@@ -2109,6 +2109,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     now names FEMIC's resolver/fetch/DWDS surfaces, fixes the initial query
     corpus, records comparison metrics, and scopes BC Gov `designatedlands` as
     manifest/workflow-pattern evidence.
-  - Current active edge for this lane is `P75.2`: run the `bcdata` versus FEMIC
-    comparison using the P75.1 corpus and write results under `runtime/phase75/`
-    without committing raw live-query artifacts.
+  - `P75.2a` complete: FEMIC baseline resolver outputs were captured under
+    `runtime/phase75/` for the fixed corpus, summarized in the Phase 75 planning
+    note, and left untracked as runtime artifacts.
+  - Current active edge for this lane is `P75.2b`: run the same query corpus
+    through `bcdata` with a reproducible R script or CLI harness, then compare
+    against the FEMIC baseline with special attention to the recent TFL 6
+    source-layer resolution challenge.

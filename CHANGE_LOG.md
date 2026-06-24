@@ -18231,3 +18231,18 @@
 - advanced the Phase 75 roadmap edge to P75.2, which should write live
   comparison outputs under `runtime/phase75/` without committing raw runtime
   artifacts.
+
+## 2026-06-24 - Captured P75.2a FEMIC resolver baseline
+- ran the fixed Phase 75 query corpus through FEMIC's existing
+  `femic data bcdc-resolve` lane with `--plan-only`, writing runtime-only
+  manifest and summary outputs under `runtime/phase75/`;
+- summarized the baseline in `planning/phase75_bcdata_resolver_evaluation_notes.md`:
+  51 queries, 11 exact hits, 4 alias hits, 33 weak text hits, 3 no hits,
+  29 WFS-queryable rows, 12 direct-download candidate rows, and 39
+  BCGW/custom-download candidate rows;
+- recorded TFL 6 source-layer benchmark pressure cases for the `bcdata`
+  comparison, including noisy short-query TFL ranking, unresolved RMZ,
+  shoreline/ocean gaps, broad DEM/slope discovery, mixed VRI/special VDYP
+  discovery, and noisy FWA stream/lake discovery; and
+- advanced the Phase 75 roadmap edge to P75.2b without committing raw runtime
+  query outputs.

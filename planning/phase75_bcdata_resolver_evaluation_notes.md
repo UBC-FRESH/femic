@@ -98,6 +98,79 @@ P75.1 is complete when:
 - `designatedlands` is scoped as source-manifest/workflow-pattern evidence; and
 - P75.2 is the next executable step.
 
+## P75.2a FEMIC Baseline Resolver Run
+
+Baseline artifacts were generated under `runtime/phase75/`:
+
+- `p75_femic_baseline_queries.txt`
+- `p75_femic_bcdc_resolve_manifest.json`
+- `p75_femic_bcdc_resolve_summary.csv`
+
+These are runtime artifacts, not tracked deliverables. The run used
+`femic data bcdc-resolve --plan-only`, which still performs catalogue
+resolution and writes resolver manifests, but does not execute downloads,
+WFS fetches, or DWDS orders.
+
+Summary from the FEMIC resolver baseline:
+
+| Metric | Count |
+| --- | ---: |
+| Query rows | 51 |
+| Exact hits | 11 |
+| Alias hits | 4 |
+| Weak text hits | 33 |
+| No hits | 3 |
+| Rows with WFS-queryable service flag | 29 |
+| Rows with direct-download candidates | 12 |
+| Rows with BCGW/custom-download candidates | 39 |
+
+No-hit queries:
+
+- `ocean shoreline`
+- `special VDYP`
+- `Silviculture Activities History`
+
+Clear FEMIC strengths from this baseline:
+
+- exact BCGW object-name queries work well for TFL/FADM/OGMA/VRI/DRA/BEC/LU
+  layers;
+- curated/generated aliases help important short names, including `BEC`,
+  `SITE_PROD_BC`, `CONSOLIDATED_CUTBLOCKS_2011`, and `FTEN_MANAGED_LIC`;
+- `Tree Farm Licence 6` surfaces the current FADM TFL view as the top match;
+- `WHSE_FOREST_VEGETATION.VEG_COMP_LYR_R1_POLY` surfaces the 2025 VRI R1 layer;
+  and
+- the resolver identifies WFS-queryable OpenMaps services for many BCGW
+  polygon/line layers.
+
+TFL 6 data-layer challenge findings that should be used as benchmark pressure
+against `bcdata`:
+
+- `TFL 6` as a short free-text query is noisy and returns `Moose Management
+  Areas - TFL38` as the top match, while `Tree Farm Licence 6` works better.
+- RMZ remains unresolved as a reusable TFL 6 source. `riparian management zone`
+  and `riparian` find a North Coast/Skeena RMZ buffer source, while `RMZ`
+  returns an Old Growth TAP protected-area record.
+- Shoreline discovery is only partly successful: `coastline`, `BC coastline`,
+  and `NTS coastline` surface the NTS coastline polygon candidate, but
+  `shoreline` is noisy and `ocean shoreline` has no hit.
+- DEM/terrain discovery is broad rather than operationally precise: `digital
+  elevation model`, `DEM`, and `BC DEM` surface LiDAR/LidarBC records, while
+  `slope` returns an unrelated Spotted Owl slope-class source.
+- VRI discovery is mixed: the exact R1 object-name query finds the 2025 VRI R1
+  layer, but `VRI L1R1` and `vegetation resources inventory` surface the
+  historical VRI package, and `special VDYP` has no hit.
+- FWA free-text discovery is noisy: `Freshwater Atlas`, `FWA streams`, and
+  `FWA lakes` all rank wetlands first, and `FWA wetlands` returns a high
+  precipitation layer.
+- `designated lands` is promising: it returns the province-wide land
+  designations spatial data with direct shapefile and GeoPackage download
+  candidates.
+
+P75.2b should now run the same query corpus through `bcdata` and compare
+whether it improves the real TFL 6 source-layer resolution problems above,
+especially RMZ, shoreline/ocean, DEM/slope, VRI/special VDYP, FWA stream/lake
+specificity, and short-query TFL 6 ranking.
+
 ## Integration Options
 
 Evaluate `bcdata` options in order:
