@@ -18146,3 +18146,13 @@
   P1.8d dependency-order recording; and
 - advanced the parent submodule pointer to the instance branch commit carrying
   the P1.8b issue-tree update.
+
+## 2026-06-23 - Created NICF/TFL6 future phase child issues
+- completed instance P1.8c by creating/linking first executable child task
+  issues under the proposed future phase parents;
+- opened P2.1 `#16`, P4.1 `#17`, and P5.1 `#18`, and reused existing cedar
+  design issue `#8` as the first Phase 3 child under `#13`;
+- updated the instance roadmap so those child issue numbers are visible in the
+  proposed phase task lists; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8c child-issue update.

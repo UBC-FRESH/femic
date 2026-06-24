@@ -446,3 +446,12 @@ roadmap now references those issue numbers and points Current Next Steps to
 `P1.8c` child task issue creation and `P1.8d` dependency-order recording.
 Implementation follow-on issues `#8`, `#9`, and `#10` remain idle until P1.8
 links the full parent/child issue tree. No implementation work was started.
+
+Completed bounded move: `P1.8c` created and linked the first executable child
+task issues under the proposed future phase parents. Phase 2 parent `#12` now
+links P2.1 source-layer materialization (`#16`); Phase 3 parent `#13` now links
+the existing P3.1 cedar design child (`#8`); Phase 4 parent `#14` now links
+P4.1 model-input bundle build (`#17`); and Phase 5 parent `#15` now links P5.1
+runtime artifact publication policy (`#18`). The instance roadmap points next
+to `P1.8d` dependency-order recording and `P1.8e` placement/defer decisions
+for `#8`, `#9`, and `#10`. No implementation work was started.
