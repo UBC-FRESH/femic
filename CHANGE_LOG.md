@@ -17982,3 +17982,16 @@
   and
 - advanced the parent submodule pointer to the instance commit carrying the
   netdown planning surface.
+
+## 2026-06-23 - Recorded NICF/TFL6 Instrument 101 additions
+- scraped the BC TFL 6 page for post-2011 instrument evidence and retained
+  Instrument 101 as the relevant 2015 boundary-extension document;
+- added
+  `external/femic-tfl6-instance/reference/tfl-06-inst-101-january-1-2015.pdf`
+  plus extracted page images for visual review;
+- updated the TFL 6 reference index and added
+  `external/femic-tfl6-instance/planning/tfl6_instrument_boundary_reconciliation.md`;
+- recorded the Instrument 101 map-labelled addition areas of `44,612 ha +/-`
+  and `2,096 ha +/-`; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  boundary-reconciliation evidence.

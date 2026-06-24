@@ -300,3 +300,17 @@ for each deduction. No recipe YAML was created and no netdown execution was
 run. Next bounded move remains `P1.7c`: classify each netdown row into TSA29
 carry-forward, TFL/general-FMU adaptation, missing-source, aspatial fallback, or
 reference-target treatment before drafting recipe skeletons.
+
+Completed bounded move: `P1.7b2` scraped the BC TFL 6 page for post-2011
+instrument evidence and retained Instrument 101 as the relevant 2015
+boundary-extension document. The instance now tracks
+`external/femic-tfl6-instance/reference/tfl-06-inst-101-january-1-2015.pdf`,
+extracted page images under `reference/extracted_images/`, and the planning
+note
+`external/femic-tfl6-instance/planning/tfl6_instrument_boundary_reconciliation.md`.
+Visual review records two Instrument 101 map-labelled TFL 6 addition areas:
+`44,612 ha +/-` and `2,096 ha +/-`, totaling about `46,708 ha`. This plausibly
+explains most or all of the gap between the `171,441 ha` MP10 historical GLB
+and the `217,042.718950 ha` current FADM-derived AOI, with about `1,106 ha` of
+residual difference still requiring geometry/vintage reconciliation. No model
+inputs, recipe YAML, or netdown execution were changed.
