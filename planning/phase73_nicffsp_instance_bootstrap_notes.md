@@ -374,3 +374,14 @@ both archives, `git annex find --not --in arbutus-s3` returns both paths, and
 next bounded move is to copy the two archive keys to `arbutus-s3`, push the
 resulting `git-annex` publication state, and record a public-read
 materialization smoke.
+
+Completed bounded move: `P1.5d` publication closeout copied the two 2025 VRI
+archive annex keys to the `external/femic-public-data` `arbutus-s3` remote,
+merged and pushed the `git-annex` publication branch, and proved public
+materialization from a fresh no-credentials clone. The smoke clone reported
+`creds: not available`, saw `arbutus-s3` as a public remote, downloaded both
+archives with `git annex get --from arbutus-s3`, and completed checksum
+verification. `git annex find --not --in arbutus-s3` now returns no 2025 VRI
+archive paths. P1.5 / `#5` is complete and the next Phase 1 edge is `P1.4` /
+`#2`: split the cedar-signal, expansion-candidate, and Patchworks
+runtime-package follow-on issues.

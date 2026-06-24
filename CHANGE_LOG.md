@@ -18063,3 +18063,17 @@
   public-read materialization smoke; and
 - advanced the parent submodule pointer to the instance commit carrying the
   publication audit.
+
+## 2026-06-23 - Published NICF/TFL6 2025 VRI source archives
+- copied the two 2025 VRI source archive annex keys to the
+  `external/femic-public-data` `arbutus-s3` public-data remote;
+- merged and pushed the `femic-public-data` `git-annex` branch so fresh clones
+  can see the remote key locations;
+- proved no-credentials public materialization from a fresh temporary clone of
+  `UBC-FRESH/femic-public-data`;
+- updated
+  `external/femic-tfl6-instance/planning/vri_2025_data_collection.md` with the
+  publication and public-read smoke evidence;
+- marked instance P1.5 complete; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  P1.5 closeout.
