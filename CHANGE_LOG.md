@@ -18111,3 +18111,15 @@
 - left the Phase 1 parent issue open until the parent FEMIC PR merges; and
 - advanced the parent submodule pointer to the instance commit carrying the
   P1.4 closeout.
+
+## 2026-06-23 - Added NICF/TFL6 P1.8 planning gate
+- opened `UBC-FRESH/femic-tfl6-instance#11` as the final Phase 1
+  next-phase planning gate;
+- updated the instance roadmap so Phase 1 remains open until Phase 2 through
+  at least Phase 5, parent issues, child task issues, and dependency order are
+  explicit;
+- recorded that follow-on implementation issues `#8`, `#9`, and `#10` should
+  remain idle until P1.8 places them into the planned phase structure or a
+  parallel lane is explicitly approved; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8 gate.

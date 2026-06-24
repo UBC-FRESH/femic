@@ -415,3 +415,12 @@ excludes XML generation, Matrix Builder execution, and Patchworks launch from
 the issue split itself. P1.4 / `#2` is complete and closed. All Phase 1 child
 tasks are checked off; the Phase 1 parent issue remains open until the parent
 FEMIC PR merges.
+
+Completed bounded planning correction: `P1.8` was added as the final Phase 1
+gate under `UBC-FRESH/femic-tfl6-instance#11`. Phase 1 is intentionally open
+again until P1.8 plans Phase 2 through at least Phase 5, creates the next
+parent/child issue tree, and records dependency order across source-layer/THLB
+work, cedar design, expansion design, model-input generation, Patchworks
+runtime build, QA/publication, and teaching docs. Existing follow-on issues
+`#8`, `#9`, and `#10` remain open but idle until P1.8 places them into the
+planned phase structure or the maintainer explicitly approves a parallel lane.
