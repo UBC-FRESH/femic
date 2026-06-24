@@ -17910,3 +17910,13 @@
   self-intersection; and
 - switched the instance run profile to the TFL 6 boundary and advanced the
   parent submodule pointer.
+
+## 2026-06-23 - Renamed NICF instance to TFL6 and indexed reference corpus
+- renamed the instance GitHub repository to `UBC-FRESH/femic-tfl6-instance`;
+- moved the parent submodule path from `external/femic-nicffsp-instance` to
+  `external/femic-tfl6-instance`;
+- indexed the locally copied TFL 6 reference corpus into
+  `reference/tfl6_reference_index.json`, `reference/tfl6_reference_index.md`,
+  and `reference/extracted_text/`; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  corpus index and visible repo-name updates.

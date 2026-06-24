@@ -4,23 +4,23 @@
 
 - Parent FEMIC coordination: `UBC-FRESH/femic#199`
 - Instance Phase 1 parent issue:
-  - `UBC-FRESH/femic-nicffsp-instance#4`: Phase 1 bootstrap repository and
+  - `UBC-FRESH/femic-tfl6-instance#4`: Phase 1 bootstrap repository and
     build plan
 - Instance Phase 1 child task issues:
-  - `UBC-FRESH/femic-nicffsp-instance#1`: `P1.2` source-payload inspection
+  - `UBC-FRESH/femic-tfl6-instance#1`: `P1.2` source-payload inspection
     and normalization
-  - `UBC-FRESH/femic-nicffsp-instance#3`: `P1.3` K3Z-to-NICF adaptation
+  - `UBC-FRESH/femic-tfl6-instance#3`: `P1.3` K3Z-to-NICF adaptation
     contract
-  - `UBC-FRESH/femic-nicffsp-instance#2`: `P1.4` cedar, expansion, and
+  - `UBC-FRESH/femic-tfl6-instance#2`: `P1.4` cedar, expansion, and
     runtime-package follow-on issue split
-  - `UBC-FRESH/femic-nicffsp-instance#5`: `P1.5` 2025 VRI source-data
+  - `UBC-FRESH/femic-tfl6-instance#5`: `P1.5` 2025 VRI source-data
     collection for the NICF base inventory
 
 ## Bootstrap Result
 
 The standalone instance repository has been created as
-`UBC-FRESH/femic-nicffsp-instance` and linked under the parent checkout at
-`external/femic-nicffsp-instance`.
+`UBC-FRESH/femic-tfl6-instance` and linked under the parent checkout at
+`external/femic-tfl6-instance`.
 
 The initial instance payload is a bootstrap/planning snapshot, not a runnable
 Patchworks model package. It includes:
@@ -106,7 +106,7 @@ NICF FSP source boundary.
 
 Completed bounded move: `P1.3a` compared the K3Z template surfaces against the
 NICF scaffold and recorded the findings in
-`external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`. K3Z can
+`external/femic-tfl6-instance/planning/k3z_template_adaptation.md`. K3Z can
 carry forward repository shape, rebuild-spec discipline, model-input bundle
 contract, and Patchworks package layout, but its generated bundle tables,
 Patchworks tracks, treatment variants, TIPSY rules, and runtime paths are not
@@ -119,12 +119,12 @@ run-profile boundary beyond source paths, especially stratification, VDYP
 sampling/rebinning, and managed-curve defaults.
 
 Completed bounded move: `P1.3b` defined the first NICF run-profile boundary in
-`external/femic-nicffsp-instance/config/run_profile.nicffsp.yaml`. The profile
+`external/femic-tfl6-instance/config/run_profile.nicffsp.yaml`. The profile
 now uses subzone BEC grouping, two-species combinations, TM second-species
 fallback, `0.90` area coverage, clean first-compile mode (`resume: false`),
 complete VDYP sampling, two-pass rebinning, `10` minimum stands per SI bin, and
 `managed_curve_mode: tipsy`. The decision is recorded in
-`external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`.
+`external/femic-tfl6-instance/planning/k3z_template_adaptation.md`.
 
 Next bounded move: continue `P1.3` / `#3` by separating K3Z assumptions into
 carry-forward versus FRST 558 review-required lists before any model-input
@@ -132,7 +132,7 @@ bundle generation starts.
 
 Completed bounded move: `P1.3c` separated K3Z carry-forward assumptions from
 FRST 558 review-required assumptions in
-`external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`. K3Z
+`external/femic-tfl6-instance/planning/k3z_template_adaptation.md`. K3Z
 structure, run-profile mechanics, bundle table contracts, and package layout
 are accepted as structural carry-forward assumptions. K3Z TIPSY rules,
 treatment variants, cedar signals, expansion candidate rules, seral objectives,
@@ -144,7 +144,7 @@ source-derived model-input surfaces needed before P1.4 runtime-package issue
 bodies can be finalized.
 
 Completed bounded move: `P1.3` accepted the first K3Z-to-NICF adaptation
-boundary. `external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`
+boundary. `external/femic-tfl6-instance/planning/k3z_template_adaptation.md`
 now records the minimum source-derived model-input surfaces needed before
 Patchworks runtime-package work: accepted AOI, LU/FDU context, AOI-clipped
 inventory checkpoint, AU diagnostics, bundle tables, managed/natural curve
@@ -165,7 +165,7 @@ and confirming the accepted public-data materialization convention. Resume
 explicit.
 
 Completed bounded move: `P1.5a` recorded the official 2025 VRI source metadata
-in `external/femic-nicffsp-instance/planning/vri_2025_data_collection.md`. The
+in `external/femic-tfl6-instance/planning/vri_2025_data_collection.md`. The
 metadata snapshot includes BCDC titles, package ids, package UUIDs, resource
 ids, resource names, modified timestamps, formats, and direct package URLs for
 the 2025 R1 polygon package and the 2025 VDYP7 polygon/layer package. Package
@@ -191,7 +191,7 @@ evidence, CRS, and the extraction/runtime path decision.
 Source lookup: found the requested TFL 6 Management Plan 10 timber supply
 analysis information package at the BC TFL management-plan document surface and
 stored a local copy at
-`external/femic-nicffsp-instance/data/source/nicf_fsp/reference/tfl_6_management_plan_10_information_package_2011.pdf`.
+`external/femic-tfl6-instance/data/source/nicf_fsp/reference/tfl_6_management_plan_10_information_package_2011.pdf`.
 The PDF verifies as 126 pages, `2183218` bytes, SHA-256
 `302b4ce948a2cb765ec6a451157963422e9b8f102647d6b71864235e3bdb38e7`, with
 extracted text confirming TFL 6, Management Plan #10, Timber Supply Analysis
@@ -199,14 +199,14 @@ Information Package, and February 2011.
 
 AOI pivot planning update: the active NICF teaching-case AOI is now TFL 6 rather
 than the original FDU 1/2/3 bootstrap boundary. Instance issue
-`UBC-FRESH/femic-nicffsp-instance#6` now tracks fetching the TFL 6 boundary from
+`UBC-FRESH/femic-tfl6-instance#6` now tracks fetching the TFL 6 boundary from
 `WHSE_ADMIN_BOUNDARIES.FADM_TFL`, clipping the 2025 R1 VRI polygon source, and
 filtering the VDYP7 polygon/layer tables to the TFL 6 feature-id set. Instance
-issue `UBC-FRESH/femic-nicffsp-instance#7` tracks the later 2011 TFL 6
+issue `UBC-FRESH/femic-tfl6-instance#7` tracks the later 2011 TFL 6
 management-plan/information-package review for FEMIC-style source-layer and
 THLB netdown recipe planning. Detailed notes live in
-`external/femic-nicffsp-instance/planning/tfl6_aoi_pivot_and_input_layers.md`
-and `external/femic-nicffsp-instance/planning/tfl6_thlb_recipe_extraction.md`.
+`external/femic-tfl6-instance/planning/tfl6_aoi_pivot_and_input_layers.md`
+and `external/femic-tfl6-instance/planning/tfl6_thlb_recipe_extraction.md`.
 
 Pivot hygiene update: reconciled the instance README, quickstart,
 `config/run_profile.nicffsp.yaml` comments, `planning/source_inventory.md`, and
@@ -216,7 +216,7 @@ pointed at the existing FDU 1/2/3 bootstrap boundary until `P1.6a` could
 materialize `data/source/tfl_6/aoi/tfl_6_boundary.gpkg`.
 
 Completed bounded move: `P1.6a` materialized the active TFL 6 boundary at
-`external/femic-nicffsp-instance/data/source/tfl_6/aoi/tfl_6_boundary.gpkg`,
+`external/femic-tfl6-instance/data/source/tfl_6/aoi/tfl_6_boundary.gpkg`,
 layer `tfl_6_boundary`. The boundary was fetched from
 `WHSE_ADMIN_BOUNDARIES.FADM_TFL` with `FOREST_FILE_ID='TFL6'`, normalized to
 lowercase fields, and verified as 182 EPSG:3005 features with `217042.719 ha`
@@ -224,3 +224,16 @@ union area and matching exploratory bounds. One source ring self-intersection
 was repaired with no rounded union-area change. The instance run profile now
 points to the TFL 6 boundary. Next bounded move is `P1.6b`: clip the 2025 VRI
 R1 polygon source to this boundary and record geometry QA.
+
+Rename and reference-corpus update: the instance repository is now
+`UBC-FRESH/femic-tfl6-instance`, linked in the parent checkout at
+`external/femic-tfl6-instance`. The locally copied TFL 6 reference corpus from
+the Province of British Columbia TFL 6 page is indexed under
+`external/femic-tfl6-instance/reference/tfl6_reference_index.json`, summarized
+in `external/femic-tfl6-instance/reference/tfl6_reference_index.md`, and has
+searchable extracted PDF text under
+`external/femic-tfl6-instance/reference/extracted_text/`. The index covers 18
+files: 17 PDFs and one PNG, including AAC rationale, licence maps, instrument,
+annual reports, Management Plan 9/10 files, analysis report, and information
+package documents. This completes `P1.7a`; `P1.7b` remains the later reviewed
+document-mining step.
