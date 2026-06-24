@@ -314,3 +314,15 @@ explains most or all of the gap between the `171,441 ha` MP10 historical GLB
 and the `217,042.718950 ha` current FADM-derived AOI, with about `1,106 ha` of
 residual difference still requiring geometry/vintage reconciliation. No model
 inputs, recipe YAML, or netdown execution were changed.
+
+Completed bounded move: `P1.7b3` added provisional adjusted current-AOI THLB
+validation targets under
+`external/femic-tfl6-instance/planning/tfl6_adjusted_thlb_benchmarks.md` and
+`external/femic-tfl6-instance/planning/tfl6_adjusted_thlb_benchmarks.json`.
+The targets scale the 2011 MP10 Table 4 values by
+`217042.718950 / 171441 = 1.265990742879`, using Instrument 101 as the working
+explanation for the current-vs-historical AOI area increase. Key scaled targets
+are `186,175.333 ha` productive forest, `170,428.940 ha` operable landbase,
+`136,487.728 ha` current THLB, and `134,598.870 ha` long-term landbase. These
+are approximate validation targets only and do not replace later spatial
+current-AOI recipe outputs.

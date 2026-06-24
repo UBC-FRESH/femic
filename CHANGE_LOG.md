@@ -17995,3 +17995,14 @@
   and `2,096 ha +/-`; and
 - advanced the parent submodule pointer to the instance commit carrying the
   boundary-reconciliation evidence.
+
+## 2026-06-23 - Added NICF/TFL6 adjusted THLB validation targets
+- added
+  `external/femic-tfl6-instance/planning/tfl6_adjusted_thlb_benchmarks.md` and
+  `external/femic-tfl6-instance/planning/tfl6_adjusted_thlb_benchmarks.json`;
+- scaled MP10 Table 4 values by `217042.718950 / 171441 = 1.265990742879`;
+- recorded provisional current-AOI targets of `186,175.333 ha` productive
+  forest, `170,428.940 ha` operable landbase, `136,487.728 ha` current THLB,
+  and `134,598.870 ha` long-term landbase; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  adjusted benchmark surfaces.
