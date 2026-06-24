@@ -424,3 +424,15 @@ work, cedar design, expansion design, model-input generation, Patchworks
 runtime build, QA/publication, and teaching docs. Existing follow-on issues
 `#8`, `#9`, and `#10` remain open but idle until P1.8 places them into the
 planned phase structure or the maintainer explicitly approves a parallel lane.
+
+Completed bounded move: `P1.8a` drafted proposed Phase 2 through Phase 5
+sections in `external/femic-tfl6-instance/ROADMAP.md`. The draft sequence puts
+reviewed source-layer and THLB netdown work before model-design assumptions,
+model-input and Patchworks runtime package construction, and publication,
+teaching documentation, and release QA. Existing implementation-lane issues
+`#8`, `#9`, and `#10` are placed into the proposed phase narrative but remain
+idle until P1.8 creates and links the explicit phase parent and child issue
+tree. No source-layer extraction, THLB recipe execution, cedar/expansion
+implementation, XML generation, Matrix Builder work, or Patchworks runtime
+packaging was started. The next bounded move is `P1.8b` / `#11`: create one
+GitHub parent issue for each proposed Phase 2 through Phase 5 section.

@@ -18123,3 +18123,15 @@
   parallel lane is explicitly approved; and
 - advanced the parent submodule pointer to the instance branch commit carrying
   the P1.8 gate.
+
+## 2026-06-23 - Drafted NICF/TFL6 future phase roadmap
+- completed instance P1.8a by adding proposed Phase 2 through Phase 5 sections
+  to `external/femic-tfl6-instance/ROADMAP.md`;
+- sequenced reviewed source-layer/THLB work before model-design assumptions,
+  model-input and Patchworks runtime build, and publication/teaching release
+  QA;
+- placed existing follow-on implementation issues `#8`, `#9`, and `#10` in
+  the proposed phase narrative while keeping them idle until P1.8 finishes the
+  parent/child issue tree; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8a roadmap draft.
