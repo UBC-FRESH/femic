@@ -18025,3 +18025,15 @@
   Instrument 101 and adjusted current-AOI benchmark tables; and
 - advanced the parent submodule pointer to the instance commit carrying the
   P1.7c planning contract.
+
+## 2026-06-23 - Completed NICF/TFL6 recipe skeleton planning
+- added
+  `external/femic-tfl6-instance/planning/tfl6_recipe_skeletons.md`;
+- proposed future TFL/general-FMU recipe destinations under `config/tfl6/`;
+- listed accepted and missing source-layer candidates with acquisition
+  strategies where known;
+- drafted the ordered THLB netdown skeleton with source IDs, execution classes,
+  blocked-execution status, and scaled validation targets;
+- kept recipe YAML creation, source acquisition, and THLB execution blocked;
+  and
+- advanced the parent submodule pointer to the instance commit completing P1.7.

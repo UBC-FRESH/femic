@@ -342,3 +342,14 @@ current-AOI benchmark tables as validation context rather than recipe inputs,
 records source-layer priority for skeleton drafting, and keeps recipe execution
 blocked. Next bounded move is `P1.7d`: draft non-executable source-layer and
 THLB netdown recipe skeleton planning tables.
+
+Completed bounded move: `P1.7d` added
+`external/femic-tfl6-instance/planning/tfl6_recipe_skeletons.md`. The note
+proposes future TFL/general-FMU recipe destinations under `config/tfl6/`, lists
+accepted and missing source-layer candidates with acquisition strategies where
+known, and drafts the ordered THLB netdown skeleton with source IDs, execution
+classes, blocked-execution status, and scaled validation targets. P1.7 is now
+complete as a planning lane only: no recipe YAML was created, no source layers
+were fetched, and no THLB netdown execution was run. The next bounded move is
+`P1.5c` / `#5`: record file size, checksum, read-smoke, CRS, and layer-name
+evidence for the provincial 2025 VRI source packages.
