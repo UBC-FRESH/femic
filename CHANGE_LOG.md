@@ -18178,3 +18178,11 @@
   parent issue `#4` open until the parent FEMIC PR merges; and
 - advanced the parent submodule pointer to the instance branch commit carrying
   the P1.8e placement update.
+
+## 2026-06-23 - Tightened NICF/TFL6 phase closeout workflow
+- amended the instance `AGENTS.md` contract so phase closeout is the required
+  next slice after the final child issue or phase gate completes;
+- corrected the instance roadmap Current Next Steps so Phase 1 closeout comes
+  before Phase 2 P2.1 / `#16`; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the workflow correction.

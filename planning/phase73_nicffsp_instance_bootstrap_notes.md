@@ -475,3 +475,9 @@ of model-input bundle task `#17`. The instance roadmap now includes a
 issue `#11`, and moves Current Next Steps to Phase 2 P2.1 / `#16`.
 Phase 1 parent issue `#4` remains open under its closure rule until the parent
 FEMIC PR merges. No implementation work was started.
+
+Workflow correction: after maintainer review, the instance `AGENTS.md` contract
+now explicitly requires phase closeout as the next slice after the final child
+issue or phase gate completes. The instance `ROADMAP.md` Current Next Steps now
+points to Phase 1 closeout before Phase 2 P2.1 / `#16`, so the workflow cannot
+skip the phase parent/PR closeout step.
