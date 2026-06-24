@@ -455,3 +455,13 @@ P4.1 model-input bundle build (`#17`); and Phase 5 parent `#15` now links P5.1
 runtime artifact publication policy (`#18`). The instance roadmap points next
 to `P1.8d` dependency-order recording and `P1.8e` placement/defer decisions
 for `#8`, `#9`, and `#10`. No implementation work was started.
+
+Completed bounded move: `P1.8d` added a `Dependency Order` section to
+`external/femic-tfl6-instance/ROADMAP.md`. The recorded order is Phase 2
+source-layer/THLB foundation, Phase 3 model-design assumptions, Phase 4
+model-input generation, Phase 4 Patchworks runtime build/QA, and Phase 5
+publication/teaching release. Cedar design `#8` and expansion design `#9` are
+recorded as model-design-layer work, while runtime-package follow-on `#10` is
+downstream of accepted source layers, THLB outputs, model design, and
+model-input bundle construction. The instance roadmap now points next to
+`P1.8e`: place or explicitly defer `#8`, `#9`, and `#10`.

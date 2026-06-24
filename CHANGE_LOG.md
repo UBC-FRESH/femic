@@ -18156,3 +18156,15 @@
   proposed phase task lists; and
 - advanced the parent submodule pointer to the instance branch commit carrying
   the P1.8c child-issue update.
+
+## 2026-06-23 - Recorded NICF/TFL6 future phase dependencies
+- completed instance P1.8d by adding an explicit dependency-order section to
+  the instance roadmap;
+- recorded the required order from Phase 2 source-layer/THLB work through Phase
+  3 model design, Phase 4 model-input/runtime-package work, and Phase 5
+  publication/teaching release;
+- recorded cedar design `#8`, expansion design `#9`, and runtime-package
+  follow-on `#10` at their dependency layers without starting implementation;
+  and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8d dependency-order update.
