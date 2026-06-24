@@ -2024,7 +2024,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [ ] P74.3c Close instance Phase 1 parent `UBC-FRESH/femic-tfl6-instance#4`
     after the parent FEMIC PR has merged.
 
-## Phase 75: Evaluate `bcdata` for BC Data Catalogue Discovery
+## Phase 75: Evaluate `bcdata` and `designatedlands` for BC Data Discovery
 
 - [ ] P75.1 Create the side-by-side comparison contract (`#201`)
   - [ ] P75.1a Audit FEMIC's current BCDC resolver/fetch/DWDS surfaces and
@@ -2036,6 +2036,9 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [ ] P75.1c Record the metrics for candidate recall, ranking,
     resource-classification accuracy, direct-download/WFS support, failure
     modes, speed, and reproducibility.
+  - [ ] P75.1d Add BC Gov `designatedlands` as a source-manifest and
+    workflow-comparison input, especially for protected/designated lands,
+    forestry restriction classes, overlap handling, and source CSV metadata.
 - [ ] P75.2 Run the `bcdata` versus FEMIC comparison (`#201`)
   - [ ] P75.2a Capture baseline FEMIC resolver outputs for the comparison
     corpus.
@@ -2048,8 +2051,11 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     bridge, and embedded Python-to-R dependency options.
   - [ ] P75.3b Explicitly decide whether `reticulate` is relevant or the wrong
     dependency direction for FEMIC.
-  - [ ] P75.3c Record dependency, installation, CI, Windows, and offline/cache
-    implications before implementation.
+  - [ ] P75.3c Compare `designatedlands` as a source-manifest reference,
+    candidate recipe pattern, or external workflow to mine, rather than a
+    lightweight FEMIC runtime dependency.
+  - [ ] P75.3d Record dependency, installation, CI, Windows, database, GDAL,
+    and offline/cache implications before implementation.
 - [ ] P75.4 Implement the accepted path only if the comparison justifies it
   (`#201`)
   - [ ] P75.4a Add the smallest maintainable optional bridge or FEMIC resolver
@@ -2101,5 +2107,6 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     `UBC-FRESH/femic-tfl6-instance#4` under its closure rule.
   - `P75.1` opened under parent FEMIC issue `#201` on
     `feature/issue-201-bcdata-resolver-evaluation`: the next bounded move for
-    this lane is the comparison contract and query corpus, not R-package
+    this lane is the comparison contract and query corpus, including `bcdata`
+    and BC Gov `designatedlands`, not R-package or designated-lands workflow
     integration.

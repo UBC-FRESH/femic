@@ -18207,3 +18207,13 @@
   non-goals; and
 - created feature branch `feature/issue-201-bcdata-resolver-evaluation` for the
   parent FEMIC planning lane.
+
+## 2026-06-24 - Added BC Gov `designatedlands` to the discovery evaluation lane
+- broadened Phase 75 and issue `#201` so BC Gov `designatedlands` is evaluated
+  alongside `bcdata`;
+- recorded `designatedlands` as a source-manifest and workflow-pattern
+  candidate for designated/protected lands, forestry restriction classes,
+  overlap handling, and source metadata; and
+- kept the dependency boundary explicit: do not treat the full
+  PostGIS/GDAL-backed `designatedlands` workflow as a lightweight FEMIC runtime
+  dependency without a separate adoption decision.
