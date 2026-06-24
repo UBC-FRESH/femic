@@ -18135,3 +18135,14 @@
   parent/child issue tree; and
 - advanced the parent submodule pointer to the instance branch commit carrying
   the P1.8a roadmap draft.
+
+## 2026-06-23 - Created NICF/TFL6 future phase parent issues
+- completed instance P1.8b by opening one GitHub parent issue for each proposed
+  future phase: Phase 2 `#12`, Phase 3 `#13`, Phase 4 `#14`, and Phase 5
+  `#15`;
+- updated the instance roadmap so each proposed phase heading references its
+  parent issue number;
+- moved the instance Current Next Steps to P1.8c child task issue creation and
+  P1.8d dependency-order recording; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8b issue-tree update.

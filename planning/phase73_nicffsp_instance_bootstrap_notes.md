@@ -436,3 +436,13 @@ tree. No source-layer extraction, THLB recipe execution, cedar/expansion
 implementation, XML generation, Matrix Builder work, or Patchworks runtime
 packaging was started. The next bounded move is `P1.8b` / `#11`: create one
 GitHub parent issue for each proposed Phase 2 through Phase 5 section.
+
+Completed bounded move: `P1.8b` opened one parent issue for each proposed
+future roadmap phase in `UBC-FRESH/femic-tfl6-instance`: Phase 2 reviewed
+source layers and THLB netdown (`#12`), Phase 3 model design assumptions
+(`#13`), Phase 4 model inputs and Patchworks runtime package (`#14`), and
+Phase 5 publication, teaching docs, and release QA (`#15`). The instance
+roadmap now references those issue numbers and points Current Next Steps to
+`P1.8c` child task issue creation and `P1.8d` dependency-order recording.
+Implementation follow-on issues `#8`, `#9`, and `#10` remain idle until P1.8
+links the full parent/child issue tree. No implementation work was started.
