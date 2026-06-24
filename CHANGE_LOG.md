@@ -17710,3 +17710,489 @@
   run, successful launch, accepted `test01` scenario evidence, and completed
   cold-clone publication proof; and
 - advanced the parent release lane to final governing-issue closeout.
+## 2026-06-23 - Bootstrapped the NICF FSP FRST 558 instance lane
+- opened parent coordination issue `UBC-FRESH/femic#199`;
+- created and pushed `UBC-FRESH/femic-nicffsp-instance` with FEMIC instance
+  scaffolding and modelwright-style workflow surfaces;
+- linked the new repo under `external/femic-nicffsp-instance` as a parent FEMIC
+  submodule;
+- tracked the initial NICF FSP AOI, LU, and FSP source payloads under lowercase
+  instance paths with hashes and provenance notes; and
+- opened `UBC-FRESH/femic-nicffsp-instance#1` for the next source-normalization
+  and K3Z-template build-boundary task.
+## 2026-06-23 - Split NICF FSP Phase 1 into task-wise instance issues
+- narrowed `UBC-FRESH/femic-nicffsp-instance#1` to `P1.2` source-payload
+  inspection and normalization;
+- opened `UBC-FRESH/femic-nicffsp-instance#3` for the `P1.3` K3Z-to-NICF
+  adaptation contract;
+- opened `UBC-FRESH/femic-nicffsp-instance#2` for the `P1.4` cedar, expansion,
+  and runtime-package follow-on issue split; and
+- updated the instance roadmap and parent Phase 73 notes so the active edge is
+  source normalization before model design or compilation work.
+## 2026-06-23 - Added the NICF FSP Phase 1 parent issue
+- opened `UBC-FRESH/femic-nicffsp-instance#4` as the Phase 1 parent issue;
+- linked child task issues `#1`, `#3`, and `#2` from the parent issue body;
+- added child-issue backlinks to the parent phase issue; and
+- updated parent and instance planning surfaces to match the modelwright-style
+  parent-per-phase, child-per-task workflow.
+## 2026-06-23 - Hardened the NICF instance agent workflow contract
+- amended `external/femic-nicffsp-instance/AGENTS.md` so future roadmap phase
+  expansions must follow the modelwright-style issue hierarchy;
+- recorded that each phase gets one parent issue and each phase task gets one
+  linked child issue; and
+- advanced the parent submodule pointer to the instance commit carrying that
+  contract.
+## 2026-06-23 - Recorded the NICF FSP amendment spatial inventory
+- inspected `external/femic-nicffsp-instance/data/source/nicf_fsp/nicf_fsp_amendment_3_spatial.zip`
+  for `P1.2a`;
+- recorded the single `NICF_FDU_2024` shapefile family, six EPSG:3005 polygon
+  features, feature labels, and measured areas in the instance source
+  inventory; and
+- advanced the parent submodule pointer to the instance commit carrying that
+  source-inventory evidence.
+## 2026-06-23 - Recorded the NICF BCGW landscape-unit inventory
+- inspected `external/femic-nicffsp-instance/data/source/nicf_fsp/bcgw_lu_clip_2026_06.zip`
+  for `P1.2`;
+- recorded the `RMP_LU_SVW_polygon` shapefile family, 27 EPSG:3005 polygon
+  features, LU names, measured areas, and overlap with `NICF_FDU_2024`; and
+- advanced the parent submodule pointer to the instance commit carrying the LU
+  inventory while leaving the relevant-LU decision open for FSP PDF cross-check.
+## 2026-06-23 - Recorded the NICF FSP PDF cross-check
+- extracted text from `external/femic-nicffsp-instance/data/source/nicf_fsp/nicf_forest_stewardship_plan_2020.pdf`;
+- confirmed the 2020 FSP names Holberg, Keogh, and Marble as the three proposed
+  FDUs/LUs;
+- recorded that Nahwitti, Shushartie, and Tsulquate appear in the 2024
+  amendment spatial payload but not the extracted 2020 FSP text; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  source-version decision evidence.
+## 2026-06-23 - Accepted the 2024 amendment layer as the NICF bootstrap AOI
+- recorded `NICF_FDU_2024.shp` as the accepted bootstrap AOI source in the
+  instance source inventory;
+- preserved all six FDU/LU features as canonical source geometry semantics;
+- kept the 2020 FSP three-FDU evidence as historical/context evidence; and
+- advanced the parent submodule pointer to the instance commit carrying the AOI
+  convention decision.
+## 2026-06-23 - Extracted the NICF canonical AOI source layer
+- extracted the accepted `NICF_FDU_2024` shapefile family into
+  `external/femic-nicffsp-instance/data/source/nicf_fsp/aoi/nicf_fdu_2024.*`;
+- verified the extracted layer reads as six valid EPSG:3005 polygon features
+  with the expected bounds and measured area; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  extracted canonical AOI source.
+
+## 2026-06-23 - Corrected the NICF FSP AOI to FDU 1-3 only
+- corrected the NICF source inventory after project clarification that the FSP
+  AOI is the provided amendment spatial boundary filtered to FDU 1 Holberg,
+  FDU 2 Keogh, and FDU 3 Marble;
+- replaced the instance canonical AOI extraction with
+  `external/femic-nicffsp-instance/data/source/nicf_fsp/aoi/nicf_fsp_aoi.*`;
+- verified the corrected AOI reads as three valid EPSG:3005 polygon features
+  totaling `147798.392 ha`; and
+- left the six-feature amendment zip as raw source provenance rather than the
+  runtime AOI boundary.
+
+## 2026-06-23 - Recorded the NICF LU reference extraction
+- extracted the FSP-relevant BCGW LU subset to
+  `external/femic-nicffsp-instance/data/source/nicf_fsp/lu_reference/nicf_lu_reference.*`;
+- verified the LU reference source reads as three valid EPSG:3005 polygon
+  features for Holberg, Keogh, and Marble totaling `165588.857 ha`;
+- recorded that the full 27-feature BCGW LU zip remains raw provenance; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  completed `P1.2d` source-layer decision.
+
+## 2026-06-23 - Completed NICF P1.2 source-path wiring
+- updated the NICF instance run profile so `selection.boundary_path` points to
+  the accepted AOI source
+  `external/femic-nicffsp-instance/data/source/nicf_fsp/aoi/nicf_fsp_aoi.shp`;
+- recorded the LU reference source path in the run profile at
+  `selection.source_context.lu_reference_path`;
+- marked `P1.2` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  run-profile source-path wiring.
+
+## 2026-06-23 - Recorded NICF P1.3a K3Z template comparison
+- added the K3Z-to-NICF comparison to
+  `external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`;
+- recorded that K3Z structure can carry forward, but generated bundle tables,
+  Patchworks tracks, treatment variants, TIPSY rules, and runtime paths are not
+  accepted NICF semantics;
+- marked `P1.3a` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  comparison note.
+
+## 2026-06-23 - Recorded NICF P1.3b run-profile boundary
+- updated the NICF instance run profile with the first accepted stratification,
+  VDYP, and managed-curve defaults beyond source paths;
+- recorded the P1.3b boundary in
+  `external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`;
+- marked `P1.3b` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  run-profile boundary decision.
+
+## 2026-06-23 - Recorded NICF P1.3c assumption split
+- recorded K3Z structural carry-forward assumptions and FRST 558
+  review-required assumptions in
+  `external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`;
+- marked `P1.3c` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  assumption split.
+
+## 2026-06-23 - Recorded NICF P1.3 adaptation-boundary acceptance
+- recorded the minimum source-derived model-input surfaces and P1.4 handoff
+  terms in
+  `external/femic-nicffsp-instance/planning/k3z_template_adaptation.md`;
+- marked `P1.3` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  accepted adaptation boundary.
+
+## 2026-06-23 - Queued NICF 2025 VRI source-data collection
+- opened `external/femic-nicffsp-instance` issue `#5` as `P1.5` for
+  materializing the latest 2025 provincial VRI R1 and VDYP7 polygon/layer
+  source packages before NICF base AOI inventory extraction depends on them;
+- added `external/femic-nicffsp-instance/planning/vri_2025_data_collection.md`
+  with package ids, expected source package names, public-data target paths,
+  and acceptance criteria;
+- updated the instance Phase 1 roadmap and parent issue so the new
+  data-collection task is a linked child issue; and
+- kept the task boundary to source materialization and verification, with no
+  model-input bundle or Patchworks runtime-package build started.
+
+## 2026-06-23 - Recorded NICF P1.5a 2025 VRI package metadata
+- recorded the official 2025 R1 and VDYP7 polygon/layer package metadata in
+  `external/femic-nicffsp-instance/planning/vri_2025_data_collection.md`;
+- marked `P1.5a` complete in the instance roadmap; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  metadata snapshot.
+
+## 2026-06-23 - Materialized NICF 2025 VRI source archives
+- downloaded and annex-added the 2025 R1 and VDYP7 polygon/layer source
+  archives under `external/femic-public-data/data/bc/vri/2025/`;
+- verified both zip archives with CRC checks before accepting the local
+  materialization;
+- pushed public-data commit `348d9b60529e3a0160672048fc33e4083f2128fb`; and
+- marked `P1.5b` complete in the instance roadmap while leaving read-smoke,
+  CRS, and public-remote publication evidence open.
+
+## 2026-06-23 - Added NICF TFL 6 MP10 information-package reference
+- found the BC-hosted copy of the TFL 6 Management Plan 10 timber supply
+  analysis information package requested for NICF source context;
+- downloaded it to
+  `external/femic-nicffsp-instance/data/source/nicf_fsp/reference/tfl_6_management_plan_10_information_package_2011.pdf`;
+- verified the PDF page count, checksum, and title text; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  reference PDF and source-inventory provenance.
+
+## 2026-06-23 - Queued NICF TFL 6 AOI pivot and THLB recipe planning
+- opened instance issue `#6` for pivoting the active AOI to TFL 6 and building
+  TFL 6-clipped 2025 VRI input layers;
+- opened instance issue `#7` for planning source-layer and THLB netdown recipe
+  extraction from the 2011 TFL 6 documents;
+- added detailed instance planning notes for both lanes; and
+- updated the parent coordination notes and instance roadmap so the original
+  FDU 1/2/3 boundary is retained as provenance but superseded as the active
+  model extraction AOI.
+
+## 2026-06-23 - Reconciled NICF pre-pivot AOI planning surfaces
+- updated the instance README, quickstart, run-profile comments, and older
+  planning notes so TFL 6 is consistently the active target AOI;
+- kept `config/run_profile.nicffsp.yaml` pointed at the existing FDU bootstrap
+  boundary until `P1.6a` materializes the TFL 6 boundary artifact; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  pivot-hygiene cleanup.
+
+## 2026-06-23 - Materialized NICF TFL 6 boundary
+- fetched and normalized `WHSE_ADMIN_BOUNDARIES.FADM_TFL` where
+  `FOREST_FILE_ID='TFL6'`;
+- added
+  `external/femic-nicffsp-instance/data/source/tfl_6/aoi/tfl_6_boundary.gpkg`;
+- verified 182 EPSG:3005 features, `217042.719 ha` union area, matching
+  bounds, and valid geometries after repairing one source ring
+  self-intersection; and
+- switched the instance run profile to the TFL 6 boundary and advanced the
+  parent submodule pointer.
+
+## 2026-06-23 - Renamed NICF instance to TFL6 and indexed reference corpus
+- renamed the instance GitHub repository to `UBC-FRESH/femic-tfl6-instance`;
+- moved the parent submodule path from `external/femic-nicffsp-instance` to
+  `external/femic-tfl6-instance`;
+- indexed the locally copied TFL 6 reference corpus into
+  `reference/tfl6_reference_index.json`, `reference/tfl6_reference_index.md`,
+  and `reference/extracted_text/`; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  corpus index and visible repo-name updates.
+
+## 2026-06-23 - Clipped NICF/TFL6 2025 R1 VRI input
+- clipped the 2025 provincial R1 VRI polygon source to the accepted TFL 6
+  boundary;
+- added
+  `external/femic-tfl6-instance/data/input/tfl_6/vri_2025_r1_poly_tfl6.gpkg`
+  and its clip manifest;
+- verified `26959` valid EPSG:3005 MultiPolygon features with
+  `217042.718950 ha` clipped area; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  `P1.6b` output and QA notes.
+
+## 2026-06-23 - Filtered NICF/TFL6 2025 VDYP7 inputs
+- filtered the 2025 VDYP7 polygon and layer tables to the clipped TFL 6 R1
+  `feature_id` set;
+- added
+  `external/femic-tfl6-instance/data/input/tfl_6/vdyp7_input_poly_2025_tfl6.parquet`,
+  `external/femic-tfl6-instance/data/input/tfl_6/vdyp7_input_layer_2025_tfl6.parquet`,
+  and the filter manifest;
+- retained `26833` VDYP7 polygon rows and `25585` VDYP7 layer rows;
+- verified zero retained feature IDs outside the clipped R1 set and zero
+  layer-table feature IDs outside the retained VDYP7 polygon table; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  `P1.6c` output and QA notes.
+
+## 2026-06-23 - Accepted NICF/TFL6 input-layer manifest
+- added
+  `external/femic-tfl6-instance/data/input/tfl_6/input_layers_manifest.json`
+  as the accepted active TFL 6 input manifest;
+- recorded the accepted TFL 6 boundary, clipped 2025 R1 polygon input,
+  filtered 2025 VDYP7 polygon table, and filtered 2025 VDYP7 layer table;
+- updated instance planning so the original FDU 1/2/3 AOI is historical
+  provenance only;
+- marked instance P1.6 complete and unblocked P1.7b reviewed source-layer/THLB
+  recipe planning; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  `P1.6d` closeout.
+
+## 2026-06-23 - Reviewed NICF/TFL6 2011 recipe source documents
+- added
+  `external/femic-tfl6-instance/planning/tfl6_2011_document_review.md` as the
+  first reviewed P1.7b document-mining note;
+- anchored the land-base review to the 2011 information package Section 6 and
+  Tables 4-17;
+- recorded first-pass source-layer, THLB netdown, yield, visual, old-seral,
+  steep-terrain, and minimum-harvest assumption candidates;
+- kept MP10 historical benchmarks separate from the current P1.6 2025 TFL 6
+  input-layer surface; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  `P1.7b` review.
+
+## 2026-06-23 - Added NICF/TFL6 THLB netdown backbone
+- added
+  `external/femic-tfl6-instance/planning/tfl6_thlb_netdown_steps.md` as the
+  ordered Management Plan 10 Table 4 THLB netdown backbone;
+- recorded the literal netdown sequence, cumulative benchmarks, tentative
+  `GLB -> AFLB -> LHLB -> THLB` FEMIC stage mapping, and per-step
+  spatial/aspatial input-layer requirements;
+- kept recipe YAML creation and execution blocked pending P1.7c/P1.7d review;
+  and
+- advanced the parent submodule pointer to the instance commit carrying the
+  netdown planning surface.
+
+## 2026-06-23 - Recorded NICF/TFL6 Instrument 101 additions
+- scraped the BC TFL 6 page for post-2011 instrument evidence and retained
+  Instrument 101 as the relevant 2015 boundary-extension document;
+- added
+  `external/femic-tfl6-instance/reference/tfl-06-inst-101-january-1-2015.pdf`
+  plus extracted page images for visual review;
+- updated the TFL 6 reference index and added
+  `external/femic-tfl6-instance/planning/tfl6_instrument_boundary_reconciliation.md`;
+- recorded the Instrument 101 map-labelled addition areas of `44,612 ha +/-`
+  and `2,096 ha +/-`; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  boundary-reconciliation evidence.
+
+## 2026-06-23 - Added NICF/TFL6 adjusted THLB validation targets
+- added
+  `external/femic-tfl6-instance/planning/tfl6_adjusted_thlb_benchmarks.md` and
+  `external/femic-tfl6-instance/planning/tfl6_adjusted_thlb_benchmarks.json`;
+- scaled MP10 Table 4 values by `217042.718950 / 171441 = 1.265990742879`;
+- recorded provisional current-AOI targets of `186,175.333 ha` productive
+  forest, `170,428.940 ha` operable landbase, `136,487.728 ha` current THLB,
+  and `134,598.870 ha` long-term landbase; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  adjusted benchmark surfaces.
+
+## 2026-06-23 - Clarified NICF/TFL6 adjusted benchmark caveat
+- recorded that Instrument 101 is close enough for the teaching-instance
+  benchmark strategy while leaving residual area mismatch unresolved;
+- noted possible smaller net-outs, parcel cleanup, boundary-vintage
+  differences, or other post-MP10 tenure changes; and
+- recorded a possible K3Z/community-forest carve-out only as an unverified
+  candidate.
+
+## 2026-06-23 - Added NICF/TFL6 recipe adaptation contract
+- added
+  `external/femic-tfl6-instance/planning/tfl6_recipe_adaptation_contract.md`;
+- classified MP10 Table 4 netdown rows into TSA29 carry-forward,
+  TFL/general-FMU adaptation, missing-source, aspatial fallback, and reference
+  target categories;
+- recorded source-layer priority and validation-context treatment for
+  Instrument 101 and adjusted current-AOI benchmark tables; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  P1.7c planning contract.
+
+## 2026-06-23 - Completed NICF/TFL6 recipe skeleton planning
+- added
+  `external/femic-tfl6-instance/planning/tfl6_recipe_skeletons.md`;
+- proposed future TFL/general-FMU recipe destinations under `config/tfl6/`;
+- listed accepted and missing source-layer candidates with acquisition
+  strategies where known;
+- drafted the ordered THLB netdown skeleton with source IDs, execution classes,
+  blocked-execution status, and scaled validation targets;
+- kept recipe YAML creation, source acquisition, and THLB execution blocked;
+  and
+- advanced the parent submodule pointer to the instance commit completing P1.7.
+
+## 2026-06-23 - Recorded NICF/TFL6 2025 VRI read smoke
+- updated
+  `external/femic-tfl6-instance/planning/vri_2025_data_collection.md` with
+  direct zipped file-geodatabase read-smoke evidence;
+- verified `VEG_COMP_LYR_R1_POLY` as an EPSG:3005 `MultiPolygon` layer with
+  `7154522` features;
+- verified `VEG_COMP_VDYP7_INPUT_POLY` and `VEG_COMP_VDYP7_INPUT_LAYER` as
+  non-spatial tables with `7104182` and `7608054` rows;
+- kept source archive extraction and publication work out of this bounded
+  slice; and
+- advanced the parent submodule pointer to the instance commit completing
+  P1.5c.
+
+## 2026-06-23 - Audited NICF/TFL6 2025 VRI public-data publication
+- updated
+  `external/femic-tfl6-instance/planning/vri_2025_data_collection.md` with
+  the `arbutus-s3` publication-status audit;
+- confirmed the public-data remote is configured with `public: yes` and the
+  expected public URL;
+- confirmed the two 2025 VRI archive annex keys are not yet present on the
+  public remote;
+- left P1.5 open for remote key copy, `git-annex` publication-state push, and
+  public-read materialization smoke; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  publication audit.
+
+## 2026-06-23 - Published NICF/TFL6 2025 VRI source archives
+- copied the two 2025 VRI source archive annex keys to the
+  `external/femic-public-data` `arbutus-s3` public-data remote;
+- merged and pushed the `femic-public-data` `git-annex` branch so fresh clones
+  can see the remote key locations;
+- proved no-credentials public materialization from a fresh temporary clone of
+  `UBC-FRESH/femic-public-data`;
+- updated
+  `external/femic-tfl6-instance/planning/vri_2025_data_collection.md` with the
+  publication and public-read smoke evidence;
+- marked instance P1.5 complete; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  P1.5 closeout.
+
+## 2026-06-23 - Opened NICF/TFL6 cedar design follow-on
+- opened `UBC-FRESH/femic-tfl6-instance#8` as the P1.4a cedar-signal design
+  follow-on issue;
+- scoped the follow-on to Cw cultural reserve behavior, utility-pole-grade
+  product requirements, treatment implications, yield-curve implications, and
+  Patchworks-facing account/reporting outputs;
+- kept model-input bundle generation and Patchworks runtime-package
+  compilation out of the cedar issue scope; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  P1.4a roadmap update.
+
+## 2026-06-23 - Opened NICF/TFL6 expansion design follow-on
+- opened `UBC-FRESH/femic-tfl6-instance#9` as the P1.4b expansion
+  candidate-area design follow-on issue;
+- scoped the follow-on to unallocated candidate-area pool semantics, K3Z
+  carry-forward review, source-derived productivity screening, AAC uplift
+  constraints, and dependency boundaries;
+- kept candidate-area geometry generation, THLB/model-input edits, and
+  Patchworks runtime-package compilation out of the expansion issue scope; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  P1.4b roadmap update.
+
+## 2026-06-23 - Opened NICF/TFL6 Patchworks runtime follow-on
+- opened `UBC-FRESH/femic-tfl6-instance#10` as the P1.4c Patchworks
+  runtime-package build/QA follow-on issue;
+- scoped the follow-on to runtime-package prerequisites, ForestModel/XML
+  generation boundaries, Matrix Builder expectations, tracks/features/accounts
+  QA, representative Patchworks launch smoke, and artifact policy;
+- closed instance P1.4 / `#2` after splitting cedar, expansion, and
+  runtime-package work into follow-on issues;
+- left the Phase 1 parent issue open until the parent FEMIC PR merges; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  P1.4 closeout.
+
+## 2026-06-23 - Added NICF/TFL6 P1.8 planning gate
+- opened `UBC-FRESH/femic-tfl6-instance#11` as the final Phase 1
+  next-phase planning gate;
+- updated the instance roadmap so Phase 1 remains open until Phase 2 through
+  at least Phase 5, parent issues, child task issues, and dependency order are
+  explicit;
+- recorded that follow-on implementation issues `#8`, `#9`, and `#10` should
+  remain idle until P1.8 places them into the planned phase structure or a
+  parallel lane is explicitly approved; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8 gate.
+
+## 2026-06-23 - Drafted NICF/TFL6 future phase roadmap
+- completed instance P1.8a by adding proposed Phase 2 through Phase 5 sections
+  to `external/femic-tfl6-instance/ROADMAP.md`;
+- sequenced reviewed source-layer/THLB work before model-design assumptions,
+  model-input and Patchworks runtime build, and publication/teaching release
+  QA;
+- placed existing follow-on implementation issues `#8`, `#9`, and `#10` in
+  the proposed phase narrative while keeping them idle until P1.8 finishes the
+  parent/child issue tree; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8a roadmap draft.
+
+## 2026-06-23 - Created NICF/TFL6 future phase parent issues
+- completed instance P1.8b by opening one GitHub parent issue for each proposed
+  future phase: Phase 2 `#12`, Phase 3 `#13`, Phase 4 `#14`, and Phase 5
+  `#15`;
+- updated the instance roadmap so each proposed phase heading references its
+  parent issue number;
+- moved the instance Current Next Steps to P1.8c child task issue creation and
+  P1.8d dependency-order recording; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8b issue-tree update.
+
+## 2026-06-23 - Created NICF/TFL6 future phase child issues
+- completed instance P1.8c by creating/linking first executable child task
+  issues under the proposed future phase parents;
+- opened P2.1 `#16`, P4.1 `#17`, and P5.1 `#18`, and reused existing cedar
+  design issue `#8` as the first Phase 3 child under `#13`;
+- updated the instance roadmap so those child issue numbers are visible in the
+  proposed phase task lists; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8c child-issue update.
+
+## 2026-06-23 - Recorded NICF/TFL6 future phase dependencies
+- completed instance P1.8d by adding an explicit dependency-order section to
+  the instance roadmap;
+- recorded the required order from Phase 2 source-layer/THLB work through Phase
+  3 model design, Phase 4 model-input/runtime-package work, and Phase 5
+  publication/teaching release;
+- recorded cedar design `#8`, expansion design `#9`, and runtime-package
+  follow-on `#10` at their dependency layers without starting implementation;
+  and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8d dependency-order update.
+
+## 2026-06-23 - Placed NICF/TFL6 follow-on issues in future phases
+- completed instance P1.8e by placing cedar design `#8`, expansion design `#9`,
+  and runtime-package build/QA `#10` into the future phase structure;
+- recorded `#8` and `#9` under Phase 3 parent `#13`, and `#10` under Phase 4
+  parent `#14` downstream of model-input bundle task `#17`;
+- marked P1.8 complete and closed instance issue `#11`, while leaving Phase 1
+  parent issue `#4` open until the parent FEMIC PR merges; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8e placement update.
+
+## 2026-06-23 - Tightened NICF/TFL6 phase closeout workflow
+- amended the instance `AGENTS.md` contract so phase closeout is the required
+  next slice after the final child issue or phase gate completes;
+- corrected the instance roadmap Current Next Steps so Phase 1 closeout comes
+  before Phase 2 P2.1 / `#16`; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the workflow correction.
+
+## 2026-06-23 - Resolved TFL6 parent PR merge conflicts
+- merged the current parent `main` branch into the TFL 6 bootstrap branch;
+- preserved `main`'s MKRF stand-stratification lane as parent roadmap Phase 73;
+- renumbered the TFL 6 bootstrap lane to parent roadmap Phase 74 and renamed
+  the parent planning note to `planning/phase74_tfl6_instance_bootstrap_notes.md`;
+- kept the `external/femic-public-data` submodule at the descendant commit that
+  includes both `main`'s raw-zip VRI pointer and the TFL 6 2025 VRI archive
+  publication work; and
+- left the active TFL 6 edge at Phase 1 closeout before Phase 2 P2.1 starts.
