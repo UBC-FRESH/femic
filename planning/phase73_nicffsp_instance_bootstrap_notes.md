@@ -261,6 +261,16 @@ The filter scanned `7104182` VDYP7 polygon rows and retained `26833`, scanned
 `7608054` VDYP7 layer rows and retained `25585`, verified zero retained feature
 IDs outside the clipped R1 set, and verified zero layer-table feature IDs
 outside the retained VDYP7 polygon table. Missing R1-to-VDYP rows are recorded
-as diagnostics for downstream inventory and THLB recipe work. Next bounded move
-is `P1.6d`: write the accepted TFL 6 input-layer manifest and supersession
-closeout.
+as diagnostics for downstream inventory and THLB recipe work.
+
+Completed bounded move: `P1.6d` accepted the active TFL 6 input-layer manifest
+at
+`external/femic-tfl6-instance/data/input/tfl_6/input_layers_manifest.json`.
+The manifest records the active TFL 6 boundary, clipped 2025 R1 polygon layer,
+filtered 2025 VDYP7 polygon table, filtered 2025 VDYP7 layer table, and
+join-contract diagnostics. Instance planning now treats the original FDU 1/2/3
+AOI as historical provenance only, not as the active model extraction boundary.
+This completes instance issue `UBC-FRESH/femic-tfl6-instance#6`; the next
+bounded move is `P1.7b` / `#7`, a reviewed pass over the 2011 TFL 6 management
+plan and information package for land-base, source-layer, yield, and THLB
+netdown assumptions.

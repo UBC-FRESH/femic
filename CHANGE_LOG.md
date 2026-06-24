@@ -17944,3 +17944,16 @@
   layer-table feature IDs outside the retained VDYP7 polygon table; and
 - advanced the parent submodule pointer to the instance commit carrying the
   `P1.6c` output and QA notes.
+
+## 2026-06-23 - Accepted NICF/TFL6 input-layer manifest
+- added
+  `external/femic-tfl6-instance/data/input/tfl_6/input_layers_manifest.json`
+  as the accepted active TFL 6 input manifest;
+- recorded the accepted TFL 6 boundary, clipped 2025 R1 polygon input,
+  filtered 2025 VDYP7 polygon table, and filtered 2025 VDYP7 layer table;
+- updated instance planning so the original FDU 1/2/3 AOI is historical
+  provenance only;
+- marked instance P1.6 complete and unblocked P1.7b reviewed source-layer/THLB
+  recipe planning; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  `P1.6d` closeout.
