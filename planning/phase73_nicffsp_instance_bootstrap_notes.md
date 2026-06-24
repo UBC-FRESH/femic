@@ -250,3 +250,17 @@ features with `217042.718950 ha` clipped area. `feature_id` is the preferred
 VDYP join-key candidate for `P1.6c`. Next bounded move is `P1.6c`: filter the
 2025 VDYP7 polygon and layer tables to the clipped TFL 6 `feature_id` set and
 verify key integrity.
+
+Completed bounded move: `P1.6c` filtered the 2025 VDYP7 polygon and layer
+tables to the clipped TFL 6 `feature_id` set. The instance now carries
+`external/femic-tfl6-instance/data/input/tfl_6/vdyp7_input_poly_2025_tfl6.parquet`,
+`external/femic-tfl6-instance/data/input/tfl_6/vdyp7_input_layer_2025_tfl6.parquet`,
+and
+`external/femic-tfl6-instance/data/input/tfl_6/vdyp7_input_2025_tfl6_filter_manifest.json`.
+The filter scanned `7104182` VDYP7 polygon rows and retained `26833`, scanned
+`7608054` VDYP7 layer rows and retained `25585`, verified zero retained feature
+IDs outside the clipped R1 set, and verified zero layer-table feature IDs
+outside the retained VDYP7 polygon table. Missing R1-to-VDYP rows are recorded
+as diagnostics for downstream inventory and THLB recipe work. Next bounded move
+is `P1.6d`: write the accepted TFL 6 input-layer manifest and supersession
+closeout.

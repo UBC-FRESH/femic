@@ -17931,3 +17931,16 @@
   `217042.718950 ha` clipped area; and
 - advanced the parent submodule pointer to the instance commit carrying the
   `P1.6b` output and QA notes.
+
+## 2026-06-23 - Filtered NICF/TFL6 2025 VDYP7 inputs
+- filtered the 2025 VDYP7 polygon and layer tables to the clipped TFL 6 R1
+  `feature_id` set;
+- added
+  `external/femic-tfl6-instance/data/input/tfl_6/vdyp7_input_poly_2025_tfl6.parquet`,
+  `external/femic-tfl6-instance/data/input/tfl_6/vdyp7_input_layer_2025_tfl6.parquet`,
+  and the filter manifest;
+- retained `26833` VDYP7 polygon rows and `25585` VDYP7 layer rows;
+- verified zero retained feature IDs outside the clipped R1 set and zero
+  layer-table feature IDs outside the retained VDYP7 polygon table; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  `P1.6c` output and QA notes.
