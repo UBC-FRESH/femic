@@ -17920,3 +17920,14 @@
   and `reference/extracted_text/`; and
 - advanced the parent submodule pointer to the instance commit carrying the
   corpus index and visible repo-name updates.
+
+## 2026-06-23 - Clipped NICF/TFL6 2025 R1 VRI input
+- clipped the 2025 provincial R1 VRI polygon source to the accepted TFL 6
+  boundary;
+- added
+  `external/femic-tfl6-instance/data/input/tfl_6/vri_2025_r1_poly_tfl6.gpkg`
+  and its clip manifest;
+- verified `26959` valid EPSG:3005 MultiPolygon features with
+  `217042.718950 ha` clipped area; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  `P1.6b` output and QA notes.

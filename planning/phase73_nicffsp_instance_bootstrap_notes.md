@@ -222,8 +222,9 @@ layer `tfl_6_boundary`. The boundary was fetched from
 lowercase fields, and verified as 182 EPSG:3005 features with `217042.719 ha`
 union area and matching exploratory bounds. One source ring self-intersection
 was repaired with no rounded union-area change. The instance run profile now
-points to the TFL 6 boundary. Next bounded move is `P1.6b`: clip the 2025 VRI
-R1 polygon source to this boundary and record geometry QA.
+points to the TFL 6 boundary. The next bounded move at that checkpoint was
+`P1.6b`: clip the 2025 VRI R1 polygon source to this boundary and record
+geometry QA.
 
 Rename and reference-corpus update: the instance repository is now
 `UBC-FRESH/femic-tfl6-instance`, linked in the parent checkout at
@@ -237,3 +238,15 @@ files: 17 PDFs and one PNG, including AAC rationale, licence maps, instrument,
 annual reports, Management Plan 9/10 files, analysis report, and information
 package documents. This completes `P1.7a`; `P1.7b` remains the later reviewed
 document-mining step.
+
+Completed bounded move: `P1.6b` clipped the 2025 provincial VRI R1 polygon
+source to the accepted TFL 6 boundary. The clipped input is
+`external/femic-tfl6-instance/data/input/tfl_6/vri_2025_r1_poly_tfl6.gpkg`,
+with manifest
+`external/femic-tfl6-instance/data/input/tfl_6/vri_2025_r1_poly_tfl6_clip_manifest.json`.
+The clip bbox-read `42297` source R1 features, exact-clipped `26959`
+intersecting features, and verified `26959` valid EPSG:3005 MultiPolygon
+features with `217042.718950 ha` clipped area. `feature_id` is the preferred
+VDYP join-key candidate for `P1.6c`. Next bounded move is `P1.6c`: filter the
+2025 VDYP7 polygon and layer tables to the clipped TFL 6 `feature_id` set and
+verify key integrity.
