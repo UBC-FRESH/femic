@@ -17970,3 +17970,15 @@
   input-layer surface; and
 - advanced the parent submodule pointer to the instance commit carrying the
   `P1.7b` review.
+
+## 2026-06-23 - Added NICF/TFL6 THLB netdown backbone
+- added
+  `external/femic-tfl6-instance/planning/tfl6_thlb_netdown_steps.md` as the
+  ordered Management Plan 10 Table 4 THLB netdown backbone;
+- recorded the literal netdown sequence, cumulative benchmarks, tentative
+  `GLB -> AFLB -> LHLB -> THLB` FEMIC stage mapping, and per-step
+  spatial/aspatial input-layer requirements;
+- kept recipe YAML creation and execution blocked pending P1.7c/P1.7d review;
+  and
+- advanced the parent submodule pointer to the instance commit carrying the
+  netdown planning surface.

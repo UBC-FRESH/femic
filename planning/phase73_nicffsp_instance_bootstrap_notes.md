@@ -287,3 +287,16 @@ It explicitly separates MP10 historical benchmarks from the current P1.6 2025
 TFL 6 input-layer surface and does not create or execute recipe YAML. Next
 bounded move is `P1.7c`: separate TSA29 workflow carry-forward patterns from
 TFL/general-FMU adaptation gaps.
+
+Completed bounded move: `P1.7b` follow-up added
+`external/femic-tfl6-instance/planning/tfl6_thlb_netdown_steps.md` as the
+ordered TFL 6 THLB netdown backbone. The note preserves the literal Management
+Plan 10 information-package Table 4 order from total landbase through current
+THLB and long-term landbase, maps those rows onto tentative FEMIC
+`GLB -> AFLB -> LHLB -> THLB` review stages, records the cumulative area
+targets (`171441 ha`, `147059 ha`, `134621 ha`, `107811 ha`, and `106319 ha`),
+and lists the candidate spatial/aspatial input layers and GIS operations needed
+for each deduction. No recipe YAML was created and no netdown execution was
+run. Next bounded move remains `P1.7c`: classify each netdown row into TSA29
+carry-forward, TFL/general-FMU adaptation, missing-source, aspatial fallback, or
+reference-target treatment before drafting recipe skeletons.
