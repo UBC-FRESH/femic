@@ -18088,3 +18088,14 @@
   compilation out of the cedar issue scope; and
 - advanced the parent submodule pointer to the instance commit carrying the
   P1.4a roadmap update.
+
+## 2026-06-23 - Opened NICF/TFL6 expansion design follow-on
+- opened `UBC-FRESH/femic-tfl6-instance#9` as the P1.4b expansion
+  candidate-area design follow-on issue;
+- scoped the follow-on to unallocated candidate-area pool semantics, K3Z
+  carry-forward review, source-derived productivity screening, AAC uplift
+  constraints, and dependency boundaries;
+- kept candidate-area geometry generation, THLB/model-input edits, and
+  Patchworks runtime-package compilation out of the expansion issue scope; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  P1.4b roadmap update.

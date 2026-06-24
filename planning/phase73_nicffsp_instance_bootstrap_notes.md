@@ -394,3 +394,12 @@ Patchworks-facing account/reporting outputs. It explicitly excludes
 model-input bundle generation, Patchworks Matrix Builder runs, and runtime
 package compilation. The next Phase 1 edge is `P1.4b`: open the K3Z expansion
 candidate-area follow-on issue.
+
+Completed bounded move: `P1.4b` opened
+`UBC-FRESH/femic-tfl6-instance#9` as the expansion candidate-area design
+follow-on issue. The issue covers unallocated candidate-area pool semantics,
+K3Z carry-forward review, source-derived productivity screening, AAC uplift
+constraints, and dependency boundaries. It explicitly excludes candidate-area
+geometry generation, THLB/model-input edits, Patchworks Matrix Builder runs,
+and runtime package compilation. The next Phase 1 edge is `P1.4c`: open the
+Patchworks runtime-package build/QA follow-on issue.
