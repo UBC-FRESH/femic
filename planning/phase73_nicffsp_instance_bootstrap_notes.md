@@ -385,3 +385,12 @@ verification. `git annex find --not --in arbutus-s3` now returns no 2025 VRI
 archive paths. P1.5 / `#5` is complete and the next Phase 1 edge is `P1.4` /
 `#2`: split the cedar-signal, expansion-candidate, and Patchworks
 runtime-package follow-on issues.
+
+Completed bounded move: `P1.4a` opened
+`UBC-FRESH/femic-tfl6-instance#8` as the cedar-signal design follow-on issue.
+The issue covers Cw cultural reserve behavior, utility-pole-grade product
+requirements, treatment implications, yield-curve implications, and
+Patchworks-facing account/reporting outputs. It explicitly excludes
+model-input bundle generation, Patchworks Matrix Builder runs, and runtime
+package compilation. The next Phase 1 edge is `P1.4b`: open the K3Z expansion
+candidate-area follow-on issue.

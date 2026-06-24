@@ -18077,3 +18077,14 @@
 - marked instance P1.5 complete; and
 - advanced the parent submodule pointer to the instance commit carrying the
   P1.5 closeout.
+
+## 2026-06-23 - Opened NICF/TFL6 cedar design follow-on
+- opened `UBC-FRESH/femic-tfl6-instance#8` as the P1.4a cedar-signal design
+  follow-on issue;
+- scoped the follow-on to Cw cultural reserve behavior, utility-pole-grade
+  product requirements, treatment implications, yield-curve implications, and
+  Patchworks-facing account/reporting outputs;
+- kept model-input bundle generation and Patchworks runtime-package
+  compilation out of the cedar issue scope; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  P1.4a roadmap update.
