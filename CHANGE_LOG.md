@@ -17957,3 +17957,16 @@
   recipe planning; and
 - advanced the parent submodule pointer to the instance commit carrying the
   `P1.6d` closeout.
+
+## 2026-06-23 - Reviewed NICF/TFL6 2011 recipe source documents
+- added
+  `external/femic-tfl6-instance/planning/tfl6_2011_document_review.md` as the
+  first reviewed P1.7b document-mining note;
+- anchored the land-base review to the 2011 information package Section 6 and
+  Tables 4-17;
+- recorded first-pass source-layer, THLB netdown, yield, visual, old-seral,
+  steep-terrain, and minimum-harvest assumption candidates;
+- kept MP10 historical benchmarks separate from the current P1.6 2025 TFL 6
+  input-layer surface; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  `P1.7b` review.

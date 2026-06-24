@@ -274,3 +274,16 @@ This completes instance issue `UBC-FRESH/femic-tfl6-instance#6`; the next
 bounded move is `P1.7b` / `#7`, a reviewed pass over the 2011 TFL 6 management
 plan and information package for land-base, source-layer, yield, and THLB
 netdown assumptions.
+
+Completed bounded move: `P1.7b` added
+`external/femic-tfl6-instance/planning/tfl6_2011_document_review.md` as the
+first reviewed document-mining note for the 2011 TFL 6 Management Plan 10
+family. The note anchors land-base review to Information Package Section 6 and
+Tables 4-17, records Table 4 benchmarks including `171441 ha` total landbase,
+`147059 ha` productive forest, `107811 ha` current THLB, and `106319 ha`
+long-term landbase, and lists first-pass source-layer, THLB netdown, yield,
+visual, old-seral, steep-terrain, and minimum-harvest assumption candidates.
+It explicitly separates MP10 historical benchmarks from the current P1.6 2025
+TFL 6 input-layer surface and does not create or execute recipe YAML. Next
+bounded move is `P1.7c`: separate TSA29 workflow carry-forward patterns from
+TFL/general-FMU adaptation gaps.
