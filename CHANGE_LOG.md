@@ -18006,3 +18006,11 @@
   and `134,598.870 ha` long-term landbase; and
 - advanced the parent submodule pointer to the instance commit carrying the
   adjusted benchmark surfaces.
+
+## 2026-06-23 - Clarified NICF/TFL6 adjusted benchmark caveat
+- recorded that Instrument 101 is close enough for the teaching-instance
+  benchmark strategy while leaving residual area mismatch unresolved;
+- noted possible smaller net-outs, parcel cleanup, boundary-vintage
+  differences, or other post-MP10 tenure changes; and
+- recorded a possible K3Z/community-forest carve-out only as an unverified
+  candidate.

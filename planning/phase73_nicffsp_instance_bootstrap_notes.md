@@ -326,3 +326,9 @@ are `186,175.333 ha` productive forest, `170,428.940 ha` operable landbase,
 `136,487.728 ha` current THLB, and `134,598.870 ha` long-term landbase. These
 are approximate validation targets only and do not replace later spatial
 current-AOI recipe outputs.
+
+Residual-delta caveat: Instrument 101 is close enough for the teaching-instance
+benchmark strategy, but the remaining mismatch may reflect smaller net-outs,
+parcel cleanup, boundary-vintage differences, or other post-MP10 tenure
+changes. A possible K3Z/community-forest carve-out is recorded only as an
+unverified candidate, not as accepted boundary evidence.
