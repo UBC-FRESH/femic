@@ -2024,9 +2024,45 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [ ] P74.3c Close instance Phase 1 parent `UBC-FRESH/femic-tfl6-instance#4`
     after the parent FEMIC PR has merged.
 
+## Phase 75: Evaluate `bcdata` for BC Data Catalogue Discovery
+
+- [ ] P75.1 Create the side-by-side comparison contract (`#201`)
+  - [ ] P75.1a Audit FEMIC's current BCDC resolver/fetch/DWDS surfaces and
+    document the comparable commands/APIs.
+  - [ ] P75.1b Define a fixed comparison corpus from known modelling
+    source-layer discovery problems, including TFL 6/TSA-style RMZ, OGMA,
+    shoreline/coastline, operability terrain/DEM, FADM/TFL boundary, DRA, FWA,
+    and VRI queries.
+  - [ ] P75.1c Record the metrics for candidate recall, ranking,
+    resource-classification accuracy, direct-download/WFS support, failure
+    modes, speed, and reproducibility.
+- [ ] P75.2 Run the `bcdata` versus FEMIC comparison (`#201`)
+  - [ ] P75.2a Capture baseline FEMIC resolver outputs for the comparison
+    corpus.
+  - [ ] P75.2b Capture equivalent `bcdata` outputs with a reproducible R
+    script or CLI harness.
+  - [ ] P75.2c Summarize cases where `bcdata` finds better, faster, more
+    reliable, or otherwise useful results than FEMIC.
+- [ ] P75.3 Decide the integration boundary (`#201`)
+  - [ ] P75.3a Compare no-adoption, reference-oracle, optional `Rscript`
+    bridge, and embedded Python-to-R dependency options.
+  - [ ] P75.3b Explicitly decide whether `reticulate` is relevant or the wrong
+    dependency direction for FEMIC.
+  - [ ] P75.3c Record dependency, installation, CI, Windows, and offline/cache
+    implications before implementation.
+- [ ] P75.4 Implement the accepted path only if the comparison justifies it
+  (`#201`)
+  - [ ] P75.4a Add the smallest maintainable optional bridge or FEMIC resolver
+    improvements supported by the comparison results.
+  - [ ] P75.4b Add tests, CLI/API docs, and dependency guidance for any adopted
+    path.
+  - [ ] P75.4c Leave FEMIC's current BCDC resolver unchanged if the benchmark
+    does not justify integration.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase75_bcdata_resolver_evaluation_notes.md`
   - `planning/phase74_tfl6_instance_bootstrap_notes.md`
   - `planning/phase71_tsa29_patchworks_rebuild_notes.md`
   - `planning/phase72_tsa29_release_notes.md`
@@ -2063,3 +2099,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - Current active edge for this PR is `P74.3b`: merge parent PR
     `UBC-FRESH/femic#200`, then close instance Phase 1 parent
     `UBC-FRESH/femic-tfl6-instance#4` under its closure rule.
+  - `P75.1` opened under parent FEMIC issue `#201` on
+    `feature/issue-201-bcdata-resolver-evaluation`: the next bounded move for
+    this lane is the comparison contract and query corpus, not R-package
+    integration.

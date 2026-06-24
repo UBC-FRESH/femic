@@ -18196,3 +18196,14 @@
   includes both `main`'s raw-zip VRI pointer and the TFL 6 2025 VRI archive
   publication work; and
 - left the active TFL 6 edge at Phase 1 closeout before Phase 2 P2.1 starts.
+
+## 2026-06-24 - Opened parent FEMIC `bcdata` resolver-evaluation lane
+- opened parent FEMIC issue `#201` for comparing the R `bcdata` package against
+  FEMIC's existing BC Data Catalogue resolver/fetch/DWDS tooling;
+- created roadmap Phase 75 so the evaluation has an explicit side-by-side
+  comparison contract before any R dependency or integration work starts;
+- added `planning/phase75_bcdata_resolver_evaluation_notes.md` with the
+  candidate query corpus, comparison metrics, integration options, and
+  non-goals; and
+- created feature branch `feature/issue-201-bcdata-resolver-evaluation` for the
+  parent FEMIC planning lane.
