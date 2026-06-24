@@ -403,3 +403,15 @@ constraints, and dependency boundaries. It explicitly excludes candidate-area
 geometry generation, THLB/model-input edits, Patchworks Matrix Builder runs,
 and runtime package compilation. The next Phase 1 edge is `P1.4c`: open the
 Patchworks runtime-package build/QA follow-on issue.
+
+Completed bounded move: `P1.4c` opened
+`UBC-FRESH/femic-tfl6-instance#10` as the Patchworks runtime-package build/QA
+follow-on issue. The issue covers runtime-package prerequisites,
+ForestModel/XML generation boundaries, Matrix Builder expectations,
+tracks/features/accounts QA, representative Patchworks launch smoke, and
+artifact policy. It depends on accepted TFL 6 inputs, source-layer/THLB
+planning, cedar design `#8`, and expansion design `#9`, and it explicitly
+excludes XML generation, Matrix Builder execution, and Patchworks launch from
+the issue split itself. P1.4 / `#2` is complete and closed. All Phase 1 child
+tasks are checked off; the Phase 1 parent issue remains open until the parent
+FEMIC PR merges.

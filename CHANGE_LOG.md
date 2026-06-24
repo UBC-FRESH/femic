@@ -18099,3 +18099,15 @@
   Patchworks runtime-package compilation out of the expansion issue scope; and
 - advanced the parent submodule pointer to the instance commit carrying the
   P1.4b roadmap update.
+
+## 2026-06-23 - Opened NICF/TFL6 Patchworks runtime follow-on
+- opened `UBC-FRESH/femic-tfl6-instance#10` as the P1.4c Patchworks
+  runtime-package build/QA follow-on issue;
+- scoped the follow-on to runtime-package prerequisites, ForestModel/XML
+  generation boundaries, Matrix Builder expectations, tracks/features/accounts
+  QA, representative Patchworks launch smoke, and artifact policy;
+- closed instance P1.4 / `#2` after splitting cedar, expansion, and
+  runtime-package work into follow-on issues;
+- left the Phase 1 parent issue open until the parent FEMIC PR merges; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  P1.4 closeout.
