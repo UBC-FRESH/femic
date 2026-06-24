@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 
 from femic.pipeline.mkrf_au import (
+    build_mkrf_au_aggregation_audit,
     build_mkrf_au_tables,
     build_mkrf_selected_au_table,
 )
@@ -50,6 +51,7 @@ class MkrfAuBuildResult:
     output_dir: Path
     au_table_path: Path
     stand_assignment_path: Path
+    aggregation_audit_path: Path
     source_row_count: int
     au_count: int
 
@@ -1159,17 +1161,21 @@ def build_mkrf_au_input_bundle(
     output_dir.mkdir(parents=True, exist_ok=True)
     source_table = gpd.read_file(resultant_gdb, layer=layer, ignore_geometry=True)
     au_table, assignment = build_mkrf_au_tables(source_table)
+    aggregation_audit = build_mkrf_au_aggregation_audit(assignment)
 
     au_table_path = output_dir / "au_table.csv"
     stand_assignment_path = output_dir / "stand_au_assignment.csv"
+    aggregation_audit_path = output_dir / "au_aggregation_audit.csv"
     au_table.to_csv(au_table_path, index=False)
     assignment.to_csv(stand_assignment_path, index=False)
+    aggregation_audit.to_csv(aggregation_audit_path, index=False)
 
     return MkrfAuBuildResult(
         resultant_gdb=resultant_gdb,
         output_dir=output_dir,
         au_table_path=au_table_path,
         stand_assignment_path=stand_assignment_path,
+        aggregation_audit_path=aggregation_audit_path,
         source_row_count=len(assignment),
         au_count=len(au_table),
     )
@@ -2281,17 +2287,6 @@ def initialize_mkrf_runtime_package(
     )
 
     selected_au_count = int(selected_au["au_id"].astype(str).nunique())
-    first_growth_curve_au_count = int(first_growth_curves["au_id"].astype(str).nunique())
-    first_growth_missing_au_count = int(
-        first_growth_diagnostics.loc[
-            first_growth_diagnostics["selected_path"]
-            .astype(str)
-            .eq("insufficient_source_stands"),
-            "au_id",
-        ]
-        .astype(str)
-        .nunique()
-    )
     managed_curve_au_count = int(managed_curves["au_id"].astype(str).nunique())
     flagged_au_count = int(bad_curve_summary["flagged"].fillna(False).astype(bool).sum())
 
@@ -2345,6 +2340,12 @@ def initialize_mkrf_runtime_package(
     runtime_curve_status = runtime_curve_status.rename(
         columns={"selected_path": "first_growth_selected_path"}
     ).sort_values("au_id", kind="stable")
+    first_growth_curve_au_count = int(
+        runtime_curve_status["has_first_growth_curve"].fillna(False).astype(bool).sum()
+    )
+    first_growth_missing_au_count = int(
+        (~runtime_curve_status["has_first_growth_curve"].fillna(False).astype(bool)).sum()
+    )
     runtime_curve_status.to_csv(curve_status_path, index=False)
     tracks_status = (
         selected_au.assign(au_id=lambda df: df["au_id"].astype(str))

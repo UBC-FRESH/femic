@@ -1974,28 +1974,60 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P72.2c Create the `v1.0.0-alpha1` tag and GitHub pre-release in `UBC-FRESH/femic-tsa29-instance`.
   - [x] P72.2d Record the release in the parent changelog/planning surfaces and publish the matching closeout comments.
 
-## Phase 73: Bootstrap the NICF FSP FRST 558 Teaching Instance
+## Phase 73: MKRF Stand Stratification Revisions
 
-- [x] P73.1 Create and link the standalone NICF FSP instance repository (`#199`)
-  - [x] P73.1a Create `UBC-FRESH/femic-nicffsp-instance` as the standalone
-    teaching-instance repository.
-  - [x] P73.1b Add it under `external/femic-nicffsp-instance` as a FEMIC
-    submodule tracking `main`.
-  - [x] P73.1c Seed the repository with FEMIC instance scaffolding and the
+- [x] P73.1 Record the MKRF stand-stratification revision issue set (`UBC-FRESH/femic-mkrf-instance#25`)
+  - [x] P73.1a Open separate child issues for minor-strata aggregation and major-strata site-series splitting (`UBC-FRESH/femic-mkrf-instance#26`, `#27`).
+  - [x] P73.1b Record the BEC field-guide reference and Anna's note that the major-stratum split logic remains TBD for the site-series child.
+- [x] P73.2 Implement the reviewed minor-strata aggregation pass (`UBC-FRESH/femic-mkrf-instance#26`)
+  - [x] P73.2a Add explicit raw-to-canonical AU aggregation before selected-AU publication for:
+    - `cwh_vm_2_ba_hw` -> `cwh_vm_2_hw_ba`
+    - `cwh_dm_x_dr_mb` -> `cwh_dm_x_dr_act`
+    - `cwh_dm_x_cw_dr` -> `cwh_dm_x_dr_cw`
+    - `cwh_vm_1_ba_hw` -> `cwh_vm_1_hw_ba`
+    - `cwh_vm_1_fdc_hw` -> `cwh_vm_1_fdc_x`
+  - [x] P73.2b Preserve raw AU lineage in `stand_au_assignment.csv` and add `au_aggregation_audit.csv` so the aggregation is reviewable.
+  - [x] P73.2c Regenerate AU inputs, selected AU table, managed inputs, managed curves, runtime package, Matrix Builder tracks, and the default `mkrf.base` smoke.
+  - [x] P73.2d Fix runtime first-growth summary counts so manifests/XML report the selected runtime AU surface after aggregation.
+  - [x] P73.2e Update MKRF docs/runbook surfaces for the AU aggregation audit and validation lane.
+- [ ] P73.3 Publish the aggregation branch bundle and close child issue `UBC-FRESH/femic-mkrf-instance#26`
+  - [ ] P73.3a Commit and push the instance and parent branches with the regenerated runtime artifacts and submodule pointer update.
+  - [ ] P73.3b Post QA commands, run IDs, and audit summary back to `#26`.
+  - [ ] P73.3c Open the instance and parent PRs for review.
+
+## Phase 74: Bootstrap the TFL 6 FRST 558 Teaching Instance
+
+- [x] P74.1 Create and link the standalone TFL 6 instance repository (`#199`)
+  - [x] P74.1a Create the standalone teaching-instance repository, now
+    `UBC-FRESH/femic-tfl6-instance`.
+  - [x] P74.1b Add it under `external/femic-tfl6-instance` as a FEMIC
+    submodule.
+  - [x] P74.1c Seed the repository with FEMIC instance scaffolding and the
     modelwright-style workflow surfaces (`AGENTS.md`, `ROADMAP.md`,
     `CHANGE_LOG.md`, and `planning/`).
-- [ ] P73.2 Record the FRST 558 source inventory and first build-plan boundary (`#199`)
-  - [x] P73.2a Inventory the uploaded NICF FSP AOI, LU, and FSP source payloads
-    without publishing machine-specific paths.
-  - [x] P73.2b Define the K3Z-template adaptation boundary for the scaled-up
-    Patchworks teaching model.
-  - [ ] P73.2c Split cedar-signal design and K3Z expansion candidate-area design
-    into explicit follow-on work items before model compilation starts.
+- [x] P74.2 Complete the instance Phase 1 bootstrap/build-plan gate (`#199`)
+  - [x] P74.2a Inventory source payloads, record the TFL 6 AOI pivot, and
+    materialize accepted 2025 VRI source/archive inputs without publishing
+    machine-specific paths.
+  - [x] P74.2b Record the K3Z-template adaptation boundary, TFL 6 source-layer
+    and THLB recipe-planning surfaces, and adjusted teaching-validation
+    benchmark targets.
+  - [x] P74.2c Split cedar design, expansion design, runtime-package work, and
+    future Phase 2 through Phase 5 parent/child issue trees before model
+    compilation starts.
+- [ ] P74.3 Complete Phase 1 closeout and merge the parent FEMIC PR (`#199`,
+  `#200`)
+  - [x] P74.3a Resolve the parent roadmap Phase 73 collision by preserving MKRF
+    as Phase 73 and renumbering the TFL 6 bootstrap lane to Phase 74.
+  - [ ] P74.3b Merge parent PR `UBC-FRESH/femic#200` after conflict resolution
+    and required closeout checks.
+  - [ ] P74.3c Close instance Phase 1 parent `UBC-FRESH/femic-tfl6-instance#4`
+    after the parent FEMIC PR has merged.
 
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
-  - `planning/phase73_nicffsp_instance_bootstrap_notes.md`
+  - `planning/phase74_tfl6_instance_bootstrap_notes.md`
   - `planning/phase71_tsa29_patchworks_rebuild_notes.md`
   - `planning/phase72_tsa29_release_notes.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
@@ -2019,19 +2051,15 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `P72.2c` complete: `UBC-FRESH/femic-tsa29-instance` pre-release `v1.0.0-alpha1` is published from merged `main` commit `45af95c`
   - `P72.2d` complete: release closeout is recorded in the parent planning surfaces and governing TSA29 release issue `#8`
   - `P72` complete
-  - `P73.1` complete under `#199`: `UBC-FRESH/femic-nicffsp-instance` exists
-    and is linked under `external/femic-nicffsp-instance`.
-  - `P73.2a-b` complete: initial source inventory and K3Z-template adaptation
-    boundary are recorded in the instance repo and
-    `planning/phase73_nicffsp_instance_bootstrap_notes.md`.
-  - `P73` Phase 1 task issues are now split in the instance tracker:
-    - parent phase issue `UBC-FRESH/femic-nicffsp-instance#4`: bootstrap
-      repository and build plan
-    - `P1.2` / `UBC-FRESH/femic-nicffsp-instance#1`: source-payload
-      inspection and normalization
-    - `P1.3` / `UBC-FRESH/femic-nicffsp-instance#3`: K3Z-to-NICF adaptation
-      contract
-    - `P1.4` / `UBC-FRESH/femic-nicffsp-instance#2`: cedar, expansion, and
-      runtime-package follow-on issue split
-  - Current active edge remains `P1.2` / `#1`: inspect and normalize the AOI/LU
-    source payloads before model-design or compilation work starts.
+  - `P73.1` complete
+  - `P73.2` complete locally for `UBC-FRESH/femic-mkrf-instance#26`; publication and issue closeout remain next
+  - `P74.1` complete under `#199`: `UBC-FRESH/femic-tfl6-instance` exists and
+    is linked under `external/femic-tfl6-instance`.
+  - `P74.2` complete: instance Phase 1 planning, source/data bootstrap,
+    future Phase 2 through Phase 5 parent/child issue tree, and dependency
+    order are recorded.
+  - `P74.3a` complete: parent PR conflict resolution preserves MKRF as Phase
+    73 and moves the TFL 6 bootstrap lane to Phase 74.
+  - Current active edge for this PR is `P74.3b`: merge parent PR
+    `UBC-FRESH/femic#200`, then close instance Phase 1 parent
+    `UBC-FRESH/femic-tfl6-instance#4` under its closure rule.

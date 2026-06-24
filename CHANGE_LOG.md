@@ -18186,3 +18186,13 @@
   before Phase 2 P2.1 / `#16`; and
 - advanced the parent submodule pointer to the instance branch commit carrying
   the workflow correction.
+
+## 2026-06-23 - Resolved TFL6 parent PR merge conflicts
+- merged the current parent `main` branch into the TFL 6 bootstrap branch;
+- preserved `main`'s MKRF stand-stratification lane as parent roadmap Phase 73;
+- renumbered the TFL 6 bootstrap lane to parent roadmap Phase 74 and renamed
+  the parent planning note to `planning/phase74_tfl6_instance_bootstrap_notes.md`;
+- kept the `external/femic-public-data` submodule at the descendant commit that
+  includes both `main`'s raw-zip VRI pointer and the TFL 6 2025 VRI archive
+  publication work; and
+- left the active TFL 6 edge at Phase 1 closeout before Phase 2 P2.1 starts.
