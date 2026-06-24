@@ -18014,3 +18014,14 @@
   differences, or other post-MP10 tenure changes; and
 - recorded a possible K3Z/community-forest carve-out only as an unverified
   candidate.
+
+## 2026-06-23 - Added NICF/TFL6 recipe adaptation contract
+- added
+  `external/femic-tfl6-instance/planning/tfl6_recipe_adaptation_contract.md`;
+- classified MP10 Table 4 netdown rows into TSA29 carry-forward,
+  TFL/general-FMU adaptation, missing-source, aspatial fallback, and reference
+  target categories;
+- recorded source-layer priority and validation-context treatment for
+  Instrument 101 and adjusted current-AOI benchmark tables; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  P1.7c planning contract.

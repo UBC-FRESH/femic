@@ -332,3 +332,13 @@ benchmark strategy, but the remaining mismatch may reflect smaller net-outs,
 parcel cleanup, boundary-vintage differences, or other post-MP10 tenure
 changes. A possible K3Z/community-forest carve-out is recorded only as an
 unverified candidate, not as accepted boundary evidence.
+
+Completed bounded move: `P1.7c` added
+`external/femic-tfl6-instance/planning/tfl6_recipe_adaptation_contract.md`.
+The note classifies each MP10 Table 4 netdown row as TSA29 carry-forward,
+TFL/general-FMU adaptation, missing-source work, aspatial fallback candidate,
+or reference target only. It also classifies Instrument 101 and adjusted
+current-AOI benchmark tables as validation context rather than recipe inputs,
+records source-layer priority for skeleton drafting, and keeps recipe execution
+blocked. Next bounded move is `P1.7d`: draft non-executable source-layer and
+THLB netdown recipe skeleton planning tables.
