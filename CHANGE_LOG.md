@@ -18050,3 +18050,16 @@
   slice; and
 - advanced the parent submodule pointer to the instance commit completing
   P1.5c.
+
+## 2026-06-23 - Audited NICF/TFL6 2025 VRI public-data publication
+- updated
+  `external/femic-tfl6-instance/planning/vri_2025_data_collection.md` with
+  the `arbutus-s3` publication-status audit;
+- confirmed the public-data remote is configured with `public: yes` and the
+  expected public URL;
+- confirmed the two 2025 VRI archive annex keys are not yet present on the
+  public remote;
+- left P1.5 open for remote key copy, `git-annex` publication-state push, and
+  public-read materialization smoke; and
+- advanced the parent submodule pointer to the instance commit carrying the
+  publication audit.

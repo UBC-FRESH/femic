@@ -364,3 +364,13 @@ with `7154522` features, and `VEG_COMP_VDYP7_INPUT_POLY` /
 extract new geodatabases or change source data. The next bounded move is
 `P1.5d` / `#5`: record public-data remote publication status for the 2025 VRI
 source archives.
+
+Completed bounded move: `P1.5d` publication-status audit recorded that the
+`arbutus-s3` public-data remote is configured with `public: yes` and the
+expected public URL, but the two 2025 VRI archive annex keys are not yet present
+on that remote. `git annex whereis` reports only the local checkout copy for
+both archives, `git annex find --not --in arbutus-s3` returns both paths, and
+`git annex find --in arbutus-s3` returns neither path. P1.5 remains open: the
+next bounded move is to copy the two archive keys to `arbutus-s3`, push the
+resulting `git-annex` publication state, and record a public-read
+materialization smoke.
