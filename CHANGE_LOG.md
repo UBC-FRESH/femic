@@ -18037,3 +18037,16 @@
 - kept recipe YAML creation, source acquisition, and THLB execution blocked;
   and
 - advanced the parent submodule pointer to the instance commit completing P1.7.
+
+## 2026-06-23 - Recorded NICF/TFL6 2025 VRI read smoke
+- updated
+  `external/femic-tfl6-instance/planning/vri_2025_data_collection.md` with
+  direct zipped file-geodatabase read-smoke evidence;
+- verified `VEG_COMP_LYR_R1_POLY` as an EPSG:3005 `MultiPolygon` layer with
+  `7154522` features;
+- verified `VEG_COMP_VDYP7_INPUT_POLY` and `VEG_COMP_VDYP7_INPUT_LAYER` as
+  non-spatial tables with `7104182` and `7608054` rows;
+- kept source archive extraction and publication work out of this bounded
+  slice; and
+- advanced the parent submodule pointer to the instance commit completing
+  P1.5c.

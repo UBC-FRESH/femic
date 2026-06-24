@@ -353,3 +353,14 @@ complete as a planning lane only: no recipe YAML was created, no source layers
 were fetched, and no THLB netdown execution was run. The next bounded move is
 `P1.5c` / `#5`: record file size, checksum, read-smoke, CRS, and layer-name
 evidence for the provincial 2025 VRI source packages.
+
+Completed bounded move: `P1.5c` added direct zipped file-geodatabase read-smoke
+evidence to
+`external/femic-tfl6-instance/planning/vri_2025_data_collection.md`. The source
+archives expose `VEG_COMP_LYR_R1_POLY` as an EPSG:3005 `MultiPolygon` layer
+with `7154522` features, and `VEG_COMP_VDYP7_INPUT_POLY` /
+`VEG_COMP_VDYP7_INPUT_LAYER` as non-spatial tables with `7104182` and
+`7608054` rows. The check used `pyogrio`/GDAL virtual zip paths and did not
+extract new geodatabases or change source data. The next bounded move is
+`P1.5d` / `#5`: record public-data remote publication status for the 2025 VRI
+source archives.
