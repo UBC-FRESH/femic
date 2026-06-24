@@ -2026,17 +2026,17 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 
 ## Phase 75: Evaluate `bcdata` and `designatedlands` for BC Data Discovery
 
-- [ ] P75.1 Create the side-by-side comparison contract (`#201`)
-  - [ ] P75.1a Audit FEMIC's current BCDC resolver/fetch/DWDS surfaces and
+- [x] P75.1 Create the side-by-side comparison contract (`#201`)
+  - [x] P75.1a Audit FEMIC's current BCDC resolver/fetch/DWDS surfaces and
     document the comparable commands/APIs.
-  - [ ] P75.1b Define a fixed comparison corpus from known modelling
+  - [x] P75.1b Define a fixed comparison corpus from known modelling
     source-layer discovery problems, including TFL 6/TSA-style RMZ, OGMA,
     shoreline/coastline, operability terrain/DEM, FADM/TFL boundary, DRA, FWA,
     and VRI queries.
-  - [ ] P75.1c Record the metrics for candidate recall, ranking,
+  - [x] P75.1c Record the metrics for candidate recall, ranking,
     resource-classification accuracy, direct-download/WFS support, failure
     modes, speed, and reproducibility.
-  - [ ] P75.1d Add BC Gov `designatedlands` as a source-manifest and
+  - [x] P75.1d Add BC Gov `designatedlands` as a source-manifest and
     workflow-comparison input, especially for protected/designated lands,
     forestry restriction classes, overlap handling, and source CSV metadata.
 - [ ] P75.2 Run the `bcdata` versus FEMIC comparison (`#201`)
@@ -2105,8 +2105,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - Current active edge for this PR is `P74.3b`: merge parent PR
     `UBC-FRESH/femic#200`, then close instance Phase 1 parent
     `UBC-FRESH/femic-tfl6-instance#4` under its closure rule.
-  - `P75.1` opened under parent FEMIC issue `#201` on
-    `feature/issue-201-bcdata-resolver-evaluation`: the next bounded move for
-    this lane is the comparison contract and query corpus, including `bcdata`
-    and BC Gov `designatedlands`, not R-package or designated-lands workflow
-    integration.
+  - `P75.1` complete under parent FEMIC issue `#201`: the comparison contract
+    now names FEMIC's resolver/fetch/DWDS surfaces, fixes the initial query
+    corpus, records comparison metrics, and scopes BC Gov `designatedlands` as
+    manifest/workflow-pattern evidence.
+  - Current active edge for this lane is `P75.2`: run the `bcdata` versus FEMIC
+    comparison using the P75.1 corpus and write results under `runtime/phase75/`
+    without committing raw live-query artifacts.

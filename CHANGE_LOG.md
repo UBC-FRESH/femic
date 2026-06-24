@@ -18217,3 +18217,17 @@
 - kept the dependency boundary explicit: do not treat the full
   PostGIS/GDAL-backed `designatedlands` workflow as a lightweight FEMIC runtime
   dependency without a separate adoption decision.
+
+## 2026-06-24 - Completed P75.1 comparison contract
+- audited FEMIC's current BCDC comparison surfaces across catalogue resolve,
+  direct download, AOI-scoped WFS fetch, DWDS order submission, and DWDS
+  follow-up;
+- expanded `planning/phase75_bcdata_resolver_evaluation_notes.md` with the
+  fixed initial query corpus for TFL 6/FADM/OGMA/RMZ/shoreline/DEM/VRI/roads/
+  hydrography/BEC/LU/designated-lands discovery pressure;
+- recorded the minimum comparison schema for ranking, authoritative-candidate
+  recall, resource classes, WFS/direct-download/DWDS availability, manual
+  acquisition, runtime, and notes; and
+- advanced the Phase 75 roadmap edge to P75.2, which should write live
+  comparison outputs under `runtime/phase75/` without committing raw runtime
+  artifacts.
