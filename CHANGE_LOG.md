@@ -18168,3 +18168,13 @@
   and
 - advanced the parent submodule pointer to the instance branch commit carrying
   the P1.8d dependency-order update.
+
+## 2026-06-23 - Placed NICF/TFL6 follow-on issues in future phases
+- completed instance P1.8e by placing cedar design `#8`, expansion design `#9`,
+  and runtime-package build/QA `#10` into the future phase structure;
+- recorded `#8` and `#9` under Phase 3 parent `#13`, and `#10` under Phase 4
+  parent `#14` downstream of model-input bundle task `#17`;
+- marked P1.8 complete and closed instance issue `#11`, while leaving Phase 1
+  parent issue `#4` open until the parent FEMIC PR merges; and
+- advanced the parent submodule pointer to the instance branch commit carrying
+  the P1.8e placement update.

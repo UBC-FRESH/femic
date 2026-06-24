@@ -465,3 +465,13 @@ recorded as model-design-layer work, while runtime-package follow-on `#10` is
 downstream of accepted source layers, THLB outputs, model design, and
 model-input bundle construction. The instance roadmap now points next to
 `P1.8e`: place or explicitly defer `#8`, `#9`, and `#10`.
+
+Completed bounded move: `P1.8e` placed the existing Phase 1 follow-on issues
+into the future phase structure. Cedar-signal design `#8` and expansion
+candidate-area design `#9` now sit under Phase 3 parent `#13`; Patchworks
+runtime-package build/QA `#10` now sits under Phase 4 parent `#14`, downstream
+of model-input bundle task `#17`. The instance roadmap now includes a
+`Follow-on Issue Placement` section, marks P1.8 complete, closes P1.8 gate
+issue `#11`, and moves Current Next Steps to Phase 2 P2.1 / `#16`.
+Phase 1 parent issue `#4` remains open under its closure rule until the parent
+FEMIC PR merges. No implementation work was started.
