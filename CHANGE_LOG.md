@@ -18246,3 +18246,18 @@
   discovery, and noisy FWA stream/lake discovery; and
 - advanced the Phase 75 roadmap edge to P75.2b without committing raw runtime
   query outputs.
+
+## 2026-06-24 - Captured P75.2b `bcdata` search baseline
+- added `scripts/phase75_bcdata_resolve_baseline.r` as the reproducible R
+  harness for running the fixed Phase 75 query corpus through `bcdata`;
+- installed `bcdata` 0.5.2 into the runtime-only library
+  `runtime/phase75/r-lib` and ran it with the explicit local R 4.5.1
+  `Rscript.exe` because `Rscript` was not on `PATH`;
+- wrote runtime-only `bcdata` CSV/JSON outputs under `runtime/phase75/`;
+- summarized the `bcdata` baseline in
+  `planning/phase75_bcdata_resolver_evaluation_notes.md`: 51 queries,
+  7 exact hits, 18 strong hits, 20 weak hits, 6 no hits, 28 WFS-like rows,
+  24 direct-download candidate rows, and 36 BCGW/DWDS-style candidate rows;
+  and
+- advanced the Phase 75 roadmap edge to P75.2c for the formal side-by-side
+  interpretation.

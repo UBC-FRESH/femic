@@ -171,6 +171,72 @@ whether it improves the real TFL 6 source-layer resolution problems above,
 especially RMZ, shoreline/ocean, DEM/slope, VRI/special VDYP, FWA stream/lake
 specificity, and short-query TFL 6 ranking.
 
+## P75.2b `bcdata` Baseline Search Run
+
+The `bcdata` side of the comparison was run with:
+
+- `C:\Program Files\R\R-4.5.1\bin\Rscript.exe`
+- local runtime R library: `runtime/phase75/r-lib`
+- tracked harness: `scripts/phase75_bcdata_resolve_baseline.r`
+- query input: `runtime/phase75/p75_femic_baseline_queries.txt`
+- runtime outputs:
+  - `runtime/phase75/p75_bcdata_search_summary.csv`
+  - `runtime/phase75/p75_bcdata_search_manifest.json`
+
+`Rscript` was not on `PATH`, so the run used the explicit R 4.5.1 executable.
+The `bcdata` package was installed into the runtime-only library rather than a
+user/global R library. The installed `bcdata` version was `0.5.2`.
+
+Summary from the `bcdata` search baseline:
+
+| Metric | Count |
+| --- | ---: |
+| Query rows | 51 |
+| Exact hits | 7 |
+| Strong hits | 18 |
+| Weak hits | 20 |
+| No hits | 6 |
+| Rows with WFS-like service flag | 28 |
+| Rows with direct-download candidates | 24 |
+| Rows with BCGW/DWDS-style candidates | 36 |
+
+No-hit queries:
+
+- `ocean shoreline`
+- `special VDYP`
+- `SITE_PROD_BC`
+- `Silviculture Activities History`
+- `CONSOLIDATED_CUTBLOCKS_2011`
+- `FTEN_MANAGED_LIC`
+
+Early comparison observations to carry into P75.2c:
+
+- `bcdata` did not improve the noisy short query `TFL 6`; both tools ranked
+  `Moose Management Areas - TFL38` first.
+- `bcdata` ranked FADM TFL deletion/addition records above the current-view
+  TFL layer for `Tree Farm Licence 6`, while FEMIC ranked the current FADM TFL
+  view first.
+- `bcdata` improved some free-text resource-family discovery:
+  - `coastline` ranked `Freshwater Atlas Coastlines`;
+  - `digital elevation model` ranked the CDED DEM record;
+  - `Freshwater Atlas` ranked rivers;
+  - `FWA lakes` ranked lakes; and
+  - `FWA wetlands` ranked wetlands.
+- `bcdata` did not solve the unresolved TFL 6 RMZ problem. It returned Morice
+  FD/Skeena RMZ for `riparian management zone`, and a Lillooet LRMP record for
+  `RMZ`.
+- `bcdata` did not solve `ocean shoreline` or `special VDYP`; both remained
+  no-hit cases.
+- `bcdata` performed worse on FEMIC's curated alias/regression cases:
+  `SITE_PROD_BC`, `CONSOLIDATED_CUTBLOCKS_2011`, and `FTEN_MANAGED_LIC` were
+  no-hit in `bcdata`, while FEMIC resolved them through alias logic.
+- `bcdata` ranked approved WHA/UWR records for the corresponding free-text
+  queries, while FEMIC ranked proposed records.
+
+P75.2c should turn these run outputs into the formal side-by-side summary and
+decide which differences are real adoption signals versus query-tuning or
+normalization issues.
+
 ## Integration Options
 
 Evaluate `bcdata` options in order:

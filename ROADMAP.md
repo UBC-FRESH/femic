@@ -2042,7 +2042,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 - [ ] P75.2 Run the `bcdata` versus FEMIC comparison (`#201`)
   - [x] P75.2a Capture baseline FEMIC resolver outputs for the comparison
     corpus.
-  - [ ] P75.2b Capture equivalent `bcdata` outputs with a reproducible R
+  - [x] P75.2b Capture equivalent `bcdata` outputs with a reproducible R
     script or CLI harness.
   - [ ] P75.2c Summarize cases where `bcdata` finds better, faster, more
     reliable, or otherwise useful results than FEMIC.
@@ -2116,3 +2116,8 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     through `bcdata` with a reproducible R script or CLI harness, then compare
     against the FEMIC baseline with special attention to the recent TFL 6
     source-layer resolution challenge.
+  - `P75.2b` complete: `scripts/phase75_bcdata_resolve_baseline.r` captured
+    the same corpus through `bcdata` into runtime-only CSV/JSON outputs.
+  - Current active edge for this lane is `P75.2c`: summarize the side-by-side
+    differences and identify which `bcdata` behaviours justify FEMIC resolver
+    improvements, optional helper use, or no adoption.
