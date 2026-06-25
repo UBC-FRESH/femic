@@ -18277,3 +18277,17 @@
   replacement-family logic as the core strength to protect; and
 - advanced the Phase 75 roadmap edge to P75.3 for the integration-boundary
   decision.
+
+## 2026-06-24 - Reimplemented first `bcdata` discovery lessons natively
+- accepted the P75.3a/P75.3b integration boundary: no mandatory R dependency,
+  no `bcdata` runtime import, no `reticulate`, and no embedded Python-to-R
+  bridge for FEMIC's normal BCDC resolver path;
+- added native Python curated aliases in `src/femic/bcdc_catalog.py` for the
+  Phase 75 free-text improvements covering FWA/coastline, landscape units,
+  approved WHA/UWR, and DEM/CDED discovery;
+- added resolver tests proving the new free-text behaviour while preserving
+  existing FEMIC alias and exact object-name strengths;
+- added Sphinx attribution crediting the BC Government `bcdata` package and
+  the Teucher, Albers, and Hazlitt JOSS paper; and
+- left `designatedlands` for the separate P75.3c source-manifest/workflow
+  review.

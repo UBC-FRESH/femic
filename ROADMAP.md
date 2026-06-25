@@ -2047,23 +2047,23 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P75.2c Summarize cases where `bcdata` finds better, faster, more
     reliable, or otherwise useful results than FEMIC.
 - [ ] P75.3 Decide the integration boundary (`#201`)
-  - [ ] P75.3a Compare no-adoption, reference-oracle, optional `Rscript`
+  - [x] P75.3a Compare no-adoption, reference-oracle, optional `Rscript`
     bridge, and embedded Python-to-R dependency options.
-  - [ ] P75.3b Explicitly decide whether `reticulate` is relevant or the wrong
+  - [x] P75.3b Explicitly decide whether `reticulate` is relevant or the wrong
     dependency direction for FEMIC.
   - [ ] P75.3c Compare `designatedlands` as a source-manifest reference,
     candidate recipe pattern, or external workflow to mine, rather than a
     lightweight FEMIC runtime dependency.
   - [ ] P75.3d Record dependency, installation, CI, Windows, database, GDAL,
     and offline/cache implications before implementation.
-- [ ] P75.4 Implement the accepted path only if the comparison justifies it
+- [x] P75.4 Implement the accepted path only if the comparison justifies it
   (`#201`)
-  - [ ] P75.4a Add the smallest maintainable optional bridge or FEMIC resolver
+  - [x] P75.4a Add the smallest maintainable optional bridge or FEMIC resolver
     improvements supported by the comparison results.
-  - [ ] P75.4b Add tests, CLI/API docs, and dependency guidance for any adopted
+  - [x] P75.4b Add tests, CLI/API docs, and dependency guidance for any adopted
     path.
-  - [ ] P75.4c Leave FEMIC's current BCDC resolver unchanged if the benchmark
-    does not justify integration.
+  - [x] P75.4c Record that the benchmark justified native resolver
+    improvements, so the no-change branch is not the accepted path.
 
 ### Detailed Next Steps Notes
 
@@ -2125,3 +2125,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - Current active edge for this lane is `P75.3`: decide the integration
     boundary, including whether to port ranking lessons into FEMIC, keep the R
     harness as optional QA tooling, or do no integration.
+  - `P75.3a` and `P75.3b` complete: useful `bcdata` behaviour will be
+    reimplemented natively in Python; no R, `bcdata`, `reticulate`, or embedded
+    Python-to-R dependency is added to normal FEMIC runtime paths.
+  - `P75.4` complete for the `bcdata` native-resolver path: FEMIC now carries
+    targeted free-text aliases and DEM preference logic, tests, and docs
+    attribution without adopting an R runtime dependency.
+  - Current active edge for this lane remains `P75.3c`: review
+    `designatedlands` as a source-manifest/workflow-pattern input separately
+    from the `bcdata` native resolver improvements.

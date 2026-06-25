@@ -538,6 +538,23 @@ The intended v1 workflow is:
 This keeps discovery separate from promotion, which is especially important
 for indirect/custom-download datasets and ambiguous source-list wording.
 
+bcdata Attribution
+------------------
+
+FEMIC's BC Data Catalogue resolver is implemented natively in Python and does
+not require R at runtime. Some Phase 75 free-text ranking improvements were
+informed by observed behaviour from the BC Government ``bcdata`` R package,
+especially for Freshwater Atlas, coastline, landscape-unit, and approved
+wildlife-habitat / ungulate-winter-range discovery cases. FEMIC adapts those
+ideas as native resolver aliases and ranking preferences; it does not copy
+``bcdata`` source code or require ``bcdata`` for normal operation.
+
+Credit: the ``bcdata`` project is maintained by BC Government contributors at
+``https://github.com/bcgov/bcdata`` and is described in Teucher, Albers, and
+Hazlitt (2021), *bcdata: An R package for searching & retrieving data from the
+B.C. Data Catalogue*, Journal of Open Source Software, 6(61), 2927,
+``https://doi.org/10.21105/joss.02927``.
+
 Related References
 ------------------
 

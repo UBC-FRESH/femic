@@ -56,6 +56,21 @@ EXACT_TEXT_MATCH_SCORE = 200
 CONTAINS_TEXT_MATCH_SCORE = 100
 NO_MATCH_SCORE = 0
 CURATED_QUERY_ALIASES: dict[str, tuple[str, ...]] = {
+    # Phase 75 free-text aliases were informed by bcgov/bcdata search
+    # outcomes, then reimplemented natively here without copying bcdata code.
+    "coastline": ("WHSE_BASEMAPPING.FWA_COASTLINES_SP",),
+    "digital elevation model": (
+        "Digital Elevation Model for British Columbia - CDED - 1:250,000",
+    ),
+    "DEM": ("Digital Elevation Model for British Columbia - CDED - 1:250,000",),
+    "FWA streams": ("WHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP",),
+    "FWA lakes": ("WHSE_BASEMAPPING.FWA_LAKES_POLY",),
+    "FWA wetlands": ("WHSE_BASEMAPPING.FWA_WETLANDS_POLY",),
+    "landscape unit": ("WHSE_LAND_USE_PLANNING.RMP_LANDSCAPE_UNIT_SVW",),
+    "wildlife habitat area": (
+        "WHSE_WILDLIFE_MANAGEMENT.WCP_WILDLIFE_HABITAT_AREA_POLY",
+    ),
+    "ungulate winter range": ("WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RANGE_SP",),
     "CONSOLIDATED_CUTBLOCKS_2011": ("CONSOLIDATED_CUTBLOCKS",),
     "SITE_PROD_BC": ("Provincial Site Productivity Layer",),
     "REG_LAND_AND_NATURAL_RESOURCE.TERRAIN_STABILITY": (

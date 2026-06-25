@@ -307,6 +307,44 @@ P75.2c interpretation:
 - `designatedlands` still needs separate source-manifest review before any
   claim about designated/protected-land source completeness.
 
+## P75.3 Native Integration Decision
+
+The accepted `bcdata` integration boundary is native Python adoption of useful
+discovery/ranking ideas, not an R runtime bridge:
+
+- no mandatory R dependency;
+- no `reticulate`;
+- no embedded Python-to-R dependency such as `rpy2`;
+- no `bcdata` import or shell-out in normal FEMIC resolver paths;
+- keep `scripts/phase75_bcdata_resolve_baseline.r` as optional QA/comparison
+  evidence only; and
+- port high-signal ranking outcomes into `src/femic/bcdc_catalog.py` as curated
+  aliases and native scoring behaviour.
+
+The first native resolver improvements are:
+
+- `coastline` -> `WHSE_BASEMAPPING.FWA_COASTLINES_SP`;
+- `FWA streams` -> `WHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP`;
+- `FWA lakes` -> `WHSE_BASEMAPPING.FWA_LAKES_POLY`;
+- `FWA wetlands` -> `WHSE_BASEMAPPING.FWA_WETLANDS_POLY`;
+- `landscape unit` -> `WHSE_LAND_USE_PLANNING.RMP_LANDSCAPE_UNIT_SVW`;
+- `wildlife habitat area` ->
+  `WHSE_WILDLIFE_MANAGEMENT.WCP_WILDLIFE_HABITAT_AREA_POLY`;
+- `ungulate winter range` ->
+  `WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RANGE_SP`; and
+- `digital elevation model` / `DEM` -> the CDED DEM title search preference.
+
+Attribution decision:
+
+- credit the BC Government `bcdata` package and the Teucher, Albers, and
+  Hazlitt JOSS paper in user-facing Sphinx docs;
+- mention in the Python resolver comments that Phase 75 free-text aliases were
+  informed by observed `bcdata` search outcomes; and
+- do not copy `bcdata` source code into FEMIC.
+
+`designatedlands` remains outside this slice. It should be reviewed as a
+source-manifest/workflow-pattern input under P75.3c before any adoption claim.
+
 ## Integration Options
 
 Evaluate `bcdata` options in order:
