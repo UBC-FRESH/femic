@@ -18318,3 +18318,16 @@
   extraction, or dependency adoption in this phase; and
 - kept future `designatedlands` manifest-mining work out of Phase 75 unless a
   new roadmap task and issue are opened for that narrower implementation.
+
+## 2026-06-25 - Added explicit GeoPackage THLB checkpoint input support
+- opened FEMIC issue `#203` for accepting explicit vector checkpoint inputs in
+  the THLB netdown runner;
+- updated the THLB checkpoint loader so `.feather` inputs still use
+  `GeoPandas.read_feather`, while explicit non-Feather vector datasets such as
+  GeoPackage use `GeoPandas.read_file`;
+- preserved the TSA29 legacy `ria_vri_vclr1p_checkpoint*.feather` rejection
+  path and the rationale for Feather restart seams as a speed/restart
+  convention rather than a raw-input requirement;
+- updated CLI and reference-doc wording for `--checkpoint-path`; and
+- added focused tests proving explicit Feather and GeoPackage checkpoint inputs
+  load and normalize to BC Albers.

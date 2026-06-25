@@ -2065,6 +2065,19 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P75.4c Record that the benchmark justified native resolver
     improvements, so the no-change branch is not the accepted path.
 
+## Phase 76: THLB Checkpoint Input Format Support
+
+- [x] P76.1 Accept explicit GeoPackage THLB checkpoint inputs (`#203`)
+  - [x] P76.1a Preserve TSA29 legacy checkpoint rejection while documenting why
+    Feather restart seams remain useful for large repeated runs.
+  - [x] P76.1b Update the checkpoint loader so explicit Feather inputs still
+    use the fast Feather path and explicit GeoPackage/vector inputs use the
+    normal GeoPandas vector reader.
+  - [x] P76.1c Update CLI/docs wording and targeted tests for explicit Feather
+    and GeoPackage checkpoint inputs.
+  - [x] P76.1d Run focused tests/docs validation, update issue comments, and
+    publish the branch.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2137,3 +2150,6 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     native resolver improvements, `designatedlands` boundary decision, and
     closeout notes. Remaining work is branch/PR lifecycle only, not additional
     resolver implementation.
+  - `P76.1` complete under `#203`: explicit GeoPackage/vector THLB checkpoint
+    inputs are supported for TFL 6 while TSA29 Feather restart seams and
+    legacy-checkpoint rejection remain intact.

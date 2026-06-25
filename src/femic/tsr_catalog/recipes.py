@@ -5804,10 +5804,16 @@ def _workbench_stage_window_for_target(
 
 
 def _load_checkpoint_geodataframe(path: Path) -> gpd.GeoDataFrame:
+    suffix = path.suffix.casefold()
     try:
-        checkpoint = gpd.read_feather(path)
+        if suffix == ".feather":
+            checkpoint = gpd.read_feather(path)
+        else:
+            checkpoint = gpd.read_file(path)
     except Exception as exc:  # pragma: no cover - filesystem/runtime seam
-        raise TsrRecipeError(f"Unable to read THLB checkpoint feather: {path}") from exc
+        raise TsrRecipeError(
+            f"Unable to read THLB checkpoint vector dataset: {path}"
+        ) from exc
     if "geometry" not in checkpoint.columns:
         raise TsrRecipeError(f"THLB checkpoint is missing a geometry column: {path}")
     checkpoint = checkpoint.copy()
@@ -17781,9 +17787,7 @@ def _preflight_locked_parent_step_required_sources(
                 seen_entry_ids.add(entry_id)
                 source_entry = source_entry_map.get(entry_id)
                 if source_entry is None:
-                    blockers.append(
-                        f"`{entry_id}` has no source-layer recipe entry."
-                    )
+                    blockers.append(f"`{entry_id}` has no source-layer recipe entry.")
                     continue
                 artifact_path = str(source_entry.get("artifact_path", "")).strip()
                 candidate_path = (
@@ -17795,7 +17799,11 @@ def _preflight_locked_parent_step_required_sources(
                     instance_root=instance_root,
                     source_entry=dict(source_entry),
                 )
-                if resolved_path is None and artifact_path and candidate_path is not None:
+                if (
+                    resolved_path is None
+                    and artifact_path
+                    and candidate_path is not None
+                ):
                     materialized_path = materialize_annex_artifact_path(candidate_path)
                     if materialized_path is not None:
                         resolved_path = _resolve_source_artifact_path(
@@ -17826,7 +17834,9 @@ def _preflight_locked_parent_step_required_sources(
                     continue
                 if _probe_vector_artifact_bounds(resolved_path) is None:
                     try:
-                        display_path = resolved_path.relative_to(instance_root).as_posix()
+                        display_path = resolved_path.relative_to(
+                            instance_root
+                        ).as_posix()
                     except ValueError:
                         display_path = str(resolved_path)
                     blockers.append(
