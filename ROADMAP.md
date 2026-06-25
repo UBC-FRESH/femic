@@ -2024,9 +2024,51 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [ ] P74.3c Close instance Phase 1 parent `UBC-FRESH/femic-tfl6-instance#4`
     after the parent FEMIC PR has merged.
 
+## Phase 75: Evaluate `bcdata` and `designatedlands` for BC Data Discovery
+
+- [x] P75.1 Create the side-by-side comparison contract (`#201`)
+  - [x] P75.1a Audit FEMIC's current BCDC resolver/fetch/DWDS surfaces and
+    document the comparable commands/APIs.
+  - [x] P75.1b Define a fixed comparison corpus from known modelling
+    source-layer discovery problems, including TFL 6/TSA-style RMZ, OGMA,
+    shoreline/coastline, operability terrain/DEM, FADM/TFL boundary, DRA, FWA,
+    and VRI queries.
+  - [x] P75.1c Record the metrics for candidate recall, ranking,
+    resource-classification accuracy, direct-download/WFS support, failure
+    modes, speed, and reproducibility.
+  - [x] P75.1d Add BC Gov `designatedlands` as a source-manifest and
+    workflow-comparison input, especially for protected/designated lands,
+    forestry restriction classes, overlap handling, and source CSV metadata.
+- [x] P75.2 Run the `bcdata` versus FEMIC comparison (`#201`)
+  - [x] P75.2a Capture baseline FEMIC resolver outputs for the comparison
+    corpus.
+  - [x] P75.2b Capture equivalent `bcdata` outputs with a reproducible R
+    script or CLI harness.
+  - [x] P75.2c Summarize cases where `bcdata` finds better, faster, more
+    reliable, or otherwise useful results than FEMIC.
+- [x] P75.3 Decide the integration boundary (`#201`)
+  - [x] P75.3a Compare no-adoption, reference-oracle, optional `Rscript`
+    bridge, and embedded Python-to-R dependency options.
+  - [x] P75.3b Explicitly decide whether `reticulate` is relevant or the wrong
+    dependency direction for FEMIC.
+  - [x] P75.3c Compare `designatedlands` as a source-manifest reference,
+    candidate recipe pattern, or external workflow to mine, rather than a
+    lightweight FEMIC runtime dependency.
+  - [x] P75.3d Record dependency, installation, CI, Windows, database, GDAL,
+    and offline/cache implications before implementation.
+- [x] P75.4 Implement the accepted path only if the comparison justifies it
+  (`#201`)
+  - [x] P75.4a Add the smallest maintainable optional bridge or FEMIC resolver
+    improvements supported by the comparison results.
+  - [x] P75.4b Add tests, CLI/API docs, and dependency guidance for any adopted
+    path.
+  - [x] P75.4c Record that the benchmark justified native resolver
+    improvements, so the no-change branch is not the accepted path.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase75_bcdata_resolver_evaluation_notes.md`
   - `planning/phase74_tfl6_instance_bootstrap_notes.md`
   - `planning/phase71_tsa29_patchworks_rebuild_notes.md`
   - `planning/phase72_tsa29_release_notes.md`
@@ -2063,3 +2105,35 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - Current active edge for this PR is `P74.3b`: merge parent PR
     `UBC-FRESH/femic#200`, then close instance Phase 1 parent
     `UBC-FRESH/femic-tfl6-instance#4` under its closure rule.
+  - `P75.1` complete under parent FEMIC issue `#201`: the comparison contract
+    now names FEMIC's resolver/fetch/DWDS surfaces, fixes the initial query
+    corpus, records comparison metrics, and scopes BC Gov `designatedlands` as
+    manifest/workflow-pattern evidence.
+  - `P75.2a` complete: FEMIC baseline resolver outputs were captured under
+    `runtime/phase75/` for the fixed corpus, summarized in the Phase 75 planning
+    note, and left untracked as runtime artifacts.
+  - Current active edge for this lane is `P75.2b`: run the same query corpus
+    through `bcdata` with a reproducible R script or CLI harness, then compare
+    against the FEMIC baseline with special attention to the recent TFL 6
+    source-layer resolution challenge.
+  - `P75.2b` complete: `scripts/phase75_bcdata_resolve_baseline.r` captured
+    the same corpus through `bcdata` into runtime-only CSV/JSON outputs.
+  - `P75.2c` complete: the side-by-side comparison shows `bcdata` is useful
+    evidence for free-text ranking improvements, but does not justify replacing
+    FEMIC's resolver because FEMIC's object-name and curated alias logic wins
+    important modelling-specific cases.
+  - `P75.3a` and `P75.3b` complete: useful `bcdata` behaviour will be
+    reimplemented natively in Python; no R, `bcdata`, `reticulate`, or embedded
+    Python-to-R dependency is added to normal FEMIC runtime paths.
+  - `P75.4` complete for the `bcdata` native-resolver path: FEMIC now carries
+    targeted free-text aliases and DEM preference logic, tests, and docs
+    attribution without adopting an R runtime dependency.
+  - `P75.3c` and `P75.3d` complete: `designatedlands` is accepted only as an
+    external source-manifest and overlay/restriction-class recipe reference,
+    not as a FEMIC runtime dependency. The upstream dependency footprint
+    includes GDAL/`ogr2ogr`, Rasterio/GeoPandas, PostGIS PostgreSQL, optional
+    Docker, SQL overlay functions, and substantial raster-processing RAM.
+  - `P75` complete: issue `#201` now has the comparison evidence, accepted
+    native resolver improvements, `designatedlands` boundary decision, and
+    closeout notes. Remaining work is branch/PR lifecycle only, not additional
+    resolver implementation.

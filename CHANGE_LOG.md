@@ -18196,3 +18196,125 @@
   includes both `main`'s raw-zip VRI pointer and the TFL 6 2025 VRI archive
   publication work; and
 - left the active TFL 6 edge at Phase 1 closeout before Phase 2 P2.1 starts.
+
+## 2026-06-24 - Opened parent FEMIC `bcdata` resolver-evaluation lane
+- opened parent FEMIC issue `#201` for comparing the R `bcdata` package against
+  FEMIC's existing BC Data Catalogue resolver/fetch/DWDS tooling;
+- created roadmap Phase 75 so the evaluation has an explicit side-by-side
+  comparison contract before any R dependency or integration work starts;
+- added `planning/phase75_bcdata_resolver_evaluation_notes.md` with the
+  candidate query corpus, comparison metrics, integration options, and
+  non-goals; and
+- created feature branch `feature/issue-201-bcdata-resolver-evaluation` for the
+  parent FEMIC planning lane.
+
+## 2026-06-24 - Added BC Gov `designatedlands` to the discovery evaluation lane
+- broadened Phase 75 and issue `#201` so BC Gov `designatedlands` is evaluated
+  alongside `bcdata`;
+- recorded `designatedlands` as a source-manifest and workflow-pattern
+  candidate for designated/protected lands, forestry restriction classes,
+  overlap handling, and source metadata; and
+- kept the dependency boundary explicit: do not treat the full
+  PostGIS/GDAL-backed `designatedlands` workflow as a lightweight FEMIC runtime
+  dependency without a separate adoption decision.
+
+## 2026-06-24 - Completed P75.1 comparison contract
+- audited FEMIC's current BCDC comparison surfaces across catalogue resolve,
+  direct download, AOI-scoped WFS fetch, DWDS order submission, and DWDS
+  follow-up;
+- expanded `planning/phase75_bcdata_resolver_evaluation_notes.md` with the
+  fixed initial query corpus for TFL 6/FADM/OGMA/RMZ/shoreline/DEM/VRI/roads/
+  hydrography/BEC/LU/designated-lands discovery pressure;
+- recorded the minimum comparison schema for ranking, authoritative-candidate
+  recall, resource classes, WFS/direct-download/DWDS availability, manual
+  acquisition, runtime, and notes; and
+- advanced the Phase 75 roadmap edge to P75.2, which should write live
+  comparison outputs under `runtime/phase75/` without committing raw runtime
+  artifacts.
+
+## 2026-06-24 - Captured P75.2a FEMIC resolver baseline
+- ran the fixed Phase 75 query corpus through FEMIC's existing
+  `femic data bcdc-resolve` lane with `--plan-only`, writing runtime-only
+  manifest and summary outputs under `runtime/phase75/`;
+- summarized the baseline in `planning/phase75_bcdata_resolver_evaluation_notes.md`:
+  51 queries, 11 exact hits, 4 alias hits, 33 weak text hits, 3 no hits,
+  29 WFS-queryable rows, 12 direct-download candidate rows, and 39
+  BCGW/custom-download candidate rows;
+- recorded TFL 6 source-layer benchmark pressure cases for the `bcdata`
+  comparison, including noisy short-query TFL ranking, unresolved RMZ,
+  shoreline/ocean gaps, broad DEM/slope discovery, mixed VRI/special VDYP
+  discovery, and noisy FWA stream/lake discovery; and
+- advanced the Phase 75 roadmap edge to P75.2b without committing raw runtime
+  query outputs.
+
+## 2026-06-24 - Captured P75.2b `bcdata` search baseline
+- added `scripts/phase75_bcdata_resolve_baseline.r` as the reproducible R
+  harness for running the fixed Phase 75 query corpus through `bcdata`;
+- installed `bcdata` 0.5.2 into the runtime-only library
+  `runtime/phase75/r-lib` and ran it with the explicit local R 4.5.1
+  `Rscript.exe` because `Rscript` was not on `PATH`;
+- wrote runtime-only `bcdata` CSV/JSON outputs under `runtime/phase75/`;
+- summarized the `bcdata` baseline in
+  `planning/phase75_bcdata_resolver_evaluation_notes.md`: 51 queries,
+  7 exact hits, 18 strong hits, 20 weak hits, 6 no hits, 28 WFS-like rows,
+  24 direct-download candidate rows, and 36 BCGW/DWDS-style candidate rows;
+  and
+- advanced the Phase 75 roadmap edge to P75.2c for the formal side-by-side
+  interpretation.
+
+## 2026-06-24 - Completed P75.2c side-by-side interpretation
+- compared the FEMIC and `bcdata` runtime summaries across the 42 benchmark
+  rows that matter most for the TFL 6 data-layer resolution challenge and
+  FEMIC regression cases;
+- recorded outcome counts in
+  `planning/phase75_bcdata_resolver_evaluation_notes.md`: 13 `bcdata` wins,
+  7 FEMIC wins, 8 complementary/ranking differences, 11 similar outcomes, and
+  3 shared failures;
+- concluded that `bcdata` is useful evidence for improving FEMIC free-text
+  ranking, especially FWA, coastline/DEM, landscape-unit, WHA, and UWR cases,
+  but does not justify replacing FEMIC's core resolver;
+- preserved FEMIC's object-name, alias, and modelling-specific
+  replacement-family logic as the core strength to protect; and
+- advanced the Phase 75 roadmap edge to P75.3 for the integration-boundary
+  decision.
+
+## 2026-06-24 - Reimplemented first `bcdata` discovery lessons natively
+- accepted the P75.3a/P75.3b integration boundary: no mandatory R dependency,
+  no `bcdata` runtime import, no `reticulate`, and no embedded Python-to-R
+  bridge for FEMIC's normal BCDC resolver path;
+- added native Python curated aliases in `src/femic/bcdc_catalog.py` for the
+  Phase 75 free-text improvements covering FWA/coastline, landscape units,
+  approved WHA/UWR, and DEM/CDED discovery;
+- added resolver tests proving the new free-text behaviour while preserving
+  existing FEMIC alias and exact object-name strengths;
+- added Sphinx attribution crediting the BC Government `bcdata` package and
+  the Teucher, Albers, and Hazlitt JOSS paper; and
+- left `designatedlands` for the separate P75.3c source-manifest/workflow
+  review.
+
+## 2026-06-24 - Completed P75.3c `designatedlands` boundary review
+- reviewed `bcgov/designatedlands` as a disposable runtime checkout and
+  recorded the source-manifest/workflow findings in
+  `planning/phase75_bcdata_resolver_evaluation_notes.md`;
+- found 42 designation rows, 36 BCGW-backed designation rows, and 6 supporting
+  rows carrying useful source names, BCGW object names, source queries,
+  restriction classes, preprocess hints, metadata URLs, notes, and licenses;
+- confirmed representative `designatedlands` BCGW object names resolve through
+  FEMIC's existing exact object-name resolver path, so this is not a new
+  free-text ranking gap;
+- accepted `designatedlands` only as an external source-manifest and
+  overlay/restriction-class recipe reference, not as a FEMIC runtime
+  dependency; and
+- recorded the dependency boundary: no PostGIS/PostgreSQL, Docker, raster,
+  full-GDAL, or `bcdata` dependency is added to FEMIC core for this lane.
+
+## 2026-06-25 - Closed out Phase 75 planning lane
+- recorded Phase 75 closeout in
+  `planning/phase75_bcdata_resolver_evaluation_notes.md`;
+- reconciled `ROADMAP.md` so Phase 75 no longer points to P75.3c as active
+  work after the `designatedlands` boundary decision;
+- confirmed the remaining Phase 75 work is branch/PR lifecycle and issue
+  closeout only, with no additional resolver implementation, source
+  extraction, or dependency adoption in this phase; and
+- kept future `designatedlands` manifest-mining work out of Phase 75 unless a
+  new roadmap task and issue are opened for that narrower implementation.

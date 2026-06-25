@@ -117,6 +117,48 @@ def _managed_licence_payload() -> dict[str, object]:
     }
 
 
+def _single_resource_payload(
+    *,
+    package_id: str,
+    package_name: str,
+    title: str,
+    object_name: str,
+    object_short_name: str = "",
+) -> dict[str, object]:
+    return {
+        "success": True,
+        "result": {
+            "results": [
+                {
+                    "id": package_id,
+                    "name": package_name,
+                    "title": title,
+                    "license_title": "Access Only",
+                    "download_audience": "Public",
+                    "organization": {
+                        "name": "data-systems-and-services",
+                        "title": "Data Systems and Services",
+                    },
+                    "resources": [
+                        {
+                            "id": f"{package_id}-wms",
+                            "name": "WMS getCapabilities request",
+                            "format": "wms",
+                            "bcdc_type": "webservice",
+                            "object_name": object_name,
+                            "object_short_name": object_short_name,
+                            "resource_access_method": "service",
+                            "resource_type": "data",
+                            "resource_storage_location": "bc geographic warehouse",
+                            "url": f"https://openmaps.gov.bc.ca/geo/pub/{object_name}/ows",
+                        }
+                    ],
+                }
+            ]
+        },
+    }
+
+
 def _mule_deer_payload() -> dict[str, object]:
     return {
         "success": True,
@@ -429,6 +471,141 @@ def test_query_variants_include_cross_namespace_curated_aliases() -> None:
 
     assert "WHSE_CADASTRE.PMBC_PARCEL_FABRIC_POLY_SVW" in cadastre_variants
     assert "WHSE_WILDLIFE_MANAGEMENT.WCP_WHA_PROPOSED_SP" in proposed_wha_variants
+
+
+@pytest.mark.parametrize(
+    ("query", "alias", "title", "object_name"),
+    [
+        (
+            "coastline",
+            "WHSE_BASEMAPPING.FWA_COASTLINES_SP",
+            "Freshwater Atlas Coastlines",
+            "WHSE_BASEMAPPING.FWA_COASTLINES_SP",
+        ),
+        (
+            "FWA streams",
+            "WHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP",
+            "Freshwater Atlas Stream Network",
+            "WHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP",
+        ),
+        (
+            "FWA lakes",
+            "WHSE_BASEMAPPING.FWA_LAKES_POLY",
+            "Freshwater Atlas Lakes",
+            "WHSE_BASEMAPPING.FWA_LAKES_POLY",
+        ),
+        (
+            "FWA wetlands",
+            "WHSE_BASEMAPPING.FWA_WETLANDS_POLY",
+            "Freshwater Atlas Wetlands",
+            "WHSE_BASEMAPPING.FWA_WETLANDS_POLY",
+        ),
+        (
+            "landscape unit",
+            "WHSE_LAND_USE_PLANNING.RMP_LANDSCAPE_UNIT_SVW",
+            "Landscape Units of British Columbia - Current",
+            "WHSE_LAND_USE_PLANNING.RMP_LANDSCAPE_UNIT_SVW",
+        ),
+        (
+            "wildlife habitat area",
+            "WHSE_WILDLIFE_MANAGEMENT.WCP_WILDLIFE_HABITAT_AREA_POLY",
+            "Wildlife Habitat Areas - Approved",
+            "WHSE_WILDLIFE_MANAGEMENT.WCP_WILDLIFE_HABITAT_AREA_POLY",
+        ),
+        (
+            "ungulate winter range",
+            "WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RANGE_SP",
+            "Ungulate Winter Range - Approved",
+            "WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RANGE_SP",
+        ),
+    ],
+)
+def test_resolve_bcdc_candidates_uses_phase75_free_text_aliases(
+    monkeypatch: pytest.MonkeyPatch,
+    query: str,
+    alias: str,
+    title: str,
+    object_name: str,
+) -> None:
+    calls: list[str] = []
+
+    def _fake_fetch(url: str) -> dict[str, object]:
+        calls.append(url)
+        if alias in url:
+            return _single_resource_payload(
+                package_id=f"pkg-{object_name.rsplit('.', maxsplit=1)[-1].casefold()}",
+                package_name=title.casefold().replace(" ", "-"),
+                title=title,
+                object_name=object_name,
+            )
+        return {"success": True, "result": {"results": []}}
+
+    monkeypatch.setattr(bcdc_catalog, "_fetch_json", _fake_fetch)
+    monkeypatch.setattr(
+        bcdc_catalog,
+        "_fetch_text",
+        lambda _url: (
+            f"""<?xml version="1.0" encoding="UTF-8"?>
+<WFS_Capabilities xmlns="http://www.opengis.net/wfs/2.0">
+  <FeatureTypeList>
+    <FeatureType>
+      <Name>pub:{object_name}</Name>
+    </FeatureType>
+  </FeatureTypeList>
+</WFS_Capabilities>
+"""
+        ),
+    )
+
+    result = bcdc_catalog.resolve_bcdc_candidates(query)
+
+    assert result.top_match is not None
+    assert result.top_match.title == title
+    assert result.top_match.matched_by == f"object_name:{object_name}"
+    assert result.top_match.suggested_fetch_strategy == "wfs_getfeature_bbox"
+    assert any(alias in note for note in result.notes)
+    assert any(alias in url for url in calls)
+
+
+def test_resolve_bcdc_candidates_prefers_cded_for_dem_free_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    cded_title = "Digital Elevation Model for British Columbia - CDED - 1:250,000"
+
+    def _fake_fetch(url: str) -> dict[str, object]:
+        calls.append(url)
+        if "Digital+Elevation+Model" in url or "Digital%20Elevation%20Model" in url:
+            return {
+                "success": True,
+                "result": {
+                    "results": [
+                        {
+                            "id": "pkg-cded",
+                            "name": "digital-elevation-model-cded",
+                            "title": cded_title,
+                            "license_title": "Open Government Licence",
+                            "download_audience": "Public",
+                            "organization": {
+                                "name": "base-mapping-and-geomatic-services",
+                                "title": "Base Mapping and Geomatic Services",
+                            },
+                            "resources": [],
+                        }
+                    ]
+                },
+            }
+        return {"success": True, "result": {"results": []}}
+
+    monkeypatch.setattr(bcdc_catalog, "_fetch_json", _fake_fetch)
+    monkeypatch.setattr(bcdc_catalog, "_fetch_text", lambda _url: "")
+
+    result = bcdc_catalog.resolve_bcdc_candidates("DEM")
+
+    assert result.top_match is not None
+    assert result.top_match.title == cded_title
+    assert result.top_match.matched_by == f"exact_text:{cded_title}"
+    assert any("Digital+Elevation+Model" in url for url in calls)
 
 
 def test_resolve_bcdc_candidates_uses_generated_alias_for_managed_licence(
