@@ -18291,3 +18291,19 @@
   the Teucher, Albers, and Hazlitt JOSS paper; and
 - left `designatedlands` for the separate P75.3c source-manifest/workflow
   review.
+
+## 2026-06-24 - Completed P75.3c `designatedlands` boundary review
+- reviewed `bcgov/designatedlands` as a disposable runtime checkout and
+  recorded the source-manifest/workflow findings in
+  `planning/phase75_bcdata_resolver_evaluation_notes.md`;
+- found 42 designation rows, 36 BCGW-backed designation rows, and 6 supporting
+  rows carrying useful source names, BCGW object names, source queries,
+  restriction classes, preprocess hints, metadata URLs, notes, and licenses;
+- confirmed representative `designatedlands` BCGW object names resolve through
+  FEMIC's existing exact object-name resolver path, so this is not a new
+  free-text ranking gap;
+- accepted `designatedlands` only as an external source-manifest and
+  overlay/restriction-class recipe reference, not as a FEMIC runtime
+  dependency; and
+- recorded the dependency boundary: no PostGIS/PostgreSQL, Docker, raster,
+  full-GDAL, or `bcdata` dependency is added to FEMIC core for this lane.

@@ -2046,15 +2046,15 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     script or CLI harness.
   - [x] P75.2c Summarize cases where `bcdata` finds better, faster, more
     reliable, or otherwise useful results than FEMIC.
-- [ ] P75.3 Decide the integration boundary (`#201`)
+- [x] P75.3 Decide the integration boundary (`#201`)
   - [x] P75.3a Compare no-adoption, reference-oracle, optional `Rscript`
     bridge, and embedded Python-to-R dependency options.
   - [x] P75.3b Explicitly decide whether `reticulate` is relevant or the wrong
     dependency direction for FEMIC.
-  - [ ] P75.3c Compare `designatedlands` as a source-manifest reference,
+  - [x] P75.3c Compare `designatedlands` as a source-manifest reference,
     candidate recipe pattern, or external workflow to mine, rather than a
     lightweight FEMIC runtime dependency.
-  - [ ] P75.3d Record dependency, installation, CI, Windows, database, GDAL,
+  - [x] P75.3d Record dependency, installation, CI, Windows, database, GDAL,
     and offline/cache implications before implementation.
 - [x] P75.4 Implement the accepted path only if the comparison justifies it
   (`#201`)
@@ -2134,3 +2134,11 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - Current active edge for this lane remains `P75.3c`: review
     `designatedlands` as a source-manifest/workflow-pattern input separately
     from the `bcdata` native resolver improvements.
+  - `P75.3c` and `P75.3d` complete: `designatedlands` is accepted only as an
+    external source-manifest and overlay/restriction-class recipe reference,
+    not as a FEMIC runtime dependency. The upstream dependency footprint
+    includes GDAL/`ogr2ogr`, Rasterio/GeoPandas, PostGIS PostgreSQL, optional
+    Docker, SQL overlay functions, and substantial raster-processing RAM.
+  - Current active edge for this lane is Phase 75 closeout: reconcile issue
+    `#201`, confirm no runtime/designatedlands checkout artifacts are tracked,
+    and prepare the branch/PR closeout without starting new resolver work.

@@ -345,6 +345,89 @@ Attribution decision:
 `designatedlands` remains outside this slice. It should be reviewed as a
 source-manifest/workflow-pattern input under P75.3c before any adoption claim.
 
+## P75.3c `designatedlands` Source-Manifest Review
+
+Reviewed `bcgov/designatedlands` at disposable runtime checkout commit
+`d73f80d`. The useful evidence is concentrated in:
+
+- `sources_designations.csv`;
+- `sources_supporting.csv`;
+- `README.md`;
+- `environment.yml`; and
+- the PostGIS/overlay SQL and `designatedlands.py` processing workflow.
+
+Source inventory summary:
+
+- `sources_designations.csv` has 42 designation rows, 36 with explicit BCGW
+  layer names, no manual-download rows, no excluded rows, and 5 rows with
+  preprocess operations.
+- `sources_supporting.csv` has 6 supporting rows for BCGS/NTS grids, BC
+  boundaries, marine ecosections, and the Muskwa-Kechika boundary.
+- The designation manifest carries attributes FEMIC should mine as curated
+  metadata: `designation`, source ID/name fields, forestry/oil-and-gas/mining
+  restriction classes, BCGW object names, source queries, metadata URLs,
+  preprocess operations, notes, and licenses.
+
+Representative forestry-relevant source families include:
+
+- legal OGMA:
+  `WHSE_LAND_USE_PLANNING.RMP_OGMA_LEGAL_CURRENT_SVW`;
+- WHA and UWR no-harvest / conditional-harvest splits:
+  `WHSE_WILDLIFE_MANAGEMENT.WCP_WILDLIFE_HABITAT_AREA_POLY` and
+  `WHSE_WILDLIFE_MANAGEMENT.WCP_UNGULATE_WINTER_RANGE_SP`;
+- fisheries sensitive watersheds:
+  `WHSE_WILDLIFE_MANAGEMENT.WCP_FISH_SENSITIVE_WS_POLY`;
+- community watersheds:
+  `WHSE_WATER_MANAGEMENT.WLS_COMMUNITY_WS_PUB_SVW`;
+- visual landscape inventory:
+  `WHSE_FOREST_VEGETATION.REC_VISUAL_LANDSCAPE_INVENTORY`;
+- legal planning objectives:
+  `WHSE_LAND_USE_PLANNING.RMP_PLAN_LEGAL_POLY_SVW`;
+- recreation polygons:
+  `WHSE_FOREST_TENURE.FTEN_RECREATION_POLY_SVW`;
+- parks, conservancies, conservation lands, and special protection areas.
+
+FEMIC resolver comparison:
+
+- representative BCGW object-name queries from `designatedlands` resolved
+  cleanly through FEMIC's existing exact object-name path;
+- most tested rows were WFS-queryable through FEMIC's existing BCDC resolver;
+- `WHSE_ADMIN_BOUNDARIES.FADM_SPECIAL_PROTECTION_AREA` resolved by object name
+  but did not advertise a WFS fetch strategy in the current resolver result;
+  and
+- this is not a `bcdata`-style free-text ranking gap. The value is curated
+  source metadata, CQL filters, restriction classes, and overlay workflow
+  design.
+
+Integration decision:
+
+- Do not add `designatedlands` as a FEMIC runtime dependency.
+- Do not vendor or copy the full workflow.
+- Do not add PostGIS, Docker, database, raster, or full GDAL processing
+  requirements to FEMIC's core BCDC discovery path.
+- Treat `designatedlands` as an external source-manifest and recipe-design
+  reference for later source manifests, designated-land THLB overlays, and
+  restriction-class teaching examples.
+- If FEMIC adopts anything later, prefer a small native manifest importer or
+  curated YAML/CSV source-list extraction that preserves attribution and points
+  back to the upstream project.
+
+Dependency / runtime implications:
+
+- the upstream workflow expects Python, GDAL/`ogr2ogr`, Rasterio, GeoPandas,
+  PostGIS-enabled PostgreSQL, PostGIS/GEOS SQL overlay functions, optional
+  Docker, and enough RAM for raster processing;
+- `environment.yml` also includes `bcdata`, but FEMIC should keep `bcdata`
+  optional QA evidence only, consistent with the P75.3a/P75.3b decision;
+- carrying this stack into FEMIC core would materially increase Windows, CI,
+  database, GDAL, and offline/cache support burden; and
+- no implementation should start until a later roadmap task defines a narrow
+  source-manifest extraction target.
+
+P75.3c/P75.3d conclusion: `designatedlands` is useful evidence for source-list
+curation and overlay/restriction-class recipe design. It is not an accepted
+runtime dependency or drop-in resolver implementation.
+
 ## Integration Options
 
 Evaluate `bcdata` options in order:
