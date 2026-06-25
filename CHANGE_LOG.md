@@ -18261,3 +18261,19 @@
   and
 - advanced the Phase 75 roadmap edge to P75.2c for the formal side-by-side
   interpretation.
+
+## 2026-06-24 - Completed P75.2c side-by-side interpretation
+- compared the FEMIC and `bcdata` runtime summaries across the 42 benchmark
+  rows that matter most for the TFL 6 data-layer resolution challenge and
+  FEMIC regression cases;
+- recorded outcome counts in
+  `planning/phase75_bcdata_resolver_evaluation_notes.md`: 13 `bcdata` wins,
+  7 FEMIC wins, 8 complementary/ranking differences, 11 similar outcomes, and
+  3 shared failures;
+- concluded that `bcdata` is useful evidence for improving FEMIC free-text
+  ranking, especially FWA, coastline/DEM, landscape-unit, WHA, and UWR cases,
+  but does not justify replacing FEMIC's core resolver;
+- preserved FEMIC's object-name, alias, and modelling-specific
+  replacement-family logic as the core strength to protect; and
+- advanced the Phase 75 roadmap edge to P75.3 for the integration-boundary
+  decision.

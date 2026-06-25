@@ -237,6 +237,76 @@ P75.2c should turn these run outputs into the formal side-by-side summary and
 decide which differences are real adoption signals versus query-tuning or
 normalization issues.
 
+## P75.2c Side-by-Side Interpretation
+
+The formal comparison focused on the 42 benchmark rows that directly exercise
+the TFL 6 data-layer resolution challenge and the existing FEMIC regression
+cases. Outcome counts:
+
+| Outcome | Count | Meaning |
+| --- | ---: | --- |
+| `bcdata_wins` | 13 | `bcdata` ranked a more obviously relevant top match or gave a stronger match class. |
+| `femic_wins` | 7 | FEMIC exact-object-name or alias logic clearly outperformed `bcdata`. |
+| `complementary_or_ranking_diff` | 8 | Both found something plausible, but ranked materially different candidates. |
+| `similar` | 11 | Both tools produced effectively comparable outcomes. |
+| `both_fail` | 3 | Neither tool found a useful candidate. |
+
+High-signal FEMIC wins:
+
+- exact object-name queries remain a FEMIC strength;
+- FEMIC ranked the current FADM TFL view first for `Tree Farm Licence 6`, while
+  `bcdata` ranked deletion/addition records first;
+- FEMIC's curated aliases resolved modelling-specific tokens that `bcdata`
+  missed entirely: `SITE_PROD_BC`, `CONSOLIDATED_CUTBLOCKS_2011`, and
+  `FTEN_MANAGED_LIC`;
+- FEMIC handled `WHSE_FOREST_VEGETATION.BEC_BIOGEOCLIMATIC_POLY` as the BEC
+  Map exact object-name candidate, while `bcdata` ranked the generalized
+  1:2M BEC zone layer first; and
+- FEMIC preserved the exact DRA master-partially-attributed road layer when the
+  exact BCGW object name was supplied.
+
+High-signal `bcdata` wins:
+
+- free-text hydrography discovery was materially better: `Freshwater Atlas`,
+  `FWA lakes`, and `FWA wetlands` ranked more relevant FWA family records than
+  FEMIC;
+- `coastline` ranked `Freshwater Atlas Coastlines`, which may be more useful
+  for reproducible shoreline/ocean proxy work than FEMIC's NTS coastline top
+  match, depending on scale and intended overlay operation;
+- `digital elevation model` ranked the CDED DEM record instead of broad LiDAR
+  catalogue records;
+- `slope` ranked `RESULTS Openings Slope Aspect and Elevation`, which is more
+  semantically relevant than FEMIC's Spotted Owl slope-class record, although
+  it is not a stand-alone DEM-to-slope solution;
+- `landscape unit` ranked `Landscape Units of British Columbia - Current`,
+  while FEMIC ranked a region-specific water-management plan; and
+- WHA/UWR free-text queries ranked approved records, while FEMIC ranked
+  proposed records.
+
+Cases where neither tool solved the modelling need:
+
+- `ocean shoreline` remained a no-hit in both tools;
+- `special VDYP` remained a no-hit in both tools;
+- `Silviculture Activities History` remained a no-hit in both tools; and
+- neither tool resolved a TFL 6-specific RMZ layer. `bcdata` found Morice/Skeena
+  or Lillooet-region RMZ-like records, while FEMIC found North Coast/Skeena or
+  Old Growth TAP candidates.
+
+P75.2c interpretation:
+
+- Do not replace FEMIC's resolver with `bcdata`.
+- Keep FEMIC's object-name search, alias expansion, and modelling-specific
+  replacement-family logic as the core resolver behaviour.
+- Treat `bcdata` as evidence for improving FEMIC free-text ranking, especially
+  for FWA, DEM/coastline, landscape-unit, WHA, and UWR queries.
+- Treat `bcdata` as a useful optional QA oracle or comparison harness candidate,
+  not a mandatory runtime dependency.
+- The most promising integration work is to port specific ranking/normalization
+  lessons into FEMIC, then keep the R harness as optional evidence tooling for
+  future resolver audits.
+- `designatedlands` still needs separate source-manifest review before any
+  claim about designated/protected-land source completeness.
+
 ## Integration Options
 
 Evaluate `bcdata` options in order:

@@ -2039,12 +2039,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P75.1d Add BC Gov `designatedlands` as a source-manifest and
     workflow-comparison input, especially for protected/designated lands,
     forestry restriction classes, overlap handling, and source CSV metadata.
-- [ ] P75.2 Run the `bcdata` versus FEMIC comparison (`#201`)
+- [x] P75.2 Run the `bcdata` versus FEMIC comparison (`#201`)
   - [x] P75.2a Capture baseline FEMIC resolver outputs for the comparison
     corpus.
   - [x] P75.2b Capture equivalent `bcdata` outputs with a reproducible R
     script or CLI harness.
-  - [ ] P75.2c Summarize cases where `bcdata` finds better, faster, more
+  - [x] P75.2c Summarize cases where `bcdata` finds better, faster, more
     reliable, or otherwise useful results than FEMIC.
 - [ ] P75.3 Decide the integration boundary (`#201`)
   - [ ] P75.3a Compare no-adoption, reference-oracle, optional `Rscript`
@@ -2118,6 +2118,10 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     source-layer resolution challenge.
   - `P75.2b` complete: `scripts/phase75_bcdata_resolve_baseline.r` captured
     the same corpus through `bcdata` into runtime-only CSV/JSON outputs.
-  - Current active edge for this lane is `P75.2c`: summarize the side-by-side
-    differences and identify which `bcdata` behaviours justify FEMIC resolver
-    improvements, optional helper use, or no adoption.
+  - `P75.2c` complete: the side-by-side comparison shows `bcdata` is useful
+    evidence for free-text ranking improvements, but does not justify replacing
+    FEMIC's resolver because FEMIC's object-name and curated alias logic wins
+    important modelling-specific cases.
+  - Current active edge for this lane is `P75.3`: decide the integration
+    boundary, including whether to port ranking lessons into FEMIC, keep the R
+    harness as optional QA tooling, or do no integration.
