@@ -2122,23 +2122,18 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     evidence for free-text ranking improvements, but does not justify replacing
     FEMIC's resolver because FEMIC's object-name and curated alias logic wins
     important modelling-specific cases.
-  - Current active edge for this lane is `P75.3`: decide the integration
-    boundary, including whether to port ranking lessons into FEMIC, keep the R
-    harness as optional QA tooling, or do no integration.
   - `P75.3a` and `P75.3b` complete: useful `bcdata` behaviour will be
     reimplemented natively in Python; no R, `bcdata`, `reticulate`, or embedded
     Python-to-R dependency is added to normal FEMIC runtime paths.
   - `P75.4` complete for the `bcdata` native-resolver path: FEMIC now carries
     targeted free-text aliases and DEM preference logic, tests, and docs
     attribution without adopting an R runtime dependency.
-  - Current active edge for this lane remains `P75.3c`: review
-    `designatedlands` as a source-manifest/workflow-pattern input separately
-    from the `bcdata` native resolver improvements.
   - `P75.3c` and `P75.3d` complete: `designatedlands` is accepted only as an
     external source-manifest and overlay/restriction-class recipe reference,
     not as a FEMIC runtime dependency. The upstream dependency footprint
     includes GDAL/`ogr2ogr`, Rasterio/GeoPandas, PostGIS PostgreSQL, optional
     Docker, SQL overlay functions, and substantial raster-processing RAM.
-  - Current active edge for this lane is Phase 75 closeout: reconcile issue
-    `#201`, confirm no runtime/designatedlands checkout artifacts are tracked,
-    and prepare the branch/PR closeout without starting new resolver work.
+  - `P75` complete: issue `#201` now has the comparison evidence, accepted
+    native resolver improvements, `designatedlands` boundary decision, and
+    closeout notes. Remaining work is branch/PR lifecycle only, not additional
+    resolver implementation.

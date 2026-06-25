@@ -428,6 +428,28 @@ P75.3c/P75.3d conclusion: `designatedlands` is useful evidence for source-list
 curation and overlay/restriction-class recipe design. It is not an accepted
 runtime dependency or drop-in resolver implementation.
 
+## Phase 75 Closeout
+
+Phase 75 is complete from the FEMIC planning perspective:
+
+- the side-by-side comparison contract was defined;
+- FEMIC resolver baseline evidence was captured;
+- `bcdata` baseline evidence was captured through the optional R harness;
+- the side-by-side interpretation was recorded;
+- useful `bcdata` discovery lessons were reimplemented natively in Python;
+- `bcdata` was credited in Python comments and Sphinx docs, including the
+  upstream GitHub project and JOSS citation;
+- `designatedlands` was reviewed and accepted only as an external
+  source-manifest / recipe-design reference; and
+- no R, `reticulate`, Python-to-R bridge, PostGIS, Docker, or full-GDAL
+  processing dependency was added to FEMIC core.
+
+The remaining workflow action is branch/PR lifecycle handling for
+`feature/issue-201-bcdata-resolver-evaluation` and GitHub issue `#201`.
+Do not start additional resolver work under this phase after closeout. Future
+work that mines `designatedlands` into a FEMIC-native source manifest should
+be proposed as a new roadmap task with its own issue.
+
 ## Integration Options
 
 Evaluate `bcdata` options in order:

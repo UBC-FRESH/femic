@@ -18307,3 +18307,14 @@
   dependency; and
 - recorded the dependency boundary: no PostGIS/PostgreSQL, Docker, raster,
   full-GDAL, or `bcdata` dependency is added to FEMIC core for this lane.
+
+## 2026-06-25 - Closed out Phase 75 planning lane
+- recorded Phase 75 closeout in
+  `planning/phase75_bcdata_resolver_evaluation_notes.md`;
+- reconciled `ROADMAP.md` so Phase 75 no longer points to P75.3c as active
+  work after the `designatedlands` boundary decision;
+- confirmed the remaining Phase 75 work is branch/PR lifecycle and issue
+  closeout only, with no additional resolver implementation, source
+  extraction, or dependency adoption in this phase; and
+- kept future `designatedlands` manifest-mining work out of Phase 75 unless a
+  new roadmap task and issue are opened for that narrower implementation.
