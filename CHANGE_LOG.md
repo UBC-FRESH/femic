@@ -18393,3 +18393,11 @@
 - recorded that the generated AFLB handoff contains `26186` EPSG:3005
   `MultiPolygon` rows and `196833.177 ha`, while core bundle CSV generation
   remains open in P4.1c.2.
+
+## 2026-06-26 - Invalidated TFL 6 AFLB handoff attempt
+
+- updated the TFL 6 instance pointer after the attempted AFLB handoff was
+  invalidated because the runner-labeled AFLB checkpoint still contained
+  non-treed/non-forested BCLCS rows; and
+- recorded that P4.1c.2 bundle CSV generation is blocked until the
+  GLB-to-AFLB non-forest/non-productive filter is corrected and rerun.
