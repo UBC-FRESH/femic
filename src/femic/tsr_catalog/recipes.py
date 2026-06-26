@@ -1593,8 +1593,10 @@ def _default_dwds_order_manifest_path(*, instance_root: Path, entry_id: str) -> 
 
 
 def _load_override_map(
-    overrides_path: Path,
+    overrides_path: Path | None,
 ) -> dict[str, TsrSourceLayerOverrideEntry]:
+    if overrides_path is None:
+        return {}
     if not overrides_path.exists():
         return {}
     record = load_tsr_source_layer_overrides(overrides_path)
@@ -1602,8 +1604,10 @@ def _load_override_map(
 
 
 def _load_overlay_attempt_map(
-    overlay_path: Path,
+    overlay_path: Path | None,
 ) -> dict[str, dict[str, Any]]:
+    if overlay_path is None:
+        return {}
     if not overlay_path.exists():
         return {}
     payload = yaml.safe_load(overlay_path.read_text(encoding="utf-8"))
@@ -5127,11 +5131,13 @@ def build_tsr_source_layers_recipe(
         source_root_resolved, recipe.canonical_inputs.candidate_facts_path
     )
     instance_root = recipe_path.expanduser().resolve().parents[2]
-    overrides_path = _resolve_instance_path(
-        instance_root, recipe.instance_inputs.source_layer_overrides_path
+    overrides_path = _resolve_optional_instance_path(
+        instance_root=instance_root,
+        value=recipe.instance_inputs.source_layer_overrides_path,
     )
-    overlay_path = _resolve_instance_path(
-        instance_root, recipe.instance_inputs.overlay_path
+    overlay_path = _resolve_optional_instance_path(
+        instance_root=instance_root,
+        value=recipe.instance_inputs.overlay_path,
     )
     override_map = _load_override_map(overrides_path)
     overlay_attempt_map = _load_overlay_attempt_map(overlay_path)
@@ -5198,8 +5204,9 @@ def build_tsr_thlb_netdown_recipe(
     )
     source_recipe = load_tsr_source_layers_recipe(source_layer_recipe_path)
     source_index = _build_source_recipe_index(source_recipe)
-    overrides_path = _resolve_instance_path(
-        instance_root, recipe.instance_inputs.source_layer_overrides_path
+    overrides_path = _resolve_optional_instance_path(
+        instance_root=instance_root,
+        value=recipe.instance_inputs.source_layer_overrides_path,
     )
     override_entries = _load_override_map(overrides_path)
 
@@ -5821,6 +5828,16 @@ def _load_checkpoint_geodataframe(path: Path) -> gpd.GeoDataFrame:
         checkpoint = checkpoint.set_crs(BC_ALBERS_EPSG)
     else:
         checkpoint = checkpoint.to_crs(BC_ALBERS_EPSG)
+    rename_columns = {
+        lower_name: upper_name
+        for lower_name, upper_name in (
+            ("feature_id", "FEATURE_ID"),
+            ("map_id", "MAP_ID"),
+        )
+        if upper_name not in checkpoint.columns and lower_name in checkpoint.columns
+    }
+    if rename_columns:
+        checkpoint = checkpoint.rename(columns=rename_columns)
     return checkpoint
 
 
@@ -7358,6 +7375,34 @@ def _auto_select_smoke_map_ids(
 
 
 def _find_landscape_unit_layer_path(instance_root: Path) -> Path | None:
+    source_recipe_path = (
+        instance_root.expanduser().resolve()
+        / "config"
+        / "tsr"
+        / "source_layers.recipe.yaml"
+    )
+    if source_recipe_path.exists():
+        payload = yaml.safe_load(source_recipe_path.read_text(encoding="utf-8"))
+        entries = payload.get("entries", []) if isinstance(payload, dict) else []
+        if isinstance(entries, list):
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                entry_text = " ".join(
+                    str(entry.get(key, ""))
+                    for key in ("entry_id", "label", "recommended_query")
+                ).casefold()
+                if "landscape" not in entry_text:
+                    continue
+                artifact_path = str(entry.get("artifact_path", "")).strip()
+                if not artifact_path:
+                    continue
+                candidate = Path(artifact_path).expanduser()
+                if not candidate.is_absolute():
+                    candidate = instance_root / candidate
+                resolved = candidate.resolve()
+                if resolved.exists():
+                    return resolved
     candidates = (
         instance_root
         / "data"
@@ -8486,6 +8531,29 @@ def _checkpoint_has_step13_enrichment(path: Path) -> bool:
             "curve2",
         )
     )
+
+
+def _recipe_steps_require_lhlb_curve_ready(
+    recipe_steps: Sequence[dict[str, Any]],
+) -> bool:
+    step13_fields = {
+        "femic_slope_pct_median",
+        "femic_hwy97_side",
+        "femic_step13_steep_slope_flag",
+    }
+    for step in recipe_steps:
+        operation_type = str(step.get("compiled_operation_type", "")).strip()
+        if operation_type == "curve_volume_threshold_exclusion":
+            return True
+        if step.get("curve_id_column") or step.get("minimum_volume_m3_per_ha"):
+            return True
+        for item in step.get("checkpoint_attribute_filters", ()) or ():
+            if not isinstance(item, dict):
+                continue
+            field = str(item.get("field", "")).strip()
+            if field in step13_fields or field.startswith("femic_step13_"):
+                return True
+    return False
 
 
 def _validate_reconstructed_restart_equivalence(
@@ -10007,9 +10075,14 @@ def _compute_legacy_reference_managed_area_ha(
         checkpoint_path=checkpoint_path,
     ):
         return None
-    latest_checkpoint = _find_tsr_checkpoint_path(
-        instance_root=instance_root, mode="latest"
-    )
+    try:
+        latest_checkpoint = _find_tsr_checkpoint_path(
+            instance_root=instance_root, mode="latest"
+        )
+    except TsrRecipeError as exc:
+        if "No stand checkpoint feather found" in str(exc):
+            return None
+        raise
     if latest_checkpoint == checkpoint_path:
         return None
     comparison = _load_checkpoint_geodataframe(latest_checkpoint)
@@ -10121,12 +10194,12 @@ def _format_thlb_filter_value(value: Any) -> str:
 def _describe_thlb_filter(item: dict[str, Any]) -> str:
     field = str(item.get("field", "")).strip()
     operator = str(item.get("operator", "")).strip()
-    value = item.get("value")
+    value = item.get("value", item.get("values"))
     if operator == "eq":
         return f"`{field}` = {_format_thlb_filter_value(value)}"
     if operator == "ne":
         return f"`{field}` != {_format_thlb_filter_value(value)}"
-    if operator == "lt":
+    if operator in {"lt", "less_than"}:
         return f"`{field}` < {_format_thlb_filter_value(value)}"
     if operator == "le":
         return f"`{field}` <= {_format_thlb_filter_value(value)}"
@@ -10136,10 +10209,14 @@ def _describe_thlb_filter(item: dict[str, Any]) -> str:
         return f"`{field}` >= {_format_thlb_filter_value(value)}"
     if operator == "in":
         return f"`{field}` in [{_format_thlb_filter_value(value)}]"
+    if operator == "in_or_null":
+        return f"`{field}` in [{_format_thlb_filter_value(value)}] or null"
     if operator == "not_in":
         return f"`{field}` not in [{_format_thlb_filter_value(value)}]"
     if operator == "is_null":
         return f"`{field}` is null"
+    if operator == "is_not_null":
+        return f"`{field}` is not null"
     if operator == "not_blank":
         return f"`{field}` is not blank"
     return f"`{field}` {operator} {_format_thlb_filter_value(value)}"
@@ -11891,8 +11968,9 @@ def _load_tsr_thlb_recipe_context(
         instance_root, recipe.instance_inputs.source_layer_recipe_path
     )
     source_recipe = load_tsr_source_layers_recipe(source_layer_recipe_path)
-    overrides_path = _resolve_instance_path(
-        instance_root, recipe.instance_inputs.source_layer_overrides_path
+    overrides_path = _resolve_optional_instance_path(
+        instance_root=instance_root,
+        value=recipe.instance_inputs.source_layer_overrides_path,
     )
     return (
         recipe,
@@ -12039,7 +12117,7 @@ def _evaluate_attribute_filter(
         return series == value
     if operator == "ne":
         return series != value
-    if operator == "lt":
+    if operator in {"lt", "less_than"}:
         return pd.to_numeric(series, errors="coerce") < float(value)
     if operator == "le":
         return pd.to_numeric(series, errors="coerce") <= float(value)
@@ -12049,10 +12127,14 @@ def _evaluate_attribute_filter(
         return pd.to_numeric(series, errors="coerce") >= float(value)
     if operator == "in":
         return series.isin(list(value))
+    if operator == "in_or_null":
+        return series.isna() | series.isin(list(value))
     if operator == "not_in":
         return ~series.isin(list(value))
     if operator == "is_null":
         return series.isna()
+    if operator == "is_not_null":
+        return series.notna()
     if operator == "not_blank":
         return series.notna() & (series.astype(str).str.strip() != "")
     raise TsrRecipeError(f"Unsupported attribute filter operator: {operator}")
@@ -12132,7 +12214,7 @@ def _build_checkpoint_attribute_mask(
     for item in filters:
         field = str(item.get("field", "")).strip()
         operator = str(item.get("operator", "")).strip()
-        value = item.get("value")
+        value = item.get("value", item.get("values"))
         if field not in checkpoint.columns:
             continue
         masks.append(
@@ -12162,7 +12244,7 @@ def _apply_source_attribute_filters(
     for item in filters:
         field = str(item.get("field", "")).strip()
         operator = str(item.get("operator", "")).strip()
-        value = item.get("value")
+        value = item.get("value", item.get("values"))
         if field not in filtered.columns:
             continue
         mask = _evaluate_attribute_filter(
@@ -19684,8 +19766,9 @@ def run_tsr_thlb_netdown_recipe(
     )
     source_recipe = load_tsr_source_layers_recipe(source_layer_recipe_path)
     source_entry_map = _load_source_recipe_entry_map(source_recipe)
-    overrides_path = _resolve_instance_path(
-        instance_root, recipe.instance_inputs.source_layer_overrides_path
+    overrides_path = _resolve_optional_instance_path(
+        instance_root=instance_root,
+        value=recipe.instance_inputs.source_layer_overrides_path,
     )
     override_entries = _load_override_map(overrides_path)
 
@@ -19947,32 +20030,41 @@ def run_tsr_thlb_netdown_recipe(
         recipe_contract["lhlb_checkpoint_area_ha"] = float(lhlb_checkpoint_area_ha)
         payload["recipe_contract"] = recipe_contract
         _write_recipe_yaml(resolved_recipe_path, payload)
-        (
-            written_lhlb_curve_ready_checkpoint_path,
-            written_lhlb_curve_ready_gpkg_path,
-            lhlb_curve_ready_checkpoint_area_ha,
-            lhlb_curve_ready_lu_cache_warmed,
-        ) = _ensure_lhlb_curve_ready_checkpoint_artifacts(
-            instance_root=instance_root,
-            checkpoint_path=written_lhlb_checkpoint_path,
-            write_gpkg=write_lhlb_curve_ready_gpkg,
-        )
-        recipe_contract["lhlb_curve_ready_checkpoint_path"] = str(
-            written_lhlb_curve_ready_checkpoint_path.relative_to(
-                instance_root
-            ).as_posix()
-        )
-        if written_lhlb_curve_ready_gpkg_path is not None:
-            recipe_contract["lhlb_curve_ready_gpkg_path"] = str(
-                written_lhlb_curve_ready_gpkg_path.relative_to(instance_root).as_posix()
+        if _recipe_steps_require_lhlb_curve_ready(selected_recipe_steps):
+            (
+                written_lhlb_curve_ready_checkpoint_path,
+                written_lhlb_curve_ready_gpkg_path,
+                lhlb_curve_ready_checkpoint_area_ha,
+                lhlb_curve_ready_lu_cache_warmed,
+            ) = _ensure_lhlb_curve_ready_checkpoint_artifacts(
+                instance_root=instance_root,
+                checkpoint_path=written_lhlb_checkpoint_path,
+                write_gpkg=write_lhlb_curve_ready_gpkg,
             )
+            recipe_contract["lhlb_curve_ready_checkpoint_path"] = str(
+                written_lhlb_curve_ready_checkpoint_path.relative_to(
+                    instance_root
+                ).as_posix()
+            )
+            if written_lhlb_curve_ready_gpkg_path is not None:
+                recipe_contract["lhlb_curve_ready_gpkg_path"] = str(
+                    written_lhlb_curve_ready_gpkg_path.relative_to(
+                        instance_root
+                    ).as_posix()
+                )
+            else:
+                recipe_contract.pop("lhlb_curve_ready_gpkg_path", None)
+            recipe_contract["lhlb_curve_ready_checkpoint_area_ha"] = float(
+                lhlb_curve_ready_checkpoint_area_ha
+            )
+            payload["recipe_contract"] = recipe_contract
+            _write_recipe_yaml(resolved_recipe_path, payload)
         else:
+            recipe_contract.pop("lhlb_curve_ready_checkpoint_path", None)
             recipe_contract.pop("lhlb_curve_ready_gpkg_path", None)
-        recipe_contract["lhlb_curve_ready_checkpoint_area_ha"] = float(
-            lhlb_curve_ready_checkpoint_area_ha
-        )
-        payload["recipe_contract"] = recipe_contract
-        _write_recipe_yaml(resolved_recipe_path, payload)
+            recipe_contract.pop("lhlb_curve_ready_checkpoint_area_ha", None)
+            payload["recipe_contract"] = recipe_contract
+            _write_recipe_yaml(resolved_recipe_path, payload)
     elif (
         execution_mode == TSR_THLB_EXECUTION_MODE_RECONSTRUCTED
         and checkpoint_restart_mode == "lhlb_curve_ready_checkpoint_restart"
