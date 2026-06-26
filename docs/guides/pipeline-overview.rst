@@ -92,6 +92,13 @@ Stage Boundaries
 - **Stage 01b (post-TIPSY):** parse returned BTC/TIPSY outputs, compare
   against VDYP, publish bundle tables and diagnostics.
 
+For TSR-style named pipelines, the AFLB/CMFLB checkpoint is the yield-ready
+model universe. The THLB checkpoint is a managed-area overlay, not the full
+stand table. The complement ``NTHLB = AFLB - THLB`` remains inside the model as
+unmanaged/full-retention forest and still requires an untreated growth curve.
+Do not start Patchworks bundle/export work from final THLB fragments alone
+unless a case-specific roadmap explicitly narrows the model universe.
+
 Key Assumptions
 ---------------
 
@@ -102,6 +109,9 @@ Key Assumptions
   FEMIC-owned runtime and parsing commands.
 - ``03_input-*.csv`` is the canonical BTC/BatchTIPSY handoff input; XLSX
   companions are readability aids generated from the same payload.
+- AFLB/CMFLB forested rows outside THLB remain in the model as retained
+  unmanaged area; THLB is treatment eligibility, not the complete growth
+  universe.
 - Legacy ``02_input-*.dat`` / ``04_output-*.out`` remain compatibility
   artifacts only.
 - Diagnostic plots are required QA artifacts, not optional cosmetics.

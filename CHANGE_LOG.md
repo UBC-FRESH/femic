@@ -18365,3 +18365,14 @@
   provenance from Patchworks-facing selected curve-family IDs; and
 - added a TFL 6 parent-doc reminder that the instance has `384` static AU bins
   but only `77` accepted selected curve families.
+
+## 2026-06-26 - Clarified AFLB universe versus THLB retention semantics
+
+- updated the model-input bundle, Stage 01a, and pipeline-overview guides to
+  state that TSR-style Patchworks bundles use AFLB/CMFLB as the stand and
+  growth universe, not final THLB fragments alone;
+- documented that THLB is a managed treatment-eligibility overlay and
+  `NTHLB = AFLB - THLB` remains inside the model as unmanaged/full-retention
+  forest that still requires untreated VDYP curve coverage; and
+- added named-pipeline registry seam notes for AFLB and AFLB-yield-ready seams
+  so built-in pipeline metadata carries the same model-building contract.

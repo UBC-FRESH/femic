@@ -13,6 +13,36 @@ FEMIC compiles standardized bundle tables under
 
 These feed downstream planning-system exporters.
 
+AFLB Stand Universe and THLB/NTHLB Semantics
+--------------------------------------------
+
+For TSR-style Patchworks bundles, the model stand universe is the accepted
+AFLB / forested model universe, not only the final THLB fragments. THLB is a
+managed-treatment-eligible subset of that universe. The complement,
+``NTHLB = AFLB - THLB``, remains in the model as unmanaged or full-retention
+forest.
+
+Bundle builders must therefore:
+
+- build stand or fragment tables from AFLB, CMFLB, or the case-specific
+  accepted forested model universe;
+- assign every stand in that universe an untreated/natural growth curve, even
+  when it is outside THLB;
+- overlay the final THLB state back onto the AFLB universe to compute
+  ``managed_share``, ``thlb_fact``, ``thlb_area_ha``, ``retention_share``, and
+  IFM state;
+- compile THLB share as managed/treatment-eligible area subject to the rest of
+  the treatment, operability, age, and group gates; and
+- compile NTHLB share as unmanaged/full-retention area, preserving growth,
+  residual inventory, products/reports, cedar or habitat signals, and group
+  memberships.
+
+Do not drop retained forested area from the runtime just because it is outside
+the THLB. In Patchworks terms, that area still belongs in the model as
+unmanaged or full-retention area. If it has no growth curve, it cannot grow and
+cannot support residual-inventory, old-forest, carbon, cedar, habitat, or
+teaching KPI reports.
+
 Selected-AU and Remap Semantics
 -------------------------------
 

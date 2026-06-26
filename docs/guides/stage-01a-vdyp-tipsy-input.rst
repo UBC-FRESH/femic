@@ -54,6 +54,14 @@ bins. Non-selected bins are not separate curve families; they are remapped to
 the selected canonical curve set in the instance remap audit. MKRF follows the
 same selected-AU publication pattern for runtime normalization.
 
+For TSR-style bundles, this selected-curve contract applies to the AFLB /
+forested model universe, not only to final THLB. Stands outside THLB are still
+inside the model as unmanaged/full-retention forest. They still need untreated
+VDYP curve assignments so retained inventory can grow and report correctly.
+THLB/NTHLB status must be carried as treatment-eligibility and retention
+attributes, not as a reason to omit non-THLB forest from Stage 01a curve
+coverage.
+
 VDYP Fitting and SI Splits
 --------------------------
 

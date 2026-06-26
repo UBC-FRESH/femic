@@ -18,10 +18,15 @@ pipelines:
         checkpoint_path: data/tsr/aflb_checkpoint.feather
         checkpoint_kind: aflb_checkpoint
         baseline_signal: aflb_checkpoint_restart
+        notes:
+          - AFLB is the yield-ready forested model universe for downstream bundle generation.
+          - Final THLB is a managed-share overlay; NTHLB equals AFLB minus THLB and remains unmanaged/full-retention forest with growth curves.
       - seam_id: aflb_yield_ready
         checkpoint_path: data/tsr/aflb_yield_ready_checkpoint.feather
         checkpoint_kind: aflb_yield_ready_checkpoint
         baseline_signal: aflb_yield_ready_checkpoint_restart
+        notes:
+          - Use this seam when AU assignment and yield-curve coverage are ready for the full AFLB universe, including NTHLB retained forest.
       - seam_id: lhlb_curve_ready
         checkpoint_path: data/tsr/lhlb_curve_ready_checkpoint.feather
         checkpoint_kind: lhlb_curve_ready_checkpoint
@@ -43,10 +48,15 @@ pipelines:
         checkpoint_path: data/tsr/aflb_checkpoint.feather
         checkpoint_kind: aflb_checkpoint
         baseline_signal: aflb_checkpoint_restart
+        notes:
+          - AFLB is the yield-ready forested model universe for downstream bundle generation.
+          - Final THLB is a managed-share overlay; NTHLB equals AFLB minus THLB and remains unmanaged/full-retention forest with growth curves.
       - seam_id: aflb_yield_ready
         checkpoint_path: data/tsr/aflb_yield_ready_checkpoint.feather
         checkpoint_kind: aflb_yield_ready_checkpoint
         baseline_signal: aflb_yield_ready_checkpoint_restart
+        notes:
+          - Use this seam when AU assignment and yield-curve coverage are ready for the full AFLB universe, including NTHLB retained forest.
       - seam_id: lhlb_curve_ready
         checkpoint_path: data/tsr/lhlb_curve_ready_checkpoint.feather
         checkpoint_kind: lhlb_curve_ready_checkpoint
