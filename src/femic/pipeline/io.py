@@ -110,6 +110,8 @@ class PipelineRunConfig:
     managed_curve_truncate_at_culm: bool | None = None
     managed_curve_max_age: int | None = None
     yield_assumptions_path: Path | None = None
+    vri_rel_candidates: list[Path] | None = None
+    vdyp_input_rel_candidates: list[Path] | None = None
     instance_root: Path | None = None
 
 
@@ -143,6 +145,8 @@ class PipelineRunProfile:
     managed_curve_truncate_at_culm: bool | None = None
     managed_curve_max_age: int | None = None
     yield_assumptions_path: Path | None = None
+    vri_rel_candidates: list[Path] | None = None
+    vdyp_input_rel_candidates: list[Path] | None = None
 
 
 @dataclass(frozen=True)
@@ -175,6 +179,8 @@ class EffectiveRunOptions:
     managed_curve_truncate_at_culm: bool | None
     managed_curve_max_age: int | None
     yield_assumptions_path: Path | None
+    vri_rel_candidates: list[Path] | None
+    vdyp_input_rel_candidates: list[Path] | None
 
 
 @dataclass(frozen=True)
@@ -545,9 +551,11 @@ def is_windows_annex_pointer_stub(
     if not text or "\n" in text or "\r" in text:
         return False
     normalized = text.replace("\\", "/")
-    return ".git/annex/" in normalized or normalized.startswith(
-        "/annex/objects/"
-    ) or normalized.startswith("annex/objects/")
+    return (
+        ".git/annex/" in normalized
+        or normalized.startswith("/annex/objects/")
+        or normalized.startswith("annex/objects/")
+    )
 
 
 def materialize_annex_artifact_path(
@@ -641,6 +649,15 @@ def _normalize_optional_path(value: object, *, field_name: str) -> Path | None:
     return Path(value)
 
 
+def _normalize_optional_path_list(
+    value: object, *, field_name: str
+) -> list[Path] | None:
+    values = _normalize_optional_str_list(value, field_name=field_name)
+    if values is None:
+        return None
+    return [Path(item) for item in values]
+
+
 def _normalize_optional_str(value: object, *, field_name: str) -> str | None:
     if value is None:
         return None
@@ -715,6 +732,11 @@ def load_pipeline_run_profile(config_path: Path) -> PipelineRunProfile:
         run = {}
     if not isinstance(run, dict):
         raise ValueError("run must be a mapping")
+    source_paths = parsed.get("source_paths", {})
+    if source_paths is None:
+        source_paths = {}
+    if not isinstance(source_paths, dict):
+        raise ValueError("source_paths must be a mapping")
     stratification = selection.get("stratification", {})
     if stratification is None:
         stratification = {}
@@ -805,6 +827,14 @@ def load_pipeline_run_profile(config_path: Path) -> PipelineRunProfile:
             modes.get("yield_assumptions_path"),
             field_name="modes.yield_assumptions_path",
         ),
+        vri_rel_candidates=_normalize_optional_path_list(
+            source_paths.get("vri_rel_candidates"),
+            field_name="source_paths.vri_rel_candidates",
+        ),
+        vdyp_input_rel_candidates=_normalize_optional_path_list(
+            source_paths.get("vdyp_input_rel_candidates"),
+            field_name="source_paths.vdyp_input_rel_candidates",
+        ),
         resume=_normalize_optional_bool(modes.get("resume"), field_name="modes.resume"),
         dry_run=_normalize_optional_bool(
             modes.get("dry_run"), field_name="modes.dry_run"
@@ -881,6 +911,8 @@ def resolve_effective_run_options(
         managed_curve_truncate_at_culm=active_profile.managed_curve_truncate_at_culm,
         managed_curve_max_age=active_profile.managed_curve_max_age,
         yield_assumptions_path=active_profile.yield_assumptions_path,
+        vri_rel_candidates=active_profile.vri_rel_candidates,
+        vdyp_input_rel_candidates=active_profile.vdyp_input_rel_candidates,
     )
 
 
@@ -930,6 +962,8 @@ def build_pipeline_run_config(
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
     yield_assumptions_path: Path | None = None,
+    vri_rel_candidates: Sequence[str | Path] | None = None,
+    vdyp_input_rel_candidates: Sequence[str | Path] | None = None,
     instance_root: Path | None = None,
 ) -> PipelineRunConfig:
     """Create normalized pipeline run configuration from CLI inputs."""
@@ -961,6 +995,16 @@ def build_pipeline_run_config(
         managed_curve_max_age=managed_curve_max_age,
         yield_assumptions_path=(
             Path(yield_assumptions_path) if yield_assumptions_path is not None else None
+        ),
+        vri_rel_candidates=(
+            [Path(path) for path in vri_rel_candidates]
+            if vri_rel_candidates is not None
+            else None
+        ),
+        vdyp_input_rel_candidates=(
+            [Path(path) for path in vdyp_input_rel_candidates]
+            if vdyp_input_rel_candidates is not None
+            else None
         ),
         instance_root=Path(instance_root) if instance_root is not None else None,
     )
@@ -1061,6 +1105,14 @@ def build_legacy_execution_plan(
         )
     if run_config.managed_curve_max_age is not None:
         env["FEMIC_MANAGED_CURVE_MAX_AGE"] = str(int(run_config.managed_curve_max_age))
+    if run_config.vri_rel_candidates is not None:
+        env["FEMIC_VRI_REL_CANDIDATES"] = os.pathsep.join(
+            path.as_posix() for path in run_config.vri_rel_candidates
+        )
+    if run_config.vdyp_input_rel_candidates is not None:
+        env["FEMIC_VDYP_INPUT_REL_CANDIDATES"] = os.pathsep.join(
+            path.as_posix() for path in run_config.vdyp_input_rel_candidates
+        )
     env.setdefault("FEMIC_RUN_UUID", str(uuid.uuid4()))
     run_uuid = env["FEMIC_RUN_UUID"]
 

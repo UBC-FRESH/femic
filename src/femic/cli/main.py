@@ -6866,6 +6866,8 @@ def run_all(
         managed_curve_y_scale=effective.managed_curve_y_scale,
         managed_curve_truncate_at_culm=effective.managed_curve_truncate_at_culm,
         managed_curve_max_age=effective.managed_curve_max_age,
+        vri_rel_candidates=effective.vri_rel_candidates,
+        vdyp_input_rel_candidates=effective.vdyp_input_rel_candidates,
         instance_root=instance_context.root,
     )
     manifest_path = run_data_prep(pipeline_run_config)
@@ -7249,6 +7251,8 @@ def prep_validate_case(
     external_paths = resolve_legacy_external_data_paths(
         repo_root=instance_context.root,
         env_override=os.environ.get("FEMIC_EXTERNAL_DATA_ROOT"),
+        vri_rel_candidates=effective.vri_rel_candidates,
+        vdyp_input_rel_candidates=effective.vdyp_input_rel_candidates,
     )
     source_root = _source_tree_root()
     required_external_paths = {
