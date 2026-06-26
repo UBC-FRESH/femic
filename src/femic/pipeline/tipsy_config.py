@@ -66,9 +66,20 @@ def resolve_tipsy_runtime_options(
 
 
 def tipsy_config_path_for_tsa(tsa_code: str, config_dir: str | Path) -> Path:
-    """Resolve default config path (`tsaXX.yaml`) for a TSA code."""
+    """Resolve legacy default config path (`tsaXX.yaml`) for a case code."""
     tsa = str(tsa_code).zfill(2)
     return Path(config_dir) / f"tsa{tsa}.yaml"
+
+
+def _tipsy_config_path_candidates(tsa_code: str, config_dir: str | Path) -> list[Path]:
+    code = str(tsa_code).zfill(2)
+    base = Path(config_dir)
+    return [
+        base / f"{code}.yaml",
+        base / f"{code}.yml",
+        base / f"tsa{code}.yaml",
+        base / f"tsa{code}.yml",
+    ]
 
 
 def _resolve_tipsy_config_path(
@@ -76,12 +87,9 @@ def _resolve_tipsy_config_path(
     tsa_code: str,
     config_dir: str | Path,
 ) -> Path | None:
-    path_yaml = tipsy_config_path_for_tsa(tsa_code, config_dir)
-    path_yml = path_yaml.with_suffix(".yml")
-    if path_yaml.exists():
-        return path_yaml
-    if path_yml.exists():
-        return path_yml
+    for path in _tipsy_config_path_candidates(tsa_code, config_dir):
+        if path.exists():
+            return path
     return None
 
 
@@ -169,8 +177,8 @@ def discover_tipsy_config_tsas(
     found: dict[str, Path] = {}
     if not base.exists():
         return found
-    for path in sorted(base.glob("tsa*.y*ml")):
-        match = re.fullmatch(r"tsa([A-Za-z0-9_-]+)\.ya?ml", path.name)
+    for path in sorted(base.glob("*.y*ml")):
+        match = re.fullmatch(r"(?:tsa)?([A-Za-z0-9_-]+)\.ya?ml", path.name)
         if not match:
             continue
         code = match.group(1)

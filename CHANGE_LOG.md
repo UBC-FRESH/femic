@@ -18331,3 +18331,11 @@
 - updated CLI and reference-doc wording for `--checkpoint-path`; and
 - added focused tests proving explicit Feather and GeoPackage checkpoint inputs
   load and normalize to BC Albers.
+
+## 2026-06-25 - Accepted exact case-code TIPSY config names
+- updated TIPSY config resolution so exact case-code filenames such as
+  `tfl6.yaml` are accepted before legacy `tsa*.yaml` fallbacks;
+- kept existing `tsa08.yaml`, `tsa29.yaml`, and `tsak3z.yaml` compatibility;
+- updated preflight error text to list both exact and legacy filename options;
+  and
+- added regression coverage for exact non-TSA case-code config loading.

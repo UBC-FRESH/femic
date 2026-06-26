@@ -7240,11 +7240,10 @@ def prep_validate_case(
             errors.append(f"Invalid TIPSY config for {code}: {exc}")
             continue
         if cfg is None:
-            expected_yaml = resolved_tipsy_config_dir / f"tsa{code}.yaml"
-            expected_yml = resolved_tipsy_config_dir / f"tsa{code}.yml"
             errors.append(
                 f"Missing TIPSY config for {code} in {resolved_tipsy_config_dir} "
-                f"(expected {expected_yaml.name} or {expected_yml.name})."
+                f"(expected {code}.yaml, {code}.yml, tsa{code}.yaml, or "
+                f"tsa{code}.yml)."
             )
 
     external_paths = resolve_legacy_external_data_paths(
