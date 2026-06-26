@@ -18401,3 +18401,12 @@
   non-treed/non-forested BCLCS rows; and
 - recorded that P4.1c.2 bundle CSV generation is blocked until the
   GLB-to-AFLB non-forest/non-productive filter is corrected and rerun.
+
+## 2026-06-26 - Repaired FMG pass-through succession for Matrix Builder
+
+- changed the generic FMG ForestModel exporter default pass-through succession
+  from `breakup=1000`, `renew=1000` to `breakup=999`, `renew=0`;
+- matched the recovered MKRF legacy succession pattern and avoided Matrix
+  Builder failures when a stand reaches age `1000` in a retained/planted
+  stratum; and
+- updated the targeted FMG serializer test for the new pass-through contract.

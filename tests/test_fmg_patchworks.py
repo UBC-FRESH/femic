@@ -4645,7 +4645,7 @@ def test_build_forestmodel_xml_tree_adds_default_pass_through_successions() -> N
     for select in succession_selects:
         succession = select.find("succession")
         assert succession is not None
-        assert succession.attrib == {"breakup": "1000", "renew": "1000"}
+        assert succession.attrib == {"breakup": "999", "renew": "0"}
         assert list(succession) == []
 
 
