@@ -10,5 +10,6 @@ repository.
    k3z
    tsa29
    mkrf
+   tfl6
    k3z-metadata-lineage
    mkrf-metadata-lineage

@@ -2078,6 +2078,16 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P76.1d Run focused tests/docs validation, update issue comments, and
     publish the branch.
 
+## Phase 77: TFL 6 Parent Documentation Publication
+
+- [x] P77.1 Publish the TFL 6 instance pointer in parent FEMIC docs (`#204`)
+  - [x] P77.1a Add TFL 6 to the parent sample-models toctree.
+  - [x] P77.1b Add a parent TFL 6 pointer page that links the standalone
+    instance repository, submodule path, roadmap, and Phase 2/Phase 3 docs
+    surfaces.
+  - [x] P77.1c Build parent Sphinx docs warning-clean and open the publication
+    PR without starting TFL 6 Phase 4 implementation.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2088,6 +2098,9 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P77.1` complete under `#204`: the parent FEMIC TFL 6 docs pointer is
+    wired into the sample-models toctree and builds warning-clean. Remaining
+    publication work is the branch/PR lifecycle, not Phase 4 implementation.
   - `P68` complete
   - `P69.1` complete
   - `P69.2` complete

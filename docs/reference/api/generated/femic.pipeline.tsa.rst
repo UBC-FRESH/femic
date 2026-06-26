@@ -15,6 +15,7 @@
       assign_thlb_area_and_flag
       assign_thlb_raw_from_raster
       build_au_assignment_null_summary
+      build_missing_au_assignment_summary
       build_strata_summary
       build_stratum_lexmatch_alias_map
       emit_missing_au_mapping_warning
@@ -25,5 +26,6 @@
       select_tsa_slice
       summarize_missing_au_mappings
       target_nstrata_for
+      validate_complete_au_assignment
       validate_nonempty_au_assignment
    
