@@ -18369,10 +18369,19 @@
 ## 2026-06-26 - Clarified AFLB universe versus THLB retention semantics
 
 - updated the model-input bundle, Stage 01a, and pipeline-overview guides to
-  state that TSR-style Patchworks bundles use AFLB/CMFLB as the stand and
-  growth universe, not final THLB fragments alone;
+  state that TSR-style Patchworks bundles use AFLB/CMFLB resultant fragments as
+  the stand and growth universe, not THLB area alone;
 - documented that THLB is a managed treatment-eligibility overlay and
   `NTHLB = AFLB - THLB` remains inside the model as unmanaged/full-retention
   forest that still requires untreated VDYP curve coverage; and
 - added named-pipeline registry seam notes for AFLB and AFLB-yield-ready seams
   so built-in pipeline metadata carries the same model-building contract.
+
+## 2026-06-26 - Refined resultant-fragment model-building semantics
+
+- updated generic model-input, Stage 01a, pipeline-overview, and named-pipeline
+  metadata surfaces to call AFLB/CMFLB outputs resultant fragments;
+- clarified that spatial netdown-induced fragments are expected Patchworks
+  inputs, while THLB/NTHLB state is assigned to those fragments; and
+- preserved the requirement that NTHLB fragments remain in the model with
+  untreated growth curves.

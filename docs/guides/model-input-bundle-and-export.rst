@@ -17,15 +17,15 @@ AFLB Stand Universe and THLB/NTHLB Semantics
 --------------------------------------------
 
 For TSR-style Patchworks bundles, the model stand universe is the accepted
-AFLB / forested model universe, not only the final THLB fragments. THLB is a
-managed-treatment-eligible subset of that universe. The complement,
-``NTHLB = AFLB - THLB``, remains in the model as unmanaged or full-retention
-forest.
+AFLB / forested model universe after spatial netdown overlays have produced
+the resultant fragments. THLB is a managed-treatment-eligible state assigned to
+those AFLB resultant fragments. The complement, ``NTHLB = AFLB - THLB``,
+remains in the model as unmanaged or full-retention forest.
 
 Bundle builders must therefore:
 
 - build stand or fragment tables from AFLB, CMFLB, or the case-specific
-  accepted forested model universe;
+  accepted forested model-universe resultant checkpoint;
 - assign every stand in that universe an untreated/natural growth curve, even
   when it is outside THLB;
 - overlay the final THLB state back onto the AFLB universe to compute
