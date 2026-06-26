@@ -76,6 +76,21 @@ FEMIC-Local Integration Notes
 - Phase 3 model-input contract:
   ``external/femic-tfl6-instance/docs/phase3-model-input-contract.rst``
 
+Selected-AU Curve-Family Reminder
+---------------------------------
+
+The TFL 6 instance intentionally separates the full static AU universe from the
+published curve-family universe. Phase 3 records ``384`` static AU bins, but
+only ``77`` selected top-area AU bins are accepted as canonical
+natural/untreated and treated/managed curve families. Non-selected AU bins are
+remapped/imputed to those selected curve families through
+``planning/tfl6_first_growth_au_remap_audit.csv`` in the instance repository.
+
+Phase 4 model-input bundle work must preserve that contract: static/source AU
+provenance may be retained for audit, but Patchworks-facing curve IDs should
+point to the selected canonical curve-family rows unless a later reviewed
+roadmap task explicitly broadens curve compilation.
+
 Publication Boundary
 --------------------
 

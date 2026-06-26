@@ -13,6 +13,34 @@ FEMIC compiles standardized bundle tables under
 
 These feed downstream planning-system exporters.
 
+Selected-AU and Remap Semantics
+-------------------------------
+
+The bundle tables must preserve the selected-AU curve-family contract created
+upstream in Stage 01a:
+
+- ``au_table.csv`` is the Patchworks-facing AU/curve lookup. It should publish
+  the accepted curve-family rows, not silently expand sparse non-selected AU
+  bins into new curve families.
+- ``curve_table.csv`` and ``curve_points_table.csv`` must contain only reviewed
+  natural/untreated and treated/managed curve IDs for those accepted curve
+  families, plus any explicit species-proportion curves required by the
+  exporter.
+- Stand or fragment assignment tables may retain both the raw/static AU and
+  the selected canonical curve-family target. Non-selected AUs should point at
+  the reviewed selected target through the lexicographic remap audit.
+
+In other words, a case can have more static AU bins than curve families. The
+static AU surface explains how the source stand was classified; the selected
+curve-family surface defines which yield curve the runtime consumes. Do not
+infer that every static AU bin needs a distinct VDYP/TIPSY curve.
+
+For the TFL 6 teaching instance, Phase 3 records ``384`` static AU bins and
+``77`` selected top-area AU curve families. P4 bundle work must therefore
+consume the remap audit rather than compiling or publishing 384 separate
+curve-family rows. MKRF carries the same idea through its
+``selected_au_table.csv`` and runtime AU remap audit surfaces.
+
 Patchworks Export
 -----------------
 

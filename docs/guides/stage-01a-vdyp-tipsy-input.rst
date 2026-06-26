@@ -18,6 +18,42 @@ Key Workflow Steps
 5. Smooth fitted curves and publish fit diagnostics.
 6. Generate ``03_input-*.csv`` + workbook handoff for unattended BTC/BatchTIPSY.
 
+Selected-AU Curve-Family Contract
+---------------------------------
+
+Stage 01a distinguishes **static AU assignment** from the smaller
+**canonical curve-family universe**:
+
+- static AU assignment may classify every stand or polygon into the full
+  BEC/species/SI AU universe used for provenance and review;
+- only the selected top-area strata/AU bins are normally compiled, plotted, and
+  published as natural/untreated VDYP curve families; and
+- non-selected AU bins or stands must be remapped/imputed to one of the
+  selected canonical curve families through the reviewed lexicographic
+  stratum-name matching audit before downstream bundle/export work consumes
+  curve IDs.
+
+Do not multiply curve families to match every sparse static AU bin unless the
+case-specific roadmap explicitly accepts that broader curve compilation. The
+standard FEMIC teaching-instance pattern is:
+
+1. rank strata by area and select the smallest top-area set needed to meet the
+   configured coverage target;
+2. overlay L/M/H SI classes on that selected set to define the canonical curve
+   families;
+3. compile VDYP and managed/TIPSY curves for those selected curve families;
+4. preserve an auditable remap table from every non-selected AU bin to its
+   selected curve-family target; and
+5. carry both the raw/static AU and selected curve-family target into the model
+   input bundle so the downstream runtime can use stable curve IDs without
+   losing provenance.
+
+The TFL 6 instance is a concrete example: the reviewed static universe has
+``384`` AU bins, but the accepted selected curve-family universe has ``77`` AU
+bins. Non-selected bins are not separate curve families; they are remapped to
+the selected canonical curve set in the instance remap audit. MKRF follows the
+same selected-AU publication pattern for runtime normalization.
+
 VDYP Fitting and SI Splits
 --------------------------
 
@@ -60,7 +96,11 @@ Operator QA Checklist
 
 - Confirm non-empty top strata with expected abundance coverage.
 - Confirm SI distribution plots are plausible before VDYP fitting.
+- Confirm the selected curve-family count, full static AU count, and
+  non-selected remap count are all reported separately.
 - Confirm AU count and labels are stable and interpretable.
+- Confirm every non-selected AU bin maps to a selected curve-family target
+  before bundle-table generation.
 - Confirm ``03_input-*.csv`` aligns with the expected BTC ``MSYT.csv`` schema
   before exporting across systems.
 

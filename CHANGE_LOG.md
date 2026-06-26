@@ -18353,3 +18353,15 @@
 - retained the Sphinx autosummary refresh to
   `docs/reference/api/generated/femic.pipeline.tsa.rst` that the docs build
   produced.
+
+## 2026-06-26 - Clarified selected-AU curve-family docs
+- opened FEMIC issue `#206` for the parent documentation gap that made the
+  selected-AU curve-family contract too easy to miss during TFL 6 P4 bundle
+  work;
+- updated the Stage 01a guide to state explicitly that selected top-area AU
+  bins define the canonical curve-family universe and that non-selected AU bins
+  must be remapped through a reviewed lexicographic audit;
+- updated the model-input bundle guide to distinguish static/source AU
+  provenance from Patchworks-facing selected curve-family IDs; and
+- added a TFL 6 parent-doc reminder that the instance has `384` static AU bins
+  but only `77` accepted selected curve families.
