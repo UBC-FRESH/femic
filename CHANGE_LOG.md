@@ -18318,3 +18318,38 @@
   extraction, or dependency adoption in this phase; and
 - kept future `designatedlands` manifest-mining work out of Phase 75 unless a
   new roadmap task and issue are opened for that narrower implementation.
+
+## 2026-06-25 - Added explicit GeoPackage THLB checkpoint input support
+- opened FEMIC issue `#203` for accepting explicit vector checkpoint inputs in
+  the THLB netdown runner;
+- updated the THLB checkpoint loader so `.feather` inputs still use
+  `GeoPandas.read_feather`, while explicit non-Feather vector datasets such as
+  GeoPackage use `GeoPandas.read_file`;
+- preserved the TSA29 legacy `ria_vri_vclr1p_checkpoint*.feather` rejection
+  path and the rationale for Feather restart seams as a speed/restart
+  convention rather than a raw-input requirement;
+- updated CLI and reference-doc wording for `--checkpoint-path`; and
+- added focused tests proving explicit Feather and GeoPackage checkpoint inputs
+  load and normalize to BC Albers.
+
+## 2026-06-25 - Accepted exact case-code TIPSY config names
+- updated TIPSY config resolution so exact case-code filenames such as
+  `tfl6.yaml` are accepted before legacy `tsa*.yaml` fallbacks;
+- kept existing `tsa08.yaml`, `tsa29.yaml`, and `tsak3z.yaml` compatibility;
+- updated preflight error text to list both exact and legacy filename options;
+  and
+- added regression coverage for exact non-TSA case-code config loading.
+
+## 2026-06-26 - Published TFL 6 parent docs pointer
+- opened FEMIC issue `#204` to publish a parent documentation pointer for the
+  merged TFL 6 teaching instance;
+- added Phase 77 / `P77.1` to `ROADMAP.md` so the docs publication task is
+  tracked separately from TFL 6 Phase 4 implementation;
+- added `docs/sample-models/tfl6.rst` and wired it into the parent
+  sample-models toctree;
+- kept the detailed TFL 6 docs in the standalone instance repository as the
+  source of truth while making them discoverable from the FEMIC Pages site;
+- rebuilt parent Sphinx docs warning-clean; and
+- retained the Sphinx autosummary refresh to
+  `docs/reference/api/generated/femic.pipeline.tsa.rst` that the docs build
+  produced.

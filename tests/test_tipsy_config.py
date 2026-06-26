@@ -41,6 +41,31 @@ rules:
     assert payload["tsa_code"] == "08"
 
 
+def test_load_tipsy_tsa_config_accepts_exact_case_code_filename(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "tfl6.yaml"
+    path.write_text(
+        """
+schema_version: 1
+tsa_code: "tfl6"
+rules:
+  - id: cedar
+    when:
+      leading_species_in: ["CW"]
+      bec_in: ["CWH"]
+    assign:
+      e: {Density: 1200, SPP_1: "CW", PCT_1: 100}
+      f: {Density: 1100, SPP_1: "CW", PCT_1: 100}
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    payload = load_tipsy_tsa_config(tsa_code="tfl6", config_dir=tmp_path)
+    assert payload is not None
+    assert payload["tsa_code"] == "tfl6"
+
+
 def test_resolve_tipsy_runtime_options_defaults_and_overrides() -> None:
     default_dir, default_legacy = resolve_tipsy_runtime_options(env={})
     assert default_dir == "config/tipsy"

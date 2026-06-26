@@ -601,7 +601,8 @@ TSR_THLB_CHECKPOINT_PATH_OPTION = typer.Option(
     None,
     "--checkpoint-path",
     help=(
-        "Optional stand checkpoint feather used as the THLB netdown execution base. "
+        "Optional stand checkpoint vector dataset used as the THLB netdown execution base. "
+        "Explicit inputs may be Feather or a readable vector dataset such as GeoPackage. "
         "Current TSA29 strict validation must use an explicit validated checkpoint "
         "under `data/tsr/`; legacy `ria_vri_vclr1p_checkpoint*.feather` fallbacks are rejected."
     ),
@@ -1646,6 +1647,7 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
     warnings: list[str] = []
 
     data_root = repo_root / "data"
+
     def _resolve_required(primary: Path, fallback: Path | None = None) -> Path | None:
         if primary.exists():
             return primary
@@ -6679,7 +6681,9 @@ def instance_mkrf_init_runtime_package(
     console.print(f"package_root: {result.package_root}")
     console.print(f"manifest: {result.manifest_path}")
     console.print(f"curve_status_csv: {result.curve_status_path}")
-    console.print(f"analysis_au_runtime_status_csv: {result.analysis_au_runtime_status_path}")
+    console.print(
+        f"analysis_au_runtime_status_csv: {result.analysis_au_runtime_status_path}"
+    )
     console.print(f"analysis_au_curve_refs_csv: {result.analysis_au_curve_refs_path}")
     console.print(f"runtime_species_share_audit_csv: {result.species_share_audit_path}")
     console.print(f"analysis_pin: {result.analysis_pin_path}")
@@ -6862,6 +6866,8 @@ def run_all(
         managed_curve_y_scale=effective.managed_curve_y_scale,
         managed_curve_truncate_at_culm=effective.managed_curve_truncate_at_culm,
         managed_curve_max_age=effective.managed_curve_max_age,
+        vri_rel_candidates=effective.vri_rel_candidates,
+        vdyp_input_rel_candidates=effective.vdyp_input_rel_candidates,
         instance_root=instance_context.root,
     )
     manifest_path = run_data_prep(pipeline_run_config)
@@ -7236,16 +7242,17 @@ def prep_validate_case(
             errors.append(f"Invalid TIPSY config for {code}: {exc}")
             continue
         if cfg is None:
-            expected_yaml = resolved_tipsy_config_dir / f"tsa{code}.yaml"
-            expected_yml = resolved_tipsy_config_dir / f"tsa{code}.yml"
             errors.append(
                 f"Missing TIPSY config for {code} in {resolved_tipsy_config_dir} "
-                f"(expected {expected_yaml.name} or {expected_yml.name})."
+                f"(expected {code}.yaml, {code}.yml, tsa{code}.yaml, or "
+                f"tsa{code}.yml)."
             )
 
     external_paths = resolve_legacy_external_data_paths(
         repo_root=instance_context.root,
         env_override=os.environ.get("FEMIC_EXTERNAL_DATA_ROOT"),
+        vri_rel_candidates=effective.vri_rel_candidates,
+        vdyp_input_rel_candidates=effective.vdyp_input_rel_candidates,
     )
     source_root = _source_tree_root()
     required_external_paths = {

@@ -24,6 +24,120 @@ from femic.tsr_catalog import recipes as tsr_recipes
 from femic.tsr_catalog import step13_attributes as tsr_step13_attributes
 
 
+def test_load_checkpoint_geodataframe_reads_explicit_feather(tmp_path: Path) -> None:
+    checkpoint_path = tmp_path / "checkpoint.feather"
+    gdf = gpd.GeoDataFrame(
+        {"feature_id": [1], "area_ha_calc": [1.0]},
+        geometry=[box(0, 0, 1, 1)],
+        crs="EPSG:3005",
+    )
+    gdf.to_feather(checkpoint_path)
+
+    loaded = tsr_recipes._load_checkpoint_geodataframe(checkpoint_path)
+
+    assert len(loaded) == 1
+    assert loaded.crs is not None
+    assert loaded.crs.to_epsg() == 3005
+    assert "feature_id" not in loaded.columns
+    assert loaded.loc[0, "FEATURE_ID"] == 1
+
+
+def test_load_checkpoint_geodataframe_reads_explicit_geopackage(tmp_path: Path) -> None:
+    checkpoint_path = tmp_path / "checkpoint.gpkg"
+    gdf = gpd.GeoDataFrame(
+        {"feature_id": [7], "map_id": ["092L000"], "area_ha_calc": [2.0]},
+        geometry=[box(-123.0, 49.0, -122.9, 49.1)],
+        crs="EPSG:4326",
+    )
+    gdf.to_file(checkpoint_path, driver="GPKG", layer="checkpoint")
+
+    loaded = tsr_recipes._load_checkpoint_geodataframe(checkpoint_path)
+
+    assert len(loaded) == 1
+    assert loaded.crs is not None
+    assert loaded.crs.to_epsg() == 3005
+    assert "feature_id" not in loaded.columns
+    assert "map_id" not in loaded.columns
+    assert loaded.loc[0, "FEATURE_ID"] == 7
+    assert loaded.loc[0, "MAP_ID"] == "092L000"
+
+
+def test_blank_optional_recipe_paths_do_not_resolve_to_instance_root(
+    tmp_path: Path,
+) -> None:
+    assert (
+        tsr_recipes._resolve_optional_instance_path(instance_root=tmp_path, value="")
+        is None
+    )
+    assert tsr_recipes._load_override_map(None) == {}
+    assert tsr_recipes._load_overlay_attempt_map(None) == {}
+
+
+def test_legacy_reference_managed_area_is_optional_without_legacy_checkpoints(
+    tmp_path: Path,
+) -> None:
+    checkpoint_path = tmp_path / "data" / "input" / "checkpoint.gpkg"
+
+    assert (
+        tsr_recipes._compute_legacy_reference_managed_area_ha(
+            instance_root=tmp_path,
+            checkpoint_path=checkpoint_path,
+        )
+        is None
+    )
+
+
+def test_find_landscape_unit_layer_path_uses_source_layer_recipe(
+    tmp_path: Path,
+) -> None:
+    lu_path = tmp_path / "data" / "source" / "strata" / "landscape_units.gpkg"
+    lu_path.parent.mkdir(parents=True)
+    lu_path.write_bytes(b"placeholder")
+    recipe_path = tmp_path / "config" / "tsr" / "source_layers.recipe.yaml"
+    recipe_path.parent.mkdir(parents=True)
+    recipe_path.write_text(
+        """
+entries:
+  - entry_id: landscape_units_tfl6
+    label: Landscape units clipped to TFL 6
+    artifact_path: data/source/strata/landscape_units.gpkg
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    assert tsr_recipes._find_landscape_unit_layer_path(tmp_path) == lu_path.resolve()
+
+
+def test_recipe_steps_require_lhlb_curve_ready_only_for_curve_bridge_steps() -> None:
+    assert not tsr_recipes._recipe_steps_require_lhlb_curve_ready(
+        (
+            {
+                "step_id": "tfl6_nd_180_stand_level_retention",
+                "compiled_operation_type": "aspatial_reduction",
+                "checkpoint_attribute_filters": [],
+            },
+        )
+    )
+    assert tsr_recipes._recipe_steps_require_lhlb_curve_ready(
+        (
+            {
+                "step_id": "tsa29_low_productivity",
+                "compiled_operation_type": "curve_volume_threshold_exclusion",
+            },
+        )
+    )
+    assert tsr_recipes._recipe_steps_require_lhlb_curve_ready(
+        (
+            {
+                "step_id": "tsa29_steep_slope",
+                "checkpoint_attribute_filters": [
+                    {"field": "femic_step13_steep_slope_flag", "operator": "eq"}
+                ],
+            },
+        )
+    )
+
+
 def _write_registry(tmp_path: Path) -> Path:
     payload = {
         "generated_utc": "2026-04-04T00:00:00+00:00",
@@ -558,7 +672,9 @@ def test_run_tsr_thlb_locked_parent_step_preserves_lu_chunk_cache_records(
         "_resolve_tsr_thlb_parent_step",
         lambda recipe, parent_step_id: parent_step,
     )
-    monkeypatch.setattr(tsr_recipes, "_resolve_tsr_total_area_benchmark", lambda recipe: 2.0)
+    monkeypatch.setattr(
+        tsr_recipes, "_resolve_tsr_total_area_benchmark", lambda recipe: 2.0
+    )
     monkeypatch.setattr(
         tsr_recipes,
         "_load_cached_landscape_unit_partition_records",
@@ -590,7 +706,8 @@ def test_run_tsr_thlb_locked_parent_step_preserves_lu_chunk_cache_records(
         updated["thlb_fact"] = updated["thlb_fact"] * 0.8
         removed_area_ha = float(
             checkpoint.geometry.area.astype(float).sum() / 10000.0
-            - (updated.geometry.area.astype(float) * updated["thlb_fact"]).sum() / 10000.0
+            - (updated.geometry.area.astype(float) * updated["thlb_fact"]).sum()
+            / 10000.0
         )
         return updated, {
             "step_id": "thlb_parent_002_compiled_01",
@@ -599,7 +716,8 @@ def test_run_tsr_thlb_locked_parent_step_preserves_lu_chunk_cache_records(
             "removed_area_ha": removed_area_ha,
             "net_removed_area_ha": removed_area_ha,
             "remaining_area_ha": float(
-                (updated.geometry.area.astype(float) * updated["thlb_fact"]).sum() / 10000.0
+                (updated.geometry.area.astype(float) * updated["thlb_fact"]).sum()
+                / 10000.0
             ),
             "runtime_notes": ["bounded locked step"],
         }
@@ -1158,9 +1276,7 @@ def test_locked_parent_step_source_preflight_auto_materializes_annex_stub(
                 ),
                 "label": "Growth and yield permanent sample plots",
                 "compiled_operation_type": "select_spatial_intersect",
-                "linked_source_entry_ids": [
-                    "whse_forest_vegetation_gry_psp_status"
-                ],
+                "linked_source_entry_ids": ["whse_forest_vegetation_gry_psp_status"],
             },
         ),
         source_entry_map=source_entry_map,
@@ -6316,6 +6432,66 @@ def test_apply_checkpoint_attribute_filters_preserves_fractional_state_on_remain
     assert removed_area_ha == pytest.approx(1.0)
     assert updated["thlb_fact"].tolist() == pytest.approx([0.35, 0.8])
     assert updated["thlb"].tolist() == [0, 1]
+
+
+def test_apply_checkpoint_attribute_filters_supports_in_or_null_values() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2, 3],
+            "BCLCS_LEVEL_2": ["N", None, "T"],
+            "thlb_fact": [1.0, 1.0, 1.0],
+            "thlb": [1, 1, 1],
+        },
+        geometry=[box(0, 0, 100, 100), box(110, 0, 210, 100), box(220, 0, 320, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint = tsr_recipes._assign_fragment_feature_ids(checkpoint)
+
+    updated, removed_area_ha = tsr_recipes._apply_checkpoint_attribute_filters(
+        checkpoint,
+        filters=[
+            {
+                "field": "BCLCS_LEVEL_2",
+                "operator": "in_or_null",
+                "values": ["N", "W"],
+            }
+        ],
+        mode="any",
+        preserve_geometry=True,
+    )
+
+    assert removed_area_ha == pytest.approx(2.0)
+    assert updated["thlb_fact"].tolist() == pytest.approx([0.0, 0.0, 1.0])
+    assert updated["thlb"].tolist() == [0, 0, 1]
+
+
+def test_apply_checkpoint_attribute_filters_supports_readable_aliases() -> None:
+    checkpoint = gpd.GeoDataFrame(
+        {
+            "FEATURE_ID": [1, 2, 3],
+            "NON_PRODUCTIVE_CD": ["X", None, None],
+            "SITE_INDEX": [4.0, 7.0, 3.0],
+            "thlb_fact": [1.0, 1.0, 1.0],
+            "thlb": [1, 1, 1],
+        },
+        geometry=[box(0, 0, 100, 100), box(110, 0, 210, 100), box(220, 0, 320, 100)],
+        crs="EPSG:3005",
+    )
+    checkpoint = tsr_recipes._assign_fragment_feature_ids(checkpoint)
+
+    updated, removed_area_ha = tsr_recipes._apply_checkpoint_attribute_filters(
+        checkpoint,
+        filters=[
+            {"field": "NON_PRODUCTIVE_CD", "operator": "is_not_null"},
+            {"field": "SITE_INDEX", "operator": "less_than", "value": 5},
+        ],
+        mode="any",
+        preserve_geometry=True,
+    )
+
+    assert removed_area_ha == pytest.approx(2.0)
+    assert updated["thlb_fact"].tolist() == pytest.approx([0.0, 1.0, 0.0])
+    assert updated["thlb"].tolist() == [0, 1, 0]
 
 
 def test_run_tsr_thlb_parent_step_preserves_geometry_for_later_stage_spatial_exclusion(
@@ -12235,8 +12411,8 @@ def test_load_highway_97_geometry_uses_annex_payload_path(
 
     monkeypatch.setattr(tsr_step13_attributes.gpd, "read_file", _fake_read_file)
 
-    resolved_artifact_path, highway_line = tsr_step13_attributes._load_highway_97_geometry(
-        instance_root=instance_root
+    resolved_artifact_path, highway_line = (
+        tsr_step13_attributes._load_highway_97_geometry(instance_root=instance_root)
     )
 
     assert resolved_artifact_path == payload_path
@@ -12753,12 +12929,10 @@ def test_write_yield_bridge_tipsy_handoff_artifacts_writes_excel_and_csv_inputs(
         _fake_build_tipsy_input_table,
     )
 
-    excel_path, btc_path = (
-        tsr_recipes._write_yield_bridge_tipsy_handoff_artifacts(
-            instance_root=instance_root,
-            tsa="29",
-            au_checkpoint=au_checkpoint,
-        )
+    excel_path, btc_path = tsr_recipes._write_yield_bridge_tipsy_handoff_artifacts(
+        instance_root=instance_root,
+        tsa="29",
+        au_checkpoint=au_checkpoint,
     )
 
     assert excel_path.is_file()

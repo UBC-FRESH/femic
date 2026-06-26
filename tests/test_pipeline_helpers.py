@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from femic.pipeline.io import (
@@ -1120,6 +1121,13 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
                 "    species_combo_count: 2",
                 "    include_tm_species2_for_single: false",
                 "    top_area_coverage: 0.95",
+                "source_paths:",
+                "  vri_rel_candidates:",
+                "    - bc/vri/2025/VEG_COMP_LYR_R1_POLY_2025.gdb",
+                "    - bc/vri/2024/VEG_COMP_LYR_R1_POLY_2024.gdb",
+                "  vdyp_input_rel_candidates:",
+                "    - bc/vri/2025/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2025.gdb",
+                "    - bc/vri/2024/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2024.gdb",
                 "modes:",
                 "  resume: true",
                 "  dry_run: false",
@@ -1161,6 +1169,14 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
     assert profile.strat_species_combo_count == 2
     assert profile.strat_include_tm_species2_for_single is False
     assert profile.strat_top_area_coverage == pytest.approx(0.95)
+    assert profile.vri_rel_candidates == [
+        Path("bc/vri/2025/VEG_COMP_LYR_R1_POLY_2025.gdb"),
+        Path("bc/vri/2024/VEG_COMP_LYR_R1_POLY_2024.gdb"),
+    ]
+    assert profile.vdyp_input_rel_candidates == [
+        Path("bc/vri/2025/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2025.gdb"),
+        Path("bc/vri/2024/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2024.gdb"),
+    ]
     assert profile.vdyp_sampling_mode == "all"
     assert profile.vdyp_two_pass_rebin is True
     assert profile.vdyp_min_stands_per_si_bin == 10
@@ -1290,6 +1306,14 @@ def test_build_legacy_execution_plan_resolves_env_and_paths(tmp_path: Path) -> N
         managed_curve_truncate_at_culm=True,
         managed_curve_max_age=300,
         yield_assumptions_path=Path("config/tsr/yield_assumptions.yaml"),
+        vri_rel_candidates=[
+            Path("bc/vri/2025/VEG_COMP_LYR_R1_POLY_2025.gdb"),
+            Path("bc/vri/2024/VEG_COMP_LYR_R1_POLY_2024.gdb"),
+        ],
+        vdyp_input_rel_candidates=[
+            Path("bc/vri/2025/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2025.gdb"),
+            Path("bc/vri/2024/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2024.gdb"),
+        ],
     )
 
     plan = build_legacy_execution_plan(
@@ -1331,6 +1355,18 @@ def test_build_legacy_execution_plan_resolves_env_and_paths(tmp_path: Path) -> N
     assert plan.env["FEMIC_MANAGED_CURVE_Y_SCALE"] == "1.2"
     assert plan.env["FEMIC_MANAGED_CURVE_TRUNCATE_AT_CULM"] == "1"
     assert plan.env["FEMIC_MANAGED_CURVE_MAX_AGE"] == "300"
+    assert plan.env["FEMIC_VRI_REL_CANDIDATES"] == os.pathsep.join(
+        [
+            "bc/vri/2025/VEG_COMP_LYR_R1_POLY_2025.gdb",
+            "bc/vri/2024/VEG_COMP_LYR_R1_POLY_2024.gdb",
+        ]
+    )
+    assert plan.env["FEMIC_VDYP_INPUT_REL_CANDIDATES"] == os.pathsep.join(
+        [
+            "bc/vri/2025/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2025.gdb",
+            "bc/vri/2024/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2024.gdb",
+        ]
+    )
     assert plan.cmd == ["/usr/bin/python3", str(script_path)]
     assert plan.working_dir == script_path.parent.resolve()
 

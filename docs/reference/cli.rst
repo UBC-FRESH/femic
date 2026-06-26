@@ -912,8 +912,9 @@ Important lock contract:
 - ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
 - ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
   ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
-- ``--checkpoint-path PATH`` (optional; current TSA29 strict validation should
-  pass an explicit validated checkpoint path under ``data/tsr/``)
+- ``--checkpoint-path PATH`` (optional; explicit inputs may be Feather or a
+  readable vector dataset such as GeoPackage; current TSA29 strict validation
+  should pass an explicit validated checkpoint path under ``data/tsr/``)
 - ``--map-id TEXT`` (repeatable; optional explicit ``MAP_ID`` subset)
 - ``--auto-map-id-smoke-subset / --no-auto-map-id-smoke-subset`` (default:
   ``--auto-map-id-smoke-subset``)
@@ -932,8 +933,9 @@ still being refined.
 - ``--instance-root PATH`` (instance root containing ``config/`` and ``data/``)
 - ``--thlb-netdown-recipe-path PATH`` (optional; defaults to
   ``config/tsr/thlb_netdown.recipe.yaml`` under the instance root)
-- ``--checkpoint-path PATH`` (optional; current TSA29 strict validation should
-  pass an explicit validated checkpoint path under ``data/tsr/``)
+- ``--checkpoint-path PATH`` (optional; explicit inputs may be Feather or a
+  readable vector dataset such as GeoPackage; current TSA29 strict validation
+  should pass an explicit validated checkpoint path under ``data/tsr/``)
 - ``--output-path PATH`` (optional; defaults to
   ``data/tsr/thlb_netdown_checkpoint.feather`` under the instance root)
 - ``--audit-path PATH`` (optional; defaults to

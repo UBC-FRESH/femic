@@ -189,6 +189,13 @@ def _row_apply(df, func, axis=1):
     return df.apply(func, axis=axis)
 
 
+def _pathsep_env_candidates(name: str) -> list[str] | None:
+    raw = os.environ.get(name)
+    if raw is None or not raw.strip():
+        return None
+    return [item.strip() for item in raw.split(os.pathsep) if item.strip()]
+
+
 # --- cell 7 ---
 # %ipcluster --help
 # %load_ext ipyparallel
@@ -217,6 +224,10 @@ _repo_root = (
 _external_paths = resolve_legacy_external_data_paths(
     repo_root=_repo_root,
     env_override=os.environ.get("FEMIC_EXTERNAL_DATA_ROOT"),
+    vri_rel_candidates=_pathsep_env_candidates("FEMIC_VRI_REL_CANDIDATES"),
+    vdyp_input_rel_candidates=_pathsep_env_candidates(
+        "FEMIC_VDYP_INPUT_REL_CANDIDATES"
+    ),
 )
 vri_vclr1p_path = _external_paths.vri_vclr1p_path
 _legacy_data_paths = build_legacy_data_artifact_paths(output_root=_repo_root / "data")
@@ -278,7 +289,9 @@ _siteprod_artifacts = resolve_legacy_siteprod_artifacts(
 siteprod_tif_path = _siteprod_artifacts.siteprod_tif_path
 siteprod_bandmap_path = _siteprod_artifacts.siteprod_bandmap_path
 print(f"using siteprod raster source: {siteprod_tif_path}")
-print(f"siteprod export fallback used: {'no' if _siteprod_artifacts.use_prestacked else 'yes'}")
+print(
+    f"siteprod export fallback used: {'no' if _siteprod_artifacts.use_prestacked else 'yes'}"
+)
 if _siteprod_artifacts.use_prestacked:
     print(f"using siteprod band map: {siteprod_bandmap_path}")
 
@@ -573,7 +586,9 @@ if _siteprod_artifacts.use_prestacked:
     siteprod_layerspecies, siteprod_specieslayer = load_siteprod_bandmap(
         bandmap_path=siteprod_bandmap_path,
     )
-    print("Using pre-stacked SiteProd TIFF + band map; skipping ArcRasterRescue/ArcPy layer listing and export.")
+    print(
+        "Using pre-stacked SiteProd TIFF + band map; skipping ArcRasterRescue/ArcPy layer listing and export."
+    )
 else:
     siteprod_layerspecies, siteprod_specieslayer = list_siteprod_layers(
         arc_raster_rescue_exe_path=arc_raster_rescue_exe_path,
