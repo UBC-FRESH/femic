@@ -18385,3 +18385,11 @@
   inputs, while THLB/NTHLB state is assigned to those fragments; and
 - preserved the requirement that NTHLB fragments remain in the model with
   untreated growth curves.
+
+## 2026-06-26 - Advanced TFL 6 P4.1c AFLB handoff
+
+- updated the TFL 6 instance pointer after materializing the generated AFLB
+  resultant-fragment handoff used for Phase 4 bundle-table construction; and
+- recorded that the generated AFLB handoff contains `26186` EPSG:3005
+  `MultiPolygon` rows and `196833.177 ha`, while core bundle CSV generation
+  remains open in P4.1c.2.
