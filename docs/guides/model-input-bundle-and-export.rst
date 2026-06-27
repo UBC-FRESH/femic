@@ -13,6 +13,64 @@ FEMIC compiles standardized bundle tables under
 
 These feed downstream planning-system exporters.
 
+AFLB Stand Universe and THLB/NTHLB Semantics
+--------------------------------------------
+
+For TSR-style Patchworks bundles, the model stand universe is the accepted
+AFLB / forested model universe after spatial netdown overlays have produced
+the resultant fragments. THLB is a managed-treatment-eligible state assigned to
+those AFLB resultant fragments. The complement, ``NTHLB = AFLB - THLB``,
+remains in the model as unmanaged or full-retention forest.
+
+Bundle builders must therefore:
+
+- build stand or fragment tables from AFLB, CMFLB, or the case-specific
+  accepted forested model-universe resultant checkpoint;
+- assign every stand in that universe an untreated/natural growth curve, even
+  when it is outside THLB;
+- overlay the final THLB state back onto the AFLB universe to compute
+  ``managed_share``, ``thlb_fact``, ``thlb_area_ha``, ``retention_share``, and
+  IFM state;
+- compile THLB share as managed/treatment-eligible area subject to the rest of
+  the treatment, operability, age, and group gates; and
+- compile NTHLB share as unmanaged/full-retention area, preserving growth,
+  residual inventory, products/reports, cedar or habitat signals, and group
+  memberships.
+
+Do not drop retained forested area from the runtime just because it is outside
+the THLB. In Patchworks terms, that area still belongs in the model as
+unmanaged or full-retention area. If it has no growth curve, it cannot grow and
+cannot support residual-inventory, old-forest, carbon, cedar, habitat, or
+teaching KPI reports.
+
+Selected-AU and Remap Semantics
+-------------------------------
+
+The bundle tables must preserve the selected-AU curve-family contract created
+upstream in Stage 01a:
+
+- ``au_table.csv`` is the Patchworks-facing AU/curve lookup. It should publish
+  the accepted curve-family rows, not silently expand sparse non-selected AU
+  bins into new curve families.
+- ``curve_table.csv`` and ``curve_points_table.csv`` must contain only reviewed
+  natural/untreated and treated/managed curve IDs for those accepted curve
+  families, plus any explicit species-proportion curves required by the
+  exporter.
+- Stand or fragment assignment tables may retain both the raw/static AU and
+  the selected canonical curve-family target. Non-selected AUs should point at
+  the reviewed selected target through the lexicographic remap audit.
+
+In other words, a case can have more static AU bins than curve families. The
+static AU surface explains how the source stand was classified; the selected
+curve-family surface defines which yield curve the runtime consumes. Do not
+infer that every static AU bin needs a distinct VDYP/TIPSY curve.
+
+For the TFL 6 teaching instance, Phase 3 records ``384`` static AU bins and
+``77`` selected top-area AU curve families. P4 bundle work must therefore
+consume the remap audit rather than compiling or publishing 384 separate
+curve-family rows. MKRF carries the same idea through its
+``selected_au_table.csv`` and runtime AU remap audit surfaces.
+
 Patchworks Export
 -----------------
 

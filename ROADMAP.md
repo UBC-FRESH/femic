@@ -2087,6 +2087,23 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     surfaces.
   - [x] P77.1c Build parent Sphinx docs warning-clean and open the publication
     PR without starting TFL 6 Phase 4 implementation.
+- [x] P77.2 Clarify the selected-AU curve-family and lexicographic remap
+  contract in parent FEMIC docs (`#206`).
+  - [x] P77.2a Update the Stage 01a and model-input bundle guides so selected
+    top-area AU bins are the canonical curve-family universe.
+  - [x] P77.2b Cross-reference the TFL 6 and MKRF instance examples that remap
+    non-selected AU bins to selected curve families.
+  - [x] P77.2c Build parent Sphinx docs warning-clean and keep this docs-only
+    fix out of TFL 6 Phase 4 model-input implementation.
+- [x] P77.3 Clarify the generic AFLB stand-universe and THLB/NTHLB retention
+  contract in parent FEMIC docs and named-pipeline metadata (`#207`).
+  - [x] P77.3a Update model-input bundle, Stage 01a, and pipeline-overview docs
+    so AFLB/CMFLB is the growth universe and final THLB is a managed-share
+    overlay.
+  - [x] P77.3b Add named-pipeline registry seam notes so AFLB restart seams are
+    described as yield-ready model-universe seams, not final-THLB-only seams.
+  - [x] P77.3c Build parent Sphinx docs warning-clean and keep this docs-only
+    correction out of TFL 6 bundle-table generation.
 
 ### Detailed Next Steps Notes
 
@@ -2098,6 +2115,16 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P77.3` / `#207` complete: parent FEMIC docs and pipeline registry metadata
+    now state that AFLB/CMFLB is the stand/growth universe, final THLB is a
+    managed-share overlay, and NTHLB remains unmanaged/full-retention forest
+    with untreated curve coverage.
+  - `P77.2` / `#206` complete: parent FEMIC docs now clarify that top-area
+    selected AU bins are the canonical curve-family universe, while
+    non-selected AU bins or stands are remapped/imputed to selected curve
+    families through the reviewed lexicographic remap audit. This was a
+    docs-only correction and did not start TFL 6 Phase 4 model-input table
+    generation.
   - `P77.1` complete under `#204`: the parent FEMIC TFL 6 docs pointer is
     wired into the sample-models toctree and builds warning-clean. Remaining
     publication work is the branch/PR lifecycle, not Phase 4 implementation.

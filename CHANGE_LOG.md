@@ -18353,3 +18353,60 @@
 - retained the Sphinx autosummary refresh to
   `docs/reference/api/generated/femic.pipeline.tsa.rst` that the docs build
   produced.
+
+## 2026-06-26 - Clarified selected-AU curve-family docs
+- opened FEMIC issue `#206` for the parent documentation gap that made the
+  selected-AU curve-family contract too easy to miss during TFL 6 P4 bundle
+  work;
+- updated the Stage 01a guide to state explicitly that selected top-area AU
+  bins define the canonical curve-family universe and that non-selected AU bins
+  must be remapped through a reviewed lexicographic audit;
+- updated the model-input bundle guide to distinguish static/source AU
+  provenance from Patchworks-facing selected curve-family IDs; and
+- added a TFL 6 parent-doc reminder that the instance has `384` static AU bins
+  but only `77` accepted selected curve families.
+
+## 2026-06-26 - Clarified AFLB universe versus THLB retention semantics
+
+- updated the model-input bundle, Stage 01a, and pipeline-overview guides to
+  state that TSR-style Patchworks bundles use AFLB/CMFLB resultant fragments as
+  the stand and growth universe, not THLB area alone;
+- documented that THLB is a managed treatment-eligibility overlay and
+  `NTHLB = AFLB - THLB` remains inside the model as unmanaged/full-retention
+  forest that still requires untreated VDYP curve coverage; and
+- added named-pipeline registry seam notes for AFLB and AFLB-yield-ready seams
+  so built-in pipeline metadata carries the same model-building contract.
+
+## 2026-06-26 - Refined resultant-fragment model-building semantics
+
+- updated generic model-input, Stage 01a, pipeline-overview, and named-pipeline
+  metadata surfaces to call AFLB/CMFLB outputs resultant fragments;
+- clarified that spatial netdown-induced fragments are expected Patchworks
+  inputs, while THLB/NTHLB state is assigned to those fragments; and
+- preserved the requirement that NTHLB fragments remain in the model with
+  untreated growth curves.
+
+## 2026-06-26 - Advanced TFL 6 P4.1c AFLB handoff
+
+- updated the TFL 6 instance pointer after materializing the generated AFLB
+  resultant-fragment handoff used for Phase 4 bundle-table construction; and
+- recorded that the generated AFLB handoff contains `26186` EPSG:3005
+  `MultiPolygon` rows and `196833.177 ha`, while core bundle CSV generation
+  remains open in P4.1c.2.
+
+## 2026-06-26 - Invalidated TFL 6 AFLB handoff attempt
+
+- updated the TFL 6 instance pointer after the attempted AFLB handoff was
+  invalidated because the runner-labeled AFLB checkpoint still contained
+  non-treed/non-forested BCLCS rows; and
+- recorded that P4.1c.2 bundle CSV generation is blocked until the
+  GLB-to-AFLB non-forest/non-productive filter is corrected and rerun.
+
+## 2026-06-26 - Repaired FMG pass-through succession for Matrix Builder
+
+- changed the generic FMG ForestModel exporter default pass-through succession
+  from `breakup=1000`, `renew=1000` to `breakup=999`, `renew=0`;
+- matched the recovered MKRF legacy succession pattern and avoided Matrix
+  Builder failures when a stand reaches age `1000` in a retained/planted
+  stratum; and
+- updated the targeted FMG serializer test for the new pass-through contract.
