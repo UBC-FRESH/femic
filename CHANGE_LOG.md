@@ -18410,3 +18410,19 @@
   Builder failures when a stand reaches age `1000` in a retained/planted
   stratum; and
 - updated the targeted FMG serializer test for the new pass-through contract.
+
+## 2026-06-27 - Planned explicit `figrecover` integration
+
+- opened FEMIC issue `#209` for explicit integration of the UBC-FRESH
+  `figrecover` package into document-ingestion and figure-recovery workflows;
+- added Phase 78 to `ROADMAP.md` with tasks for optional dependency handling,
+  environment preflight, artifact/provenance conventions, CLI/API wrappers, a
+  TFL 6 MP11 pilot, and documentation/validation;
+- added `planning/phase78_figrecover_integration_notes.md` to define the
+  package boundary, proposed `femic doc figures` surfaces, runtime artifact
+  layout, required provenance fields, review-status vocabulary, and MP11 pilot
+  alignment;
+- marked P78.1 complete and advanced the active edge to P78.2 optional
+  dependency packaging and environment checks; and
+- recorded that the first attempted local GitHub install timed out and did not
+  leave `figrecover` installed, so dependency adoption remains open P78.2 work.
