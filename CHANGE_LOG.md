@@ -18460,6 +18460,19 @@
 - marked P78.3 complete in `ROADMAP.md`, advancing the active edge to P78.4
   CLI/API wrappers for auditable figure-recovery workflows.
 
+## 2026-06-28 - Planned open LiDAR acquisition and terrain-analysis package phase
+
+- opened parent FEMIC issue `#211` and child issues `#212`-`#217` for reusable
+  open LiDAR source discovery, tile-indexing, resumable materialization,
+  terrain raster/slope products, terrain-derived stream candidate workflows,
+  CLI/docs/tests, and a bounded TFL 6 pilot;
+- updated `ROADMAP.md` with Phase 79 so instance repositories can eventually
+  consume FEMIC package APIs instead of carrying one-off LiDAR/terrain scripts;
+- kept heavy LiDAR/raster dependencies scoped to optional workflows; and
+- recorded the boundary that TFL 6 will first run an immediate public DEM
+  steep-slope repair lane while FEMIC builds the reusable long-term open LiDAR
+  capability.
+
 ## 2026-06-28 - Added document-figure corpus and table-registration CLI wrappers
 
 - added `femic doc figures prepare-corpus` to initialize FEMIC's ignored

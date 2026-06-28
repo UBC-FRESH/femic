@@ -2154,6 +2154,51 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P78.6c Post issue progress comments and update the changelog at each
     implementation milestone.
 
+## Phase 79: Open LiDAR Acquisition And Terrain Analysis (`#211`)
+
+Status: planned.
+
+Goal: add first-class FEMIC package support for automated open LiDAR
+point-cloud acquisition and derived terrain/hydrography analysis, so instance
+repositories can build public-data proxies for steep slopes, stream
+location/classification, and related THLB/riparian workflows without one-off
+scripts.
+
+- [ ] P79.1 Define open LiDAR source and tile-index contract (`#212`).
+  - [ ] P79.1a Survey supported public source families such as LidarBC/open
+    LiDAR.
+  - [ ] P79.1b Define tile-index records, AOI intersection behaviour,
+    metadata fields, and provenance requirements.
+  - [ ] P79.1c Define dependency, storage, and generated-artifact boundaries.
+- [ ] P79.2 Implement resumable LiDAR and DEM materialization manifests
+  (`#213`).
+  - [ ] P79.2a Define manifest schema for source URLs, checksums, local paths,
+    status, and retry state.
+  - [ ] P79.2b Implement resumable acquisition helpers.
+  - [ ] P79.2c Add checksum and completeness validation.
+  - [ ] P79.2d Add CLI/API preflight surfaces.
+- [ ] P79.3 Add terrain raster and slope-product pipeline APIs (`#214`).
+  - [ ] P79.3a Select optional dependency stack for point-cloud/raster work.
+  - [ ] P79.3b Implement terrain raster derivation interfaces.
+  - [ ] P79.3c Implement percent-slope and zonal-stat helpers.
+  - [ ] P79.3d Add QA report outputs.
+- [ ] P79.4 Add terrain-derived stream candidate workflows (`#215`).
+  - [ ] P79.4a Define terrain-derived hydrography product contract.
+  - [ ] P79.4b Add comparison metrics against existing public hydrography.
+  - [ ] P79.4c Emit review manifests and caveat reports.
+- [ ] P79.5 Add CLI docs tests and instance hooks for LiDAR workflows (`#216`).
+  - [ ] P79.5a Add CLI commands for tile discovery/materialization and terrain
+    products.
+  - [ ] P79.5b Add docs and examples.
+  - [ ] P79.5c Add tests for manifests and command behaviour.
+  - [ ] P79.5d Add instance integration notes.
+- [ ] P79.6 Pilot open LiDAR terrain workflow against TFL 6 needs (`#217`).
+  - [ ] P79.6a Select a bounded TFL 6 AOI/test area.
+  - [ ] P79.6b Run tile discovery/materialization.
+  - [ ] P79.6c Build terrain/slope candidate products.
+  - [ ] P79.6d Compare outputs against TFL 6 instance needs.
+  - [ ] P79.6e Write pilot closeout and package follow-up list.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2165,6 +2210,11 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P79` / `#211` is planned: FEMIC will grow reusable open LiDAR
+    acquisition, terrain-raster, slope, and terrain-derived hydrography
+    workflows. The immediate TFL 6 instance uses a public DEM steep-slope
+    repair lane first; this parent package phase is the reusable long-term
+    implementation path.
   - `P78.6` / `#209` is complete: the optional document-figure recovery
     workflow is documented in `docs/guides/document-figure-recovery.rst`, the
     CLI reference includes `femic doc figures` commands, and
