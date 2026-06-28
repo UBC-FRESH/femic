@@ -2115,12 +2115,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P78.1c Record the dependency, artifact, provenance, review-status,
     and TFL 6 MP11 pilot boundaries in
     `planning/phase78_figrecover_integration_notes.md`.
-- [ ] P78.2 Add optional dependency and environment checks (`#209`)
-  - [ ] P78.2a Add a FEMIC optional extra for figure recovery only after the
+- [x] P78.2 Add optional dependency and environment checks (`#209`)
+  - [x] P78.2a Add a FEMIC optional extra for figure recovery only after the
     dependency footprint is accepted.
-  - [ ] P78.2b Add a lightweight CLI preflight that reports whether
+  - [x] P78.2b Add a lightweight CLI preflight that reports whether
     `figrecover` and required PDF/image extras are importable.
-  - [ ] P78.2c Keep normal FEMIC install, THLB, VDYP, TIPSY, and Patchworks
+  - [x] P78.2c Keep normal FEMIC install, THLB, VDYP, TIPSY, and Patchworks
     workflows working without `figrecover` installed.
 - [ ] P78.3 Define figure-recovery artifact conventions (`#209`)
   - [ ] P78.3a Standardize corpus paths for public PDFs, rendered pages,
@@ -2165,12 +2165,15 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P78.1` / `#209` is complete: the parent FEMIC integration lane for the
-    new UBC-FRESH `figrecover` package now has an optional-dependency boundary,
-    proposed `femic doc figures` command surfaces, artifact/provenance
-    conventions, review-status contract, and TFL 6 MP11 pilot alignment. The
-    immediate edge is P78.2: add optional dependency packaging and environment
-    checks without making `figrecover` mandatory for normal FEMIC workflows.
+  - `P78.2` / `#209` is complete: FEMIC now has an optional `figures` extra
+    pinned to UBC-FRESH `figrecover` release tag `v0.1.0a1`, plus
+    `femic doc figures preflight` for import/version checks. Local validation
+    installed the extra and confirmed `figrecover`, PyMuPDF, pypdf, OpenCV,
+    scikit-image, and httpx import successfully. The immediate edge is P78.3:
+    define figure-recovery artifact conventions before broad MP11 processing.
+    The 72-core Ubuntu GPU server should be treated as the preferred execution
+    environment for heavier P78.3/P78.5 rendering, VLM, and batch-recovery
+    pilots.
   - `P77.3` / `#207` complete: parent FEMIC docs and pipeline registry metadata
     now state that AFLB/CMFLB is the stand/growth universe, final THLB is a
     managed-share overlay, and NTHLB remains unmanaged/full-retention forest

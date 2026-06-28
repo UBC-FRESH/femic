@@ -6,6 +6,8 @@ import json
 import os
 import csv
 import getpass
+import importlib
+import importlib.metadata
 import platform
 import subprocess
 import sys
@@ -358,6 +360,16 @@ data_app = typer.Typer(
     no_args_is_help=True,
     help="Resolve and collect BC Data Catalogue source-data candidates.",
 )
+doc_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Inspect and prepare document-ingestion workflows.",
+)
+doc_figures_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Inspect optional figure-recovery tooling.",
+)
 pipelines_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
@@ -477,6 +489,14 @@ BCDC_DOWNLOAD_OPTION = typer.Option(
     True,
     "--download/--no-download",
     help="Materialize the DWDS artifact when the follow-up probe exposes a download URL.",
+)
+FIGRECOVER_INSTALL_HINT = "python -m pip install -e .[figures]"
+FIGRECOVER_OPTIONAL_MODULES = (
+    ("pymupdf", "fitz"),
+    ("pypdf", "pypdf"),
+    ("opencv", "cv2"),
+    ("scikit-image", "skimage"),
+    ("httpx", "httpx"),
 )
 BCDC_PLAN_ONLY_OPTION = typer.Option(
     False,
@@ -9953,6 +9973,49 @@ def patchworks_build_blocks(
         )
 
 
+def _module_import_status(module_name: str) -> tuple[bool, str | None]:
+    try:
+        importlib.import_module(module_name)
+    except ModuleNotFoundError as exc:
+        if exc.name == module_name:
+            return False, exc.name
+        return False, str(exc)
+    return True, None
+
+
+def _package_version(package_name: str) -> str:
+    try:
+        return importlib.metadata.version(package_name)
+    except importlib.metadata.PackageNotFoundError:
+        return "unknown"
+
+
+@doc_figures_app.command("preflight")
+def doc_figures_preflight() -> None:
+    """Check optional figrecover dependencies without processing documents."""
+
+    figrecover_ok, figrecover_error = _module_import_status("figrecover")
+    if figrecover_ok:
+        console.print(f"figrecover: ok version={_package_version('figrecover')}")
+    else:
+        console.print(f"figrecover: missing ({figrecover_error})")
+
+    all_ok = figrecover_ok
+    for label, module_name in FIGRECOVER_OPTIONAL_MODULES:
+        module_ok, module_error = _module_import_status(module_name)
+        all_ok = all_ok and module_ok
+        if module_ok:
+            console.print(f"{label}: ok")
+        else:
+            console.print(f"{label}: missing ({module_error})")
+
+    if not all_ok:
+        console.print(f"install_hint: {FIGRECOVER_INSTALL_HINT}", markup=False)
+        raise typer.Exit(code=1)
+
+    console.print("[green]Figure-recovery preflight passed[/green]")
+
+
 @fansier_app.command("run-batch")
 def fansier_run_batch(
     rgm_path: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
@@ -10228,6 +10291,8 @@ app.add_typer(tsa_app, name="tsa")
 app.add_typer(tipsy_app, name="tipsy")
 app.add_typer(fansier_app, name="fansier")
 app.add_typer(data_app, name="data")
+doc_app.add_typer(doc_figures_app, name="figures")
+app.add_typer(doc_app, name="doc")
 app.add_typer(pipelines_app, name="pipelines")
 app.add_typer(tsr_app, name="tsr")
 app.add_typer(export_app, name="export")

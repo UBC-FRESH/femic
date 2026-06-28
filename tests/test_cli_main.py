@@ -87,6 +87,79 @@ def test_enable_rich_tracebacks_unexpected_import_error_propagates(
         cli_main._enable_rich_tracebacks()
 
 
+def test_doc_figures_help_renders() -> None:
+    runner = CliRunner()
+
+    doc_result = runner.invoke(cli_main.app, ["doc", "--help"])
+    figures_result = runner.invoke(cli_main.app, ["doc", "figures", "--help"])
+    preflight_result = runner.invoke(
+        cli_main.app, ["doc", "figures", "preflight", "--help"]
+    )
+
+    assert doc_result.exit_code == 0, doc_result.output
+    assert figures_result.exit_code == 0, figures_result.output
+    assert preflight_result.exit_code == 0, preflight_result.output
+    assert "figures" in doc_result.stdout
+    assert "preflight" in figures_result.stdout
+    assert "Check optional figrecover dependencies" in preflight_result.stdout
+
+
+def test_doc_figures_preflight_passes(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        cli_main,
+        "_module_import_status",
+        lambda _module_name: (True, None),
+    )
+    monkeypatch.setattr(cli_main, "_package_version", lambda _package_name: "0.1.0a1")
+
+    result = CliRunner().invoke(cli_main.app, ["doc", "figures", "preflight"])
+
+    assert result.exit_code == 0, result.output
+    assert "figrecover: ok version=0.1.0a1" in result.stdout
+    assert "pymupdf: ok" in result.stdout
+    assert "pypdf: ok" in result.stdout
+    assert "opencv: ok" in result.stdout
+    assert "scikit-image: ok" in result.stdout
+    assert "httpx: ok" in result.stdout
+    assert "Figure-recovery preflight passed" in result.stdout
+
+
+def test_doc_figures_preflight_fails_when_figrecover_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _fake_import_status(module_name: str) -> tuple[bool, str | None]:
+        if module_name == "figrecover":
+            return False, "figrecover"
+        return True, None
+
+    monkeypatch.setattr(cli_main, "_module_import_status", _fake_import_status)
+
+    result = CliRunner().invoke(cli_main.app, ["doc", "figures", "preflight"])
+
+    assert result.exit_code == 1
+    assert "figrecover: missing (figrecover)" in result.stdout
+    assert f"install_hint: {cli_main.FIGRECOVER_INSTALL_HINT}" in result.stdout
+
+
+def test_doc_figures_preflight_reports_missing_optional_module(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _fake_import_status(module_name: str) -> tuple[bool, str | None]:
+        if module_name == "cv2":
+            return False, "cv2"
+        return True, None
+
+    monkeypatch.setattr(cli_main, "_module_import_status", _fake_import_status)
+    monkeypatch.setattr(cli_main, "_package_version", lambda _package_name: "0.1.0a1")
+
+    result = CliRunner().invoke(cli_main.app, ["doc", "figures", "preflight"])
+
+    assert result.exit_code == 1
+    assert "figrecover: ok version=0.1.0a1" in result.stdout
+    assert "opencv: missing (cv2)" in result.stdout
+    assert f"install_hint: {cli_main.FIGRECOVER_INSTALL_HINT}" in result.stdout
+
+
 def test_preflight_checks_exit_when_data_root_missing(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

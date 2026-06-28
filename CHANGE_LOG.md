@@ -18426,3 +18426,19 @@
   dependency packaging and environment checks; and
 - recorded that the first attempted local GitHub install timed out and did not
   leave `figrecover` installed, so dependency adoption remains open P78.2 work.
+
+## 2026-06-28 - Added `figrecover` optional dependency preflight
+
+- added the optional `figures` extra, pinned to UBC-FRESH `figrecover` release
+  tag `v0.1.0a1`, so users can install figure-recovery dependencies with
+  `python -m pip install -e .[figures]`;
+- added the `femic doc figures preflight` CLI command to report whether
+  `figrecover`, PyMuPDF, pypdf, OpenCV, scikit-image, and httpx are importable;
+- kept the dependency optional so normal FEMIC THLB, VDYP, TIPSY, Patchworks,
+  and instance workflows do not require `figrecover`;
+- installed the optional extra in the local FEMIC virtual environment and
+  confirmed the preflight reports all required imports as available;
+- added focused CLI tests for help rendering, passing preflight, missing
+  `figrecover`, and missing optional-module reporting; and
+- recorded the 72-core Ubuntu GPU server as the preferred environment for
+  heavier P78.3/P78.5 MP11 rendering, VLM, and batch-recovery pilots.

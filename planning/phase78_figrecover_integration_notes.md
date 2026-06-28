@@ -155,6 +155,17 @@ The pilot must not:
    TFL 6 instance Phase 6 lane.
 6. P78.6: document the workflow and run focused validation.
 
+## Execution Environment Notes
+
+The local Windows FEMIC environment is sufficient for P78.2 packaging and
+import-preflight work. Heavier P78.3 through P78.5 work should preferentially
+run on the available Ubuntu server with 72 Xeon cores, 768 GB RAM, and the
+96 GB NVIDIA RTX Pro 6000 Blackwell GPU. That server is the better place for
+large MP11 page rendering, crop generation, VLM-assisted figure metadata
+review, and batch extraction pilots. Any server-side workflow must still write
+portable manifests and avoid committing bulky runtime pages, crops, overlays,
+prompt logs, or unreleasable recovered tables.
+
 ## Validation Expectations
 
 Before any P78 implementation milestone closes:
