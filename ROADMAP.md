@@ -2138,13 +2138,13 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     promoting them directly into live model contracts.
   - [x] P78.4c Add tests using synthetic/public-safe fixtures rather than
     private PDFs or arbitrary downloaded documents.
-- [ ] P78.5 Pilot the workflow against the TFL 6 MP11 package (`#209`)
-  - [ ] P78.5a Align the parent FEMIC pilot with
+- [x] P78.5 Pilot the workflow against the TFL 6 MP11 package (`#209`)
+  - [x] P78.5a Align the parent FEMIC pilot with
     `UBC-FRESH/femic-tfl6-instance#42`, especially P6.1 source/provenance and
     P6.2 extraction-manifest needs.
-  - [ ] P78.5b Produce a small public-safe pilot manifest for selected MP11
+  - [x] P78.5b Produce a small public-safe pilot manifest for selected MP11
     figure candidates before attempting broad extraction.
-  - [ ] P78.5c Record limitations and required human-review steps before any
+  - [x] P78.5c Record limitations and required human-review steps before any
     recovered values feed TFL 6 crosswalk or model-overhaul planning.
 - [ ] P78.6 Document and validate the integration (`#209`)
   - [ ] P78.6a Add docs for installing FEMIC with the figure-recovery optional
@@ -2165,18 +2165,15 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P78.4` / `#209` is complete: `femic doc figures prepare-corpus` now
-    initializes FEMIC's ignored document-ingestion corpus layout, renders PDFs
-    through optional `figrecover`, writes `source_manifest.yaml`, and can
-    summarize a figrecover JSONL figure manifest as
-    `figure_candidates.csv`. `femic doc figures register-table` appends a
-    FEMIC provenance record to `review_manifest.jsonl`, writes a JSON sidecar,
-    hashes source/crop/table artifacts, and enforces review-status gates before
-    accepted statuses can be recorded. The immediate edge is P78.5: pilot a
-    small public-safe TFL 6 MP11 figure-candidate manifest aligned with the
-    TFL 6 instance Phase 6 lane. The 72-core Ubuntu GPU server should be
-    treated as the preferred execution environment for heavier P78.5 rendering,
-    VLM, and batch-recovery pilots.
+  - `P78.5` / `#209` is complete: the public-safe TFL 6 MP11 pilot note and
+    compact figure-candidate manifest now live in
+    `planning/phase78_tfl6_mp11_pilot_notes.md` and
+    `planning/phase78_tfl6_mp11_pilot_figure_manifest.csv`. The pilot records
+    the public source URL, SHA256, page count, selected figure/page anchors,
+    chart families, recovery objectives, review status, and TFL 6 instance
+    Phase 6 alignment without committing rendered pages or recovered values.
+    The immediate edge is P78.6: document and validate the FEMIC integration
+    before closing the Phase 78 branch/PR.
   - `P77.3` / `#207` complete: parent FEMIC docs and pipeline registry metadata
     now state that AFLB/CMFLB is the stand/growth universe, final THLB is a
     managed-share overlay, and NTHLB remains unmanaged/full-retention forest

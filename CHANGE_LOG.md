@@ -18477,3 +18477,19 @@
   rendering rather than private PDFs or arbitrary downloaded documents; and
 - marked P78.4 complete in `ROADMAP.md`, advancing the active edge to the
   public-safe TFL 6 MP11 pilot manifest in P78.5.
+
+## 2026-06-28 - Added TFL 6 MP11 figure-recovery pilot manifest
+
+- scanned the public TFL 6 MP11 PDF source package with PyMuPDF, recording a
+  `475` page count and SHA256
+  `44591c1024254e36d8989df45a2b489a624d5669c5ae01a6ebfd961b50a7321b`;
+- exercised `femic doc figures prepare-corpus` through the Typer app against
+  selected public MP11 pages, rendering `12` page images under ignored
+  `runtime/document_ingestion/tfl6-mp11-pilot/`;
+- added `planning/phase78_tfl6_mp11_pilot_figure_manifest.csv` with a compact
+  public-safe set of selected figure candidates, page anchors, chart families,
+  recovery objectives, review status, and TFL 6 instance Phase 6 alignment;
+- added `planning/phase78_tfl6_mp11_pilot_notes.md` documenting the source,
+  runtime trial, private-data hygiene, and handoff expectations; and
+- marked P78.5 complete in `ROADMAP.md`, advancing the active edge to P78.6
+  documentation and validation.

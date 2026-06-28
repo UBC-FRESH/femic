@@ -183,6 +183,9 @@ The pilot must not:
    Status: complete.
 5. P78.5: run a small TFL 6 MP11 pilot manifest and hand off findings to the
    TFL 6 instance Phase 6 lane.
+   Status: complete. The pilot files are
+   `planning/phase78_tfl6_mp11_pilot_notes.md` and
+   `planning/phase78_tfl6_mp11_pilot_figure_manifest.csv`.
 6. P78.6: document the workflow and run focused validation.
 
 ## Execution Environment Notes
