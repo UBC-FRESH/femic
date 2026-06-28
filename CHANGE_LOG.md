@@ -18459,3 +18459,21 @@
   serialization; and
 - marked P78.3 complete in `ROADMAP.md`, advancing the active edge to P78.4
   CLI/API wrappers for auditable figure-recovery workflows.
+
+## 2026-06-28 - Added document-figure corpus and table-registration CLI wrappers
+
+- added `femic doc figures prepare-corpus` to initialize FEMIC's ignored
+  document-ingestion corpus layout, render supplied PDFs through optional
+  `figrecover`, write `source_manifest.yaml`, and optionally summarize a
+  figrecover JSONL figure manifest as `figure_candidates.csv`;
+- added `femic doc figures register-table` to register recovered CSV/JSON
+  tables with FEMIC provenance, table checksums, calibration JSON,
+  extraction parameters, review status, downstream-use classification, and
+  JSON/JSONL manifest outputs;
+- kept both commands thin over FEMIC helper APIs and lazy optional
+  `figrecover` imports so normal FEMIC workflows still do not require
+  figure-recovery dependencies;
+- added CLI tests using synthetic placeholder files and monkeypatched
+  rendering rather than private PDFs or arbitrary downloaded documents; and
+- marked P78.4 complete in `ROADMAP.md`, advancing the active edge to the
+  public-safe TFL 6 MP11 pilot manifest in P78.5.

@@ -101,6 +101,8 @@ def test_doc_figures_help_renders() -> None:
     assert preflight_result.exit_code == 0, preflight_result.output
     assert "figures" in doc_result.stdout
     assert "preflight" in figures_result.stdout
+    assert "prepare-corpus" in figures_result.stdout
+    assert "register-table" in figures_result.stdout
     assert "Check optional figrecover dependencies" in preflight_result.stdout
 
 
@@ -158,6 +160,184 @@ def test_doc_figures_preflight_reports_missing_optional_module(
     assert "figrecover: ok version=0.1.0a1" in result.stdout
     assert "opencv: missing (cv2)" in result.stdout
     assert f"install_hint: {cli_main.FIGRECOVER_INSTALL_HINT}" in result.stdout
+
+
+def test_doc_figures_prepare_corpus_writes_source_manifest(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    pdf_path = tmp_path / "source.pdf"
+    pdf_path.write_bytes(b"%PDF synthetic placeholder")
+
+    def _fake_render_pdf_pages(**kwargs: object) -> list[dict[str, object]]:
+        output_dir = Path(kwargs["output_dir"])
+        output_dir.mkdir(parents=True, exist_ok=True)
+        page_path = output_dir / "source-p0001.png"
+        page_path.write_text("page", encoding="utf-8")
+        return [
+            {
+                "document_id": kwargs["document_id"],
+                "page_number": 1,
+                "image_path": str(page_path),
+                "source_pdf": str(kwargs["pdf_path"]),
+                "width_px": 100,
+                "height_px": 100,
+                "dpi": kwargs["dpi"],
+                "renderer": "test-renderer",
+                "metadata": {},
+            }
+        ]
+
+    monkeypatch.setattr(
+        cli_main,
+        "_render_document_figure_pdf_pages",
+        _fake_render_pdf_pages,
+    )
+    monkeypatch.setattr(cli_main, "_package_version", lambda _package_name: "0.1.0a1")
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "doc",
+            "figures",
+            "prepare-corpus",
+            "test-corpus",
+            "--pdf",
+            str(pdf_path),
+            "--output-root",
+            str(tmp_path / "corpus"),
+            "--dpi",
+            "72",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert '"corpus_id": "test-corpus"' in result.stdout
+    source_manifest = tmp_path / "corpus" / "source_manifest.yaml"
+    payload = yaml.safe_load(source_manifest.read_text(encoding="utf-8"))
+    assert payload["corpus_id"] == "test-corpus"
+    assert payload["figrecover_version"] == "0.1.0a1"
+    assert payload["sources"][0]["rendered_page_count"] == 1
+    assert (tmp_path / "corpus" / "pages" / "source-p0001.png").exists()
+
+
+def test_doc_figures_prepare_corpus_requires_input(tmp_path: Path) -> None:
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "doc",
+            "figures",
+            "prepare-corpus",
+            "test-corpus",
+            "--output-root",
+            str(tmp_path / "corpus"),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "provide at least one --pdf" in result.stdout
+
+
+def test_doc_figures_register_table_writes_review_manifest(tmp_path: Path) -> None:
+    table_path = tmp_path / "recovered.csv"
+    table_path.write_text("x,y\n1,2\n", encoding="utf-8")
+    calibration_path = tmp_path / "calibration.json"
+    calibration_path.write_text('{"x_axis": "linear", "y_axis": "linear"}\n', encoding="utf-8")
+    extraction_parameters_path = tmp_path / "params.json"
+    extraction_parameters_path.write_text('{"mask": "blue"}\n', encoding="utf-8")
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "doc",
+            "figures",
+            "register-table",
+            "test-corpus",
+            str(table_path),
+            "--document-title",
+            "Synthetic Management Plan",
+            "--page",
+            "12",
+            "--figure-id",
+            "Figure 1",
+            "--series-name",
+            "base case",
+            "--visual-selection-rule",
+            "blue line mask",
+            "--calibration-spec",
+            str(calibration_path),
+            "--extraction-method",
+            "deterministic_line_mask",
+            "--extraction-parameters",
+            str(extraction_parameters_path),
+            "--source-url",
+            "https://example.test/source.pdf",
+            "--review-status",
+            "accepted_for_comparison",
+            "--downstream-use",
+            "comparison_evidence",
+            "--reviewer",
+            "tester",
+            "--figrecover-version",
+            "0.1.0a1",
+            "--output-root",
+            str(tmp_path / "corpus"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    review_manifest = tmp_path / "corpus" / "review_manifest.jsonl"
+    sidecar = tmp_path / "corpus" / "recovered" / "Figure-1-provenance.json"
+    manifest_payload = json.loads(review_manifest.read_text(encoding="utf-8"))
+    sidecar_payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    assert manifest_payload["review_status"] == "accepted_for_comparison"
+    assert manifest_payload["reviewer"] == "tester"
+    assert manifest_payload["output_checksum"] == sidecar_payload["output_checksum"]
+    assert '"downstream_use_classification": "comparison_evidence"' in result.stdout
+
+
+def test_doc_figures_register_table_rejects_unreviewed_model_input(
+    tmp_path: Path,
+) -> None:
+    table_path = tmp_path / "recovered.csv"
+    table_path.write_text("x,y\n1,2\n", encoding="utf-8")
+    calibration_path = tmp_path / "calibration.json"
+    calibration_path.write_text('{"x_axis": "linear"}\n', encoding="utf-8")
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "doc",
+            "figures",
+            "register-table",
+            "test-corpus",
+            str(table_path),
+            "--document-title",
+            "Synthetic Management Plan",
+            "--page",
+            "12",
+            "--figure-id",
+            "Figure 1",
+            "--series-name",
+            "base case",
+            "--visual-selection-rule",
+            "blue line mask",
+            "--calibration-spec",
+            str(calibration_path),
+            "--extraction-method",
+            "deterministic_line_mask",
+            "--source-url",
+            "https://example.test/source.pdf",
+            "--review-status",
+            "accepted_for_model_input",
+            "--downstream-use",
+            "model_input",
+            "--output-root",
+            str(tmp_path / "corpus"),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "reviewer is required" in result.stdout
 
 
 def test_preflight_checks_exit_when_data_root_missing(

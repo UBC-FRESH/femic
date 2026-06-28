@@ -59,6 +59,19 @@ The exact command names can change during implementation, but the separation
 between preparation, recovery/review, registration, and accepted export should
 remain.
 
+P78.4 implements the first two command surfaces:
+
+- `femic doc figures prepare-corpus` creates the FEMIC corpus artifact layout,
+  renders supplied PDFs through lazy optional `figrecover` imports, writes
+  `source_manifest.yaml`, and can summarize a figrecover JSONL figure manifest
+  into `figure_candidates.csv`.
+- `femic doc figures register-table` records a recovered CSV/JSON table in the
+  FEMIC review manifest, writes a JSON provenance sidecar, computes checksums,
+  and enforces the P78.3 review-status gates.
+
+The export surface remains future work; no command promotes raw recovered data
+directly into live model contracts.
+
 ## Artifact Convention
 
 Use ignored runtime/local paths for generated document artifacts by default.
@@ -167,6 +180,7 @@ The pilot must not:
 3. P78.3: implement artifact-path and provenance-record helpers.
    Status: complete.
 4. P78.4: add wrapper CLI/API commands with synthetic/public-safe tests.
+   Status: complete.
 5. P78.5: run a small TFL 6 MP11 pilot manifest and hand off findings to the
    TFL 6 instance Phase 6 lane.
 6. P78.6: document the workflow and run focused validation.

@@ -2131,12 +2131,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     can be referenced by FEMIC planning or model-input work.
   - [x] P78.3c Keep private or unreleasable PDFs, crops, overlays, prompt logs,
     and recovered tables under ignored local paths unless explicitly sanitized.
-- [ ] P78.4 Add FEMIC CLI/API wrappers for auditable recovery workflows (`#209`)
-  - [ ] P78.4a Add commands to prepare a PDF corpus and write a figure-candidate
+- [x] P78.4 Add FEMIC CLI/API wrappers for auditable recovery workflows (`#209`)
+  - [x] P78.4a Add commands to prepare a PDF corpus and write a figure-candidate
     manifest through `figrecover` when the optional dependency is installed.
-  - [ ] P78.4b Add commands to register reviewed recovered tables without
+  - [x] P78.4b Add commands to register reviewed recovered tables without
     promoting them directly into live model contracts.
-  - [ ] P78.4c Add tests using synthetic/public-safe fixtures rather than
+  - [x] P78.4c Add tests using synthetic/public-safe fixtures rather than
     private PDFs or arbitrary downloaded documents.
 - [ ] P78.5 Pilot the workflow against the TFL 6 MP11 package (`#209`)
   - [ ] P78.5a Align the parent FEMIC pilot with
@@ -2165,15 +2165,18 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P78.3` / `#209` is complete: FEMIC now has
-    `src/femic/document_figures.py` helpers for ignored runtime corpus paths,
-    provenance records, review-status validation, checksums, JSON/JSONL
-    manifest writing, and review-gated promotion metadata. The immediate edge
-    is P78.4: add thin FEMIC CLI/API wrappers that call these helpers and
-    optional `figrecover` surfaces without making recovered values live model
-    inputs. The 72-core Ubuntu GPU server should be treated as the preferred
-    execution environment for heavier P78.4/P78.5 rendering, VLM, and
-    batch-recovery pilots.
+  - `P78.4` / `#209` is complete: `femic doc figures prepare-corpus` now
+    initializes FEMIC's ignored document-ingestion corpus layout, renders PDFs
+    through optional `figrecover`, writes `source_manifest.yaml`, and can
+    summarize a figrecover JSONL figure manifest as
+    `figure_candidates.csv`. `femic doc figures register-table` appends a
+    FEMIC provenance record to `review_manifest.jsonl`, writes a JSON sidecar,
+    hashes source/crop/table artifacts, and enforces review-status gates before
+    accepted statuses can be recorded. The immediate edge is P78.5: pilot a
+    small public-safe TFL 6 MP11 figure-candidate manifest aligned with the
+    TFL 6 instance Phase 6 lane. The 72-core Ubuntu GPU server should be
+    treated as the preferred execution environment for heavier P78.5 rendering,
+    VLM, and batch-recovery pilots.
   - `P77.3` / `#207` complete: parent FEMIC docs and pipeline registry metadata
     now state that AFLB/CMFLB is the stand/growth universe, final THLB is a
     managed-share overlay, and NTHLB remains unmanaged/full-retention forest

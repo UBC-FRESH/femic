@@ -9,6 +9,7 @@ import getpass
 import importlib
 import importlib.metadata
 import platform
+import re
 import subprocess
 import sys
 from datetime import UTC, datetime
@@ -82,6 +83,18 @@ from femic.instance_context import (
     INSTANCE_ROOT_ENV,
     InstanceContext,
     resolve_instance_context,
+)
+from femic.document_figures import (
+    DOCUMENT_FIGURE_DOWNSTREAM_USE_CLASSES,
+    DOCUMENT_FIGURE_REVIEW_STATUSES,
+    DocumentFigureProvenanceError,
+    DocumentFigureProvenanceRecord,
+    append_document_figure_review_manifest_jsonl,
+    build_document_figure_artifact_paths,
+    build_document_figure_corpus_root,
+    compute_document_figure_file_sha256,
+    current_document_figure_review_timestamp,
+    write_document_figure_provenance_json,
 )
 from femic.fmg import (
     DEFAULT_CC_MAX_AGE,
@@ -9990,6 +10003,105 @@ def _package_version(package_name: str) -> str:
         return "unknown"
 
 
+def _require_figrecover_object(module_name: str, object_name: str) -> Any:
+    try:
+        module = importlib.import_module(module_name)
+    except ModuleNotFoundError as exc:
+        console.print(f"figrecover import failed: {exc}", markup=False)
+        console.print(f"install_hint: {FIGRECOVER_INSTALL_HINT}", markup=False)
+        raise typer.Exit(code=1) from exc
+    return getattr(module, object_name)
+
+
+def _render_document_figure_pdf_pages(
+    *,
+    pdf_path: Path,
+    output_dir: Path,
+    pages: str | None,
+    dpi: int,
+    image_format: str,
+    document_id: str | None,
+    overwrite: bool,
+) -> list[dict[str, Any]]:
+    render_pdf_pages = _require_figrecover_object(
+        "figrecover.documents", "render_pdf_pages"
+    )
+    rendered_pages = render_pdf_pages(
+        pdf_path,
+        output_dir,
+        pages=pages,
+        dpi=dpi,
+        image_format=image_format,
+        document_id=document_id,
+        overwrite=overwrite,
+    )
+    return [_model_or_mapping_to_dict(page) for page in rendered_pages]
+
+
+def _read_figrecover_figure_manifest_rows(path: Path) -> list[dict[str, Any]]:
+    figure_manifest_class = _require_figrecover_object(
+        "figrecover.manifest", "FigureManifest"
+    )
+    manifest = figure_manifest_class.read_jsonl(path)
+    rows: list[dict[str, Any]] = []
+    for candidate in manifest:
+        rows.append(_model_or_mapping_to_dict(candidate))
+    return rows
+
+
+def _model_or_mapping_to_dict(value: Any) -> dict[str, Any]:
+    if hasattr(value, "model_dump"):
+        return value.model_dump(mode="json")
+    if isinstance(value, dict):
+        return dict(value)
+    return dict(value)
+
+
+def _load_json_object(path: Path | None) -> dict[str, Any]:
+    if path is None:
+        return {}
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"expected JSON object in {path}")
+    return payload
+
+
+def _safe_document_figure_slug(value: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip()).strip("-")
+    return slug or "document-figure"
+
+
+def _write_figure_candidate_csv(rows: list[dict[str, Any]], path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = [
+        "figure_id",
+        "document_id",
+        "page_number",
+        "image_path",
+        "source_image_path",
+        "bbox",
+        "label",
+        "caption",
+        "source",
+        "confidence",
+    ]
+    with path.open("w", encoding="utf-8", newline="") as file_obj:
+        writer = csv.DictWriter(file_obj, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(
+                {
+                    field: (
+                        json.dumps(row.get(field), sort_keys=True)
+                        if field == "bbox" and row.get(field) is not None
+                        else row.get(field)
+                    )
+                    for field in fieldnames
+                }
+            )
+    return path
+
+
 @doc_figures_app.command("preflight")
 def doc_figures_preflight() -> None:
     """Check optional figrecover dependencies without processing documents."""
@@ -10014,6 +10126,380 @@ def doc_figures_preflight() -> None:
         raise typer.Exit(code=1)
 
     console.print("[green]Figure-recovery preflight passed[/green]")
+
+
+@doc_figures_app.command("prepare-corpus")
+def doc_figures_prepare_corpus(
+    corpus_id: str = typer.Argument(..., help="Stable corpus identifier."),
+    pdfs: list[Path] | None = typer.Option(
+        None,
+        "--pdf",
+        help="PDF to render into the corpus. May be supplied multiple times.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    input_dir: Path | None = typer.Option(
+        None,
+        "--input-dir",
+        help="Directory of PDFs to include in the corpus.",
+        exists=True,
+        file_okay=False,
+        readable=True,
+        show_default=False,
+    ),
+    pdf_glob: str = typer.Option(
+        "*.pdf",
+        "--pdf-glob",
+        help="Glob used with --input-dir.",
+    ),
+    output_root: Path | None = typer.Option(
+        None,
+        "--output-root",
+        help=(
+            "Corpus output root. Defaults to "
+            "runtime/document_ingestion/<corpus-id> under the current workspace."
+        ),
+        show_default=False,
+    ),
+    pages: str | None = typer.Option(
+        None,
+        "--pages",
+        help="One-based page selection such as '1,3-5'. Defaults to all pages.",
+        show_default=False,
+    ),
+    dpi: int = typer.Option(300, "--dpi", min=1, help="PDF render DPI."),
+    image_format: str = typer.Option(
+        "png",
+        "--image-format",
+        help="Rendered page image format.",
+    ),
+    figure_manifest: Path | None = typer.Option(
+        None,
+        "--figure-manifest",
+        help="Optional figrecover figure-candidate JSONL manifest to summarize.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        show_default=False,
+    ),
+    overwrite: bool = typer.Option(
+        False,
+        "--overwrite",
+        help="Overwrite existing rendered pages.",
+    ),
+) -> None:
+    """Prepare a FEMIC document-figure corpus with optional figrecover rendering."""
+
+    sources = [Path(path) for path in (pdfs or [])]
+    if input_dir is not None:
+        sources.extend(sorted(Path(input_dir).glob(pdf_glob)))
+    sources = list(dict.fromkeys(sources))
+    if not sources and figure_manifest is None:
+        console.print(
+            "[red]Error:[/red] provide at least one --pdf, --input-dir, or "
+            "--figure-manifest",
+            markup=True,
+        )
+        raise typer.Exit(code=1)
+
+    corpus_root = output_root or build_document_figure_corpus_root(Path.cwd(), corpus_id)
+    artifact_paths = build_document_figure_artifact_paths(corpus_root)
+    artifact_paths.ensure_directories()
+
+    source_records: list[dict[str, Any]] = []
+    try:
+        for source in sources:
+            rendered_pages = _render_document_figure_pdf_pages(
+                pdf_path=source,
+                output_dir=artifact_paths.pages_dir,
+                pages=pages,
+                dpi=dpi,
+                image_format=image_format,
+                document_id=_safe_document_figure_slug(source.stem),
+                overwrite=overwrite,
+            )
+            source_records.append(
+                {
+                    "path": str(source),
+                    "sha256": compute_document_figure_file_sha256(source),
+                    "rendered_page_count": len(rendered_pages),
+                    "rendered_pages": rendered_pages,
+                }
+            )
+    except Exception as exc:
+        console.print(f"[red]Figure corpus preparation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    candidate_count = 0
+    if figure_manifest is not None:
+        try:
+            candidate_rows = _read_figrecover_figure_manifest_rows(figure_manifest)
+            _write_figure_candidate_csv(
+                candidate_rows, artifact_paths.figure_candidates_path
+            )
+            candidate_count = len(candidate_rows)
+        except Exception as exc:
+            console.print(f"[red]Figure manifest import failed:[/red] {exc}")
+            raise typer.Exit(code=1) from exc
+
+    source_manifest = {
+        "schema_version": 1,
+        "corpus_id": corpus_id,
+        "created_at": current_document_figure_review_timestamp(),
+        "figrecover_version": _package_version("figrecover"),
+        "artifact_paths": artifact_paths.as_dict(),
+        "sources": source_records,
+        "figure_manifest": str(figure_manifest) if figure_manifest else None,
+        "figure_candidate_count": candidate_count,
+        "private_data_hygiene": (
+            "Generated pages, crops, overlays, prompt logs, private PDFs, and "
+            "unreviewed recovered tables stay under ignored runtime paths unless "
+            "explicitly sanitized and approved for tracking."
+        ),
+    }
+    artifact_paths.source_manifest_path.write_text(
+        yaml.safe_dump(source_manifest, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    summary = {
+        "corpus_id": corpus_id,
+        "corpus_root": str(artifact_paths.corpus_root),
+        "source_manifest": str(artifact_paths.source_manifest_path),
+        "source_count": len(source_records),
+        "rendered_page_count": sum(
+            int(record["rendered_page_count"]) for record in source_records
+        ),
+        "figure_candidate_count": candidate_count,
+        "figure_candidates": str(artifact_paths.figure_candidates_path),
+        "review_manifest": str(artifact_paths.review_manifest_path),
+    }
+    console.print(json.dumps(summary, indent=2))
+
+
+@doc_figures_app.command("register-table")
+def doc_figures_register_table(
+    corpus_id: str = typer.Argument(..., help="Stable corpus identifier."),
+    table_path: Path = typer.Argument(
+        ...,
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="Reviewed or review-pending recovered CSV/JSON table.",
+    ),
+    document_title: str = typer.Option(
+        ...,
+        "--document-title",
+        help="Source document title or package component title.",
+    ),
+    page_number: int = typer.Option(
+        ...,
+        "--page",
+        min=1,
+        help="One-based source-document page number.",
+    ),
+    figure_id: str | None = typer.Option(
+        None,
+        "--figure-id",
+        help="Source figure identifier.",
+        show_default=False,
+    ),
+    table_id: str | None = typer.Option(
+        None,
+        "--table-id",
+        help="Recovered table identifier when no figure ID is available.",
+        show_default=False,
+    ),
+    series_name: str = typer.Option(
+        ...,
+        "--series-name",
+        help="Recovered series name.",
+    ),
+    visual_selection_rule: str = typer.Option(
+        ...,
+        "--visual-selection-rule",
+        help="Visual rule used to identify the recovered series.",
+    ),
+    calibration_spec: Path = typer.Option(
+        ...,
+        "--calibration-spec",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="JSON calibration specification used for extraction.",
+    ),
+    extraction_method: str = typer.Option(
+        ...,
+        "--extraction-method",
+        help="Extraction method or toolchain label.",
+    ),
+    extraction_parameters: Path | None = typer.Option(
+        None,
+        "--extraction-parameters",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="Optional JSON extraction-parameter object.",
+        show_default=False,
+    ),
+    source_url: str | None = typer.Option(
+        None,
+        "--source-url",
+        help="Public source URL for the document.",
+        show_default=False,
+    ),
+    source_path: Path | None = typer.Option(
+        None,
+        "--source-path",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="Local source document path.",
+        show_default=False,
+    ),
+    source_checksum: str | None = typer.Option(
+        None,
+        "--source-checksum",
+        help="Explicit source-document checksum.",
+        show_default=False,
+    ),
+    crop_path: Path | None = typer.Option(
+        None,
+        "--crop-path",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="Reviewed figure crop path.",
+        show_default=False,
+    ),
+    crop_checksum: str | None = typer.Option(
+        None,
+        "--crop-checksum",
+        help="Explicit crop checksum.",
+        show_default=False,
+    ),
+    package_component: str | None = typer.Option(
+        None,
+        "--package-component",
+        help="Source package component label.",
+        show_default=False,
+    ),
+    figrecover_version: str | None = typer.Option(
+        None,
+        "--figrecover-version",
+        help="figrecover version used for extraction.",
+        show_default=False,
+    ),
+    review_status: str = typer.Option(
+        "needs_value_review",
+        "--review-status",
+        help=f"FEMIC review status. Allowed: {', '.join(DOCUMENT_FIGURE_REVIEW_STATUSES)}.",
+    ),
+    downstream_use_classification: str = typer.Option(
+        "unclassified",
+        "--downstream-use",
+        help=(
+            "Downstream use class. Allowed: "
+            f"{', '.join(DOCUMENT_FIGURE_DOWNSTREAM_USE_CLASSES)}."
+        ),
+    ),
+    reviewer: str | None = typer.Option(
+        None,
+        "--reviewer",
+        help="Reviewer name for reviewed or accepted statuses.",
+        show_default=False,
+    ),
+    review_timestamp: str | None = typer.Option(
+        None,
+        "--review-timestamp",
+        help="UTC review timestamp. Defaults to now when reviewer is supplied.",
+        show_default=False,
+    ),
+    output_root: Path | None = typer.Option(
+        None,
+        "--output-root",
+        help=(
+            "Corpus output root. Defaults to "
+            "runtime/document_ingestion/<corpus-id> under the current workspace."
+        ),
+        show_default=False,
+    ),
+    provenance_json: Path | None = typer.Option(
+        None,
+        "--provenance-json",
+        help="Optional path for the formatted provenance JSON sidecar.",
+        show_default=False,
+    ),
+) -> None:
+    """Register a recovered table with FEMIC provenance and review status."""
+
+    corpus_root = output_root or build_document_figure_corpus_root(Path.cwd(), corpus_id)
+    artifact_paths = build_document_figure_artifact_paths(corpus_root)
+    artifact_paths.ensure_directories()
+
+    try:
+        calibration_payload = _load_json_object(calibration_spec)
+        extraction_payload = _load_json_object(extraction_parameters)
+        resolved_source_checksum = source_checksum
+        if resolved_source_checksum is None and source_path is not None:
+            resolved_source_checksum = compute_document_figure_file_sha256(source_path)
+        resolved_crop_checksum = crop_checksum
+        if resolved_crop_checksum is None and crop_path is not None:
+            resolved_crop_checksum = compute_document_figure_file_sha256(crop_path)
+        resolved_review_timestamp = review_timestamp
+        if resolved_review_timestamp is None and reviewer is not None:
+            resolved_review_timestamp = current_document_figure_review_timestamp()
+        record = DocumentFigureProvenanceRecord(
+            corpus_id=corpus_id,
+            document_title=document_title,
+            page_number=page_number,
+            series_name=series_name,
+            visual_selection_rule=visual_selection_rule,
+            figrecover_version=figrecover_version or _package_version("figrecover"),
+            extraction_method=extraction_method,
+            output_path=table_path,
+            output_checksum=compute_document_figure_file_sha256(table_path),
+            review_status=review_status,
+            downstream_use_classification=downstream_use_classification,
+            source_url=source_url,
+            source_path=source_path,
+            source_checksum=resolved_source_checksum,
+            package_component=package_component,
+            figure_id=figure_id,
+            table_id=table_id,
+            crop_path=crop_path,
+            crop_checksum=resolved_crop_checksum,
+            calibration_spec=calibration_payload,
+            extraction_parameters=extraction_payload,
+            reviewer=reviewer,
+            review_timestamp=resolved_review_timestamp,
+            created_timestamp=current_document_figure_review_timestamp(),
+        )
+        append_document_figure_review_manifest_jsonl(
+            record, artifact_paths.review_manifest_path
+        )
+        sidecar_path = provenance_json
+        if sidecar_path is None:
+            identifier = figure_id or table_id or Path(table_path).stem
+            sidecar_path = (
+                artifact_paths.recovered_dir
+                / f"{_safe_document_figure_slug(identifier)}-provenance.json"
+            )
+        write_document_figure_provenance_json(record, sidecar_path)
+    except (DocumentFigureProvenanceError, ValueError, json.JSONDecodeError) as exc:
+        console.print(f"[red]Table registration failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    summary = {
+        "corpus_id": corpus_id,
+        "review_manifest": str(artifact_paths.review_manifest_path),
+        "provenance_json": str(sidecar_path),
+        "review_status": record.review_status,
+        "downstream_use_classification": record.downstream_use_classification,
+        "output_checksum": record.output_checksum,
+    }
+    console.print(json.dumps(summary, indent=2))
 
 
 @fansier_app.command("run-batch")
