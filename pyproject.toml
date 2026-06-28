@@ -35,6 +35,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+figures = [
+    "figrecover[pdf,cv,vlm] @ git+https://github.com/UBC-FRESH/figrecover.git@v0.1.0a1",
+]
 dev = [
     "datalad[full]",
     "ipywidgets",

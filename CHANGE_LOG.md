@@ -18410,3 +18410,100 @@
   Builder failures when a stand reaches age `1000` in a retained/planted
   stratum; and
 - updated the targeted FMG serializer test for the new pass-through contract.
+
+## 2026-06-27 - Planned explicit `figrecover` integration
+
+- opened FEMIC issue `#209` for explicit integration of the UBC-FRESH
+  `figrecover` package into document-ingestion and figure-recovery workflows;
+- added Phase 78 to `ROADMAP.md` with tasks for optional dependency handling,
+  environment preflight, artifact/provenance conventions, CLI/API wrappers, a
+  TFL 6 MP11 pilot, and documentation/validation;
+- added `planning/phase78_figrecover_integration_notes.md` to define the
+  package boundary, proposed `femic doc figures` surfaces, runtime artifact
+  layout, required provenance fields, review-status vocabulary, and MP11 pilot
+  alignment;
+- marked P78.1 complete and advanced the active edge to P78.2 optional
+  dependency packaging and environment checks; and
+- recorded that the first attempted local GitHub install timed out and did not
+  leave `figrecover` installed, so dependency adoption remains open P78.2 work.
+
+## 2026-06-28 - Added `figrecover` optional dependency preflight
+
+- added the optional `figures` extra, pinned to UBC-FRESH `figrecover` release
+  tag `v0.1.0a1`, so users can install figure-recovery dependencies with
+  `python -m pip install -e .[figures]`;
+- added the `femic doc figures preflight` CLI command to report whether
+  `figrecover`, PyMuPDF, pypdf, OpenCV, scikit-image, and httpx are importable;
+- kept the dependency optional so normal FEMIC THLB, VDYP, TIPSY, Patchworks,
+  and instance workflows do not require `figrecover`;
+- installed the optional extra in the local FEMIC virtual environment and
+  confirmed the preflight reports all required imports as available;
+- added focused CLI tests for help rendering, passing preflight, missing
+  `figrecover`, and missing optional-module reporting; and
+- recorded the 72-core Ubuntu GPU server as the preferred environment for
+  heavier P78.3/P78.5 MP11 rendering, VLM, and batch-recovery pilots.
+
+## 2026-06-28 - Added document-figure artifact and provenance helpers
+
+- added `src/femic/document_figures.py` with FEMIC-side helper APIs for
+  default ignored runtime corpus roots, standard document-ingestion artifact
+  paths, checksum calculation, review timestamps, provenance records, and
+  JSON/JSONL manifest writing;
+- encoded the Phase 78 review-status vocabulary and downstream-use classes so
+  recovered figure values cannot be promoted to reviewed or accepted statuses
+  without reviewer and timestamp provenance;
+- kept the helper layer independent of importing `figrecover`, preserving the
+  optional dependency boundary for normal FEMIC runtime workflows;
+- added focused tests for path conventions, directory creation, checksum
+  determinism, provenance validation, reviewed-status gates, and manifest
+  serialization; and
+- marked P78.3 complete in `ROADMAP.md`, advancing the active edge to P78.4
+  CLI/API wrappers for auditable figure-recovery workflows.
+
+## 2026-06-28 - Added document-figure corpus and table-registration CLI wrappers
+
+- added `femic doc figures prepare-corpus` to initialize FEMIC's ignored
+  document-ingestion corpus layout, render supplied PDFs through optional
+  `figrecover`, write `source_manifest.yaml`, and optionally summarize a
+  figrecover JSONL figure manifest as `figure_candidates.csv`;
+- added `femic doc figures register-table` to register recovered CSV/JSON
+  tables with FEMIC provenance, table checksums, calibration JSON,
+  extraction parameters, review status, downstream-use classification, and
+  JSON/JSONL manifest outputs;
+- kept both commands thin over FEMIC helper APIs and lazy optional
+  `figrecover` imports so normal FEMIC workflows still do not require
+  figure-recovery dependencies;
+- added CLI tests using synthetic placeholder files and monkeypatched
+  rendering rather than private PDFs or arbitrary downloaded documents; and
+- marked P78.4 complete in `ROADMAP.md`, advancing the active edge to the
+  public-safe TFL 6 MP11 pilot manifest in P78.5.
+
+## 2026-06-28 - Added TFL 6 MP11 figure-recovery pilot manifest
+
+- scanned the public TFL 6 MP11 PDF source package with PyMuPDF, recording a
+  `475` page count and SHA256
+  `44591c1024254e36d8989df45a2b489a624d5669c5ae01a6ebfd961b50a7321b`;
+- exercised `femic doc figures prepare-corpus` through the Typer app against
+  selected public MP11 pages, rendering `12` page images under ignored
+  `runtime/document_ingestion/tfl6-mp11-pilot/`;
+- added `planning/phase78_tfl6_mp11_pilot_figure_manifest.csv` with a compact
+  public-safe set of selected figure candidates, page anchors, chart families,
+  recovery objectives, review status, and TFL 6 instance Phase 6 alignment;
+- added `planning/phase78_tfl6_mp11_pilot_notes.md` documenting the source,
+  runtime trial, private-data hygiene, and handoff expectations; and
+- marked P78.5 complete in `ROADMAP.md`, advancing the active edge to P78.6
+  documentation and validation.
+
+## 2026-06-28 - Documented and validated the figure-recovery workflow
+
+- added `docs/guides/document-figure-recovery.rst` covering the optional
+  `femic[figures]` install, `femic doc figures preflight`, corpus layout,
+  `prepare-corpus`, `register-table`, review gates, private-data hygiene, and
+  the TFL 6 MP11 pilot manifest;
+- linked the new guide from `docs/guides/index.rst`;
+- added a curated `femic.document_figures` API page and linked it from the API
+  module index;
+- updated the CLI reference with the `doc figures` command group and examples;
+- verified the docs build warning-clean with Sphinx; and
+- marked P78.6 complete in `ROADMAP.md`, making the Phase 78 branch ready for
+  PR review and merge.

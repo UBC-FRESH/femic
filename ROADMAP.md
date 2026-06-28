@@ -2105,9 +2105,59 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P77.3c Build parent Sphinx docs warning-clean and keep this docs-only
     correction out of TFL 6 bundle-table generation.
 
+## Phase 78: `figrecover` Document-Figure Integration
+
+- [x] P78.1 Plan the `figrecover` integration boundary (`#209`)
+  - [x] P78.1a Treat `figrecover` as an optional FEMIC document-ingestion tool,
+    not a required core runtime dependency.
+  - [x] P78.1b Define where FEMIC wraps `figrecover` versus where users call
+    `figrecover` directly for manual chart calibration and review.
+  - [x] P78.1c Record the dependency, artifact, provenance, review-status,
+    and TFL 6 MP11 pilot boundaries in
+    `planning/phase78_figrecover_integration_notes.md`.
+- [x] P78.2 Add optional dependency and environment checks (`#209`)
+  - [x] P78.2a Add a FEMIC optional extra for figure recovery only after the
+    dependency footprint is accepted.
+  - [x] P78.2b Add a lightweight CLI preflight that reports whether
+    `figrecover` and required PDF/image extras are importable.
+  - [x] P78.2c Keep normal FEMIC install, THLB, VDYP, TIPSY, and Patchworks
+    workflows working without `figrecover` installed.
+- [x] P78.3 Define figure-recovery artifact conventions (`#209`)
+  - [x] P78.3a Standardize corpus paths for public PDFs, rendered pages,
+    figure crops, calibration specs, recovered CSV/JSON, overlays, review
+    manifests, and accepted exports.
+  - [x] P78.3b Require page, figure, source URL/checksum, calibration, tool
+    version, extraction method, and human-review status before recovered values
+    can be referenced by FEMIC planning or model-input work.
+  - [x] P78.3c Keep private or unreleasable PDFs, crops, overlays, prompt logs,
+    and recovered tables under ignored local paths unless explicitly sanitized.
+- [x] P78.4 Add FEMIC CLI/API wrappers for auditable recovery workflows (`#209`)
+  - [x] P78.4a Add commands to prepare a PDF corpus and write a figure-candidate
+    manifest through `figrecover` when the optional dependency is installed.
+  - [x] P78.4b Add commands to register reviewed recovered tables without
+    promoting them directly into live model contracts.
+  - [x] P78.4c Add tests using synthetic/public-safe fixtures rather than
+    private PDFs or arbitrary downloaded documents.
+- [x] P78.5 Pilot the workflow against the TFL 6 MP11 package (`#209`)
+  - [x] P78.5a Align the parent FEMIC pilot with
+    `UBC-FRESH/femic-tfl6-instance#42`, especially P6.1 source/provenance and
+    P6.2 extraction-manifest needs.
+  - [x] P78.5b Produce a small public-safe pilot manifest for selected MP11
+    figure candidates before attempting broad extraction.
+  - [x] P78.5c Record limitations and required human-review steps before any
+    recovered values feed TFL 6 crosswalk or model-overhaul planning.
+- [x] P78.6 Document and validate the integration (`#209`)
+  - [x] P78.6a Add docs for installing FEMIC with the figure-recovery optional
+    extra and for running the provenance-preserving workflow.
+  - [x] P78.6b Add warning-clean Sphinx docs and focused tests for the wrapper
+    behavior.
+  - [x] P78.6c Post issue progress comments and update the changelog at each
+    implementation milestone.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase78_figrecover_integration_notes.md`
   - `planning/phase75_bcdata_resolver_evaluation_notes.md`
   - `planning/phase74_tfl6_instance_bootstrap_notes.md`
   - `planning/phase71_tsa29_patchworks_rebuild_notes.md`
@@ -2115,6 +2165,12 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P78.6` / `#209` is complete: the optional document-figure recovery
+    workflow is documented in `docs/guides/document-figure-recovery.rst`, the
+    CLI reference includes `femic doc figures` commands, and
+    `femic.document_figures` has a curated API page. Focused tests, scoped
+    lint, and Sphinx warning-clean validation passed. The Phase 78 branch is
+    ready for PR review and merge.
   - `P77.3` / `#207` complete: parent FEMIC docs and pipeline registry metadata
     now state that AFLB/CMFLB is the stand/growth universe, final THLB is a
     managed-share overlay, and NTHLB remains unmanaged/full-retention forest
