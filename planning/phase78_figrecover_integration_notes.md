@@ -80,6 +80,12 @@ runtime/document_ingestion/<corpus_id>/
   accepted/
 ```
 
+P78.3 implements this convention in `src/femic/document_figures.py` through
+`build_document_figure_corpus_root(...)` and
+`build_document_figure_artifact_paths(...)`. The helpers only resolve and
+create FEMIC-side runtime paths; they do not import `figrecover` and do not
+process PDFs.
+
 Tracked planning files should contain compact manifests, checksums, review
 summaries, and accepted crosswalks. They should not contain bulky rendered
 pages, crops, overlays, prompt logs, private PDFs, or unreleased recovered
@@ -118,6 +124,13 @@ Suggested review-status vocabulary:
 - `rejected`;
 - `superseded`.
 
+P78.3 implements this vocabulary through
+`DocumentFigureProvenanceRecord`, `validate_document_figure_provenance(...)`,
+and JSON/JSONL writing helpers. Reviewed or accepted statuses require reviewer
+and review timestamp fields. This gate is intentionally conservative: raw
+figure recovery can be recorded, but FEMIC cannot silently treat it as reviewed
+planning evidence or model input.
+
 ## TFL 6 MP11 Pilot Boundary
 
 The first pilot should align with the TFL 6 instance Phase 6 issue tree:
@@ -148,8 +161,11 @@ The pilot must not:
 ## Implementation Sequence
 
 1. P78.1: finalize this integration boundary and issue/roadmap placement.
+   Status: complete.
 2. P78.2: add optional dependency packaging and preflight checks.
+   Status: complete.
 3. P78.3: implement artifact-path and provenance-record helpers.
+   Status: complete.
 4. P78.4: add wrapper CLI/API commands with synthetic/public-safe tests.
 5. P78.5: run a small TFL 6 MP11 pilot manifest and hand off findings to the
    TFL 6 instance Phase 6 lane.

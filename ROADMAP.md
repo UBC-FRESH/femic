@@ -2122,14 +2122,14 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
     `figrecover` and required PDF/image extras are importable.
   - [x] P78.2c Keep normal FEMIC install, THLB, VDYP, TIPSY, and Patchworks
     workflows working without `figrecover` installed.
-- [ ] P78.3 Define figure-recovery artifact conventions (`#209`)
-  - [ ] P78.3a Standardize corpus paths for public PDFs, rendered pages,
+- [x] P78.3 Define figure-recovery artifact conventions (`#209`)
+  - [x] P78.3a Standardize corpus paths for public PDFs, rendered pages,
     figure crops, calibration specs, recovered CSV/JSON, overlays, review
     manifests, and accepted exports.
-  - [ ] P78.3b Require page, figure, source URL/checksum, calibration, tool
+  - [x] P78.3b Require page, figure, source URL/checksum, calibration, tool
     version, extraction method, and human-review status before recovered values
     can be referenced by FEMIC planning or model-input work.
-  - [ ] P78.3c Keep private or unreleasable PDFs, crops, overlays, prompt logs,
+  - [x] P78.3c Keep private or unreleasable PDFs, crops, overlays, prompt logs,
     and recovered tables under ignored local paths unless explicitly sanitized.
 - [ ] P78.4 Add FEMIC CLI/API wrappers for auditable recovery workflows (`#209`)
   - [ ] P78.4a Add commands to prepare a PDF corpus and write a figure-candidate
@@ -2165,15 +2165,15 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P78.2` / `#209` is complete: FEMIC now has an optional `figures` extra
-    pinned to UBC-FRESH `figrecover` release tag `v0.1.0a1`, plus
-    `femic doc figures preflight` for import/version checks. Local validation
-    installed the extra and confirmed `figrecover`, PyMuPDF, pypdf, OpenCV,
-    scikit-image, and httpx import successfully. The immediate edge is P78.3:
-    define figure-recovery artifact conventions before broad MP11 processing.
-    The 72-core Ubuntu GPU server should be treated as the preferred execution
-    environment for heavier P78.3/P78.5 rendering, VLM, and batch-recovery
-    pilots.
+  - `P78.3` / `#209` is complete: FEMIC now has
+    `src/femic/document_figures.py` helpers for ignored runtime corpus paths,
+    provenance records, review-status validation, checksums, JSON/JSONL
+    manifest writing, and review-gated promotion metadata. The immediate edge
+    is P78.4: add thin FEMIC CLI/API wrappers that call these helpers and
+    optional `figrecover` surfaces without making recovered values live model
+    inputs. The 72-core Ubuntu GPU server should be treated as the preferred
+    execution environment for heavier P78.4/P78.5 rendering, VLM, and
+    batch-recovery pilots.
   - `P77.3` / `#207` complete: parent FEMIC docs and pipeline registry metadata
     now state that AFLB/CMFLB is the stand/growth universe, final THLB is a
     managed-share overlay, and NTHLB remains unmanaged/full-retention forest

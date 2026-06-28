@@ -18442,3 +18442,20 @@
   `figrecover`, and missing optional-module reporting; and
 - recorded the 72-core Ubuntu GPU server as the preferred environment for
   heavier P78.3/P78.5 MP11 rendering, VLM, and batch-recovery pilots.
+
+## 2026-06-28 - Added document-figure artifact and provenance helpers
+
+- added `src/femic/document_figures.py` with FEMIC-side helper APIs for
+  default ignored runtime corpus roots, standard document-ingestion artifact
+  paths, checksum calculation, review timestamps, provenance records, and
+  JSON/JSONL manifest writing;
+- encoded the Phase 78 review-status vocabulary and downstream-use classes so
+  recovered figure values cannot be promoted to reviewed or accepted statuses
+  without reviewer and timestamp provenance;
+- kept the helper layer independent of importing `figrecover`, preserving the
+  optional dependency boundary for normal FEMIC runtime workflows;
+- added focused tests for path conventions, directory creation, checksum
+  determinism, provenance validation, reviewed-status gates, and manifest
+  serialization; and
+- marked P78.3 complete in `ROADMAP.md`, advancing the active edge to P78.4
+  CLI/API wrappers for auditable figure-recovery workflows.
