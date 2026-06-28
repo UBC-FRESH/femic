@@ -19,6 +19,7 @@ export modules.
    data-access-inventory
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
+   document-figure-recovery
    tsr-thlb-reconstruction-ladder
    github-datalad-arbutus-pattern
    windows-arbutus-auth-workflow

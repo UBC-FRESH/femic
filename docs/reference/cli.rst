@@ -25,6 +25,7 @@ Commands
 - ``tipsy``
 - ``fansier``
 - ``data``
+- ``doc``
 - ``pipelines``
 - ``tsr``
 - ``export``
@@ -50,6 +51,56 @@ Run
 - ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-config PATH`` (YAML/JSON run profile)
 - ``--instance-root PATH`` (optional; defaults to CWD or ``FEMIC_INSTANCE_ROOT`` env)
+
+Document Ingestion
+------------------
+
+.. code-block:: text
+
+   python -m femic doc [OPTIONS] COMMAND [ARGS]...
+
+Subcommands
+
+- ``figures``: optional figure-recovery workflow helpers.
+
+``doc figures`` subcommands
+
+- ``preflight``: report whether optional ``figrecover`` dependencies are
+  importable.
+- ``prepare-corpus``: initialize an ignored document-ingestion corpus, render
+  selected PDFs through ``figrecover``, write ``source_manifest.yaml``, and
+  optionally summarize a figrecover figure manifest.
+- ``register-table``: register a recovered CSV/JSON table with FEMIC
+  provenance, checksums, calibration metadata, review status, and downstream
+  use classification.
+
+Common examples:
+
+.. code-block:: bash
+
+   python -m femic doc figures preflight
+
+   python -m femic doc figures prepare-corpus tfl6-mp11-pilot \
+     --pdf /path/to/TFL6_MP_11_202606_w_Appendices_Web-compressed.pdf \
+     --pages 82-86,91,98-100,103,116,123 \
+     --dpi 150 \
+     --output-root runtime/document_ingestion/tfl6-mp11-pilot
+
+   python -m femic doc figures register-table tfl6-mp11-pilot recovered.csv \
+     --document-title "TFL 6 Management Plan 11" \
+     --page 82 \
+     --figure-id "Figure 2" \
+     --series-name "base case" \
+     --visual-selection-rule "blue harvest-flow line" \
+     --calibration-spec calibration/figure-2.json \
+     --extraction-method deterministic_line_mask \
+     --source-url https://www.westernforest.com/wp-content/uploads/2026/06/TFL6_MP_11_202606_w_Appendices_Web-compressed.pdf \
+     --review-status accepted_for_comparison \
+     --downstream-use comparison_evidence \
+     --reviewer "Reviewer Name"
+
+See :doc:`../guides/document-figure-recovery` for the workflow and review
+gates.
 
 Pipelines
 ---------

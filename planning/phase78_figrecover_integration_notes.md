@@ -187,6 +187,9 @@ The pilot must not:
    `planning/phase78_tfl6_mp11_pilot_notes.md` and
    `planning/phase78_tfl6_mp11_pilot_figure_manifest.csv`.
 6. P78.6: document the workflow and run focused validation.
+   Status: complete. The user-facing guide is
+   `docs/guides/document-figure-recovery.rst`; the curated API page is
+   `docs/reference/api/femic-document-figures.rst`.
 
 ## Execution Environment Notes
 

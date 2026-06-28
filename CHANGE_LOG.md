@@ -18493,3 +18493,17 @@
   runtime trial, private-data hygiene, and handoff expectations; and
 - marked P78.5 complete in `ROADMAP.md`, advancing the active edge to P78.6
   documentation and validation.
+
+## 2026-06-28 - Documented and validated the figure-recovery workflow
+
+- added `docs/guides/document-figure-recovery.rst` covering the optional
+  `femic[figures]` install, `femic doc figures preflight`, corpus layout,
+  `prepare-corpus`, `register-table`, review gates, private-data hygiene, and
+  the TFL 6 MP11 pilot manifest;
+- linked the new guide from `docs/guides/index.rst`;
+- added a curated `femic.document_figures` API page and linked it from the API
+  module index;
+- updated the CLI reference with the `doc figures` command group and examples;
+- verified the docs build warning-clean with Sphinx; and
+- marked P78.6 complete in `ROADMAP.md`, making the Phase 78 branch ready for
+  PR review and merge.

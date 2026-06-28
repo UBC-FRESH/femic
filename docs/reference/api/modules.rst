@@ -46,6 +46,7 @@ Current curated pages in this section include ``femic.instance_context``,
 ``femic.instance_bootstrap``, ``femic.bcdc_catalog``,
 ``femic.bcdc_fetch``,
 ``femic.bcdc_dwds``,
+``femic.document_figures``,
 ``femic.tsr_catalog``,
 ``femic.geospatial_preflight``,
 ``femic.pipeline.bundle``, ``femic.pipeline.legacy_runtime``, and
@@ -59,6 +60,7 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-bcdc-catalog
    femic-bcdc-fetch
    femic-bcdc-dwds
+   femic-document-figures
    femic-tsr-catalog
    femic-geospatial-preflight
    femic-pipeline-bundle
