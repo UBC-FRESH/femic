@@ -18520,3 +18520,15 @@
 - verified the docs build warning-clean with Sphinx; and
 - marked P78.6 complete in `ROADMAP.md`, making the Phase 78 branch ready for
   PR review and merge.
+
+## 2026-06-29 - Advanced TFL 6 submodule to MP11 Phase 15 closeout
+
+- merged TFL 6 PR `#155`, closing the MP11 harvest-system runtime publication
+  lane through Phase 15;
+- advanced `external/femic-tfl6-instance` to merge commit `6fc598f`;
+- verified the TFL 6 GitHub Pages deploy completed after the merge;
+- verified the live Phase 15 documentation page returns HTTP `200` and the
+  docs root links to it; and
+- preserved the recorded boundary that the MP11 harvest-system runtime is
+  `replacement_candidate_ready_for_review`, not an automatic Phase 5
+  replacement.
