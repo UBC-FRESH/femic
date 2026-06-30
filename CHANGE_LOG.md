@@ -18532,3 +18532,15 @@
 - preserved the recorded boundary that the MP11 harvest-system runtime is
   `replacement_candidate_ready_for_review`, not an automatic Phase 5
   replacement.
+
+## 2026-06-30 - Opened FreshForge provider integration phase
+
+- opened parent FEMIC issue `#220` and child issues `#221` through `#225` for
+  the Phase 80 FreshForge provider integration lane;
+- created branch `feature/p80-femic-freshforge-provider`;
+- recorded the active roadmap plan for a plan-only `femic.freshforge`
+  integration that exposes K3Z model-building stages through FreshForge
+  provider metadata, validation, inspection, and non-executing planning; and
+- preserved the explicit boundary that this phase does not add `freshforge run`,
+  FreshForge-driven FEMIC execution, real BTC/Patchworks launch, artifact
+  inspection, or replacement of `femic instance rebuild`.
