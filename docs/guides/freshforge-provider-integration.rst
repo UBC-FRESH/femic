@@ -4,12 +4,17 @@ FreshForge Provider Integration
 Purpose
 -------
 
-FEMIC exposes a plan-only FreshForge provider for K3Z model-build workflow
-graphs. FreshForge owns declarative graph validation, provider discovery,
+FEMIC exposes a plan-only FreshForge provider for model-build workflow stages.
+FreshForge owns declarative graph validation, provider discovery,
 inspection, and deterministic non-executing planning. FEMIC still owns actual
 execution through existing commands such as ``femic run``,
 ``femic tsa btc-post-tipsy``, ``femic export patchworks``,
 ``femic patchworks matrix-build``, and ``femic instance rebuild``.
+
+The provider is intentionally instance-neutral. Concrete workflow documents
+for K3Z or other FEMIC instances belong in the corresponding instance
+repositories, where the instance root, run profile, TSA code, Patchworks
+runtime configuration, and artifact names are owned.
 
 Install
 -------
@@ -32,7 +37,7 @@ discover provider id ``femic``:
 
    freshforge providers
 
-The provider references currently exposed for K3Z model-build planning are:
+The provider references currently exposed for model-build planning are:
 
 - ``femic.validate_case``
 - ``femic.geospatial_preflight``
@@ -42,22 +47,22 @@ The provider references currently exposed for K3Z model-build planning are:
 - ``femic.patchworks_preflight``
 - ``femic.matrix_build``
 
-K3Z Workflow Example
---------------------
+Generic Workflow Example
+------------------------
 
-The public-safe example workflow lives at:
+The public-safe provider example workflow lives at:
 
 .. code-block:: text
 
-   examples/freshforge/k3z_model_build_workflow.yaml
+   examples/freshforge/model_build_workflow.yaml
 
 Validate and plan it with:
 
 .. code-block:: bash
 
-   freshforge validate examples/freshforge/k3z_model_build_workflow.yaml
-   freshforge inspect examples/freshforge/k3z_model_build_workflow.yaml
-   freshforge plan examples/freshforge/k3z_model_build_workflow.yaml
+   freshforge validate examples/freshforge/model_build_workflow.yaml
+   freshforge inspect examples/freshforge/model_build_workflow.yaml
+   freshforge plan examples/freshforge/model_build_workflow.yaml
 
 The graph declares this order:
 
@@ -82,6 +87,16 @@ Named pipelines remain a narrower TSR/THLB recipe and runbook lane. The
 FreshForge integration is the cross-package workflow graph surface intended to
 describe broader model-building pipelines.
 
+Instance Workflow Ownership
+---------------------------
+
+``femic.freshforge`` owns only the reusable FEMIC provider vocabulary. It does
+not ship K3Z-specific workflow builders or default paths. Instance-specific
+FreshForge documents should live in the instance repository that owns the
+model-build contract. For example, a K3Z workflow document should live in the
+K3Z instance repository, while FEMIC core supplies reusable provider references
+such as ``femic.validate_case`` and ``femic.matrix_build``.
+
 Boundaries
 ----------
 
@@ -99,6 +114,5 @@ API
 ---
 
 Use :func:`femic.freshforge.provider_factory` when a caller needs explicit
-registry control. Use :func:`femic.freshforge.build_k3z_workflow_document` or
-:func:`femic.freshforge.build_k3z_workflow_spec` to construct the canonical K3Z
-workflow graph from Python.
+registry control. Concrete workflow assembly is intentionally left to instance
+repositories or caller-owned workflow documents.

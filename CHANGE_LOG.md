@@ -18590,3 +18590,20 @@
 - left P80.5 open because merge remains gated on the explicit decision about
   existing full-repo `mypy src` and `pytest` baseline failures outside the new
   FreshForge integration.
+
+## 2026-06-30 - Corrected FreshForge provider instance boundary
+
+- removed K3Z-specific workflow builder functions and default constants from
+  `femic.freshforge`;
+- retained `femic.freshforge` as the generic, non-executing provider for
+  reusable FEMIC model-build stages;
+- replaced the FEMIC-core FreshForge example with
+  `examples/freshforge/model_build_workflow.yaml`, a public-safe generic
+  provider fixture; and
+- documented that concrete K3Z FreshForge workflow documents belong in the K3Z
+  instance repository, while FEMIC core supplies the reusable provider
+  vocabulary and validation hooks;
+- verified the corrected boundary with Ruff, targeted mypy, targeted
+  FreshForge integration tests, FreshForge CLI validate/plan checks against the
+  generic example, warning-clean Sphinx docs, package build, `twine check`, and
+  direct sdist/wheel metadata inspection.

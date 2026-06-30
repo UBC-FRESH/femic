@@ -2209,18 +2209,21 @@ scripts.
   - [x] P80.1d Expose a direct provider factory for tests and advanced callers.
 - [x] P80.2 Implement non-executing FEMIC provider metadata and validation
   (`#222`).
-  - [x] P80.2a Add provider id `femic` and K3Z model-build node types.
+  - [x] P80.2a Add provider id `femic` and reusable FEMIC model-build node
+    types.
   - [x] P80.2b Validate broad required node parameters only.
   - [x] P80.2c Return FreshForge diagnostics for provider-owned validation
     failures.
   - [x] P80.2d Preserve the no-execution boundary: no file reads, artifact
     inspection, BTC launch, Patchworks launch, or FEMIC stage execution.
-- [x] P80.3 Add canonical K3Z FreshForge workflow spec (`#223`).
+- [x] P80.3 Add generic FreshForge workflow example and defer concrete
+  instance specs (`#223`).
   - [x] P80.3a Encode validate-case through matrix-build graph order.
   - [x] P80.3b Keep paths repo-relative and public-safe.
   - [x] P80.3c Represent BatchTIPSY and Patchworks seams as declared metadata
     and artifacts, not execution.
-  - [x] P80.3d Add API support to build the workflow document/spec.
+  - [x] P80.3d Keep K3Z-specific workflow composition out of `femic.freshforge`;
+    concrete instance workflow documents belong in instance repositories.
 - [x] P80.4 Add FreshForge integration docs and tests (`#224`).
   - [x] P80.4a Add provider, workflow, and packaging metadata tests.
   - [x] P80.4b Document FreshForge graph planning versus FEMIC execution
@@ -2250,13 +2253,15 @@ Phase 80 focused verification passed with:
 - `python -m build`
 - `twine check dist/*`
 - `freshforge providers --json`
-- `freshforge validate examples/freshforge/k3z_model_build_workflow.yaml --json`
-- `freshforge plan examples/freshforge/k3z_model_build_workflow.yaml --json`
+- `freshforge validate examples/freshforge/model_build_workflow.yaml --json`
+- `freshforge plan examples/freshforge/model_build_workflow.yaml --json`
 - `pre-commit run --all-files`
 
 Phase 80 artifact inspection passed: the sdist includes
-`examples/freshforge/k3z_model_build_workflow.yaml`, and the wheel metadata
+`examples/freshforge/model_build_workflow.yaml`, and the wheel metadata
 contains `[freshforge.providers] femic = femic.freshforge:provider_factory`.
+The package uses a generic provider example and leaves K3Z-specific workflow
+documents to the K3Z instance repository.
 
 Full-repo acceptance is not yet green in this Windows workspace. `mypy src`
 still reports existing broad typing issues outside `femic.freshforge`, including
@@ -2278,15 +2283,19 @@ workflow passed on the feature branch.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P80` / `#220` is active: FEMIC will expose K3Z model-building stages as a
+  - `P80` / `#220` is active: FEMIC exposes reusable model-building stages as a
     plan-only FreshForge provider. Optional `femic[freshforge]` packaging,
-    provider entry-point discovery, provider metadata/validation, a canonical
-    K3Z workflow graph, and focused docs/tests are implemented. Focused local
-    verification, Sphinx, build, artifact checks, and FreshForge CLI smoke
-    checks pass, and PR `#226` is green for docs and release-artifact checks.
-    The remaining edge is merge/closeout after deciding how to handle existing
-    full-repo `mypy src` and `pytest` failures that are outside the new
-    integration.
+    provider entry-point discovery, provider metadata/validation, a generic
+    provider example graph, and focused docs/tests are implemented. K3Z-specific
+    FreshForge workflow composition is intentionally deferred to the K3Z
+    instance repository. Focused local verification, Sphinx, build, artifact
+    checks, and FreshForge CLI smoke checks pass, and PR `#226` was green for
+    docs and release-artifact checks before this boundary-correction push. The
+    boundary correction also passes focused Ruff, targeted mypy/pytest,
+    FreshForge CLI validate/plan, Sphinx, build, `twine check`, and artifact
+    inspection locally. The remaining edge is rerunning PR checks, then
+    merge/closeout after deciding how to handle existing full-repo `mypy src`
+    and `pytest` failures that are outside the new integration.
   - `P79` / `#211` is planned: FEMIC will grow reusable open LiDAR
     acquisition, terrain-raster, slope, and terrain-derived hydrography
     workflows. The immediate TFL 6 instance uses a public DEM steep-slope

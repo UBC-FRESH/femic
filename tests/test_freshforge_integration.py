@@ -10,16 +10,14 @@ import yaml
 
 from femic.freshforge import (
     FEMIC_PROVIDER_ID,
-    build_k3z_workflow_document,
-    build_k3z_workflow_spec,
     provider_factory,
 )
 
 freshforge = pytest.importorskip("freshforge")
 
 
-EXAMPLE_PATH = Path("examples/freshforge/k3z_model_build_workflow.yaml")
-EXPECTED_K3Z_ORDER = [
+EXAMPLE_PATH = Path("examples/freshforge/model_build_workflow.yaml")
+EXPECTED_MODEL_BUILD_ORDER = [
     "validate_case",
     "geospatial_preflight",
     "compile_upstream",
@@ -36,6 +34,10 @@ def _registry_with_femic_provider():
     registry = ProviderRegistry()
     registry.register(provider_factory())
     return registry
+
+
+def _example_document() -> dict[str, object]:
+    return yaml.safe_load(EXAMPLE_PATH.read_text(encoding="utf-8"))
 
 
 def test_provider_metadata_serializes_deterministically() -> None:
@@ -119,7 +121,7 @@ def test_provider_metadata_serializes_deterministically() -> None:
         ],
         "name": "FEMIC model-build provider",
         "description": (
-            "Non-executing provider for FEMIC K3Z model-build workflow "
+            "Non-executing provider for FEMIC model-build workflow "
             "validation, inspection, and planning."
         ),
     }
@@ -151,20 +153,14 @@ def test_femic_import_does_not_import_freshforge_eagerly() -> None:
     assert result.stdout.strip() == "False"
 
 
-def test_example_workflow_matches_builder_document() -> None:
-    example = yaml.safe_load(EXAMPLE_PATH.read_text(encoding="utf-8"))
+def test_example_workflow_is_generic_and_public_safe() -> None:
+    document = _example_document()
 
-    assert example == build_k3z_workflow_document()
-
-
-def test_build_k3z_workflow_spec_returns_freshforge_spec() -> None:
-    spec = build_k3z_workflow_spec()
-
-    assert spec.id == "k3z_model_build"
-    assert [node.id for node in spec.nodes] == EXPECTED_K3Z_ORDER
+    assert document["workflow"]["id"] == "femic_model_build_example"
+    assert "k3z" not in yaml.safe_dump(document).lower()
 
 
-def test_canonical_k3z_workflow_validates_and_plans() -> None:
+def test_example_workflow_validates_and_plans() -> None:
     from freshforge.loading import load_workflow
     from freshforge.planning import create_run_plan
     from freshforge.validation import validate_workflow_with_providers
@@ -186,16 +182,16 @@ def test_canonical_k3z_workflow_validates_and_plans() -> None:
         registry=_registry_with_femic_provider(),
     )
     assert not plan.has_errors
-    assert [node.id for node in plan.nodes] == EXPECTED_K3Z_ORDER
+    assert [node.id for node in plan.nodes] == EXPECTED_MODEL_BUILD_ORDER
     assert {node.provider_id for node in plan.nodes} == {"femic"}
-    assert [node.node_type for node in plan.nodes] == EXPECTED_K3Z_ORDER
+    assert [node.node_type for node in plan.nodes] == EXPECTED_MODEL_BUILD_ORDER
 
 
 def test_missing_required_parameter_returns_provider_diagnostic() -> None:
     from freshforge.validation import validate_workflow_document
     from freshforge.validation import validate_workflow_with_providers
 
-    document = build_k3z_workflow_document()
+    document = _example_document()
     del document["nodes"][0]["parameters"]["run_config"]
     spec, structural = validate_workflow_document(document)
 
@@ -216,7 +212,7 @@ def test_unknown_femic_node_type_fails_provider_validation() -> None:
     from freshforge.validation import validate_workflow_document
     from freshforge.validation import validate_workflow_with_providers
 
-    document = build_k3z_workflow_document()
+    document = _example_document()
     document["nodes"][0]["provider"] = "femic.not_a_stage"
     spec, structural = validate_workflow_document(document)
 

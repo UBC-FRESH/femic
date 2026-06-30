@@ -8,16 +8,10 @@ commands, inspect artifacts, or touch model inputs.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 FEMIC_PROVIDER_ID = "femic"
 FEMIC_PROVIDER_VERSION = "0.1.0a1"
-DEFAULT_K3Z_INSTANCE_ROOT = "external/femic-k3z-instance"
-DEFAULT_K3Z_RUN_CONFIG = "config/run_profile.k3z.yaml"
-DEFAULT_K3Z_PATCHWORKS_CONFIG = "config/patchworks.runtime.windows.yaml"
-DEFAULT_K3Z_TSA = "k3z"
-DEFAULT_K3Z_RUN_ID = "k3z_freshforge_plan"
 
 
 @dataclass(frozen=True)
@@ -105,7 +99,7 @@ class FemicFreshForgeProvider:
             version=FEMIC_PROVIDER_VERSION,
             name="FEMIC model-build provider",
             description=(
-                "Non-executing provider for FEMIC K3Z model-build workflow "
+                "Non-executing provider for FEMIC model-build workflow "
                 "validation, inspection, and planning."
             ),
             node_types=tuple(
@@ -184,161 +178,6 @@ class FemicFreshForgeProvider:
 def provider_factory() -> FemicFreshForgeProvider:
     """Return the FEMIC FreshForge provider for entry-point discovery."""
     return FemicFreshForgeProvider()
-
-
-def build_k3z_workflow_document(
-    *,
-    instance_root: str = DEFAULT_K3Z_INSTANCE_ROOT,
-    run_config: str = DEFAULT_K3Z_RUN_CONFIG,
-    patchworks_config: str = DEFAULT_K3Z_PATCHWORKS_CONFIG,
-    tsa: str = DEFAULT_K3Z_TSA,
-    run_id: str = DEFAULT_K3Z_RUN_ID,
-) -> dict[str, Any]:
-    """Build the canonical non-executing K3Z FreshForge workflow document."""
-    return {
-        "workflow": {
-            "id": "k3z_model_build",
-            "name": "K3Z FEMIC model-build workflow",
-            "description": (
-                "Plan-only FreshForge graph for the FEMIC K3Z model-build path."
-            ),
-        },
-        "nodes": [
-            {
-                "id": "validate_case",
-                "provider": "femic.validate_case",
-                "outputs": {"case_validation": "case_preflight_ok"},
-                "parameters": {
-                    "instance_root": instance_root,
-                    "run_config": run_config,
-                },
-            },
-            {
-                "id": "geospatial_preflight",
-                "provider": "femic.geospatial_preflight",
-                "needs": ["validate_case"],
-                "inputs": {"case_validation": "validate_case.case_validation"},
-                "outputs": {"geospatial_runtime": "geospatial_runtime_ok"},
-                "parameters": {"instance_root": instance_root},
-            },
-            {
-                "id": "compile_upstream",
-                "provider": "femic.compile_upstream",
-                "needs": ["geospatial_preflight"],
-                "inputs": {
-                    "geospatial_runtime": ("geospatial_preflight.geospatial_runtime")
-                },
-                "outputs": {"btc_handoff": "stage01a_btc_handoff"},
-                "parameters": {
-                    "instance_root": instance_root,
-                    "run_config": run_config,
-                    "run_id": run_id,
-                },
-                "artifacts": {
-                    "run_manifest": f"runtime/logs/run_manifest-{run_id}.json"
-                },
-            },
-            {
-                "id": "btc_post_tipsy",
-                "provider": "femic.btc_post_tipsy",
-                "needs": ["compile_upstream"],
-                "inputs": {"btc_handoff": "compile_upstream.btc_handoff"},
-                "outputs": {"model_input_bundle": "model_input_bundle"},
-                "parameters": {
-                    "instance_root": instance_root,
-                    "run_config": run_config,
-                    "tsa": tsa,
-                    "run_id": run_id,
-                },
-                "artifacts": {
-                    "btc_manifest": f"runtime/logs/btc_manifest-{run_id}.json",
-                    "post_tipsy_manifest": (
-                        f"runtime/logs/run_manifest-post_tipsy_{run_id}.json"
-                    ),
-                },
-            },
-            {
-                "id": "export_patchworks",
-                "provider": "femic.export_patchworks",
-                "needs": ["btc_post_tipsy"],
-                "inputs": {"model_input_bundle": "btc_post_tipsy.model_input_bundle"},
-                "outputs": {"patchworks_package": "k3z_patchworks_model"},
-                "parameters": {
-                    "instance_root": instance_root,
-                    "run_config": run_config,
-                    "tsa": tsa,
-                },
-                "artifacts": {
-                    "forestmodel_xml": (
-                        "models/k3z_patchworks_model/yield/forestmodel.xml"
-                    ),
-                    "fragments": ("models/k3z_patchworks_model/shapefiles/blocks.shp"),
-                },
-            },
-            {
-                "id": "patchworks_preflight",
-                "provider": "femic.patchworks_preflight",
-                "needs": ["export_patchworks"],
-                "inputs": {
-                    "patchworks_package": "export_patchworks.patchworks_package"
-                },
-                "outputs": {"patchworks_runtime": "patchworks_runtime_ok"},
-                "parameters": {
-                    "instance_root": instance_root,
-                    "patchworks_config": patchworks_config,
-                },
-            },
-            {
-                "id": "matrix_build",
-                "provider": "femic.matrix_build",
-                "needs": ["patchworks_preflight"],
-                "inputs": {
-                    "patchworks_runtime": ("patchworks_preflight.patchworks_runtime")
-                },
-                "outputs": {
-                    "compiled_patchworks_model": "compiled_k3z_patchworks_model"
-                },
-                "parameters": {
-                    "instance_root": instance_root,
-                    "patchworks_config": patchworks_config,
-                    "run_id": run_id,
-                },
-                "artifacts": {
-                    "matrix_build_manifest": (
-                        f"runtime/logs/patchworks_matrixbuilder_manifest-{run_id}.json"
-                    )
-                },
-            },
-        ],
-    }
-
-
-def build_k3z_workflow_spec(**kwargs: Any) -> Any:
-    """Return the canonical K3Z workflow as a FreshForge ``WorkflowSpec``."""
-    from freshforge.validation import (  # type: ignore[import-untyped]
-        has_error_diagnostics,
-        validate_workflow_document,
-    )
-
-    document = build_k3z_workflow_document(**kwargs)
-    spec, diagnostics = validate_workflow_document(document)
-    if spec is None or has_error_diagnostics(diagnostics):
-        codes = ", ".join(diagnostic.code for diagnostic in diagnostics)
-        raise ValueError(f"Built K3Z FreshForge workflow is invalid: {codes}")
-    return spec
-
-
-def write_k3z_workflow_document(path: str | Path, **kwargs: Any) -> Path:
-    """Write the canonical K3Z FreshForge workflow document as YAML."""
-    import yaml
-
-    output_path = Path(path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(
-        yaml.safe_dump(build_k3z_workflow_document(**kwargs), sort_keys=False),
-        encoding="utf-8",
-    )
-    return output_path
 
 
 def _freshforge_metadata_types() -> tuple[Any, Any]:

@@ -74,13 +74,15 @@ femic prep validate-case --instance-root external/femic-k3z-instance --run-confi
 femic prep geospatial-preflight
 ```
 
-FreshForge can inspect the plan-only K3Z model-build graph when FEMIC is
-installed with the optional integration:
+FreshForge can inspect plan-only FEMIC model-build graphs when FEMIC is
+installed with the optional integration. FEMIC core ships a generic provider
+example; concrete K3Z or other instance workflow documents belong in the
+corresponding instance repositories.
 
 ```bash
 freshforge providers
-freshforge validate examples/freshforge/k3z_model_build_workflow.yaml
-freshforge plan examples/freshforge/k3z_model_build_workflow.yaml
+freshforge validate examples/freshforge/model_build_workflow.yaml
+freshforge plan examples/freshforge/model_build_workflow.yaml
 ```
 
 FreshForge validation and planning do not run FEMIC stages, launch BTC,

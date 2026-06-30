@@ -12,9 +12,10 @@ Responsibilities
 
 - expose provider id ``femic`` through ``freshforge.providers`` entry-point
   discovery;
-- describe K3Z model-build stages as non-executing FreshForge node types;
+- describe reusable FEMIC model-build stages as non-executing FreshForge node
+  types;
 - validate broad node parameters, inputs, outputs, and artifact declarations;
-- build the canonical K3Z FreshForge workflow document/spec; and
+- leave instance-specific workflow composition to instance repositories; and
 - preserve the boundary that FreshForge planning does not execute FEMIC.
 
 API
