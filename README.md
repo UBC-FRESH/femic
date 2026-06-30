@@ -46,6 +46,11 @@ python -m pip install -r requirements-dev.txt
 This installs FEMIC in editable mode (`-e .`) plus development tools and
 DataLad (`datalad[full]`).
 
+The development extra also installs the optional FreshForge integration used
+to validate and plan FEMIC model-build workflow graphs without executing FEMIC
+stages. For a runtime install that only needs that integration, use
+`femic[freshforge]`.
+
 Then bootstrap annex-backed submodules and materialize real file content:
 
 ```bash
@@ -68,6 +73,20 @@ Preflight before long runs:
 femic prep validate-case --instance-root external/femic-k3z-instance --run-config config/run_profile.k3z.yaml
 femic prep geospatial-preflight
 ```
+
+FreshForge can inspect plan-only FEMIC model-build graphs when FEMIC is
+installed with the optional integration. FEMIC core ships a generic provider
+example; concrete K3Z or other instance workflow documents belong in the
+corresponding instance repositories.
+
+```bash
+freshforge providers
+freshforge validate examples/freshforge/model_build_workflow.yaml
+freshforge plan examples/freshforge/model_build_workflow.yaml
+```
+
+FreshForge validation and planning do not run FEMIC stages, launch BTC,
+launch Patchworks, read declared artifacts, or replace `femic instance rebuild`.
 
 If `git annex version` fails, install `git-annex` at the OS level and re-open
 the shell before retrying.

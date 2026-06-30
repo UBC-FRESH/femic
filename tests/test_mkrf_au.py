@@ -125,8 +125,14 @@ def test_build_mkrf_au_tables_applies_minor_strata_aggregation_auditably() -> No
     assert assignment.loc[assignment["res_key"].eq(21), "au_id"].iloc[0] == (
         "cwh_vm_2_hw_ba"
     )
-    assert assignment.loc[assignment["res_key"].eq(21), "leading_species_1"].iloc[0] == "ba"
-    assert assignment.loc[assignment["res_key"].eq(21), "leading_species_1_share"].iloc[0] == 55
+    assert (
+        assignment.loc[assignment["res_key"].eq(21), "leading_species_1"].iloc[0]
+        == "ba"
+    )
+    assert (
+        assignment.loc[assignment["res_key"].eq(21), "leading_species_1_share"].iloc[0]
+        == 55
+    )
 
     assert au_table["au_id"].tolist() == ["cwh_dm_x_dr_cw", "cwh_vm_2_hw_ba"]
     merged = au_table.loc[au_table["au_id"].eq("cwh_vm_2_hw_ba")].iloc[0]

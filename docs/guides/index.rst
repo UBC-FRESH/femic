@@ -20,6 +20,7 @@ export modules.
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery
+   freshforge-provider-integration
    tsr-thlb-reconstruction-ladder
    github-datalad-arbutus-pattern
    windows-arbutus-auth-workflow

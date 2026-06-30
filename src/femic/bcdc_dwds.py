@@ -277,7 +277,9 @@ def _extract_dwds_pickup_download_url(*, pickup_url: str, html_text: str) -> str
         if parsed.scheme in {"http", "https"} and parsed.netloc:
             return candidate
 
-    href_matches = re.findall(r"href\s*=\s*['\"]?([^'\">\s]+)", html_text, flags=re.IGNORECASE)
+    href_matches = re.findall(
+        r"href\s*=\s*['\"]?([^'\">\s]+)", html_text, flags=re.IGNORECASE
+    )
     for href in href_matches:
         candidate = urljoin(pickup_url, unescape(href.strip()))
         parsed = urlparse(candidate)
@@ -287,7 +289,9 @@ def _extract_dwds_pickup_download_url(*, pickup_url: str, html_text: str) -> str
 
 
 def _resolve_dwds_pickup_download_url(order_guid: str) -> tuple[str, str | None]:
-    pickup_url = DWDS_PICKUP_BY_GUID_URL_TEMPLATE.format(order_guid=quote(order_guid, safe="-"))
+    pickup_url = DWDS_PICKUP_BY_GUID_URL_TEMPLATE.format(
+        order_guid=quote(order_guid, safe="-")
+    )
     html_text = _fetch_text(pickup_url)
     return pickup_url, _extract_dwds_pickup_download_url(
         pickup_url=pickup_url,
@@ -295,7 +299,9 @@ def _resolve_dwds_pickup_download_url(order_guid: str) -> tuple[str, str | None]
     )
 
 
-def _status_probe_from_payload(payload: dict[str, Any] | None) -> BcdcDwdsStatusProbe | None:
+def _status_probe_from_payload(
+    payload: dict[str, Any] | None,
+) -> BcdcDwdsStatusProbe | None:
     if not isinstance(payload, dict):
         return None
     order_id = payload.get("order_id")
@@ -306,7 +312,9 @@ def _status_probe_from_payload(payload: dict[str, Any] | None) -> BcdcDwdsStatus
         raw_payload=dict(payload.get("raw_payload", {}))
         if isinstance(payload.get("raw_payload"), dict)
         else payload,
-        status=str(payload.get("status")) if payload.get("status") is not None else None,
+        status=str(payload.get("status"))
+        if payload.get("status") is not None
+        else None,
         description=(
             str(payload.get("description"))
             if payload.get("description") is not None
@@ -324,7 +332,9 @@ def _status_probe_from_payload(payload: dict[str, Any] | None) -> BcdcDwdsStatus
 def _order_result_from_payload(payload: dict[str, Any]) -> BcdcDwdsOrderResult:
     bbox_payload = payload.get("bbox_epsg3005")
     if not isinstance(bbox_payload, list | tuple) or len(bbox_payload) != 4:
-        raise BcdcDwdsError("DWDS manifest payload is missing a valid bbox_epsg3005 entry.")
+        raise BcdcDwdsError(
+            "DWDS manifest payload is missing a valid bbox_epsg3005 entry."
+        )
     return BcdcDwdsOrderResult(
         query=str(payload["query"]),
         limit=int(payload["limit"]),
@@ -336,19 +346,27 @@ def _order_result_from_payload(payload: dict[str, Any]) -> BcdcDwdsOrderResult:
         resource_id=str(payload["resource_id"]),
         resource_name=str(payload["resource_name"]),
         resource_url=(
-            str(payload["resource_url"]) if payload.get("resource_url") is not None else None
+            str(payload["resource_url"])
+            if payload.get("resource_url") is not None
+            else None
         ),
         feature_type=str(payload["feature_type"]),
         matched_by=str(payload["matched_by"]),
         aoi_source=str(payload["aoi_source"]),
         bbox_epsg3005=tuple(float(value) for value in bbox_payload),  # type: ignore[arg-type]
-        geomark_id=str(payload["geomark_id"]) if payload.get("geomark_id") is not None else None,
+        geomark_id=str(payload["geomark_id"])
+        if payload.get("geomark_id") is not None
+        else None,
         geomark_url=(
-            str(payload["geomark_url"]) if payload.get("geomark_url") is not None else None
+            str(payload["geomark_url"])
+            if payload.get("geomark_url") is not None
+            else None
         ),
         output_format=str(payload["output_format"]),
         email_address=(
-            str(payload["email_address"]) if payload.get("email_address") is not None else None
+            str(payload["email_address"])
+            if payload.get("email_address") is not None
+            else None
         ),
         clipping_method=str(payload["clipping_method"]),
         ordering_application=str(payload["ordering_application"]),
@@ -359,7 +377,9 @@ def _order_result_from_payload(payload: dict[str, Any]) -> BcdcDwdsOrderResult:
             else {}
         ),
         order_id=str(payload["order_id"]),
-        order_guid=str(payload["order_guid"]) if payload.get("order_guid") is not None else None,
+        order_guid=str(payload["order_guid"])
+        if payload.get("order_guid") is not None
+        else None,
         submission_status=str(payload["submission_status"]),
         submission_description=str(payload["submission_description"]),
         submission_value=(
@@ -407,7 +427,9 @@ def _order_result_from_payload(payload: dict[str, Any]) -> BcdcDwdsOrderResult:
             if payload.get("materialized_bytes") is not None
             else None
         ),
-        followup_warnings=tuple(str(item) for item in payload.get("followup_warnings", [])),
+        followup_warnings=tuple(
+            str(item) for item in payload.get("followup_warnings", [])
+        ),
     )
 
 
@@ -429,7 +451,11 @@ def load_bcdc_dwds_manifest(path: Path) -> list[BcdcDwdsOrderResult]:
             if isinstance(item, dict)
         ]
     if isinstance(payload, list):
-        return [_order_result_from_payload(item) for item in payload if isinstance(item, dict)]
+        return [
+            _order_result_from_payload(item)
+            for item in payload
+            if isinstance(item, dict)
+        ]
     if isinstance(payload, dict):
         return [_order_result_from_payload(payload)]
     raise BcdcDwdsError(f"Unsupported DWDS manifest payload shape in {resolved}")
@@ -498,7 +524,9 @@ def _download_dwds_artifact(
             f"Unable to download DWDS artifact from {download_url}: HTTP {exc.code}: {detail}"
         ) from exc
     except URLError as exc:  # pragma: no cover - network branch
-        raise BcdcDwdsError(f"Unable to download DWDS artifact from {download_url}: {exc}") from exc
+        raise BcdcDwdsError(
+            f"Unable to download DWDS artifact from {download_url}: {exc}"
+        ) from exc
 
     target_path.write_bytes(content)
     return target_path.resolve(), content_type, len(content)
@@ -543,7 +571,9 @@ def follow_up_bcdc_dwds_order(
     artifact_content_type = order_result.materialized_content_type
     artifact_bytes = order_result.materialized_bytes
 
-    effective_download_url = latest_probe.download_url if latest_probe is not None else None
+    effective_download_url = (
+        latest_probe.download_url if latest_probe is not None else None
+    )
     if effective_download_url is None and order_result.order_guid:
         pickup_url, pickup_download_url = _resolve_dwds_pickup_download_url(
             order_result.order_guid

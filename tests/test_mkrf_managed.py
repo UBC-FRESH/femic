@@ -400,7 +400,9 @@ def test_build_mkrf_managed_au_msyt_table_supports_pw_ss_species() -> None:
     assert row["planted_density1"] == 1050
 
 
-def test_build_mkrf_managed_au_msyt_table_rebalances_fractional_density_rounding() -> None:
+def test_build_mkrf_managed_au_msyt_table_rebalances_fractional_density_rounding() -> (
+    None
+):
     bootstrap_table = pd.DataFrame(
         [
             {

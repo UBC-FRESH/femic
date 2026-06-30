@@ -66,6 +66,7 @@ GUIDE_PAGES = [
     "data-access-inventory",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
+    "freshforge-provider-integration",
     "tsr-thlb-reconstruction-ladder",
     "public-data-mirror-runbook",
     "case-onboarding",
@@ -146,9 +147,7 @@ def test_smoothed_bin_pchip_is_documented_as_default_au_first_growth_method() ->
     diagnostics_text = (GUIDES_ROOT / "diagnostics-playbook.rst").read_text(
         encoding="utf-8"
     )
-    pipeline_text = (GUIDES_ROOT / "pipeline-overview.rst").read_text(
-        encoding="utf-8"
-    )
+    pipeline_text = (GUIDES_ROOT / "pipeline-overview.rst").read_text(encoding="utf-8")
 
     assert "smoothed_bin_pchip" in planning_text
     assert "legacy/fallback" in planning_text

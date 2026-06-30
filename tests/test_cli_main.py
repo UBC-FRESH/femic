@@ -241,7 +241,9 @@ def test_doc_figures_register_table_writes_review_manifest(tmp_path: Path) -> No
     table_path = tmp_path / "recovered.csv"
     table_path.write_text("x,y\n1,2\n", encoding="utf-8")
     calibration_path = tmp_path / "calibration.json"
-    calibration_path.write_text('{"x_axis": "linear", "y_axis": "linear"}\n', encoding="utf-8")
+    calibration_path.write_text(
+        '{"x_axis": "linear", "y_axis": "linear"}\n', encoding="utf-8"
+    )
     extraction_parameters_path = tmp_path / "params.json"
     extraction_parameters_path.write_text('{"mask": "blue"}\n', encoding="utf-8")
 
@@ -6727,7 +6729,10 @@ def test_instance_mkrf_init_runtime_package_uses_default_paths(
         captured_kwargs.update(kwargs)
         return SimpleNamespace(
             package_root=instance_root / "models" / "mkrf_patchworks_model",
-            readme_path=instance_root / "models" / "mkrf_patchworks_model" / "README.md",
+            readme_path=instance_root
+            / "models"
+            / "mkrf_patchworks_model"
+            / "README.md",
             manifest_path=instance_root
             / "models"
             / "mkrf_patchworks_model"
@@ -6795,51 +6800,102 @@ def test_instance_mkrf_init_runtime_package_uses_default_paths(
     cli_main.instance_mkrf_init_runtime_package(
         package_root=Path("models/mkrf_patchworks_model"),
         selected_au_csv=Path("data/model_input_bundle/selected_au_table.csv"),
-        stand_origin_assignment_csv=Path("data/model_input_bundle/stand_origin_assignment.csv"),
+        stand_origin_assignment_csv=Path(
+            "data/model_input_bundle/stand_origin_assignment.csv"
+        ),
         stand_au_assignment_csv=Path("data/model_input_bundle/stand_au_assignment.csv"),
-        managed_bootstrap_csv=Path("data/model_input_bundle/managed_au_bootstrap_table.csv"),
-        first_growth_curves_csv=Path("data/model_input_bundle/first_growth_au_curves.csv"),
+        managed_bootstrap_csv=Path(
+            "data/model_input_bundle/managed_au_bootstrap_table.csv"
+        ),
+        first_growth_curves_csv=Path(
+            "data/model_input_bundle/first_growth_au_curves.csv"
+        ),
         first_growth_diagnostics_csv=Path(
             "data/model_input_bundle/first_growth_au_fit_diagnostics.csv"
         ),
         managed_curves_csv=Path("data/model_input_bundle/managed_au_curves.csv"),
-        managed_run_manifest_json=Path("data/model_input_bundle/managed_au_run_manifest.json"),
+        managed_run_manifest_json=Path(
+            "data/model_input_bundle/managed_au_run_manifest.json"
+        ),
         bad_curve_audit_summary_csv=Path(
             "data/model_input_bundle/bad_curve_audit_summary.csv"
         ),
         instance_root=instance_root,
     )
 
-    assert captured_kwargs["package_root"] == (
-        instance_root / "models" / "mkrf_patchworks_model"
-    ).resolve()
-    assert captured_kwargs["selected_au_csv"] == (
-        instance_root / "data" / "model_input_bundle" / "selected_au_table.csv"
-    ).resolve()
-    assert captured_kwargs["stand_origin_assignment_csv"] == (
-        instance_root / "data" / "model_input_bundle" / "stand_origin_assignment.csv"
-    ).resolve()
-    assert captured_kwargs["stand_au_assignment_csv"] == (
-        instance_root / "data" / "model_input_bundle" / "stand_au_assignment.csv"
-    ).resolve()
-    assert captured_kwargs["managed_bootstrap_csv"] == (
-        instance_root / "data" / "model_input_bundle" / "managed_au_bootstrap_table.csv"
-    ).resolve()
-    assert captured_kwargs["first_growth_curves_csv"] == (
-        instance_root / "data" / "model_input_bundle" / "first_growth_au_curves.csv"
-    ).resolve()
-    assert captured_kwargs["first_growth_diagnostics_csv"] == (
-        instance_root / "data" / "model_input_bundle" / "first_growth_au_fit_diagnostics.csv"
-    ).resolve()
-    assert captured_kwargs["managed_curves_csv"] == (
-        instance_root / "data" / "model_input_bundle" / "managed_au_curves.csv"
-    ).resolve()
-    assert captured_kwargs["managed_run_manifest_json"] == (
-        instance_root / "data" / "model_input_bundle" / "managed_au_run_manifest.json"
-    ).resolve()
-    assert captured_kwargs["bad_curve_audit_summary_csv"] == (
-        instance_root / "data" / "model_input_bundle" / "bad_curve_audit_summary.csv"
-    ).resolve()
+    assert (
+        captured_kwargs["package_root"]
+        == (instance_root / "models" / "mkrf_patchworks_model").resolve()
+    )
+    assert (
+        captured_kwargs["selected_au_csv"]
+        == (
+            instance_root / "data" / "model_input_bundle" / "selected_au_table.csv"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["stand_origin_assignment_csv"]
+        == (
+            instance_root
+            / "data"
+            / "model_input_bundle"
+            / "stand_origin_assignment.csv"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["stand_au_assignment_csv"]
+        == (
+            instance_root / "data" / "model_input_bundle" / "stand_au_assignment.csv"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["managed_bootstrap_csv"]
+        == (
+            instance_root
+            / "data"
+            / "model_input_bundle"
+            / "managed_au_bootstrap_table.csv"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["first_growth_curves_csv"]
+        == (
+            instance_root / "data" / "model_input_bundle" / "first_growth_au_curves.csv"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["first_growth_diagnostics_csv"]
+        == (
+            instance_root
+            / "data"
+            / "model_input_bundle"
+            / "first_growth_au_fit_diagnostics.csv"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["managed_curves_csv"]
+        == (
+            instance_root / "data" / "model_input_bundle" / "managed_au_curves.csv"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["managed_run_manifest_json"]
+        == (
+            instance_root
+            / "data"
+            / "model_input_bundle"
+            / "managed_au_run_manifest.json"
+        ).resolve()
+    )
+    assert (
+        captured_kwargs["bad_curve_audit_summary_csv"]
+        == (
+            instance_root
+            / "data"
+            / "model_input_bundle"
+            / "bad_curve_audit_summary.csv"
+        ).resolve()
+    )
     assert any("mkrf runtime package initialized" in msg for msg in messages)
     assert any("manifest:" in msg for msg in messages)
     assert any("curve_status_csv:" in msg for msg in messages)
@@ -6868,7 +6924,9 @@ def test_instance_mkrf_audit_runtime_sanity_uses_resolved_paths(
         return SimpleNamespace(
             package_root=(instance_root / "models" / "mkrf_patchworks_model").resolve(),
             stage_dir=stage_dir.resolve(),
-            audit_csv_path=(stage_dir / "sanity" / "mkrf_runtime_sanity_audit.csv").resolve(),
+            audit_csv_path=(
+                stage_dir / "sanity" / "mkrf_runtime_sanity_audit.csv"
+            ).resolve(),
             summary_json_path=(
                 stage_dir / "sanity" / "mkrf_runtime_sanity_summary.json"
             ).resolve(),
@@ -6884,9 +6942,10 @@ def test_instance_mkrf_audit_runtime_sanity_uses_resolved_paths(
         instance_root=instance_root,
     )
 
-    assert captured_kwargs["package_root"] == (
-        instance_root / "models" / "mkrf_patchworks_model"
-    ).resolve()
+    assert (
+        captured_kwargs["package_root"]
+        == (instance_root / "models" / "mkrf_patchworks_model").resolve()
+    )
     assert captured_kwargs["stage_dir"] == stage_dir.resolve()
     assert any("mkrf runtime sanity audit complete" in msg for msg in messages)
     assert any("audit_csv:" in msg for msg in messages)
@@ -6931,12 +6990,14 @@ def test_instance_mkrf_publish_runtime_spatial_uses_default_paths(
         instance_root=instance_root,
     )
 
-    assert captured_kwargs["resultant_gdb"] == (
-        instance_root / "data" / "source" / "Resultant.gdb"
-    ).resolve()
-    assert captured_kwargs["package_root"] == (
-        instance_root / "models" / "mkrf_patchworks_model"
-    ).resolve()
+    assert (
+        captured_kwargs["resultant_gdb"]
+        == (instance_root / "data" / "source" / "Resultant.gdb").resolve()
+    )
+    assert (
+        captured_kwargs["package_root"]
+        == (instance_root / "models" / "mkrf_patchworks_model").resolve()
+    )
     assert any("mkrf runtime spatial published" in msg for msg in messages)
     assert any("fragments:" in msg for msg in messages)
     assert any("manifest:" in msg for msg in messages)

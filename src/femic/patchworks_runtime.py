@@ -1140,7 +1140,9 @@ def _run_windows_matrix_builder_with_auto_close(
         return {pid for pid in target_pids if pid > 0}
 
     def _current_shell_pids() -> set[int]:
-        shell_pids = _find_windows_patchworks_shell_process_ids() - baseline_shell_process_ids
+        shell_pids = (
+            _find_windows_patchworks_shell_process_ids() - baseline_shell_process_ids
+        )
         return {pid for pid in shell_pids if pid > 0}
 
     with (
@@ -1286,12 +1288,8 @@ def _run_windows_matrix_builder_with_auto_close(
         "shell_close_method": shell_close_method,
         "closed_shell_window_count": closed_shell_window_count,
         "force_stopped_shell_pids": force_stopped_shell_pids,
-        "remaining_process_ids": sorted(
-            _current_target_pids()
-        ),
-        "remaining_shell_process_ids": sorted(
-            _current_shell_pids()
-        ),
+        "remaining_process_ids": sorted(_current_target_pids()),
+        "remaining_shell_process_ids": sorted(_current_shell_pids()),
     }
 
 

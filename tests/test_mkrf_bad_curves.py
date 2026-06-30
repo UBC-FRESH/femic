@@ -23,9 +23,24 @@ def test_build_mkrf_bad_curve_audit_writes_summary_and_detail(
 
     pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "shape_area_ha": 10.0, "au_id": "au_bad"},
-            {"res_key": 2, "forest_cover_id": 102, "shape_area_ha": 12.0, "au_id": "au_bad"},
-            {"res_key": 3, "forest_cover_id": 201, "shape_area_ha": 8.0, "au_id": "au_ok"},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "shape_area_ha": 10.0,
+                "au_id": "au_bad",
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 102,
+                "shape_area_ha": 12.0,
+                "au_id": "au_bad",
+            },
+            {
+                "res_key": 3,
+                "forest_cover_id": 201,
+                "shape_area_ha": 8.0,
+                "au_id": "au_ok",
+            },
         ]
     ).to_csv(assignment_csv, index=False)
     pd.DataFrame(
@@ -78,7 +93,9 @@ def test_build_mkrf_bad_curve_audit_writes_summary_and_detail(
             },
         ]
     )
-    monkeypatch.setattr("femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table)
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table
+    )
 
     result = build_mkrf_bad_curve_audit(
         resultant_gdb=tmp_path / "resultant.gdb",
@@ -95,7 +112,10 @@ def test_build_mkrf_bad_curve_audit_writes_summary_and_detail(
     assert result.flagged_au_count == 1
     assert result.total_selected_au_count == 2
     assert summary.loc[summary["au_id"] == "au_bad", "flagged"].item() is True
-    assert summary.loc[summary["au_id"] == "au_bad", "population_pattern"].item() == "mixed_low_high"
+    assert (
+        summary.loc[summary["au_id"] == "au_bad", "population_pattern"].item()
+        == "mixed_low_high"
+    )
     assert summary.loc[summary["au_id"] == "au_bad", "age_lt_80_count"].item() == 1
     assert summary.loc[summary["au_id"] == "au_bad", "age_gte_80_count"].item() == 1
     assert (
@@ -133,9 +153,24 @@ def test_apply_young_skewed_sibling_borrow_replaces_only_target_curve() -> None:
     )
     assignment = pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "au_id": "cwh_dm_x_dr_cw", "shape_area_ha": 1.0},
-            {"res_key": 2, "forest_cover_id": 201, "au_id": "cwh_dm_x_cw_dr", "shape_area_ha": 1.0},
-            {"res_key": 3, "forest_cover_id": 202, "au_id": "cwh_dm_x_cw_dr", "shape_area_ha": 1.0},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "au_id": "cwh_dm_x_dr_cw",
+                "shape_area_ha": 1.0,
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 201,
+                "au_id": "cwh_dm_x_cw_dr",
+                "shape_area_ha": 1.0,
+            },
+            {
+                "res_key": 3,
+                "forest_cover_id": 202,
+                "au_id": "cwh_dm_x_cw_dr",
+                "shape_area_ha": 1.0,
+            },
         ]
     )
     source_table = pd.DataFrame(
@@ -199,10 +234,30 @@ def test_apply_insufficient_support_merge_uses_largest_same_bec_neighbor() -> No
     )
     assignment = pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "au_id": "cwh_vm_1_fdc_cw", "shape_area_ha": 10.0},
-            {"res_key": 2, "forest_cover_id": 201, "au_id": "cwh_vm_1_hw_cw", "shape_area_ha": 50.0},
-            {"res_key": 3, "forest_cover_id": 202, "au_id": "cwh_vm_1_hw_cw", "shape_area_ha": 50.0},
-            {"res_key": 4, "forest_cover_id": 301, "au_id": "cwh_vm_1_cw_hw", "shape_area_ha": 20.0},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "au_id": "cwh_vm_1_fdc_cw",
+                "shape_area_ha": 10.0,
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 201,
+                "au_id": "cwh_vm_1_hw_cw",
+                "shape_area_ha": 50.0,
+            },
+            {
+                "res_key": 3,
+                "forest_cover_id": 202,
+                "au_id": "cwh_vm_1_hw_cw",
+                "shape_area_ha": 50.0,
+            },
+            {
+                "res_key": 4,
+                "forest_cover_id": 301,
+                "au_id": "cwh_vm_1_cw_hw",
+                "shape_area_ha": 20.0,
+            },
         ]
     )
 
@@ -252,9 +307,24 @@ def test_apply_insufficient_support_merge_handles_missing_curve_targets() -> Non
     )
     assignment = pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "au_id": "cwh_vm_2_cw_fdc", "shape_area_ha": 10.0},
-            {"res_key": 2, "forest_cover_id": 201, "au_id": "cwh_vm_2_fdc_cw", "shape_area_ha": 50.0},
-            {"res_key": 3, "forest_cover_id": 202, "au_id": "cwh_vm_2_fdc_cw", "shape_area_ha": 50.0},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "au_id": "cwh_vm_2_cw_fdc",
+                "shape_area_ha": 10.0,
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 201,
+                "au_id": "cwh_vm_2_fdc_cw",
+                "shape_area_ha": 50.0,
+            },
+            {
+                "res_key": 3,
+                "forest_cover_id": 202,
+                "au_id": "cwh_vm_2_fdc_cw",
+                "shape_area_ha": 50.0,
+            },
         ]
     )
     source_table = pd.DataFrame(
@@ -304,9 +374,24 @@ def test_apply_insufficient_support_merge_uses_fragment_level_old_support() -> N
     )
     assignment = pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "au_id": "cwh_vm_2_cw_fdc", "shape_area_ha": 1.0},
-            {"res_key": 2, "forest_cover_id": 101, "au_id": "cwh_vm_2_fdc_cw", "shape_area_ha": 9.0},
-            {"res_key": 3, "forest_cover_id": 201, "au_id": "cwh_vm_2_fdc_cw", "shape_area_ha": 50.0},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "au_id": "cwh_vm_2_cw_fdc",
+                "shape_area_ha": 1.0,
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 101,
+                "au_id": "cwh_vm_2_fdc_cw",
+                "shape_area_ha": 9.0,
+            },
+            {
+                "res_key": 3,
+                "forest_cover_id": 201,
+                "au_id": "cwh_vm_2_fdc_cw",
+                "shape_area_ha": 50.0,
+            },
         ]
     )
     source_table = pd.DataFrame(
@@ -363,9 +448,24 @@ def test_apply_insufficient_support_merge_skips_low_terminal_donors() -> None:
     )
     assignment = pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "au_id": "cwh_dm_x_dr_mb", "shape_area_ha": 1.0},
-            {"res_key": 2, "forest_cover_id": 201, "au_id": "cwh_dm_x_dr_ep", "shape_area_ha": 100.0},
-            {"res_key": 3, "forest_cover_id": 301, "au_id": "cwh_dm_x_cw_dr", "shape_area_ha": 50.0},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "au_id": "cwh_dm_x_dr_mb",
+                "shape_area_ha": 1.0,
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 201,
+                "au_id": "cwh_dm_x_dr_ep",
+                "shape_area_ha": 100.0,
+            },
+            {
+                "res_key": 3,
+                "forest_cover_id": 301,
+                "au_id": "cwh_dm_x_cw_dr",
+                "shape_area_ha": 50.0,
+            },
         ]
     )
     source_table = pd.DataFrame(
@@ -406,12 +506,21 @@ def test_build_mkrf_bad_curve_audit_classifies_insufficient_source_stands(
     output_dir = tmp_path / "out"
 
     pd.DataFrame(
-        [{"res_key": 1, "forest_cover_id": 101, "shape_area_ha": 10.0, "au_id": "au_sparse"}]
+        [
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "shape_area_ha": 10.0,
+                "au_id": "au_sparse",
+            }
+        ]
     ).to_csv(assignment_csv, index=False)
     pd.DataFrame(
         [{"au_id": "au_sparse", "selected_rank": 1, "covered_area_ha": 80.0}]
     ).to_csv(selected_au_csv, index=False)
-    pd.DataFrame(columns=["au_id", "age", "volume"]).to_csv(first_growth_curves_csv, index=False)
+    pd.DataFrame(columns=["au_id", "age", "volume"]).to_csv(
+        first_growth_curves_csv, index=False
+    )
     pd.DataFrame(
         [{"FEATURE_ID": 101, "PRJ_TOTAL_AGE": 350, "PRJ_VOL_DWB": 250.0}]
     ).to_csv(vdyp_yields_csv, index=False)
@@ -428,7 +537,9 @@ def test_build_mkrf_bad_curve_audit_classifies_insufficient_source_stands(
             }
         ]
     )
-    monkeypatch.setattr("femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table)
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table
+    )
 
     result = build_mkrf_bad_curve_audit(
         resultant_gdb=tmp_path / "resultant.gdb",
@@ -444,7 +555,10 @@ def test_build_mkrf_bad_curve_audit_classifies_insufficient_source_stands(
         summary.loc[summary["au_id"] == "au_sparse", "curve_issue_class"].item()
         == "insufficient_source_stands"
     )
-    assert summary.loc[summary["au_id"] == "au_sparse", "old_support_stand_count"].item() == 1
+    assert (
+        summary.loc[summary["au_id"] == "au_sparse", "old_support_stand_count"].item()
+        == 1
+    )
 
 
 def test_build_mkrf_bad_curve_audit_uses_unique_old_support_stands(
@@ -458,15 +572,32 @@ def test_build_mkrf_bad_curve_audit_uses_unique_old_support_stands(
 
     pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "shape_area_ha": 10.0, "au_id": "au_dup"},
-            {"res_key": 2, "forest_cover_id": 101, "shape_area_ha": 5.0, "au_id": "au_dup"},
-            {"res_key": 3, "forest_cover_id": 102, "shape_area_ha": 5.0, "au_id": "au_dup"},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "shape_area_ha": 10.0,
+                "au_id": "au_dup",
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 101,
+                "shape_area_ha": 5.0,
+                "au_id": "au_dup",
+            },
+            {
+                "res_key": 3,
+                "forest_cover_id": 102,
+                "shape_area_ha": 5.0,
+                "au_id": "au_dup",
+            },
         ]
     ).to_csv(assignment_csv, index=False)
     pd.DataFrame(
         [{"au_id": "au_dup", "selected_rank": 1, "covered_area_ha": 20.0}]
     ).to_csv(selected_au_csv, index=False)
-    pd.DataFrame(columns=["au_id", "age", "volume"]).to_csv(first_growth_curves_csv, index=False)
+    pd.DataFrame(columns=["au_id", "age", "volume"]).to_csv(
+        first_growth_curves_csv, index=False
+    )
     pd.DataFrame(
         [
             {"FEATURE_ID": 101, "PRJ_TOTAL_AGE": 350, "PRJ_VOL_DWB": 250.0},
@@ -494,7 +625,9 @@ def test_build_mkrf_bad_curve_audit_uses_unique_old_support_stands(
             },
         ]
     )
-    monkeypatch.setattr("femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table)
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table
+    )
 
     result = build_mkrf_bad_curve_audit(
         resultant_gdb=tmp_path / "resultant.gdb",
@@ -523,14 +656,26 @@ def test_build_mkrf_bad_curve_audit_reclassifies_zero_old_support_units_as_manag
 
     pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "shape_area_ha": 10.0, "au_id": "au_logging"},
-            {"res_key": 2, "forest_cover_id": 102, "shape_area_ha": 12.0, "au_id": "au_logging"},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "shape_area_ha": 10.0,
+                "au_id": "au_logging",
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 102,
+                "shape_area_ha": 12.0,
+                "au_id": "au_logging",
+            },
         ]
     ).to_csv(assignment_csv, index=False)
     pd.DataFrame(
         [{"au_id": "au_logging", "selected_rank": 1, "covered_area_ha": 80.0}]
     ).to_csv(selected_au_csv, index=False)
-    pd.DataFrame(columns=["au_id", "age", "volume"]).to_csv(first_growth_curves_csv, index=False)
+    pd.DataFrame(columns=["au_id", "age", "volume"]).to_csv(
+        first_growth_curves_csv, index=False
+    )
     pd.DataFrame(
         [
             {"FEATURE_ID": 101, "PRJ_TOTAL_AGE": 350, "PRJ_VOL_DWB": 225.0},
@@ -558,7 +703,9 @@ def test_build_mkrf_bad_curve_audit_reclassifies_zero_old_support_units_as_manag
             },
         ]
     )
-    monkeypatch.setattr("femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table)
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table
+    )
 
     result = build_mkrf_bad_curve_audit(
         resultant_gdb=tmp_path / "resultant.gdb",

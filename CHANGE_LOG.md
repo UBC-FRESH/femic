@@ -18532,3 +18532,80 @@
 - preserved the recorded boundary that the MP11 harvest-system runtime is
   `replacement_candidate_ready_for_review`, not an automatic Phase 5
   replacement.
+
+## 2026-06-30 - Opened FreshForge provider integration phase
+
+- opened parent FEMIC issue `#220` and child issues `#221` through `#225` for
+  the Phase 80 FreshForge provider integration lane;
+- created branch `feature/p80-femic-freshforge-provider`;
+- recorded the active roadmap plan for a plan-only `femic.freshforge`
+  integration that exposes K3Z model-building stages through FreshForge
+  provider metadata, validation, inspection, and non-executing planning; and
+- preserved the explicit boundary that this phase does not add `freshforge run`,
+  FreshForge-driven FEMIC execution, real BTC/Patchworks launch, artifact
+  inspection, or replacement of `femic instance rebuild`.
+
+## 2026-06-30 - Implemented plan-only FEMIC FreshForge provider
+
+- added optional `femic[freshforge]` packaging and a `freshforge.providers`
+  entry point for provider id `femic`;
+- added `femic.freshforge` with a non-executing provider factory, K3Z
+  model-build node metadata, provider-owned broad parameter/artifact
+  validation, and helpers to build the canonical K3Z workflow document/spec;
+- added `examples/freshforge/k3z_model_build_workflow.yaml` as a public-safe
+  plan-only graph from validate-case through Patchworks matrix-build;
+- documented the integration in the README, a new guide, and a curated API
+  page, explicitly distinguishing FreshForge graph planning from
+  `femic instance rebuild` execution and named-pipeline TSR/THLB runbooks;
+- added tests for provider metadata, package metadata, lazy import behavior,
+  example/workflow parity, FreshForge validation/planning, missing-parameter
+  diagnostics, unknown node types, and entry-point discovery; and
+- verified focused lint, targeted mypy, targeted pytest, installed
+  `freshforge` CLI provider discovery/validate/plan smoke checks, and a
+  warning-clean Sphinx build.
+
+## 2026-06-30 - Verified FreshForge artifacts and recorded full-suite baseline
+
+- ran Phase 80 focused acceptance checks for optional install, Ruff format,
+  Ruff lint, targeted mypy, targeted pytest, FreshForge CLI provider
+  discovery/validate/plan smoke checks, warning-clean Sphinx docs, package
+  build, `twine check`, and pre-commit;
+- inspected the built sdist and confirmed it includes
+  `examples/freshforge/k3z_model_build_workflow.yaml`;
+- inspected the built wheel and confirmed the `[freshforge.providers]` entry
+  point maps `femic` to `femic.freshforge:provider_factory`;
+- recorded that full `mypy src` remains blocked by existing broad repo typing
+  issues outside `femic.freshforge`; and
+- recorded that full `pytest` currently reports 45 failures across existing
+  CLI, docs-contract, Patchworks, named-pipeline, TSR, TIPSY, post-TIPSY, and
+  WS3 smoke surfaces, while the new FreshForge integration tests pass.
+
+## 2026-06-30 - Opened FreshForge integration PR and verified PR checks
+
+- opened PR `#226` for the Phase 80 FEMIC FreshForge provider integration;
+- posted verification comments on parent issue `#220`, closeout issue `#225`,
+  and implementation child issues `#221` through `#224`;
+- verified the PR `docs-pages` build and `package-release-checks` workflow both
+  completed successfully; and
+- left P80.5 open because merge remains gated on the explicit decision about
+  existing full-repo `mypy src` and `pytest` baseline failures outside the new
+  FreshForge integration.
+
+## 2026-06-30 - Corrected FreshForge provider instance boundary
+
+- removed K3Z-specific workflow builder functions and default constants from
+  `femic.freshforge`;
+- retained `femic.freshforge` as the generic, non-executing provider for
+  reusable FEMIC model-build stages;
+- replaced the FEMIC-core FreshForge example with
+  `examples/freshforge/model_build_workflow.yaml`, a public-safe generic
+  provider fixture; and
+- documented that concrete K3Z FreshForge workflow documents belong in the K3Z
+  instance repository, while FEMIC core supplies the reusable provider
+  vocabulary and validation hooks;
+- verified the corrected boundary with Ruff, targeted mypy, targeted
+  FreshForge integration tests, FreshForge CLI validate/plan checks against the
+  generic example, warning-clean Sphinx docs, package build, `twine check`, and
+  direct sdist/wheel metadata inspection; and
+- verified PR `#226` docs and package-release checks passed on the corrected
+  branch.

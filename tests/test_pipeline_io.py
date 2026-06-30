@@ -130,12 +130,7 @@ def test_resolve_windows_annex_pointer_payload_path_maps_annex_objects_pointer(
     pointer_path = worktree_root / "data" / "downloads" / "source.gpkg"
     pointer_path.parent.mkdir(parents=True)
     gitdir = tmp_path / "gitdir"
-    payload = (
-        gitdir
-        / "annex"
-        / "objects"
-        / "MD5E-s12--deadbeef.gpkg"
-    )
+    payload = gitdir / "annex" / "objects" / "MD5E-s12--deadbeef.gpkg"
     payload.parent.mkdir(parents=True)
     payload.write_bytes(b"SQLite format 3")
     (worktree_root / ".git").write_text("gitdir: ../gitdir\n", encoding="utf-8")
@@ -166,12 +161,7 @@ def test_materialize_annex_artifact_path_runs_annex_get_and_resolves_payload(
     pointer_path = worktree_root / "data" / "downloads" / "source.gpkg"
     pointer_path.parent.mkdir(parents=True)
     gitdir = tmp_path / "gitdir"
-    payload = (
-        gitdir
-        / "annex"
-        / "objects"
-        / "MD5E-s12--deadbeef.gpkg"
-    )
+    payload = gitdir / "annex" / "objects" / "MD5E-s12--deadbeef.gpkg"
     payload.parent.mkdir(parents=True)
     (worktree_root / ".git").write_text("gitdir: ../gitdir\n", encoding="utf-8")
     pointer_path.write_text(

@@ -1269,7 +1269,7 @@ def test_run_patchworks_command_windows_aborts_on_live_fatal_stderr(
             self._returncode: int | None = None
             stdout.write("")
             stdout.flush()
-            stderr.write("Fatal error loading XML model\nUndefined column \"AGE\"\n")
+            stderr.write('Fatal error loading XML model\nUndefined column "AGE"\n')
             stderr.flush()
 
         def poll(self) -> int | None:
@@ -1342,7 +1342,9 @@ def test_run_patchworks_command_collects_warning_lines(
     )
 
     assert result.returncode == 0
-    assert result.warnings == ("Processing completed. Review warnings and exit when finished.",)
+    assert result.warnings == (
+        "Processing completed. Review warnings and exit when finished.",
+    )
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     assert manifest["warnings"] == [
         "Processing completed. Review warnings and exit when finished."

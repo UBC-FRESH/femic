@@ -235,7 +235,9 @@ def _stash_glb_snapshot(
         "boundary_area_ha": result.boundary_area_ha,
         "area_delta_ha": result.area_delta_ha,
         "public_data_glb_stash_attempted": True,
-        "public_data_glb_stash_status": "updated" if archive_exists or summary_exists else "stashed",
+        "public_data_glb_stash_status": "updated"
+        if archive_exists or summary_exists
+        else "stashed",
         "public_data_glb_archive_path": str(archive_path),
         "public_data_glb_summary_path": str(summary_path),
     }

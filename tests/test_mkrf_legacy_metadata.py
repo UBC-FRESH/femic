@@ -761,8 +761,7 @@ def test_mkrf_source_input_publication_boundary_records_p56_5_decision() -> None
     ]
     assert reconstructed["source_feature_class"] == {
         "path": (
-            "MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/"
-            "Resultant.gdb/Resultant"
+            "MKRF_Cosmin_Model/MKRF/03_MappingAnalysisData/Resultant.gdb/Resultant"
         ),
         "feature_count": 1873,
         "geometry_type": "MultiPolygon",
@@ -798,10 +797,7 @@ def test_mkrf_source_input_publication_boundary_records_p56_5_decision() -> None
         "true_multipart_shared_features": 0,
         "note": [
             "Resultant rows carried single-part multipolygon geometries only.",
-            (
-                "No value drift was observed across the published runtime field "
-                "subset."
-            ),
+            ("No value drift was observed across the published runtime field subset."),
         ],
     }
     assert lanes["raw_source_reproducibility_lane"]["substitute_boundary"] == {

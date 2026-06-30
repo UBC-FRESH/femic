@@ -11,7 +11,9 @@ from femic.pipeline.au_first_growth import (
 )
 
 
-def test_select_au_first_growth_curve_returns_insufficient_support_for_small_input() -> None:
+def test_select_au_first_growth_curve_returns_insufficient_support_for_small_input() -> (
+    None
+):
     vdyp_out = {
         10: pd.DataFrame(
             {
@@ -120,7 +122,18 @@ def test_prune_bad_leading_anchors_ignores_late_tail_outliers() -> None:
     anchors = pd.DataFrame(
         {
             "age_bin": [60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 300.0],
-            "median_volume": [36.2, 42.85, 45.65, 51.55, 61.4, 69.2, 75.6, 82.6, 89.05, 20.0],
+            "median_volume": [
+                36.2,
+                42.85,
+                45.65,
+                51.55,
+                61.4,
+                69.2,
+                75.6,
+                82.6,
+                89.05,
+                20.0,
+            ],
         }
     )
 
@@ -133,8 +146,32 @@ def test_prune_bad_leading_anchors_ignores_late_tail_outliers() -> None:
 def test_prune_bad_leading_anchors_can_drop_local_ugly_left_block() -> None:
     anchors = pd.DataFrame(
         {
-            "age_bin": [60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0],
-            "median_volume": [1.9, 1.9, 30.5, 34.6, 31.75, 34.25, 22.5, 26.0, 24.7, 28.4, 31.3],
+            "age_bin": [
+                60.0,
+                65.0,
+                70.0,
+                75.0,
+                80.0,
+                85.0,
+                90.0,
+                95.0,
+                100.0,
+                105.0,
+                110.0,
+            ],
+            "median_volume": [
+                1.9,
+                1.9,
+                30.5,
+                34.6,
+                31.75,
+                34.25,
+                22.5,
+                26.0,
+                24.7,
+                28.4,
+                31.3,
+            ],
         }
     )
 

@@ -331,8 +331,13 @@ def test_fetch_bcdc_wfs_data_tiles_when_service_rejects_pagination(
     )
 
     assert result.feature_count == 4
-    assert any("fell back to recursive bbox tiling" in warning for warning in result.warnings)
-    assert any("Tiled WFS fetch assembled `4` unique features" in warning for warning in result.warnings)
+    assert any(
+        "fell back to recursive bbox tiling" in warning for warning in result.warnings
+    )
+    assert any(
+        "Tiled WFS fetch assembled `4` unique features" in warning
+        for warning in result.warnings
+    )
 
 
 def test_fetch_bcdc_wfs_data_rejects_direct_download_only(
