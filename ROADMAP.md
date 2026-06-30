@@ -2289,13 +2289,13 @@ workflow passed on the feature branch.
     provider example graph, and focused docs/tests are implemented. K3Z-specific
     FreshForge workflow composition is intentionally deferred to the K3Z
     instance repository. Focused local verification, Sphinx, build, artifact
-    checks, and FreshForge CLI smoke checks pass, and PR `#226` was green for
-    docs and release-artifact checks before this boundary-correction push. The
-    boundary correction also passes focused Ruff, targeted mypy/pytest,
-    FreshForge CLI validate/plan, Sphinx, build, `twine check`, and artifact
-    inspection locally. The remaining edge is rerunning PR checks, then
-    merge/closeout after deciding how to handle existing full-repo `mypy src`
-    and `pytest` failures that are outside the new integration.
+    checks, and FreshForge CLI smoke checks pass. The boundary correction also
+    passes focused Ruff, targeted mypy/pytest, FreshForge CLI validate/plan,
+    Sphinx, build, `twine check`, and artifact inspection locally. PR `#226`
+    is green for docs and release-artifact checks on the corrected branch. The
+    remaining edge is merge/closeout after deciding how to handle existing
+    full-repo `mypy src` and `pytest` failures that are outside the new
+    integration.
   - `P79` / `#211` is planned: FEMIC will grow reusable open LiDAR
     acquisition, terrain-raster, slope, and terrain-derived hydrography
     workflows. The immediate TFL 6 instance uses a public DEM steep-slope

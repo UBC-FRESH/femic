@@ -18606,4 +18606,6 @@
 - verified the corrected boundary with Ruff, targeted mypy, targeted
   FreshForge integration tests, FreshForge CLI validate/plan checks against the
   generic example, warning-clean Sphinx docs, package build, `twine check`, and
-  direct sdist/wheel metadata inspection.
+  direct sdist/wheel metadata inspection; and
+- verified PR `#226` docs and package-release checks passed on the corrected
+  branch.
