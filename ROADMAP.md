@@ -2272,6 +2272,43 @@ post-TIPSY, and WS3 smoke surfaces; the new FreshForge integration tests pass.
 PR `#226` is open and its `docs-pages` build and `package-release-checks`
 workflow passed on the feature branch.
 
+## Phase 81: MKRF FreshForge Workflow Deployment (`#227`)
+
+- [ ] P81.1 Add MKRF instance-owned FreshForge workflow contract
+  (`UBC-FRESH/femic-mkrf-instance#35`).
+  - [ ] P81.1a Create the MKRF feature branch and workflow directory.
+  - [ ] P81.1b Add `workflows/freshforge/mkrf_model_build_workflow.yaml`
+    using reusable `femic.*` provider references.
+  - [ ] P81.1c Encode validate-case through matrix-build graph order with
+    MKRF-owned parameters and artifact declarations only.
+- [ ] P81.2 Document MKRF FreshForge planning boundary
+  (`UBC-FRESH/femic-mkrf-instance#35`).
+  - [ ] P81.2a Add FreshForge validate/inspect/plan commands to MKRF docs and
+    runbook surfaces.
+  - [ ] P81.2b Preserve `femic instance rebuild` as the execution surface and
+    state that FreshForge does not run FEMIC, BTC, Patchworks, DataLad, or
+    artifact materialization.
+- [ ] P81.3 Add parent integration checks for the MKRF workflow (`#227`).
+  - [ ] P81.3a Add focused parent test coverage that loads the MKRF workflow
+    artifact when the submodule is present.
+  - [ ] P81.3b Validate and plan the MKRF graph with the existing generic
+    `femic.freshforge` provider.
+- [ ] P81.4 Verify and publish the MKRF FreshForge workflow deployment
+  (`#227`, `UBC-FRESH/femic-mkrf-instance#35`).
+  - [ ] P81.4a Run FreshForge CLI validate/inspect/plan from the MKRF instance.
+  - [ ] P81.4b Run FEMIC rebuild-spec validation and dry-run execution
+    surfaces.
+  - [ ] P81.4c Run docs/package checks and artifact metadata inspection.
+  - [ ] P81.4d Audit MKRF annex publication state with
+    `git annex find --not --in arbutus-s3`.
+  - [ ] P81.4e Open PRs, sync issue comments, and update the parent submodule
+    pointer.
+
+Phase 81 depends on the P80 provider branch/PR because the MKRF workflow uses
+the generic `femic.freshforge` provider entry point. MKRF owns the concrete
+workflow document; FEMIC core must not add MKRF-specific workflow builder
+functions.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2296,6 +2333,12 @@ workflow passed on the feature branch.
     remaining edge is merge/closeout after deciding how to handle existing
     full-repo `mypy src` and `pytest` failures that are outside the new
     integration.
+  - `P81` / `#227` is active: deploy the P80 FreshForge provider against the
+    MKRF instance as the first real instance-owned workflow contract. The MKRF
+    branch `feature/freshforge-mkrf-rebuild-workflow` will add
+    `workflows/freshforge/mkrf_model_build_workflow.yaml`, docs/runbook
+    guidance, and validation evidence while leaving actual execution with
+    `femic instance rebuild`.
   - `P79` / `#211` is planned: FEMIC will grow reusable open LiDAR
     acquisition, terrain-raster, slope, and terrain-derived hydrography
     workflows. The immediate TFL 6 instance uses a public DEM steep-slope
