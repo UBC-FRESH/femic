@@ -18648,3 +18648,22 @@
 - marked the P80 and P81 roadmap closeout checklists current while preserving
   the boundary that `femic.freshforge` stays generic and MKRF owns the concrete
   FreshForge workflow document.
+
+## 2026-06-30 - Published expanded TFL6 model payload materialization
+
+- opened parent issue `#230` and TFL6 instance issue
+  `UBC-FRESH/femic-tfl6-instance#156` for the TFL6 expanded model
+  materialization gap;
+- updated the TFL6 instance so non-scenario files under `models/` are tracked
+  through DataLad/git-annex while Patchworks scenario output directories under
+  `models/**/analysis/p*/` and `models/**/analysis/headless_runs/` remain
+  ignored;
+- annexed and published 73 non-scenario TFL6 model payload files to
+  `arbutus-s3`;
+- verified no non-ignored `models/**` files remain untracked and no tracked
+  model annex keys are missing from `arbutus-s3`;
+- proved a fresh clone of the TFL6 branch can materialize the model tree with
+  `datalad get -r models` from `arbutus-s3`, leaving zero model annex keys
+  missing locally; and
+- updated the parent FEMIC submodule pointer to the repaired TFL6 `main`
+  commit `60f696d`.
