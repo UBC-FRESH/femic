@@ -18665,5 +18665,5 @@
 - proved a fresh clone of the TFL6 branch can materialize the model tree with
   `datalad get -r models` from `arbutus-s3`, leaving zero model annex keys
   missing locally; and
-- updated the parent FEMIC submodule pointer to the repaired TFL6 commit
-  `b07e28c`.
+- updated the parent FEMIC submodule pointer to the repaired TFL6 `main`
+  commit `60f696d`.
