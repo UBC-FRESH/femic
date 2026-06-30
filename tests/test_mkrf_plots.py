@@ -18,7 +18,9 @@ matplotlib.use("Agg")
 
 
 def test_classify_site_index_levels_splits_into_lmh_bins() -> None:
-    levels = _classify_site_index_levels(pd.Series([10.0, 12.0, 20.0, 25.0, 35.0, 40.0]))
+    levels = _classify_site_index_levels(
+        pd.Series([10.0, 12.0, 20.0, 25.0, 35.0, 40.0])
+    )
     assert list(levels.astype(str)) == ["L", "L", "M", "M", "H", "H"]
 
 
@@ -31,8 +33,24 @@ def test_build_tipsy_legacy_au_table_derives_bec_and_species_pair() -> None:
     )
     tipsy_spp_comp = pd.DataFrame(
         [
-            {"AU": 101, "BA": 10.0, "CW": 45.0, "DR": 0.0, "FD": 0.0, "HW": 45.0, "YC": 0.0},
-            {"AU": 102, "BA": 0.0, "CW": 0.0, "DR": 20.0, "FD": 60.0, "HW": 20.0, "YC": 0.0},
+            {
+                "AU": 101,
+                "BA": 10.0,
+                "CW": 45.0,
+                "DR": 0.0,
+                "FD": 0.0,
+                "HW": 45.0,
+                "YC": 0.0,
+            },
+            {
+                "AU": 102,
+                "BA": 0.0,
+                "CW": 0.0,
+                "DR": 20.0,
+                "FD": 60.0,
+                "HW": 20.0,
+                "YC": 0.0,
+            },
         ]
     )
 
@@ -85,11 +103,36 @@ def test_build_mkrf_all_plots_uses_managed_curve_bundle(
 
     pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 2, "forest_cover_id": 102, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 3, "forest_cover_id": 103, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 4, "forest_cover_id": 104, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 4, "forest_cover_id": 104, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 102,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 3,
+                "forest_cover_id": 103,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 4,
+                "forest_cover_id": 104,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 4,
+                "forest_cover_id": 104,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
         ]
     ).to_csv(assignment_csv, index=False)
     pd.DataFrame(
@@ -115,9 +158,24 @@ def test_build_mkrf_all_plots_uses_managed_curve_bundle(
     ).to_csv(first_growth_curves_csv, index=False)
     pd.DataFrame(
         [
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 0, "volume": 0.0},
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 10, "volume": 60.0},
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 20, "volume": 110.0},
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 0,
+                "volume": 0.0,
+            },
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 10,
+                "volume": 60.0,
+            },
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 20,
+                "volume": 110.0,
+            },
         ]
     ).to_csv(managed_curves_csv, index=False)
     pd.DataFrame(
@@ -165,8 +223,12 @@ def test_build_mkrf_all_plots_uses_managed_curve_bundle(
         ]
     )
 
-    monkeypatch.setattr("femic.workflows.mkrf.build_mkrf_au_distribution_plot", _fake_distribution_plot)
-    monkeypatch.setattr("femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table)
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.build_mkrf_au_distribution_plot", _fake_distribution_plot
+    )
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table
+    )
 
     result = build_mkrf_all_plots(
         resultant_gdb=tmp_path / "resultant.gdb",
@@ -202,10 +264,30 @@ def test_build_mkrf_all_plots_removes_stale_plot_files(
 
     pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 2, "forest_cover_id": 102, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 3, "forest_cover_id": 103, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 4, "forest_cover_id": 104, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 102,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 3,
+                "forest_cover_id": 103,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 4,
+                "forest_cover_id": 104,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
         ]
     ).to_csv(assignment_csv, index=False)
     pd.DataFrame(
@@ -231,9 +313,24 @@ def test_build_mkrf_all_plots_removes_stale_plot_files(
     ).to_csv(first_growth_curves_csv, index=False)
     pd.DataFrame(
         [
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 0, "volume": 0.0},
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 10, "volume": 60.0},
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 20, "volume": 110.0},
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 0,
+                "volume": 0.0,
+            },
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 10,
+                "volume": 60.0,
+            },
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 20,
+                "volume": 110.0,
+            },
         ]
     ).to_csv(managed_curves_csv, index=False)
     pd.DataFrame(
@@ -277,8 +374,12 @@ def test_build_mkrf_all_plots_removes_stale_plot_files(
         ]
     )
 
-    monkeypatch.setattr("femic.workflows.mkrf.build_mkrf_au_distribution_plot", _fake_distribution_plot)
-    monkeypatch.setattr("femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table)
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.build_mkrf_au_distribution_plot", _fake_distribution_plot
+    )
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table
+    )
 
     build_mkrf_all_plots(
         resultant_gdb=tmp_path / "resultant.gdb",
@@ -307,10 +408,30 @@ def test_build_mkrf_all_plots_applies_age_floor_to_lmh_diagnostics(
 
     pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 2, "forest_cover_id": 102, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 3, "forest_cover_id": 103, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 4, "forest_cover_id": 104, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 102,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 3,
+                "forest_cover_id": 103,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 4,
+                "forest_cover_id": 104,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
         ]
     ).to_csv(assignment_csv, index=False)
     pd.DataFrame(
@@ -336,9 +457,24 @@ def test_build_mkrf_all_plots_applies_age_floor_to_lmh_diagnostics(
     ).to_csv(first_growth_curves_csv, index=False)
     pd.DataFrame(
         [
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 0, "volume": 0.0},
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 10, "volume": 60.0},
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 20, "volume": 110.0},
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 0,
+                "volume": 0.0,
+            },
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 10,
+                "volume": 60.0,
+            },
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 20,
+                "volume": 110.0,
+            },
         ]
     ).to_csv(managed_curves_csv, index=False)
     pd.DataFrame(
@@ -377,14 +513,30 @@ def test_build_mkrf_all_plots_applies_age_floor_to_lmh_diagnostics(
 
     source_table = pd.DataFrame(
         [
-            {"FOREST_COVER_ID": 101, "TCL_1_ESTIMATED_SITE_INDEX": 20.0, "AGE_2020": 40.0},
-            {"FOREST_COVER_ID": 102, "TCL_1_ESTIMATED_SITE_INDEX": 25.0, "AGE_2020": 120.0},
-            {"FOREST_COVER_ID": 103, "TCL_1_ESTIMATED_SITE_INDEX": 30.0, "AGE_2020": 130.0},
+            {
+                "FOREST_COVER_ID": 101,
+                "TCL_1_ESTIMATED_SITE_INDEX": 20.0,
+                "AGE_2020": 40.0,
+            },
+            {
+                "FOREST_COVER_ID": 102,
+                "TCL_1_ESTIMATED_SITE_INDEX": 25.0,
+                "AGE_2020": 120.0,
+            },
+            {
+                "FOREST_COVER_ID": 103,
+                "TCL_1_ESTIMATED_SITE_INDEX": 30.0,
+                "AGE_2020": 130.0,
+            },
         ]
     )
 
-    monkeypatch.setattr("femic.workflows.mkrf.build_mkrf_au_distribution_plot", _fake_distribution_plot)
-    monkeypatch.setattr("femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table)
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.build_mkrf_au_distribution_plot", _fake_distribution_plot
+    )
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table
+    )
 
     result = build_mkrf_all_plots(
         resultant_gdb=tmp_path / "resultant.gdb",
@@ -412,10 +564,30 @@ def test_build_mkrf_all_plots_filters_fitdiag_overlay_to_age_eligible_stands(
 
     pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 101, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 2, "forest_cover_id": 102, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 3, "forest_cover_id": 103, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
-            {"res_key": 4, "forest_cover_id": 104, "shape_area_ha": 10.0, "au_id": "cwh_dm_x_cw_fdc"},
+            {
+                "res_key": 1,
+                "forest_cover_id": 101,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 102,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 3,
+                "forest_cover_id": 103,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
+            {
+                "res_key": 4,
+                "forest_cover_id": 104,
+                "shape_area_ha": 10.0,
+                "au_id": "cwh_dm_x_cw_fdc",
+            },
         ]
     ).to_csv(assignment_csv, index=False)
     pd.DataFrame(
@@ -441,9 +613,24 @@ def test_build_mkrf_all_plots_filters_fitdiag_overlay_to_age_eligible_stands(
     ).to_csv(first_growth_curves_csv, index=False)
     pd.DataFrame(
         [
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 0, "volume": 0.0},
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 10, "volume": 60.0},
-            {"au_id": "cwh_dm_x_cw_fdc", "managed_curve_id": 60001, "age": 20, "volume": 110.0},
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 0,
+                "volume": 0.0,
+            },
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 10,
+                "volume": 60.0,
+            },
+            {
+                "au_id": "cwh_dm_x_cw_fdc",
+                "managed_curve_id": 60001,
+                "age": 20,
+                "volume": 110.0,
+            },
         ]
     ).to_csv(managed_curves_csv, index=False)
     pd.DataFrame(
@@ -482,10 +669,26 @@ def test_build_mkrf_all_plots_filters_fitdiag_overlay_to_age_eligible_stands(
 
     source_table = pd.DataFrame(
         [
-            {"FOREST_COVER_ID": 101, "TCL_1_ESTIMATED_SITE_INDEX": 10.0, "AGE_2020": 40.0},
-            {"FOREST_COVER_ID": 102, "TCL_1_ESTIMATED_SITE_INDEX": 12.0, "AGE_2020": 120.0},
-            {"FOREST_COVER_ID": 103, "TCL_1_ESTIMATED_SITE_INDEX": 30.0, "AGE_2020": 130.0},
-            {"FOREST_COVER_ID": 104, "TCL_1_ESTIMATED_SITE_INDEX": 14.0, "AGE_2020": 110.0},
+            {
+                "FOREST_COVER_ID": 101,
+                "TCL_1_ESTIMATED_SITE_INDEX": 10.0,
+                "AGE_2020": 40.0,
+            },
+            {
+                "FOREST_COVER_ID": 102,
+                "TCL_1_ESTIMATED_SITE_INDEX": 12.0,
+                "AGE_2020": 120.0,
+            },
+            {
+                "FOREST_COVER_ID": 103,
+                "TCL_1_ESTIMATED_SITE_INDEX": 30.0,
+                "AGE_2020": 130.0,
+            },
+            {
+                "FOREST_COVER_ID": 104,
+                "TCL_1_ESTIMATED_SITE_INDEX": 14.0,
+                "AGE_2020": 110.0,
+            },
         ]
     )
 
@@ -494,7 +697,9 @@ def test_build_mkrf_all_plots_filters_fitdiag_overlay_to_age_eligible_stands(
         "femic.workflows.mkrf", fromlist=["_build_fitdiag_summary"]
     )._build_fitdiag_summary
 
-    def _fake_build_first_growth_curves(**_: object) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def _fake_build_first_growth_curves(
+        **_: object,
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         curves = pd.DataFrame(
             [
                 {"au_id": "cwh_dm_x_cw_fdc__L", "age": 1, "volume": 1.0},
@@ -520,10 +725,19 @@ def test_build_mkrf_all_plots_filters_fitdiag_overlay_to_age_eligible_stands(
         captured_feature_ids.append(set(raw_subset["FEATURE_ID"].astype(int).tolist()))
         return original_build_fitdiag_summary(raw_subset)
 
-    monkeypatch.setattr("femic.workflows.mkrf.build_mkrf_au_distribution_plot", _fake_distribution_plot)
-    monkeypatch.setattr("femic.workflows.mkrf.build_mkrf_first_growth_curves", _fake_build_first_growth_curves)
-    monkeypatch.setattr("femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table)
-    monkeypatch.setattr("femic.workflows.mkrf._build_fitdiag_summary", _capturing_fitdiag_summary)
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.build_mkrf_au_distribution_plot", _fake_distribution_plot
+    )
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.build_mkrf_first_growth_curves",
+        _fake_build_first_growth_curves,
+    )
+    monkeypatch.setattr(
+        "femic.workflows.mkrf.gpd.read_file", lambda *args, **kwargs: source_table
+    )
+    monkeypatch.setattr(
+        "femic.workflows.mkrf._build_fitdiag_summary", _capturing_fitdiag_summary
+    )
 
     result = build_mkrf_all_plots(
         resultant_gdb=tmp_path / "resultant.gdb",

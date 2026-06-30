@@ -205,7 +205,9 @@ def _collapse_subprecision_retention_splits(
         pd.to_numeric(area_ha, errors="coerce").fillna(0.0).clip(lower=0.0).to_numpy()
     )
     managed_mask = normalized_ifm.eq("managed").to_numpy(dtype=bool)
-    split_mask = managed_mask & (normalized_retention > 0.0) & (normalized_retention < 1.0)
+    split_mask = (
+        managed_mask & (normalized_retention > 0.0) & (normalized_retention < 1.0)
+    )
     if not split_mask.any():
         return normalized_ifm, normalized_retention
 
@@ -1616,7 +1618,11 @@ def _format_legacy_define_constant_value(value: Any) -> str | None:
         return None
     if re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)", normalized):
         return normalized
-    if len(normalized) >= 2 and normalized[0] == normalized[-1] and normalized[0] == "'":
+    if (
+        len(normalized) >= 2
+        and normalized[0] == normalized[-1]
+        and normalized[0] == "'"
+    ):
         return normalized
     escaped = normalized.replace("'", "''")
     return f"'{escaped}'"
@@ -1897,14 +1903,13 @@ def _load_legacy_mkrf_attribute_review_table(
     legacy_attributes_config: dict[str, Any],
 ) -> pd.DataFrame:
     source = legacy_attributes_config.get("source", {})
-    review_extract = (
-        source.get("parent_review_extracts", {}) or {}
-    ).get("range_extract") or str(DEFAULT_LEGACY_MKRF_ATTRIB_REVIEW_EXTRACT)
+    review_extract = (source.get("parent_review_extracts", {}) or {}).get(
+        "range_extract"
+    ) or str(DEFAULT_LEGACY_MKRF_ATTRIB_REVIEW_EXTRACT)
     review_path = _LEGACY_MKRF_REPO_ROOT / str(review_extract)
     if not review_path.exists():
         raise ValueError(
-            "legacy MKRF Attrib review extract is missing: "
-            f"{review_path.as_posix()}"
+            f"legacy MKRF Attrib review extract is missing: {review_path.as_posix()}"
         )
     return pd.read_csv(review_path, dtype=str).fillna("")
 
@@ -1923,8 +1928,7 @@ def _load_legacy_mkrf_species_lookup_contract() -> dict[str, tuple[str, str]]:
     review_path = _LEGACY_MKRF_REPO_ROOT / DEFAULT_LEGACY_MKRF_SPP_COMP_REVIEW_EXTRACT
     if not review_path.exists():
         raise ValueError(
-            "legacy MKRF SPP_COMP review extract is missing: "
-            f"{review_path.as_posix()}"
+            f"legacy MKRF SPP_COMP review extract is missing: {review_path.as_posix()}"
         )
     table = pd.read_csv(review_path, dtype=str).fillna("")
     value_columns = [column for column in table.columns if column != "au"]
@@ -2045,7 +2049,9 @@ def _build_legacy_mkrf_native_attribute_selects(
                 species_lookup_contract=species_lookup_contract,
             )
             or _normalize_optional_expression(row_config.get("factor_expression")),
-            "selection_expression": _normalize_optional_expression(row.get("Unnamed: 9"))
+            "selection_expression": _normalize_optional_expression(
+                row.get("Unnamed: 9")
+            )
             or _normalize_optional_expression(row_config.get("selection_expression"))
             or "",
         }
@@ -2116,9 +2122,7 @@ def _validate_legacy_mkrf_native_attributes(
             + ", ".join(missing_curve_ids)
         )
     if not any(curve_id.startswith("Yield_") for curve_id in curve_ids):
-        raise ValueError(
-            "native MKRF Attrib builder requires emitted `Yield_*` curves"
-        )
+        raise ValueError("native MKRF Attrib builder requires emitted `Yield_*` curves")
 
     validation_contract = legacy_attributes_config.get("validation_contract", {})
     expected_attribute_names = {
@@ -6176,8 +6180,12 @@ def build_fragments_geodataframe(
         )
     if not positive_area_mask.all():
         scoped = scoped.loc[positive_area_mask].copy().reset_index(drop=True)
-        total_area_ha = total_area_ha.loc[positive_area_mask].copy().reset_index(drop=True)
-        block_values = block_values.loc[positive_area_mask].copy().reset_index(drop=True)
+        total_area_ha = (
+            total_area_ha.loc[positive_area_mask].copy().reset_index(drop=True)
+        )
+        block_values = (
+            block_values.loc[positive_area_mask].copy().reset_index(drop=True)
+        )
         area_values = area_values.loc[positive_area_mask].copy().reset_index(drop=True)
     age_values = (
         pd.to_numeric(scoped["PROJ_AGE_1"], errors="coerce").fillna(0).astype(int)

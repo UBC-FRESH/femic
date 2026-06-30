@@ -330,7 +330,10 @@ def assign_si_levels_from_stratum_quantiles(
                     level_quants = restricted
         if not level_quants:
             continue
-        quantile_triplets = {level: tuple(int(v) for v in values) for level, values in level_quants.items()}
+        quantile_triplets = {
+            level: tuple(int(v) for v in values)
+            for level, values in level_quants.items()
+        }
         min_q_lo = min(q_lo for q_lo, _q_mid, _q_hi in quantile_triplets.values())
         max_q_hi = max(q_hi for _q_lo, _q_mid, q_hi in quantile_triplets.values())
         for si_level, quantiles in quantile_triplets.items():

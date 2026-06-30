@@ -206,9 +206,9 @@ def test_missing_required_parameter_returns_provider_diagnostic() -> None:
         structural_diagnostics=structural,
     )
 
-    assert {
-        diagnostic.code for diagnostic in diagnostics
-    } == {"femic.parameters.missing"}
+    assert {diagnostic.code for diagnostic in diagnostics} == {
+        "femic.parameters.missing"
+    }
     assert diagnostics[0].location == "nodes[0].parameters.run_config"
 
 
@@ -227,9 +227,9 @@ def test_unknown_femic_node_type_fails_provider_validation() -> None:
         structural_diagnostics=structural,
     )
 
-    assert {
-        diagnostic.code for diagnostic in diagnostics
-    } == {"node.provider.node_type.unknown"}
+    assert {diagnostic.code for diagnostic in diagnostics} == {
+        "node.provider.node_type.unknown"
+    }
 
 
 def test_default_freshforge_registry_discovers_installed_femic_provider() -> None:

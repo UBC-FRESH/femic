@@ -39,7 +39,9 @@ def collapse_stand_assignments(assignment: pd.DataFrame) -> pd.DataFrame:
     """Collapse fragment-level assignment rows to one deterministic AU per stand."""
     table = assignment.copy()
     weight_col = "shape_area_ha" if "shape_area_ha" in table.columns else None
-    weight_basis = "shape_area_ha" if weight_col is not None else "fragment_record_count"
+    weight_basis = (
+        "shape_area_ha" if weight_col is not None else "fragment_record_count"
+    )
     if weight_col is None:
         table["_weight"] = 1.0
     else:
@@ -214,9 +216,9 @@ def _expand_stand_assignment_with_lexmatch(
         ignore_index=True,
         sort=False,
     )
-    return combined.sort_values(["au_id", "forest_cover_id"], kind="stable").reset_index(
-        drop=True
-    )
+    return combined.sort_values(
+        ["au_id", "forest_cover_id"], kind="stable"
+    ).reset_index(drop=True)
 
 
 def _resolve_eligible_first_growth_feature_ids(
@@ -249,7 +251,9 @@ def build_mkrf_first_growth_curves(
     assignment: pd.DataFrame,
     source_table: pd.DataFrame | None = None,
     levenshtein_fn: Callable[[str, str], int] | None = None,
-    process_vdyp_out_fn: Callable[..., tuple[np.ndarray, np.ndarray]] = process_vdyp_out,
+    process_vdyp_out_fn: Callable[
+        ..., tuple[np.ndarray, np.ndarray]
+    ] = process_vdyp_out,
     min_first_growth_age: float = _MIN_FIRST_GROWTH_AGE,
     min_source_stands: int = _MIN_FIRST_GROWTH_SOURCE_STANDS,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -267,7 +271,9 @@ def build_mkrf_first_growth_curves(
         .isin(eligible_feature_ids)
     ].copy()
     assigned_feature_ids = set(
-        pd.to_numeric(stand_assignment["forest_cover_id"], errors="coerce").dropna().astype(int)
+        pd.to_numeric(stand_assignment["forest_cover_id"], errors="coerce")
+        .dropna()
+        .astype(int)
     )
     unmatched_feature_ids = eligible_feature_ids - assigned_feature_ids
     if unmatched_feature_ids:
@@ -315,7 +321,9 @@ def build_mkrf_first_growth_curves(
         lexmatch_count = int(assignment_status.eq("lexmatch_assigned").sum())
         lexmatch_alias_count = int(lexmatch_used.astype(bool).sum())
         sparse_warning = len(feature_ids) < 5
-        vdyp_out = {feature_id: feature_tables[feature_id] for feature_id in feature_ids}
+        vdyp_out = {
+            feature_id: feature_tables[feature_id] for feature_id in feature_ids
+        }
         selection = select_au_first_growth_curve(
             vdyp_out=vdyp_out,
             min_source_stands=min_source_stands,
@@ -327,7 +335,9 @@ def build_mkrf_first_growth_curves(
         selected_path = selection.selected_path
         accepted = selection.accepted
 
-        for age, volume in zip(np.asarray(x_curve, dtype=float), np.asarray(y_curve, dtype=float)):
+        for age, volume in zip(
+            np.asarray(x_curve, dtype=float), np.asarray(y_curve, dtype=float)
+        ):
             if not math.isfinite(float(volume)) or float(volume) <= 0.0:
                 continue
             curve_rows.append(
@@ -347,7 +357,9 @@ def build_mkrf_first_growth_curves(
                 "curve_point_count": int(sum(1 for y in y_curve if float(y) > 0.0)),
                 "age_min": int(au_rows["PRJ_TOTAL_AGE"].min()),
                 "age_max": int(au_rows["PRJ_TOTAL_AGE"].max()),
-                "assignment_weight_basis": assignment_rows["assignment_weight_basis"].iloc[0],
+                "assignment_weight_basis": assignment_rows[
+                    "assignment_weight_basis"
+                ].iloc[0],
                 "ambiguous_stand_count": ambiguous_count,
                 "tie_break_stand_count": tie_break_count,
                 "lexmatch_stand_count": lexmatch_count,

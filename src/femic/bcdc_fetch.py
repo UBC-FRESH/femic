@@ -354,10 +354,14 @@ def _fetch_wfs_payload_paged(
                 bbox_epsg3005=bbox_epsg3005,
                 page_size=page_size,
             )
-            return tiled_payload, first_request_url, (
-                "Paged WFS fetch fell back to recursive bbox tiling after the "
-                "service rejected `startIndex` pagination.",
-                *tiled_warnings,
+            return (
+                tiled_payload,
+                first_request_url,
+                (
+                    "Paged WFS fetch fell back to recursive bbox tiling after the "
+                    "service rejected `startIndex` pagination.",
+                    *tiled_warnings,
+                ),
             )
         page_features = page_payload.get("features", [])
         if not isinstance(page_features, list):

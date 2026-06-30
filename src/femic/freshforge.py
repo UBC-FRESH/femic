@@ -122,7 +122,9 @@ class FemicFreshForgeProvider:
             ),
         )
 
-    def validate_node(self, node: Any, node_type: Any, *, location: str) -> tuple[Any, ...]:
+    def validate_node(
+        self, node: Any, node_type: Any, *, location: str
+    ) -> tuple[Any, ...]:
         """Validate broad FEMIC node shape without executing FEMIC."""
         diagnostic, severity = _freshforge_diagnostic_types()
         diagnostics: list[Any] = []
@@ -224,9 +226,7 @@ def build_k3z_workflow_document(
                 "provider": "femic.compile_upstream",
                 "needs": ["geospatial_preflight"],
                 "inputs": {
-                    "geospatial_runtime": (
-                        "geospatial_preflight.geospatial_runtime"
-                    )
+                    "geospatial_runtime": ("geospatial_preflight.geospatial_runtime")
                 },
                 "outputs": {"btc_handoff": "stage01a_btc_handoff"},
                 "parameters": {
@@ -261,9 +261,7 @@ def build_k3z_workflow_document(
                 "id": "export_patchworks",
                 "provider": "femic.export_patchworks",
                 "needs": ["btc_post_tipsy"],
-                "inputs": {
-                    "model_input_bundle": "btc_post_tipsy.model_input_bundle"
-                },
+                "inputs": {"model_input_bundle": "btc_post_tipsy.model_input_bundle"},
                 "outputs": {"patchworks_package": "k3z_patchworks_model"},
                 "parameters": {
                     "instance_root": instance_root,
@@ -274,9 +272,7 @@ def build_k3z_workflow_document(
                     "forestmodel_xml": (
                         "models/k3z_patchworks_model/yield/forestmodel.xml"
                     ),
-                    "fragments": (
-                        "models/k3z_patchworks_model/shapefiles/blocks.shp"
-                    ),
+                    "fragments": ("models/k3z_patchworks_model/shapefiles/blocks.shp"),
                 },
             },
             {
@@ -297,9 +293,7 @@ def build_k3z_workflow_document(
                 "provider": "femic.matrix_build",
                 "needs": ["patchworks_preflight"],
                 "inputs": {
-                    "patchworks_runtime": (
-                        "patchworks_preflight.patchworks_runtime"
-                    )
+                    "patchworks_runtime": ("patchworks_preflight.patchworks_runtime")
                 },
                 "outputs": {
                     "compiled_patchworks_model": "compiled_k3z_patchworks_model"

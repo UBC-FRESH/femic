@@ -10203,7 +10203,9 @@ def doc_figures_prepare_corpus(
         )
         raise typer.Exit(code=1)
 
-    corpus_root = output_root or build_document_figure_corpus_root(Path.cwd(), corpus_id)
+    corpus_root = output_root or build_document_figure_corpus_root(
+        Path.cwd(), corpus_id
+    )
     artifact_paths = build_document_figure_artifact_paths(corpus_root)
     artifact_paths.ensure_directories()
 
@@ -10434,7 +10436,9 @@ def doc_figures_register_table(
 ) -> None:
     """Register a recovered table with FEMIC provenance and review status."""
 
-    corpus_root = output_root or build_document_figure_corpus_root(Path.cwd(), corpus_id)
+    corpus_root = output_root or build_document_figure_corpus_root(
+        Path.cwd(), corpus_id
+    )
     artifact_paths = build_document_figure_artifact_paths(corpus_root)
     artifact_paths.ensure_directories()
 

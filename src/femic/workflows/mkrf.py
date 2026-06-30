@@ -177,7 +177,9 @@ def _build_managed_species_share_table(
             if bucket:
                 shares[bucket] += float(pct_value)
         row_payload = {"au_id": str(row.au_id).strip()}
-        row_payload.update({f"share_{bucket.lower()}": shares[bucket] for bucket in shares})
+        row_payload.update(
+            {f"share_{bucket.lower()}": shares[bucket] for bucket in shares}
+        )
         rows.append(row_payload)
     return pd.DataFrame(rows)
 
@@ -193,7 +195,9 @@ def _build_unmanaged_species_share_table(
         selected_ids = set(selected_au_table["au_id"].astype(str).str.strip())
         rows = rows.loc[rows["au_id"].isin(selected_ids)].copy()
 
-    rows["shape_area_ha"] = pd.to_numeric(rows["shape_area_ha"], errors="coerce").fillna(0.0)
+    rows["shape_area_ha"] = pd.to_numeric(
+        rows["shape_area_ha"], errors="coerce"
+    ).fillna(0.0)
     rows["leading_species_1_share"] = pd.to_numeric(
         rows["leading_species_1_share"], errors="coerce"
     ).fillna(0.0)
@@ -225,15 +229,28 @@ def _build_unmanaged_species_share_table(
             "au_id": str(row.au_id).strip(),
             "area_ha": area_ha,
         }
-        payload.update({f"share_{bucket.lower()}_ha": shares[bucket] for bucket in _SPECIES_BUCKETS})
+        payload.update(
+            {
+                f"share_{bucket.lower()}_ha": shares[bucket]
+                for bucket in _SPECIES_BUCKETS
+            }
+        )
         payload_rows.append(payload)
 
     if not payload_rows:
         return pd.DataFrame(
-            columns=["au_id", "area_ha", *[f"share_{bucket.lower()}" for bucket in _SPECIES_BUCKETS]]
+            columns=[
+                "au_id",
+                "area_ha",
+                *[f"share_{bucket.lower()}" for bucket in _SPECIES_BUCKETS],
+            ]
         )
 
-    aggregated = pd.DataFrame(payload_rows).groupby("au_id", as_index=False).sum(numeric_only=True)
+    aggregated = (
+        pd.DataFrame(payload_rows)
+        .groupby("au_id", as_index=False)
+        .sum(numeric_only=True)
+    )
     for bucket in _SPECIES_BUCKETS:
         area_column = f"share_{bucket.lower()}_ha"
         share_column = f"share_{bucket.lower()}"
@@ -243,7 +260,9 @@ def _build_unmanaged_species_share_table(
             0.0,
         )
 
-    return aggregated[["au_id", *[f"share_{bucket.lower()}" for bucket in _SPECIES_BUCKETS]]]
+    return aggregated[
+        ["au_id", *[f"share_{bucket.lower()}" for bucket in _SPECIES_BUCKETS]]
+    ]
 
 
 def _build_species_share_audit_table(
@@ -262,7 +281,12 @@ def _build_species_share_audit_table(
         working["au_id"] = working["au_id"].astype(str).str.strip()
         for row in working.itertuples(index=False):
             for bucket in _SPECIES_BUCKETS:
-                share_pct = float(pd.to_numeric(getattr(row, f"share_{bucket.lower()}", 0.0), errors="coerce") or 0.0)
+                share_pct = float(
+                    pd.to_numeric(
+                        getattr(row, f"share_{bucket.lower()}", 0.0), errors="coerce"
+                    )
+                    or 0.0
+                )
                 rows.append(
                     {
                         "origin_lane": origin_lane,
@@ -286,7 +310,10 @@ def _build_ct_eligibility_audit_table(
 ) -> pd.DataFrame:
     selected = selected_au_table.copy()
     selected["au_id"] = selected["au_id"].astype(str).str.strip()
-    if "leading_species_1" not in selected.columns or "leading_species_2" not in selected.columns:
+    if (
+        "leading_species_1" not in selected.columns
+        or "leading_species_2" not in selected.columns
+    ):
         parsed = selected["au_id"].map(_parse_mkrf_au_id)
         selected["leading_species_1"] = [
             parts[3] if parts is not None else "" for parts in parsed
@@ -327,8 +354,7 @@ def _build_ct_eligibility_audit_table(
     audit["cw_fd_threshold_pct"] = float(_MKRF_CT_MIN_CW_FD_SHARE_PCT)
     audit["cw_fd_ge_threshold"] = audit["share_cw_fd"].ge(_MKRF_CT_MIN_CW_FD_SHARE_PCT)
     audit["final_ct_eligible"] = (
-        audit["runtime_ct_eligible_before_species_filter"]
-        & audit["cw_fd_ge_threshold"]
+        audit["runtime_ct_eligible_before_species_filter"] & audit["cw_fd_ge_threshold"]
     )
 
     def _reasons(row: pd.Series) -> str:
@@ -365,7 +391,9 @@ def _build_ct_eligibility_audit_table(
     ].sort_values("au_id", kind="stable")
 
 
-def _ct_product_fraction_values(*, hw_share: float, fd_share: float) -> dict[str, float]:
+def _ct_product_fraction_values(
+    *, hw_share: float, fd_share: float
+) -> dict[str, float]:
     target = float(_MKRF_CT_TARGET_BA_REMOVAL_FRACTION)
     hw_fraction = 1.0 if hw_share > target else hw_share / target
     if hw_share > target:
@@ -375,9 +403,7 @@ def _ct_product_fraction_values(*, hw_share: float, fd_share: float) -> dict[str
     else:
         fd_fraction = fd_share / target
     other_fraction = (
-        0.0
-        if hw_share + fd_share > target
-        else (target - hw_share - fd_share) / target
+        0.0 if hw_share + fd_share > target else (target - hw_share - fd_share) / target
     )
     return {
         "cw": 0.0,
@@ -404,9 +430,15 @@ def _build_ct_intensity_audit_tables(
         if share_row.empty:
             continue
         share = share_row.iloc[0]
-        treated_cw = float(pd.to_numeric(share.get("share_cw", 0.0), errors="coerce") or 0.0)
-        treated_hw = float(pd.to_numeric(share.get("share_hw", 0.0), errors="coerce") or 0.0)
-        treated_fd = float(pd.to_numeric(share.get("share_fd", 0.0), errors="coerce") or 0.0)
+        treated_cw = float(
+            pd.to_numeric(share.get("share_cw", 0.0), errors="coerce") or 0.0
+        )
+        treated_hw = float(
+            pd.to_numeric(share.get("share_hw", 0.0), errors="coerce") or 0.0
+        )
+        treated_fd = float(
+            pd.to_numeric(share.get("share_fd", 0.0), errors="coerce") or 0.0
+        )
         treated_other = max(0.0, 100.0 - treated_cw - treated_hw - treated_fd)
         fractions = _ct_product_fraction_values(
             hw_share=treated_hw / 100.0,
@@ -507,9 +539,7 @@ def _build_hw_ingrowth_overlay_audit_tables(
                 )
                 or 0.0
             ),
-            "hw_ingrowth_source": str(
-                getattr(bootstrap_row, "hw_ingrowth_source", "")
-            ),
+            "hw_ingrowth_source": str(getattr(bootstrap_row, "hw_ingrowth_source", "")),
             "managed_species_overflow_to_hw_pct": float(
                 pd.to_numeric(
                     getattr(bootstrap_row, "managed_species_overflow_to_hw_pct", 0.0),
@@ -549,7 +579,9 @@ def _build_hw_ingrowth_overlay_audit_tables(
             payload[f"delta_{code}_pct"] = adjusted_pct - base_pct
             payload[f"base_{code}_sph"] = density_total * base_pct / 100.0
             payload[f"adjusted_{code}_sph"] = density_total * adjusted_pct / 100.0
-            payload[f"delta_{code}_sph"] = density_total * (adjusted_pct - base_pct) / 100.0
+            payload[f"delta_{code}_sph"] = (
+                density_total * (adjusted_pct - base_pct) / 100.0
+            )
         payload["base_pct_total"] = sum(
             float(payload[f"base_{species_code.lower()}_pct"])
             for species_code in species_codes
@@ -558,7 +590,9 @@ def _build_hw_ingrowth_overlay_audit_tables(
             float(payload[f"adjusted_{species_code.lower()}_pct"])
             for species_code in species_codes
         )
-        payload["base_sph_total"] = density_total * float(payload["base_pct_total"]) / 100.0
+        payload["base_sph_total"] = (
+            density_total * float(payload["base_pct_total"]) / 100.0
+        )
         payload["adjusted_sph_total"] = (
             density_total * float(payload["adjusted_pct_total"]) / 100.0
         )
@@ -586,7 +620,9 @@ def _build_hw_ingrowth_overlay_audit_tables(
             mean_delta_hw_sph=("delta_hw_sph", "mean"),
             overflow_au_count=(
                 "managed_species_overflow_to_hw_pct",
-                lambda values: int((pd.to_numeric(values, errors="coerce").fillna(0.0) > 0).sum()),
+                lambda values: int(
+                    (pd.to_numeric(values, errors="coerce").fillna(0.0) > 0).sum()
+                ),
             ),
         )
         .sort_values("managed_family_id", kind="stable")
@@ -606,9 +642,15 @@ def _normalize_runtime_au_assignments(
     selected["au_id"] = selected["au_id"].astype(str).str.strip()
     selected_parts = selected["au_id"].map(_parse_mkrf_au_id)
     selected = selected.loc[selected_parts.notna()].copy()
-    selected[["bec_zone", "bec_subzone", "bec_variant", "leading_species_1", "leading_species_2"]] = (
-        pd.DataFrame(selected_parts.loc[selected.index].tolist(), index=selected.index)
-    )
+    selected[
+        [
+            "bec_zone",
+            "bec_subzone",
+            "bec_variant",
+            "leading_species_1",
+            "leading_species_2",
+        ]
+    ] = pd.DataFrame(selected_parts.loc[selected.index].tolist(), index=selected.index)
     if "selected_rank" in selected.columns:
         selected["selected_rank"] = pd.to_numeric(
             selected["selected_rank"], errors="coerce"
@@ -658,7 +700,9 @@ def _normalize_runtime_au_assignments(
         if not candidates:
             return raw_au_id, "no_selected_au_same_bec"
 
-        def score(candidate: dict[str, object]) -> tuple[int, int, int, int, float, str]:
+        def score(
+            candidate: dict[str, object],
+        ) -> tuple[int, int, int, int, float, str]:
             cand_sp1 = str(candidate["leading_species_1"])
             cand_sp2 = str(candidate["leading_species_2"])
             overlap = len({raw_sp1, raw_sp2} & {cand_sp1, cand_sp2})
@@ -677,7 +721,9 @@ def _normalize_runtime_au_assignments(
     normalized = (
         stand_origin_assignment.copy()
         .assign(
-            forest_cover_id=lambda df: pd.to_numeric(df["forest_cover_id"], errors="coerce"),
+            forest_cover_id=lambda df: pd.to_numeric(
+                df["forest_cover_id"], errors="coerce"
+            ),
             raw_au_id=lambda df: df["au_id"].astype(str).str.strip(),
         )
         .dropna(subset=["forest_cover_id"])
@@ -694,7 +740,9 @@ def _normalize_runtime_au_assignments(
 
     remap_audit = (
         normalized.groupby(
-            ["raw_au_id", "au_id", "was_remapped", "remap_reason"], dropna=False, as_index=False
+            ["raw_au_id", "au_id", "was_remapped", "remap_reason"],
+            dropna=False,
+            as_index=False,
         )
         .agg(
             forest_cover_id_count=("forest_cover_id", "nunique"),
@@ -730,7 +778,9 @@ def _apply_young_skewed_sibling_borrow(
     source_subset["forest_cover_id"] = pd.to_numeric(
         source_subset["FOREST_COVER_ID"], errors="coerce"
     )
-    source_subset["AGE_2020"] = pd.to_numeric(source_subset["AGE_2020"], errors="coerce")
+    source_subset["AGE_2020"] = pd.to_numeric(
+        source_subset["AGE_2020"], errors="coerce"
+    )
     age_rows = stand_assignment.merge(
         source_subset[["forest_cover_id", "AGE_2020"]],
         on="forest_cover_id",
@@ -738,7 +788,11 @@ def _apply_young_skewed_sibling_borrow(
     )
     old_support = (
         age_rows.groupby("au_id", as_index=False)["AGE_2020"]
-        .apply(lambda s: int((pd.to_numeric(s, errors="coerce") >= min_first_growth_age).sum()))
+        .apply(
+            lambda s: int(
+                (pd.to_numeric(s, errors="coerce") >= min_first_growth_age).sum()
+            )
+        )
         .rename(columns={"AGE_2020": "age_gte_80_count"})
     )
 
@@ -758,9 +812,13 @@ def _apply_young_skewed_sibling_borrow(
         terminal_curves, on="au_id", how="left"
     )
     summary["age_gte_80_count"] = (
-        pd.to_numeric(summary["age_gte_80_count"], errors="coerce").fillna(0).astype(int)
+        pd.to_numeric(summary["age_gte_80_count"], errors="coerce")
+        .fillna(0)
+        .astype(int)
     )
-    summary["terminal_volume"] = pd.to_numeric(summary["terminal_volume"], errors="coerce")
+    summary["terminal_volume"] = pd.to_numeric(
+        summary["terminal_volume"], errors="coerce"
+    )
 
     curves_out = curves.copy()
     terminal_lookup = {
@@ -792,19 +850,25 @@ def _apply_young_skewed_sibling_borrow(
             continue
         curves_out = curves_out.loc[curves_out["au_id"] != au_id].copy()
         sibling_curve["au_id"] = au_id
-        curves_out = pd.concat([curves_out, sibling_curve], ignore_index=True, sort=False)
+        curves_out = pd.concat(
+            [curves_out, sibling_curve], ignore_index=True, sort=False
+        )
         diagnostics_out.loc[diagnostics_out["au_id"] == au_id, "selected_path"] = (
             "borrowed_young_skewed_sibling"
         )
-        diagnostics_out.loc[diagnostics_out["au_id"] == au_id, "borrowed_from_au_id"] = (
-            sibling_au_id
-        )
+        diagnostics_out.loc[
+            diagnostics_out["au_id"] == au_id, "borrowed_from_au_id"
+        ] = sibling_au_id
         diagnostics_out.loc[diagnostics_out["au_id"] == au_id, "borrow_reason"] = (
             f"old_support<={max_old_support_count}_and_terminal<{low_terminal_threshold:g}"
         )
 
-    curves_out = curves_out.sort_values(["au_id", "age"], kind="stable").reset_index(drop=True)
-    diagnostics_out = diagnostics_out.sort_values("au_id", kind="stable").reset_index(drop=True)
+    curves_out = curves_out.sort_values(["au_id", "age"], kind="stable").reset_index(
+        drop=True
+    )
+    diagnostics_out = diagnostics_out.sort_values("au_id", kind="stable").reset_index(
+        drop=True
+    )
     return curves_out, diagnostics_out
 
 
@@ -839,7 +903,9 @@ def _apply_insufficient_support_merge(
     source_subset["forest_cover_id"] = pd.to_numeric(
         source_subset["FOREST_COVER_ID"], errors="coerce"
     )
-    source_subset["AGE_2020"] = pd.to_numeric(source_subset["AGE_2020"], errors="coerce")
+    source_subset["AGE_2020"] = pd.to_numeric(
+        source_subset["AGE_2020"], errors="coerce"
+    )
     age_rows = assignment_rows.merge(
         source_subset[["forest_cover_id", "AGE_2020"]],
         on="forest_cover_id",
@@ -871,8 +937,12 @@ def _apply_insufficient_support_merge(
     summary = base_summary.merge(area_by_au, on="au_id", how="left").merge(
         terminal_curves, on="au_id", how="left"
     )
-    summary["covered_area_ha"] = pd.to_numeric(summary["covered_area_ha"], errors="coerce").fillna(0.0)
-    summary["terminal_volume"] = pd.to_numeric(summary["terminal_volume"], errors="coerce")
+    summary["covered_area_ha"] = pd.to_numeric(
+        summary["covered_area_ha"], errors="coerce"
+    ).fillna(0.0)
+    summary["terminal_volume"] = pd.to_numeric(
+        summary["terminal_volume"], errors="coerce"
+    )
     summary["old_support_stand_count"] = (
         pd.to_numeric(summary["old_support_stand_count"], errors="coerce")
         .fillna(0)
@@ -881,11 +951,15 @@ def _apply_insufficient_support_merge(
     summary["accepted"] = summary["accepted"].fillna(False)
 
     curves_out = curves.copy()
-    for _, row in summary.sort_values(["covered_area_ha", "au_id"], ascending=[False, True]).iterrows():
+    for _, row in summary.sort_values(
+        ["covered_area_ha", "au_id"], ascending=[False, True]
+    ).iterrows():
         target_au_id = str(row["au_id"])
         target_selected_path = str(row.get("selected_path", ""))
         has_missing_curve = pd.isna(row.get("terminal_volume"))
-        insufficient_support = 0 < int(row["old_support_stand_count"]) < int(min_source_stands)
+        insufficient_support = (
+            0 < int(row["old_support_stand_count"]) < int(min_source_stands)
+        )
         if not (
             target_selected_path == "insufficient_source_stands"
             or (has_missing_curve and insufficient_support)
@@ -895,7 +969,9 @@ def _apply_insufficient_support_merge(
         parsed_target = _parse_mkrf_au_id(target_au_id)
         if parsed_target is None:
             continue
-        target_zone, target_subzone, target_variant, target_sp1, target_sp2 = parsed_target
+        target_zone, target_subzone, target_variant, target_sp1, target_sp2 = (
+            parsed_target
+        )
 
         candidates: list[tuple[int, float, str]] = []
         for _, candidate in summary.iterrows():
@@ -904,7 +980,9 @@ def _apply_insufficient_support_merge(
                 continue
             if not bool(candidate.get("accepted", False)):
                 continue
-            candidate_terminal = pd.to_numeric(candidate.get("terminal_volume"), errors="coerce")
+            candidate_terminal = pd.to_numeric(
+                candidate.get("terminal_volume"), errors="coerce"
+            )
             if (
                 pd.isna(candidate_terminal)
                 or float(candidate_terminal) <= 0.0
@@ -922,19 +1000,25 @@ def _apply_insufficient_support_merge(
             ):
                 continue
             shared_species = len({target_sp1, target_sp2} & {cand_sp1, cand_sp2})
-            candidate_area = float(pd.to_numeric(candidate["covered_area_ha"], errors="coerce"))
+            candidate_area = float(
+                pd.to_numeric(candidate["covered_area_ha"], errors="coerce")
+            )
             candidates.append((shared_species, candidate_area, candidate_au_id))
 
         if not candidates:
             continue
 
-        _, _, source_au_id = max(candidates, key=lambda item: (item[0], item[1], item[2]))
+        _, _, source_au_id = max(
+            candidates, key=lambda item: (item[0], item[1], item[2])
+        )
         source_curve = curves_out.loc[curves_out["au_id"] == source_au_id].copy()
         if source_curve.empty:
             continue
         curves_out = curves_out.loc[curves_out["au_id"] != target_au_id].copy()
         source_curve["au_id"] = target_au_id
-        curves_out = pd.concat([curves_out, source_curve], ignore_index=True, sort=False)
+        curves_out = pd.concat(
+            [curves_out, source_curve], ignore_index=True, sort=False
+        )
         target_mask = diagnostics_out["au_id"] == target_au_id
         if not target_mask.any():
             diagnostics_out = pd.concat(
@@ -966,8 +1050,12 @@ def _apply_insufficient_support_merge(
             )
             diagnostics_out.loc[target_mask, "accepted"] = True
 
-    curves_out = curves_out.sort_values(["au_id", "age"], kind="stable").reset_index(drop=True)
-    diagnostics_out = diagnostics_out.sort_values("au_id", kind="stable").reset_index(drop=True)
+    curves_out = curves_out.sort_values(["au_id", "age"], kind="stable").reset_index(
+        drop=True
+    )
+    diagnostics_out = diagnostics_out.sort_values("au_id", kind="stable").reset_index(
+        drop=True
+    )
     return curves_out, diagnostics_out
 
 
@@ -1107,7 +1195,9 @@ def _manifest_path_value(path: Path | str | None) -> str | None:
         return None
     candidate = Path(path)
     try:
-        return os.path.relpath(candidate.resolve(), Path.cwd().resolve()).replace("\\", "/")
+        return os.path.relpath(candidate.resolve(), Path.cwd().resolve()).replace(
+            "\\", "/"
+        )
     except Exception:
         return candidate.name
 
@@ -1126,7 +1216,9 @@ _MKRF_RUNTIME_FRAGMENT_FIELD_MAP: tuple[tuple[str, str], ...] = (
 )
 
 
-def _project_mkrf_runtime_fragments(*, source_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+def _project_mkrf_runtime_fragments(
+    *, source_gdf: gpd.GeoDataFrame
+) -> gpd.GeoDataFrame:
     """Project MKRF Resultant rows into the recovered runtime fragments field surface."""
     missing = sorted(
         source_name
@@ -1404,9 +1496,7 @@ def _filter_assignment_to_selected_aus(
     selected_au_table: pd.DataFrame,
 ) -> pd.DataFrame:
     selected_ids = set(selected_au_table["au_id"].astype(str))
-    return assignment.loc[
-        assignment["au_id"].astype(str).isin(selected_ids)
-    ].copy()
+    return assignment.loc[assignment["au_id"].astype(str).isin(selected_ids)].copy()
 
 
 def _classify_site_index_levels(site_index: pd.Series) -> pd.Series:
@@ -1418,8 +1508,10 @@ def _classify_site_index_levels(site_index: pd.Series) -> pd.Series:
         labeled = pd.Series("M", index=valid.index, dtype="object")
     else:
         quantile_count = min(3, int(valid.nunique()))
-        labels = ["M"] if quantile_count == 1 else (
-            ["L", "H"] if quantile_count == 2 else ["L", "M", "H"]
+        labels = (
+            ["M"]
+            if quantile_count == 1
+            else (["L", "H"] if quantile_count == 2 else ["L", "M", "H"])
         )
         ranked = valid.rank(method="first")
         labeled = pd.qcut(ranked, q=quantile_count, labels=labels).astype("object")
@@ -1443,7 +1535,9 @@ def _build_fitdiag_summary(raw_subset: pd.DataFrame) -> pd.DataFrame:
     table["Age"] = pd.to_numeric(table["Age"], errors="coerce")
     table["Vdwb"] = pd.to_numeric(table["Vdwb"], errors="coerce")
     table = table.dropna(subset=["Age", "Vdwb"])
-    table = table.loc[(table["Age"] >= 30) & (table["Age"] <= 350) & (table["Vdwb"] >= 0)]
+    table = table.loc[
+        (table["Age"] >= 30) & (table["Age"] <= 350) & (table["Vdwb"] >= 0)
+    ]
     if table.empty:
         return pd.DataFrame(columns=["age_bin", "median_volume", "p25", "p75"])
     table["age_bin"] = (np.floor(table["Age"] / 5.0) * 5.0).astype(float)
@@ -1459,7 +1553,9 @@ def _build_fitdiag_summary(raw_subset: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def _fitdiag_plot_path(*, output_dir: Path, tsa_code: str, au_label: str, level: str) -> Path:
+def _fitdiag_plot_path(
+    *, output_dir: Path, tsa_code: str, au_label: str, level: str
+) -> Path:
     tsa = str(tsa_code).zfill(2)
     return output_dir / f"vdyp_fitdiag_tsa{tsa}-{au_label}-{level}.png"
 
@@ -1550,7 +1646,9 @@ def build_mkrf_managed_au_input_bundle(
         msyt_path=msyt_path,
         selected_au_count=int(len(selected_au_table)),
         included_au_count=int(included.sum()),
-        unmatched_au_count=int((bootstrap_table["bootstrap_status"] == "unmatched").sum()),
+        unmatched_au_count=int(
+            (bootstrap_table["bootstrap_status"] == "unmatched").sum()
+        ),
         logging_origin_si_au_count=int(
             (bootstrap_table["managed_si_source"] == "logging_origin_median").sum()
         ),
@@ -1574,9 +1672,7 @@ def build_mkrf_managed_au_curves(
     log_dir.mkdir(parents=True, exist_ok=True)
     bootstrap_table = pd.read_csv(bootstrap_csv)
     manifest_path = output_dir / "managed_au_run_manifest.json"
-    included_count = int(
-        bootstrap_table["included_in_msyt"].fillna(False).sum()
-    )
+    included_count = int(bootstrap_table["included_in_msyt"].fillna(False).sum())
     try:
         btc_result = run_btc_cli(
             input_csv=msyt_csv,
@@ -1681,7 +1777,9 @@ def build_mkrf_all_plots(
     source_table = gpd.read_file(resultant_gdb, layer=layer, ignore_geometry=True)
 
     selected_ids = list(
-        selected_au_table.sort_values(["selected_rank", "au_id"], kind="stable")["au_id"]
+        selected_au_table.sort_values(["selected_rank", "au_id"], kind="stable")[
+            "au_id"
+        ]
     )
     label_map = _build_selected_au_label_map(selected_au_table)
 
@@ -1767,7 +1865,9 @@ def build_mkrf_all_plots(
             if curve.empty:
                 continue
             plotted = True
-            ax.plot(curve["age"], curve["volume"], linewidth=2.0, color=color, label=level)
+            ax.plot(
+                curve["age"], curve["volume"], linewidth=2.0, color=color, label=level
+            )
             ymax = max(ymax, float(curve["volume"].max()))
         if plotted:
             ax.set_title(f"VDYP L/M/H Comparison: {label}")
@@ -1779,7 +1879,9 @@ def build_mkrf_all_plots(
             ax.legend(fontsize=8)
             fig.tight_layout()
             fig.savefig(
-                _lmh_plot_path(output_dir=output_dir, tsa_code=tsa_code, au_label=label),
+                _lmh_plot_path(
+                    output_dir=output_dir, tsa_code=tsa_code, au_label=label
+                ),
                 dpi=150,
             )
             lmh_plot_count += 1
@@ -1797,7 +1899,9 @@ def build_mkrf_all_plots(
             ]
             if not stand_ids:
                 continue
-            raw_subset = vdyp_yields.loc[vdyp_yields["FEATURE_ID"].isin(stand_ids)].copy()
+            raw_subset = vdyp_yields.loc[
+                vdyp_yields["FEATURE_ID"].isin(stand_ids)
+            ].copy()
             feature_tables = _extract_feature_curve_tables(raw_subset)
             if not feature_tables:
                 continue
@@ -1816,7 +1920,9 @@ def build_mkrf_all_plots(
             raw_label_used = False
             for table in feature_tables.values():
                 raw = table.reset_index().dropna()
-                raw = raw.loc[(raw["Age"] >= 0) & (raw["Age"] <= 350) & (raw["Vdwb"] >= 0)]
+                raw = raw.loc[
+                    (raw["Age"] >= 0) & (raw["Age"] <= 350) & (raw["Vdwb"] >= 0)
+                ]
                 if raw.empty:
                     continue
                 ax.plot(
@@ -1845,7 +1951,13 @@ def build_mkrf_all_plots(
                     color="tab:blue",
                     label="Observed median (5y bins)",
                 )
-            ax.plot(curve["age"], curve["volume"], color="black", linewidth=2.2, label="Selected fit")
+            ax.plot(
+                curve["age"],
+                curve["volume"],
+                color="black",
+                linewidth=2.2,
+                label="Selected fit",
+            )
             ax.set_title(f"VDYP Fit Diagnostic: {label} {level}")
             ax.set_xlabel("Age")
             ax.set_ylabel("Volume (m3/ha)")
@@ -1917,7 +2029,9 @@ def build_mkrf_all_plots(
     for au_id in selected_ids:
         label = label_map[str(au_id)]
         tipsy_curve = managed_curves.loc[managed_curves["au_id"] == str(au_id)].copy()
-        vdyp_curve = first_growth_curves.loc[first_growth_curves["au_id"] == str(au_id)].copy()
+        vdyp_curve = first_growth_curves.loc[
+            first_growth_curves["au_id"] == str(au_id)
+        ].copy()
         if tipsy_curve.empty or vdyp_curve.empty:
             continue
         fig, ax = plt.subplots(1, 1, figsize=(8, 6))
@@ -1950,7 +2064,9 @@ def build_mkrf_all_plots(
         ax.legend(fontsize=8)
         fig.tight_layout()
         fig.savefig(
-            _tipsy_vdyp_plot_path(output_dir=output_dir, tsa_code=tsa_code, au_label=label),
+            _tipsy_vdyp_plot_path(
+                output_dir=output_dir, tsa_code=tsa_code, au_label=label
+            ),
             dpi=150,
         )
         tipsy_vdyp_plot_count += 1
@@ -2010,7 +2126,9 @@ def build_mkrf_bad_curve_audit(
         "BEC_SUBZONE",
         "BEC_VARIANT",
     }
-    source_subset = source_subset[[c for c in source_subset.columns if c in keep_columns]].copy()
+    source_subset = source_subset[
+        [c for c in source_subset.columns if c in keep_columns]
+    ].copy()
     terminal_stands = (
         vdyp_yields.sort_values(["FEATURE_ID", "PRJ_TOTAL_AGE"], kind="stable")
         .groupby("FEATURE_ID", as_index=False)
@@ -2026,10 +2144,16 @@ def build_mkrf_bad_curve_audit(
 
     detail_rows: list[dict[str, object]] = []
     summary_rows: list[dict[str, object]] = []
-    for _, selected_row in selected.sort_values(["selected_rank", "au_id"], kind="stable").iterrows():
+    for _, selected_row in selected.sort_values(
+        ["selected_rank", "au_id"], kind="stable"
+    ).iterrows():
         au_id = str(selected_row["au_id"])
-        assignment_rows = assignment.loc[assignment["au_id"].astype(str) == au_id].copy()
-        joined = assignment_rows.merge(source_subset, on="forest_cover_id", how="left").merge(
+        assignment_rows = assignment.loc[
+            assignment["au_id"].astype(str) == au_id
+        ].copy()
+        joined = assignment_rows.merge(
+            source_subset, on="forest_cover_id", how="left"
+        ).merge(
             terminal_stands,
             on="forest_cover_id",
             how="left",
@@ -2070,15 +2194,31 @@ def build_mkrf_bad_curve_audit(
         else:
             pattern = "midrange"
 
-        terminal_volume = pd.to_numeric(selected_row["terminal_volume"], errors="coerce")
+        terminal_volume = pd.to_numeric(
+            selected_row["terminal_volume"], errors="coerce"
+        )
         initial_flag = (
-            float(pd.to_numeric(pd.Series([selected_row["terminal_volume"]]), errors="coerce").fillna(0.0).iloc[0])
+            float(
+                pd.to_numeric(
+                    pd.Series([selected_row["terminal_volume"]]), errors="coerce"
+                )
+                .fillna(0.0)
+                .iloc[0]
+            )
             < low_terminal_threshold
         ) or (
-            float(pd.to_numeric(pd.Series([selected_row["covered_area_ha"]]), errors="coerce").fillna(0.0).iloc[0])
+            float(
+                pd.to_numeric(
+                    pd.Series([selected_row["covered_area_ha"]]), errors="coerce"
+                )
+                .fillna(0.0)
+                .iloc[0]
+            )
             > large_area_threshold
             and float(
-                pd.to_numeric(pd.Series([selected_row["terminal_volume"]]), errors="coerce")
+                pd.to_numeric(
+                    pd.Series([selected_row["terminal_volume"]]), errors="coerce"
+                )
                 .fillna(0.0)
                 .iloc[0]
             )
@@ -2126,11 +2266,21 @@ def build_mkrf_bad_curve_audit(
                 "age_gte_80_count": age_gte_80_count,
                 "age_gte_80_share": _share(age_gte_80_count),
                 "old_support_stand_count": old_support_stand_count,
-                "terminal_vdyp_min": float(terminal.min()) if len(terminal.dropna()) else np.nan,
-                "terminal_vdyp_p25": float(terminal.quantile(0.25)) if len(terminal.dropna()) else np.nan,
-                "terminal_vdyp_median": float(terminal.median()) if len(terminal.dropna()) else np.nan,
-                "terminal_vdyp_p75": float(terminal.quantile(0.75)) if len(terminal.dropna()) else np.nan,
-                "terminal_vdyp_max": float(terminal.max()) if len(terminal.dropna()) else np.nan,
+                "terminal_vdyp_min": float(terminal.min())
+                if len(terminal.dropna())
+                else np.nan,
+                "terminal_vdyp_p25": float(terminal.quantile(0.25))
+                if len(terminal.dropna())
+                else np.nan,
+                "terminal_vdyp_median": float(terminal.median())
+                if len(terminal.dropna())
+                else np.nan,
+                "terminal_vdyp_p75": float(terminal.quantile(0.75))
+                if len(terminal.dropna())
+                else np.nan,
+                "terminal_vdyp_max": float(terminal.max())
+                if len(terminal.dropna())
+                else np.nan,
                 "low_terminal_stand_count": low_count,
                 "high_terminal_stand_count": high_count,
                 "population_pattern": pattern,
@@ -2141,7 +2291,9 @@ def build_mkrf_bad_curve_audit(
         if not flagged:
             continue
         for _, row in joined.sort_values(
-            ["terminal_vdyp_volume", "forest_cover_id"], kind="stable", na_position="last"
+            ["terminal_vdyp_volume", "forest_cover_id"],
+            kind="stable",
+            na_position="last",
         ).iterrows():
             detail_rows.append(
                 {
@@ -2218,7 +2370,9 @@ def initialize_mkrf_runtime_package(
     ct_eligibility_audit_path = analysis_dir / "ct_eligibility_audit.csv"
     ct_intensity_audit_path = analysis_dir / "ct_intensity_audit.csv"
     ct_intensity_summary_path = analysis_dir / "ct_intensity_summary.csv"
-    hw_ingrowth_overlay_audit_path = analysis_dir / "planted_hw_ingrowth_overlay_audit.csv"
+    hw_ingrowth_overlay_audit_path = (
+        analysis_dir / "planted_hw_ingrowth_overlay_audit.csv"
+    )
     hw_ingrowth_overlay_summary_path = (
         analysis_dir / "planted_hw_ingrowth_overlay_summary.csv"
     )
@@ -2288,7 +2442,9 @@ def initialize_mkrf_runtime_package(
 
     selected_au_count = int(selected_au["au_id"].astype(str).nunique())
     managed_curve_au_count = int(managed_curves["au_id"].astype(str).nunique())
-    flagged_au_count = int(bad_curve_summary["flagged"].fillna(False).astype(bool).sum())
+    flagged_au_count = int(
+        bad_curve_summary["flagged"].fillna(False).astype(bool).sum()
+    )
 
     first_growth_path_by_au = (
         first_growth_diagnostics[["au_id", "selected_path"]]
@@ -2317,17 +2473,24 @@ def initialize_mkrf_runtime_package(
         runtime_curve_status["flagged"].fillna(False).astype(bool)
     )
     runtime_curve_status = runtime_curve_status.drop(columns=["flagged"])
-    runtime_curve_status["has_first_growth_curve"] = runtime_curve_status["selected_path"].notna() & (
+    runtime_curve_status["has_first_growth_curve"] = runtime_curve_status[
+        "selected_path"
+    ].notna() & (
         ~runtime_curve_status["selected_path"].eq("insufficient_source_stands")
     )
-    runtime_curve_status["has_managed_curve"] = runtime_curve_status["au_id"].isin(managed_curve_aus)
+    runtime_curve_status["has_managed_curve"] = runtime_curve_status["au_id"].isin(
+        managed_curve_aus
+    )
     runtime_curve_status["runtime_curve_mode"] = np.where(
-        runtime_curve_status["has_first_growth_curve"] & runtime_curve_status["has_managed_curve"],
+        runtime_curve_status["has_first_growth_curve"]
+        & runtime_curve_status["has_managed_curve"],
         "first_growth_and_managed",
         np.where(
             (~runtime_curve_status["has_first_growth_curve"])
             & runtime_curve_status["has_managed_curve"]
-            & runtime_curve_status["selected_path"].fillna("").eq("insufficient_source_stands"),
+            & runtime_curve_status["selected_path"]
+            .fillna("")
+            .eq("insufficient_source_stands"),
             "managed_only",
             "incomplete",
         ),
@@ -2344,26 +2507,25 @@ def initialize_mkrf_runtime_package(
         runtime_curve_status["has_first_growth_curve"].fillna(False).astype(bool).sum()
     )
     first_growth_missing_au_count = int(
-        (~runtime_curve_status["has_first_growth_curve"].fillna(False).astype(bool)).sum()
+        (
+            ~runtime_curve_status["has_first_growth_curve"].fillna(False).astype(bool)
+        ).sum()
     )
     runtime_curve_status.to_csv(curve_status_path, index=False)
-    tracks_status = (
-        selected_au.assign(au_id=lambda df: df["au_id"].astype(str))
-        .merge(
-            runtime_curve_status[
-                [
-                    "au_id",
-                    "first_growth_selected_path",
-                    "has_first_growth_curve",
-                    "has_managed_curve",
-                    "runtime_curve_mode",
-                    "runtime_curve_note",
-                    "flagged_bad_curve",
-                ]
-            ],
-            on="au_id",
-            how="left",
-        )
+    tracks_status = selected_au.assign(au_id=lambda df: df["au_id"].astype(str)).merge(
+        runtime_curve_status[
+            [
+                "au_id",
+                "first_growth_selected_path",
+                "has_first_growth_curve",
+                "has_managed_curve",
+                "runtime_curve_mode",
+                "runtime_curve_note",
+                "flagged_bad_curve",
+            ]
+        ],
+        on="au_id",
+        how="left",
     )
     tracks_sort_columns = ["au_id"]
     if "selected_rank" in tracks_status.columns:
@@ -2371,7 +2533,9 @@ def initialize_mkrf_runtime_package(
     tracks_status = tracks_status.sort_values(tracks_sort_columns, kind="stable")
     tracks_status.to_csv(analysis_au_runtime_status_path, index=False)
     curve_ref_rows: list[dict[str, object]] = []
-    for row in runtime_curve_status.sort_values("au_id", kind="stable").itertuples(index=False):
+    for row in runtime_curve_status.sort_values("au_id", kind="stable").itertuples(
+        index=False
+    ):
         au_token = str(row.au_id).upper().replace("-", "_")
         curve_ref_rows.append(
             {
@@ -2387,22 +2551,35 @@ def initialize_mkrf_runtime_package(
                 "first_growth_curve_id": (
                     f"FG_{au_token}" if bool(row.has_first_growth_curve) else ""
                 ),
-                "managed_curve_id": f"MG_{au_token}" if bool(row.has_managed_curve) else "",
+                "managed_curve_id": f"MG_{au_token}"
+                if bool(row.has_managed_curve)
+                else "",
                 "flagged_bad_curve": bool(row.flagged_bad_curve),
                 "runtime_curve_note": (
                     str(row.runtime_curve_note)
-                    if pd.notna(row.runtime_curve_note) and str(row.runtime_curve_note).strip()
+                    if pd.notna(row.runtime_curve_note)
+                    and str(row.runtime_curve_note).strip()
                     else ""
                 ),
             }
         )
     pd.DataFrame(curve_ref_rows).to_csv(analysis_au_curve_refs_path, index=False)
-    managed_curve_lookup_rows = [row for row in curve_ref_rows if row["managed_curve_id"]]
+    managed_curve_lookup_rows = [
+        row for row in curve_ref_rows if row["managed_curve_id"]
+    ]
     managed_curve_au_ids = [str(row["au_id"]) for row in managed_curve_lookup_rows]
-    managed_curve_ids = [str(row["managed_curve_id"]) for row in managed_curve_lookup_rows]
-    first_growth_curve_lookup_rows = [row for row in curve_ref_rows if row["first_growth_curve_id"]]
-    first_growth_curve_au_ids = [str(row["au_id"]) for row in first_growth_curve_lookup_rows]
-    first_growth_curve_ids = [str(row["first_growth_curve_id"]) for row in first_growth_curve_lookup_rows]
+    managed_curve_ids = [
+        str(row["managed_curve_id"]) for row in managed_curve_lookup_rows
+    ]
+    first_growth_curve_lookup_rows = [
+        row for row in curve_ref_rows if row["first_growth_curve_id"]
+    ]
+    first_growth_curve_au_ids = [
+        str(row["au_id"]) for row in first_growth_curve_lookup_rows
+    ]
+    first_growth_curve_ids = [
+        str(row["first_growth_curve_id"]) for row in first_growth_curve_lookup_rows
+    ]
     ct_bucket_specs = _mkrf_ct_bucket_specs()
     runtime_base_au_expr = (
         f"if(startswith(au,'thn'),substring(au,{len(_mkrf_ct_bucket_prefix(40))}),au)"
@@ -2467,7 +2644,9 @@ def initialize_mkrf_runtime_package(
         .astype(str)
         .str.strip()
     )
-    unmanaged_share_assignment = unmanaged_share_assignment.drop(columns=["runtime_au_id"])
+    unmanaged_share_assignment = unmanaged_share_assignment.drop(
+        columns=["runtime_au_id"]
+    )
     unmanaged_species_shares = _build_unmanaged_species_share_table(
         unmanaged_share_assignment,
         selected_au_table=selected_au,
@@ -2499,10 +2678,10 @@ def initialize_mkrf_runtime_package(
         )
         managed_share_lookup_exprs[share_column] = f"Number({lookup_expr})/100"
     ct_eligibility_species_shares = ct_eligibility_species_shares.assign(
-        share_cw_fd=lambda df: pd.to_numeric(
-            df["share_cw"], errors="coerce"
-        ).fillna(0.0)
-        + pd.to_numeric(df["share_fd"], errors="coerce").fillna(0.0)
+        share_cw_fd=lambda df: (
+            pd.to_numeric(df["share_cw"], errors="coerce").fillna(0.0)
+            + pd.to_numeric(df["share_fd"], errors="coerce").fillna(0.0)
+        )
     )
     ct_eligibility_cw_fd_values = [
         str(float(value))
@@ -2581,7 +2760,9 @@ def initialize_mkrf_runtime_package(
     ct_product_keys: list[str] = []
     natural_ct_product_curve_ids: list[str] = []
     treated_ct_product_curve_ids: list[str] = []
-    for row in runtime_curve_status.sort_values("au_id", kind="stable").itertuples(index=False):
+    for row in runtime_curve_status.sort_values("au_id", kind="stable").itertuples(
+        index=False
+    ):
         au_id = str(row.au_id)
         managed_group = managed_by_au.get(au_id)
         if managed_group is None or managed_group.empty:
@@ -2704,16 +2885,23 @@ def initialize_mkrf_runtime_package(
         au_node = et.SubElement(aus_node, "au")
         au_node.set("id", str(row.au_id))
         au_node.set("runtimeCurveMode", str(row.runtime_curve_mode))
-        au_node.set("hasManagedCurve", "true" if bool(row.has_managed_curve) else "false")
         au_node.set(
-            "hasFirstGrowthCurve", "true" if bool(row.has_first_growth_curve) else "false"
+            "hasManagedCurve", "true" if bool(row.has_managed_curve) else "false"
         )
-        au_node.set("flaggedBadCurve", "true" if bool(row.flagged_bad_curve) else "false")
+        au_node.set(
+            "hasFirstGrowthCurve",
+            "true" if bool(row.has_first_growth_curve) else "false",
+        )
+        au_node.set(
+            "flaggedBadCurve", "true" if bool(row.flagged_bad_curve) else "false"
+        )
         if pd.notna(row.first_growth_selected_path):
             au_node.set("firstGrowthSelectedPath", str(row.first_growth_selected_path))
         if pd.notna(row.runtime_curve_note) and str(row.runtime_curve_note).strip():
             au_node.set("note", str(row.runtime_curve_note))
-    et.ElementTree(root).write(xml_contract_path, encoding="utf-8", xml_declaration=True)
+    et.ElementTree(root).write(
+        xml_contract_path, encoding="utf-8", xml_declaration=True
+    )
 
     curve_bank_root = et.Element(
         "mkrfRuntimeCurveBank",
@@ -2786,22 +2974,32 @@ def initialize_mkrf_runtime_package(
         if bool(row.has_first_growth_curve):
             fg_group = first_growth_by_au.get(str(row.au_id))
             if fg_group is not None and not fg_group.empty:
-                fg_curve = et.SubElement(forestmodel_root, "curve", {"id": f"FG_{au_token}"})
+                fg_curve = et.SubElement(
+                    forestmodel_root, "curve", {"id": f"FG_{au_token}"}
+                )
                 for curve_row in fg_group.itertuples(index=False):
                     et.SubElement(
                         fg_curve,
                         "point",
-                        {"x": str(float(curve_row.age)), "y": str(float(curve_row.volume))},
+                        {
+                            "x": str(float(curve_row.age)),
+                            "y": str(float(curve_row.volume)),
+                        },
                     )
         if bool(row.has_managed_curve):
             managed_group = managed_by_au.get(str(row.au_id))
             if managed_group is not None and not managed_group.empty:
-                mg_curve = et.SubElement(forestmodel_root, "curve", {"id": f"MG_{au_token}"})
+                mg_curve = et.SubElement(
+                    forestmodel_root, "curve", {"id": f"MG_{au_token}"}
+                )
                 for curve_row in managed_group.itertuples(index=False):
                     et.SubElement(
                         mg_curve,
                         "point",
-                        {"x": str(float(curve_row.age)), "y": str(float(curve_row.volume))},
+                        {
+                            "x": str(float(curve_row.age)),
+                            "y": str(float(curve_row.volume)),
+                        },
                     )
         managed_group = managed_by_au.get(str(row.au_id))
         if managed_group is None or managed_group.empty:
@@ -2854,8 +3052,12 @@ def initialize_mkrf_runtime_package(
             if not age_values:
                 age_values = [0.0, 100.0]
             for age_value in age_values:
-                natural_volume = _curve_group_value_at_age(natural_group, int(age_value))
-                treated_volume = _curve_group_value_at_age(managed_group, int(age_value))
+                natural_volume = _curve_group_value_at_age(
+                    natural_group, int(age_value)
+                )
+                treated_volume = _curve_group_value_at_age(
+                    managed_group, int(age_value)
+                )
                 et.SubElement(
                     natural_residual_curve,
                     "point",
@@ -4011,7 +4213,9 @@ def initialize_mkrf_runtime_package(
             "managed_run_manifest_json": str(managed_run_manifest_json.resolve()),
             "bad_curve_audit_summary_csv": str(bad_curve_audit_summary_csv.resolve()),
             "runtime_curve_status_csv": str(curve_status_path.resolve()),
-            "analysis_au_runtime_status_csv": str(analysis_au_runtime_status_path.resolve()),
+            "analysis_au_runtime_status_csv": str(
+                analysis_au_runtime_status_path.resolve()
+            ),
             "analysis_au_curve_refs_csv": str(analysis_au_curve_refs_path.resolve()),
             "runtime_au_remap_audit_csv": str(runtime_au_remap_audit_path.resolve()),
             "runtime_species_share_audit_csv": str(species_share_audit_path.resolve()),
@@ -4045,7 +4249,9 @@ def initialize_mkrf_runtime_package(
             "selected_passthrough_count": int((~remap_audit["was_remapped"]).sum()),
             "remapped_source_au_count": int(remap_audit["was_remapped"].sum()),
             "remapped_forest_cover_id_count": int(
-                remap_audit.loc[remap_audit["was_remapped"], "forest_cover_id_count"].sum()
+                remap_audit.loc[
+                    remap_audit["was_remapped"], "forest_cover_id_count"
+                ].sum()
             ),
         },
         "curve_policy": {
@@ -4162,7 +4368,9 @@ def audit_mkrf_runtime_sanity(
         for bucket in _SPECIES_BUCKETS:
             label = f"{surface}.yield.{ifm_lane}.indsp.{bucket}"
             target_csv_path = targets_dir / f"{label.replace('.', '_')}.csv"
-            target_has_signal, target_max_current = _target_signal_status(target_csv_path)
+            target_has_signal, target_max_current = _target_signal_status(
+                target_csv_path
+            )
             track_labels = feature_labels if surface == "feature" else product_labels
             account_present = label in accounts_labels
             track_present = label in track_labels
@@ -4173,7 +4381,8 @@ def audit_mkrf_runtime_sanity(
             natural_nonzero = bool(
                 pd.to_numeric(
                     source_rows.loc[
-                        source_rows["origin_lane"].astype(str).eq("natural"), "share_pct"
+                        source_rows["origin_lane"].astype(str).eq("natural"),
+                        "share_pct",
                     ],
                     errors="coerce",
                 )
@@ -4184,7 +4393,8 @@ def audit_mkrf_runtime_sanity(
             treated_nonzero = bool(
                 pd.to_numeric(
                     source_rows.loc[
-                        source_rows["origin_lane"].astype(str).eq("treated"), "share_pct"
+                        source_rows["origin_lane"].astype(str).eq("treated"),
+                        "share_pct",
                     ],
                     errors="coerce",
                 )
@@ -4229,7 +4439,9 @@ def audit_mkrf_runtime_sanity(
         kind="stable",
     )
     audit_frame.to_csv(audit_csv_path, index=False)
-    failure_count = int(audit_frame["audit_status"].astype(str).str.startswith("fail_").sum())
+    failure_count = int(
+        audit_frame["audit_status"].astype(str).str.startswith("fail_").sum()
+    )
     summary_payload = {
         "schema_version": 1,
         "package_root": str(package_root),

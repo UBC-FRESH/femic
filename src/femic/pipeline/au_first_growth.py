@@ -61,16 +61,18 @@ def _prune_bad_leading_anchors(anchors: pd.DataFrame) -> pd.DataFrame:
         return cleaned
     window_bins = min(_EARLY_LOCAL_WINDOW_BINS, len(cleaned))
     min_segment_bins = min(_EARLY_LOCAL_MIN_SEGMENT_BINS, len(cleaned))
-    max_prune = max(0, min(_EARLY_LOCAL_MAX_PRUNE_BINS, len(cleaned) - min_segment_bins))
+    max_prune = max(
+        0, min(_EARLY_LOCAL_MAX_PRUNE_BINS, len(cleaned) - min_segment_bins)
+    )
     best_start = 0
     best_score = float("inf")
     for start_idx in range(max_prune + 1):
         start_age = float(cleaned.iloc[start_idx]["age_bin"])
         if start_age > _EARLY_LOCAL_MAX_START_AGE:
             break
-        segment = cleaned.iloc[start_idx : start_idx + window_bins]["median_volume"].to_numpy(
-            dtype=float
-        )
+        segment = cleaned.iloc[start_idx : start_idx + window_bins][
+            "median_volume"
+        ].to_numpy(dtype=float)
         if segment.size < min_segment_bins:
             continue
         diffs = np.diff(segment)
@@ -147,7 +149,9 @@ def _splice_exponential_toe(
     x_left = np.asarray(x_[:join_idx], dtype=float)
     body_left = np.asarray(y_[:join_idx], dtype=float)
     y_left = legacy_fit_func1(x_left, *popt)
-    y_left = np.nan_to_num(np.asarray(y_left, dtype=float), nan=0.0, posinf=0.0, neginf=0.0)
+    y_left = np.nan_to_num(
+        np.asarray(y_left, dtype=float), nan=0.0, posinf=0.0, neginf=0.0
+    )
     if y_left.size == 0:
         return y_
     join_value = float(y_[join_idx])
@@ -157,7 +161,9 @@ def _splice_exponential_toe(
     if blend_width > 1:
         blend_start = int(y_left.size - blend_width)
         w = np.linspace(0.0, 1.0, blend_width)
-        y_left[blend_start:] = (1.0 - w) * y_left[blend_start:] + w * body_left[blend_start:]
+        y_left[blend_start:] = (1.0 - w) * y_left[blend_start:] + w * body_left[
+            blend_start:
+        ]
     y_out = y_.copy()
     y_out[:join_idx] = y_left
     return y_out

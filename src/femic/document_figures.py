@@ -189,19 +189,13 @@ def validate_document_figure_provenance(
     if record.page_number < 1:
         raise DocumentFigureProvenanceError("page_number must be >= 1")
     if record.source_url is None and record.source_path is None:
-        raise DocumentFigureProvenanceError(
-            "source_url or source_path is required"
-        )
+        raise DocumentFigureProvenanceError("source_url or source_path is required")
     if record.figure_id is None and record.table_id is None:
-        raise DocumentFigureProvenanceError(
-            "figure_id or table_id is required"
-        )
+        raise DocumentFigureProvenanceError("figure_id or table_id is required")
     if not record.series_name.strip():
         raise DocumentFigureProvenanceError("series_name cannot be blank")
     if not record.visual_selection_rule.strip():
-        raise DocumentFigureProvenanceError(
-            "visual_selection_rule cannot be blank"
-        )
+        raise DocumentFigureProvenanceError("visual_selection_rule cannot be blank")
     if record.calibration_spec is None:
         raise DocumentFigureProvenanceError("calibration_spec is required")
     if not record.figrecover_version.strip():
@@ -209,9 +203,7 @@ def validate_document_figure_provenance(
     if not record.extraction_method.strip():
         raise DocumentFigureProvenanceError("extraction_method cannot be blank")
     if record.extraction_parameters is None:
-        raise DocumentFigureProvenanceError(
-            "extraction_parameters is required"
-        )
+        raise DocumentFigureProvenanceError("extraction_parameters is required")
     if not record.output_checksum.strip():
         raise DocumentFigureProvenanceError("output_checksum cannot be blank")
     if record.review_status not in DOCUMENT_FIGURE_REVIEW_STATUSES:

@@ -125,7 +125,9 @@ def load_mkrf_managed_rule_config(path: Path) -> MkrfManagedRuleConfig:
     rules: list[MkrfManagedRule] = []
     for family_id, raw_rule in raw_rules.items():
         if not isinstance(raw_rule, Mapping):
-            raise ValueError(f"Managed family {family_id!r} must be a mapping in {path}")
+            raise ValueError(
+                f"Managed family {family_id!r} must be a mapping in {path}"
+            )
         species_mix = raw_rule.get("species_mix", {}) or {}
         if not isinstance(species_mix, Mapping) or not species_mix:
             raise ValueError(
@@ -145,7 +147,9 @@ def load_mkrf_managed_rule_config(path: Path) -> MkrfManagedRuleConfig:
                 bec_zone=str(raw_rule.get("bec_zone", "")).strip().lower(),
                 bec_subzone=str(raw_rule.get("bec_subzone", "")).strip().lower(),
                 bec_variant=str(raw_rule.get("bec_variant", "")).strip().lower(),
-                density_total=int(raw_rule.get("density_total", defaults["density_total"])),
+                density_total=int(
+                    raw_rule.get("density_total", defaults["density_total"])
+                ),
                 regen_delay=int(raw_rule.get("regen_delay", defaults["regen_delay"])),
                 oaf1=float(raw_rule.get("oaf1", defaults["oaf1"])),
                 oaf2=float(raw_rule.get("oaf2", defaults["oaf2"])),
@@ -228,7 +232,9 @@ def build_mkrf_stand_origin_assignment(
     source_subset["forest_cover_id"] = pd.to_numeric(
         source_subset["forest_cover_id"], errors="coerce"
     )
-    source_subset["age_2020"] = pd.to_numeric(source_subset["age_2020"], errors="coerce")
+    source_subset["age_2020"] = pd.to_numeric(
+        source_subset["age_2020"], errors="coerce"
+    )
     source_subset["site_index"] = pd.to_numeric(
         source_subset["site_index"], errors="coerce"
     )
@@ -259,7 +265,9 @@ def build_mkrf_stand_origin_assignment(
         )
     )
     origin_assignment["fire_origin_min_age"] = float(fire_origin_min_age)
-    origin_assignment["is_fire_origin"] = origin_assignment["origin_class"].eq("fire_origin")
+    origin_assignment["is_fire_origin"] = origin_assignment["origin_class"].eq(
+        "fire_origin"
+    )
     origin_assignment["is_logging_origin"] = origin_assignment["origin_class"].eq(
         "logging_origin"
     )
@@ -386,7 +394,9 @@ def build_mkrf_managed_au_bootstrap_table(
                 "bootstrap_status": "expert_rule" if included else "unmatched",
                 "included_in_msyt": bool(included),
                 "mapping_path": (
-                    f"expert_rule_{si_source}" if included else f"expert_rule_{si_source}"
+                    f"expert_rule_{si_source}"
+                    if included
+                    else f"expert_rule_{si_source}"
                 ),
                 "managed_si": managed_si,
                 "managed_family_id": rule.family_id,
@@ -419,9 +429,13 @@ def build_mkrf_managed_au_msyt_table(
     *,
     bootstrap_table: pd.DataFrame,
 ) -> pd.DataFrame:
-    included = bootstrap_table.loc[bootstrap_table["included_in_msyt"].fillna(False)].copy()
+    included = bootstrap_table.loc[
+        bootstrap_table["included_in_msyt"].fillna(False)
+    ].copy()
     if included.empty:
-        raise RuntimeError("No managed AU bootstrap rows available for MSYT generation.")
+        raise RuntimeError(
+            "No managed AU bootstrap rows available for MSYT generation."
+        )
     included = included.sort_values(["selected_rank", "au_id"], kind="stable")
     tipsy_rows: list[dict[str, Any]] = []
     for _, row in included.iterrows():
@@ -460,7 +474,11 @@ def parse_mkrf_managed_au_curves(
             ["managed_curve_id", "au_id"],
         ]
         .copy()
-        .assign(managed_curve_id=lambda df: pd.to_numeric(df["managed_curve_id"]).astype(int))
+        .assign(
+            managed_curve_id=lambda df: pd.to_numeric(df["managed_curve_id"]).astype(
+                int
+            )
+        )
     )
     merged = parsed.merge(
         lookup,
@@ -494,10 +512,14 @@ def parse_mkrf_managed_au_curves(
     for column in ordered_columns:
         if column not in curves.columns:
             curves[column] = np.nan
-    return curves[ordered_columns].sort_values(
-        ["managed_curve_id", "age"],
-        kind="stable",
-    ).reset_index(drop=True)
+    return (
+        curves[ordered_columns]
+        .sort_values(
+            ["managed_curve_id", "age"],
+            kind="stable",
+        )
+        .reset_index(drop=True)
+    )
 
 
 def write_mkrf_managed_run_manifest(
@@ -596,7 +618,9 @@ def _managed_species_payload_dict(
     }
 
 
-def _managed_species_payload_from_mix(species_mix: Mapping[str, float]) -> ManagedSpeciesPayload:
+def _managed_species_payload_from_mix(
+    species_mix: Mapping[str, float],
+) -> ManagedSpeciesPayload:
     ranked = sorted(
         (
             (str(species).strip().upper(), float(share))

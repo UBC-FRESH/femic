@@ -18,7 +18,9 @@ from femic.document_figures import (
 )
 
 
-def _valid_record(tmp_path: Path, **overrides: object) -> DocumentFigureProvenanceRecord:
+def _valid_record(
+    tmp_path: Path, **overrides: object
+) -> DocumentFigureProvenanceRecord:
     output_path = tmp_path / "recovered" / "figure-1.csv"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text("x,y\n1,2\n", encoding="utf-8")

@@ -13,7 +13,9 @@ from femic.workflows.mkrf import (
 )
 
 
-def test_build_unmanaged_species_share_table_aggregates_area_weighted_species_mix() -> None:
+def test_build_unmanaged_species_share_table_aggregates_area_weighted_species_mix() -> (
+    None
+):
     stand_assignment = pd.DataFrame(
         [
             {
@@ -285,14 +287,19 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert payload["source_contracts"]["runtime_species_share_audit_csv"] == str(
         result.species_share_audit_path.resolve()
     )
-    assert payload["source_contracts"]["analysis_pin"] == str(result.analysis_pin_path.resolve())
+    assert payload["source_contracts"]["analysis_pin"] == str(
+        result.analysis_pin_path.resolve()
+    )
     assert payload["source_contracts"]["headless_runtime_common_bsh"] == str(
         result.headless_runtime_common_path.resolve()
     )
     assert payload["source_contracts"]["flow_targets_bsh"] == str(
         result.flow_targets_script_path.resolve()
     )
-    assert payload["managed_only_runtime_policy"]["insufficient_support_borrowing"] == "forbidden"
+    assert (
+        payload["managed_only_runtime_policy"]["insufficient_support_borrowing"]
+        == "forbidden"
+    )
     assert payload["runtime_au_normalization"]["remapped_source_au_count"] == 1
 
     curve_status = pd.read_csv(result.curve_status_path)
@@ -315,7 +322,10 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
 
     curve_refs = pd.read_csv(result.analysis_au_curve_refs_path)
     assert curve_refs["au_id"].tolist() == ["cwh_vm_1_dr_hw", "cwh_vm_1_hw_cw"]
-    assert curve_refs["first_growth_curve_id"].fillna("").tolist() == ["", "FG_CWH_VM_1_HW_CW"]
+    assert curve_refs["first_growth_curve_id"].fillna("").tolist() == [
+        "",
+        "FG_CWH_VM_1_HW_CW",
+    ]
     assert curve_refs["managed_curve_id"].fillna("").tolist() == [
         "MG_CWH_VM_1_DR_HW",
         "MG_CWH_VM_1_HW_CW",
@@ -351,7 +361,10 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
 
     curve_bank_text = result.xml_curve_bank_path.read_text(encoding="utf-8")
     assert "<mkrfRuntimeCurveBank" in curve_bank_text
-    assert '<analysisUnit id="cwh_vm_1_hw_cw" runtimeCurveMode="first_growth_and_managed">' in curve_bank_text
+    assert (
+        '<analysisUnit id="cwh_vm_1_hw_cw" runtimeCurveMode="first_growth_and_managed">'
+        in curve_bank_text
+    )
     assert "<firstGrowthCurve" in curve_bank_text
     assert "<managedCurve>" in curve_bank_text
 
@@ -360,31 +373,42 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert "MKRF canonical rebuild" in forestmodel_text
     assert (
         '<input block="Int(RES_KEY)" area="Shape_Area/10000" age="Int(AGE_2020)" '
-        'exclude="CONTCLAS eq \'X\'" />' in forestmodel_text
+        "exclude=\"CONTCLAS eq 'X'\" />" in forestmodel_text
     )
-    assert forestmodel_text.index('curve id="FG_CWH_VM_1_HW_CW"') < forestmodel_text.index(
-        '<define field="status"'
-    )
+    assert forestmodel_text.index(
+        'curve id="FG_CWH_VM_1_HW_CW"'
+    ) < forestmodel_text.index('<define field="status"')
     assert 'curve id="FG_CWH_VM_1_HW_CW"' in forestmodel_text
     assert 'curve id="MG_CWH_VM_1_DR_HW"' in forestmodel_text
     assert 'curve id="le10"' in forestmodel_text
     assert '<define field="status" column="CONTCLAS" />' in forestmodel_text
-    assert '<define field="origin" column="lookupTable(Int(FOREST_COV),\'101,102\',\'natural,treated\')" />' in forestmodel_text
     assert (
-        "<define field=\"statecode\" column=\"if(lookupTable(Int(FOREST_COV),'101,102',"
-        "'natural,treated') eq 'natural','EN','EM')\" />"
+        "<define field=\"origin\" column=\"lookupTable(Int(FOREST_COV),'101,102','natural,treated')\" />"
         in forestmodel_text
     )
+    assert (
+        '<define field="statecode" column="if(lookupTable(Int(FOREST_COV),\'101,102\','
+        "'natural,treated') eq 'natural','EN','EM')\" />" in forestmodel_text
+    )
     assert '<define field="au" column="' in forestmodel_text
-    assert "<define field=\"au\" column=\"lookupTable(Int(FOREST_COV),'101,102','cwh_vm_1_hw_cw,cwh_vm_1_dr_hw')\" />" in forestmodel_text
-    assert "<define field=\"auf\" column=\"lookupTable(Int(FOREST_COV),'101,102','cwh_vm_1_hw_cw,cwh_vm_1_dr_hw')\" />" in forestmodel_text
+    assert (
+        "<define field=\"au\" column=\"lookupTable(Int(FOREST_COV),'101,102','cwh_vm_1_hw_cw,cwh_vm_1_dr_hw')\" />"
+        in forestmodel_text
+    )
+    assert (
+        "<define field=\"auf\" column=\"lookupTable(Int(FOREST_COV),'101,102','cwh_vm_1_hw_cw,cwh_vm_1_dr_hw')\" />"
+        in forestmodel_text
+    )
 
     analysis_pin_text = result.analysis_pin_path.read_text(encoding="utf-8")
     assert 'String tracks_path_prefix = "../tracks/";' in analysis_pin_text
     assert 'sourceRelative("headless_runtime_common.bsh");' in analysis_pin_text
     assert 'sourceRelative("../scripts/targets/flowtargets.bsh");' in analysis_pin_text
     assert 'block_shape = "../spatial/fragments.shp";' in analysis_pin_text
-    assert "setupYieldFlowTargets(control, periods, tracks_path_prefix);" in analysis_pin_text
+    assert (
+        "setupYieldFlowTargets(control, periods, tracks_path_prefix);"
+        in analysis_pin_text
+    )
     assert 'def.setCaption("Forest Outline");' in analysis_pin_text
     assert "new PolygonSymbol(new Color(239, 239, 239))" in analysis_pin_text
     assert (
@@ -402,17 +426,31 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert '"CT40"' in analysis_pin_text
     assert '"CT45"' in analysis_pin_text
     assert '"CT",' not in analysis_pin_text
-    assert 'patch0Theme.setFieldname("product.area.managed.treat.CC.size");' in analysis_pin_text
-    assert 'patch1Theme.setFieldname("feature.area.managed.seral.le10.size");' in analysis_pin_text
+    assert (
+        'patch0Theme.setFieldname("product.area.managed.treat.CC.size");'
+        in analysis_pin_text
+    )
+    assert (
+        'patch1Theme.setFieldname("feature.area.managed.seral.le10.size");'
+        in analysis_pin_text
+    )
     assert "femicQueueHeadlessStage();" in analysis_pin_text
 
-    headless_common_text = result.headless_runtime_common_path.read_text(encoding="utf-8")
+    headless_common_text = result.headless_runtime_common_path.read_text(
+        encoding="utf-8"
+    )
     assert "product.yield.managed.total" in headless_common_text
     assert "flow.even." in headless_common_text
 
     flow_targets_text = result.flow_targets_script_path.read_text(encoding="utf-8")
-    assert '_collectAccounts("product.yield.managed.", tracksPathPrefix);' in flow_targets_text
-    assert '_collectAccounts("feature.yield.managed.", tracksPathPrefix);' in flow_targets_text
+    assert (
+        '_collectAccounts("product.yield.managed.", tracksPathPrefix);'
+        in flow_targets_text
+    )
+    assert (
+        '_collectAccounts("feature.yield.managed.", tracksPathPrefix);'
+        in flow_targets_text
+    )
     assert '<define field="aux" column="Int(FOREST_COV)" />' in forestmodel_text
     assert '<define field="hasfg"' not in forestmodel_text
     assert '<define field="managed" constant="\'C\'" />' in forestmodel_text
@@ -445,16 +483,28 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert "*(" in forestmodel_text
     assert "<products>" in forestmodel_text
     assert '<attribute label="product.area.managed.total">' in forestmodel_text
-    assert '<attribute label="\'product.area.managed.treat.\'+treatment">' in forestmodel_text
+    assert (
+        "<attribute label=\"'product.area.managed.treat.'+treatment\">"
+        in forestmodel_text
+    )
     assert '<attribute label="product.yield.managed.total">' in forestmodel_text
     assert '<attribute label="product.yield.managed.indsp.Ba">' in forestmodel_text
-    assert '<attribute label="\'product.yield.managed.treat.\'+treatment">' in forestmodel_text
+    assert (
+        "<attribute label=\"'product.yield.managed.treat.'+treatment\">"
+        in forestmodel_text
+    )
     assert "if(startswith(treatment,'CT'),0," in forestmodel_text
     assert "/0.45" in forestmodel_text
     assert "if(startswith(treatment,'CT'),if((" in forestmodel_text
     assert "if(origin eq 'natural' and hasnatcurve eq 'Y'," in forestmodel_text
-    assert "lookupTable(treatment+'|'+if(startswith(au,'thn'),substring(au,7),au)," in forestmodel_text
-    assert "'CT35|cwh_vm_1_dr_hw,CT40|cwh_vm_1_dr_hw,CT45|cwh_vm_1_dr_hw" in forestmodel_text
+    assert (
+        "lookupTable(treatment+'|'+if(startswith(au,'thn'),substring(au,7),au),"
+        in forestmodel_text
+    )
+    assert (
+        "'CT35|cwh_vm_1_dr_hw,CT40|cwh_vm_1_dr_hw,CT45|cwh_vm_1_dr_hw"
+        in forestmodel_text
+    )
     assert "CT50|" not in forestmodel_text
     assert "CT150|" not in forestmodel_text
     assert "startswith(treatment,'CT')" in forestmodel_text
@@ -464,16 +514,18 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert "if(treatment eq 'CT',0.4,1)" not in forestmodel_text
     assert '<curve idref="unity"' in forestmodel_text
     assert '<curve idref="le10"' in forestmodel_text
-    assert 'select statement="status in managed and oper in operable"' in forestmodel_text
+    assert (
+        'select statement="status in managed and oper in operable"' in forestmodel_text
+    )
     assert 'select statement="status in managed"' in forestmodel_text
     assert "not startswith(au,'thn')" in forestmodel_text
     assert "share_cw" not in forestmodel_text
     assert " ge 0.5" in forestmodel_text
     assert " gt 0.15" not in forestmodel_text
     assert "'cwh_vm_1_dr_hw,cwh_vm_1_hw_cw','90.0,80.0'" in forestmodel_text
-    assert "treatment label=\"CT35\" minage=\"35\" maxage=\"39\"" in forestmodel_text
-    assert "treatment label=\"CT40\" minage=\"40\" maxage=\"44\"" in forestmodel_text
-    assert "treatment label=\"CT45\" minage=\"45\" maxage=\"49\"" in forestmodel_text
+    assert 'treatment label="CT35" minage="35" maxage="39"' in forestmodel_text
+    assert 'treatment label="CT40" minage="40" maxage="44"' in forestmodel_text
+    assert 'treatment label="CT45" minage="45" maxage="49"' in forestmodel_text
     assert "'thn040_'+au" in forestmodel_text
     assert "'thn035_'+au" in forestmodel_text
     assert "'thn045_'+au" in forestmodel_text
@@ -483,7 +535,9 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert "<track>" in forestmodel_text
     assert 'treatment label="CC"' in forestmodel_text
     assert 'treatment label="CT"' not in forestmodel_text
-    assert 'treatment label="CT40" minage="40" maxage="44" retain="20"' in forestmodel_text
+    assert (
+        'treatment label="CT40" minage="40" maxage="44" retain="20"' in forestmodel_text
+    )
 
 
 def test_audit_mkrf_runtime_sanity_flags_zero_signal_with_nonzero_source_share(

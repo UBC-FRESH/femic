@@ -186,8 +186,18 @@ def test_build_mkrf_first_growth_curves_lexmatches_unmatched_stands() -> None:
 def test_build_mkrf_first_growth_curves_excludes_stands_younger_than_80() -> None:
     assignment = pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 10, "au_id": "cwh_vm_1_cw_fdc", "shape_area_ha": 2.0},
-            {"res_key": 2, "forest_cover_id": 11, "au_id": "cwh_vm_1_cw_fdc", "shape_area_ha": 2.0},
+            {
+                "res_key": 1,
+                "forest_cover_id": 10,
+                "au_id": "cwh_vm_1_cw_fdc",
+                "shape_area_ha": 2.0,
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 11,
+                "au_id": "cwh_vm_1_cw_fdc",
+                "shape_area_ha": 2.0,
+            },
         ]
     )
     source_table = pd.DataFrame(
@@ -222,8 +232,18 @@ def test_build_mkrf_first_growth_curves_excludes_stands_younger_than_80() -> Non
 def test_build_mkrf_first_growth_curves_rejects_single_old_stand_support() -> None:
     assignment = pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 10, "au_id": "cwh_vm_1_dr_hw", "shape_area_ha": 1.0},
-            {"res_key": 2, "forest_cover_id": 11, "au_id": "cwh_vm_1_dr_hw", "shape_area_ha": 1.0},
+            {
+                "res_key": 1,
+                "forest_cover_id": 10,
+                "au_id": "cwh_vm_1_dr_hw",
+                "shape_area_ha": 1.0,
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 11,
+                "au_id": "cwh_vm_1_dr_hw",
+                "shape_area_ha": 1.0,
+            },
         ]
     )
     source_table = pd.DataFrame(
@@ -257,8 +277,18 @@ def test_build_mkrf_first_growth_curves_rejects_single_old_stand_support() -> No
 def test_build_mkrf_first_growth_curves_uses_smoothed_bin_pchip_curve_family() -> None:
     assignment = pd.DataFrame(
         [
-            {"res_key": 1, "forest_cover_id": 10, "au_id": "cwh_vm_1_cw_hw", "shape_area_ha": 1.0},
-            {"res_key": 2, "forest_cover_id": 11, "au_id": "cwh_vm_1_cw_hw", "shape_area_ha": 1.0},
+            {
+                "res_key": 1,
+                "forest_cover_id": 10,
+                "au_id": "cwh_vm_1_cw_hw",
+                "shape_area_ha": 1.0,
+            },
+            {
+                "res_key": 2,
+                "forest_cover_id": 11,
+                "au_id": "cwh_vm_1_cw_hw",
+                "shape_area_ha": 1.0,
+            },
         ]
     )
     source_table = pd.DataFrame(

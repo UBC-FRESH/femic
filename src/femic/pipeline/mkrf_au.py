@@ -187,9 +187,15 @@ def build_mkrf_au_tables(
     if canonical_parts.shape[1] != 5:
         raise ValueError("MKRF AU aggregation produced non-canonical AU identifiers.")
     assignment = assignment.copy()
-    assignment[["au_bec_zone", "au_bec_subzone", "au_bec_variant", "au_species_1", "au_species_2"]] = (
-        canonical_parts
-    )
+    assignment[
+        [
+            "au_bec_zone",
+            "au_bec_subzone",
+            "au_bec_variant",
+            "au_species_1",
+            "au_species_2",
+        ]
+    ] = canonical_parts
     au_table = (
         assignment.groupby(
             [

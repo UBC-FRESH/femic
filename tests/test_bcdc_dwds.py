@@ -423,9 +423,15 @@ def test_follow_up_bcdc_dwds_order_uses_pickup_guid_when_status_probe_has_no_url
         updated.latest_followup_pickup_url
         == "https://apps.gov.bc.ca/pub/dwds-rasp/pickupByGUID/guid-123"
     )
-    assert updated.latest_followup_pickup_download_url == "https://distribution.data.gov.bc.ca/example.zip"
+    assert (
+        updated.latest_followup_pickup_download_url
+        == "https://distribution.data.gov.bc.ca/example.zip"
+    )
     assert updated.materialized_artifact_path == str(tmp_path / "order_2551000.zip")
-    assert updated.materialized_download_url == "https://distribution.data.gov.bc.ca/example.zip"
+    assert (
+        updated.materialized_download_url
+        == "https://distribution.data.gov.bc.ca/example.zip"
+    )
 
 
 def test_follow_up_bcdc_dwds_order_records_warning_when_probe_has_no_download_url(
@@ -478,7 +484,10 @@ def test_follow_up_bcdc_dwds_order_records_warning_when_probe_has_no_download_ur
     updated = bcdc_dwds.follow_up_bcdc_dwds_order(result, download_root=None)
 
     assert updated.materialized_artifact_path is None
-    assert any("did not expose a download URL" in warning for warning in updated.followup_warnings)
+    assert any(
+        "did not expose a download URL" in warning
+        for warning in updated.followup_warnings
+    )
 
 
 def test_follow_up_bcdc_dwds_order_records_pickup_warning_when_launcher_has_no_distribution_url(
@@ -540,5 +549,6 @@ def test_follow_up_bcdc_dwds_order_records_pickup_warning_when_launcher_has_no_d
 
     assert updated.materialized_artifact_path is None
     assert any(
-        "pickup-by-GUID launcher page" in warning for warning in updated.followup_warnings
+        "pickup-by-GUID launcher page" in warning
+        for warning in updated.followup_warnings
     )
