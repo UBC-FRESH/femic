@@ -18563,3 +18563,19 @@
 - verified focused lint, targeted mypy, targeted pytest, installed
   `freshforge` CLI provider discovery/validate/plan smoke checks, and a
   warning-clean Sphinx build.
+
+## 2026-06-30 - Verified FreshForge artifacts and recorded full-suite baseline
+
+- ran Phase 80 focused acceptance checks for optional install, Ruff format,
+  Ruff lint, targeted mypy, targeted pytest, FreshForge CLI provider
+  discovery/validate/plan smoke checks, warning-clean Sphinx docs, package
+  build, `twine check`, and pre-commit;
+- inspected the built sdist and confirmed it includes
+  `examples/freshforge/k3z_model_build_workflow.yaml`;
+- inspected the built wheel and confirmed the `[freshforge.providers]` entry
+  point maps `femic` to `femic.freshforge:provider_factory`;
+- recorded that full `mypy src` remains blocked by existing broad repo typing
+  issues outside `femic.freshforge`; and
+- recorded that full `pytest` currently reports 45 failures across existing
+  CLI, docs-contract, Patchworks, named-pipeline, TSR, TIPSY, post-TIPSY, and
+  WS3 smoke surfaces, while the new FreshForge integration tests pass.
