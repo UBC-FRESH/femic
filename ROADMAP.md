@@ -2229,12 +2229,14 @@ scripts.
     pipeline vocabulary.
   - [x] P80.4d Verify Sphinx builds warning-clean.
 - [ ] P80.5 Close out FreshForge integration lifecycle (`#225`).
-  - [ ] P80.5a Run local acceptance checks.
+  - [x] P80.5a Run local acceptance checks and record the non-green full-suite
+    baseline.
   - [x] P80.5b Inspect built wheel metadata for the FreshForge provider entry
     point.
   - [x] P80.5c Update roadmap and changelog closeout notes.
-  - [ ] P80.5d Comment on child and parent issues with verification results.
-  - [ ] P80.5e Open PR and merge after green CI/docs.
+  - [x] P80.5d Comment on child and parent issues with verification results.
+  - [x] P80.5e Open PR and verify PR CI/docs checks.
+  - [ ] P80.5f Merge after the full-suite baseline decision is resolved.
 
 Phase 80 focused verification passed with:
 
@@ -2262,6 +2264,8 @@ missing stubs for pandas/geopandas/scipy/seaborn and pre-existing type errors
 in Patchworks, VDYP, TSR, and MKRF modules. Full `pytest` reports 45 failures
 across existing CLI, docs-contract, Patchworks, named-pipeline, TSR, TIPSY,
 post-TIPSY, and WS3 smoke surfaces; the new FreshForge integration tests pass.
+PR `#226` is open and its `docs-pages` build and `package-release-checks`
+workflow passed on the feature branch.
 
 ### Detailed Next Steps Notes
 
@@ -2279,9 +2283,10 @@ post-TIPSY, and WS3 smoke surfaces; the new FreshForge integration tests pass.
     provider entry-point discovery, provider metadata/validation, a canonical
     K3Z workflow graph, and focused docs/tests are implemented. Focused local
     verification, Sphinx, build, artifact checks, and FreshForge CLI smoke
-    checks pass. The remaining edge is P80.5 issue comments, PR, CI/docs
-    verification, merge, and deciding how to handle existing full-repo
-    `mypy src` and `pytest` failures that are outside the new integration.
+    checks pass, and PR `#226` is green for docs and release-artifact checks.
+    The remaining edge is merge/closeout after deciding how to handle existing
+    full-repo `mypy src` and `pytest` failures that are outside the new
+    integration.
   - `P79` / `#211` is planned: FEMIC will grow reusable open LiDAR
     acquisition, terrain-raster, slope, and terrain-derived hydrography
     workflows. The immediate TFL 6 instance uses a public DEM steep-slope

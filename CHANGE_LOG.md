@@ -18579,3 +18579,14 @@
 - recorded that full `pytest` currently reports 45 failures across existing
   CLI, docs-contract, Patchworks, named-pipeline, TSR, TIPSY, post-TIPSY, and
   WS3 smoke surfaces, while the new FreshForge integration tests pass.
+
+## 2026-06-30 - Opened FreshForge integration PR and verified PR checks
+
+- opened PR `#226` for the Phase 80 FEMIC FreshForge provider integration;
+- posted verification comments on parent issue `#220`, closeout issue `#225`,
+  and implementation child issues `#221` through `#224`;
+- verified the PR `docs-pages` build and `package-release-checks` workflow both
+  completed successfully; and
+- left P80.5 open because merge remains gated on the explicit decision about
+  existing full-repo `mypy src` and `pytest` baseline failures outside the new
+  FreshForge integration.
