@@ -2231,7 +2231,7 @@ scripts.
   - [x] P80.4c Link the integration to existing rebuild specs and named
     pipeline vocabulary.
   - [x] P80.4d Verify Sphinx builds warning-clean.
-- [ ] P80.5 Close out FreshForge integration lifecycle (`#225`).
+- [x] P80.5 Close out FreshForge integration lifecycle (`#225`).
   - [x] P80.5a Run local acceptance checks and record the non-green full-suite
     baseline.
   - [x] P80.5b Inspect built wheel metadata for the FreshForge provider entry
@@ -2239,7 +2239,7 @@ scripts.
   - [x] P80.5c Update roadmap and changelog closeout notes.
   - [x] P80.5d Comment on child and parent issues with verification results.
   - [x] P80.5e Open PR and verify PR CI/docs checks.
-  - [ ] P80.5f Merge after the full-suite baseline decision is resolved.
+  - [x] P80.5f Merge after the full-suite baseline decision is resolved.
 
 Phase 80 focused verification passed with:
 
@@ -2269,8 +2269,62 @@ missing stubs for pandas/geopandas/scipy/seaborn and pre-existing type errors
 in Patchworks, VDYP, TSR, and MKRF modules. Full `pytest` reports 45 failures
 across existing CLI, docs-contract, Patchworks, named-pipeline, TSR, TIPSY,
 post-TIPSY, and WS3 smoke surfaces; the new FreshForge integration tests pass.
-PR `#226` is open and its `docs-pages` build and `package-release-checks`
-workflow passed on the feature branch.
+PR `#226` was squash-merged to `main` after its `docs-pages` build and
+`package-release-checks` workflow passed on the feature branch.
+
+## Phase 81: MKRF FreshForge Workflow Deployment (`#227`)
+
+- [x] P81.1 Add MKRF instance-owned FreshForge workflow contract
+  (`UBC-FRESH/femic-mkrf-instance#35`).
+  - [x] P81.1a Create the MKRF feature branch and workflow directory.
+  - [x] P81.1b Add `workflows/freshforge/mkrf_model_build_workflow.yaml`
+    using reusable `femic.*` provider references.
+  - [x] P81.1c Encode validate-case through matrix-build graph order with
+    MKRF-owned parameters and artifact declarations only.
+- [x] P81.2 Document MKRF FreshForge planning boundary
+  (`UBC-FRESH/femic-mkrf-instance#35`).
+  - [x] P81.2a Add FreshForge validate/inspect/plan commands to MKRF docs and
+    runbook surfaces.
+  - [x] P81.2b Preserve `femic instance rebuild` as the execution surface and
+    state that FreshForge does not run FEMIC, BTC, Patchworks, DataLad, or
+    artifact materialization.
+- [x] P81.3 Add parent integration checks for the MKRF workflow (`#227`).
+  - [x] P81.3a Add focused parent test coverage that loads the MKRF workflow
+    artifact when the submodule is present.
+  - [x] P81.3b Validate and plan the MKRF graph with the existing generic
+    `femic.freshforge` provider.
+- [x] P81.4 Verify and publish the MKRF FreshForge workflow deployment
+  (`#227`, `UBC-FRESH/femic-mkrf-instance#35`).
+  - [x] P81.4a Run FreshForge CLI validate/inspect/plan from the MKRF instance.
+  - [x] P81.4b Run FEMIC rebuild-spec validation and dry-run execution
+    surfaces.
+  - [x] P81.4c Run docs/package checks and artifact metadata inspection.
+  - [x] P81.4d Audit MKRF annex publication state with
+    `git annex find --not --in arbutus-s3`.
+  - [x] P81.4e Open PRs, sync issue comments, and update the parent submodule
+    pointer.
+
+Phase 81 depends on the P80 provider branch/PR because the MKRF workflow uses
+the generic `femic.freshforge` provider entry point. MKRF owns the concrete
+workflow document; FEMIC core must not add MKRF-specific workflow builder
+functions. The workflow uses
+`config/patchworks.runtime.mkrf_rebuild.windows.yaml`, the current canonical
+MKRF Patchworks runtime config, rather than the retained PoC
+`config/patchworks.runtime.windows.yaml` surface.
+
+Phase 81 focused verification passed with:
+
+- `freshforge providers --json` from `external/femic-mkrf-instance`;
+- `freshforge validate workflows/freshforge/mkrf_model_build_workflow.yaml --json`;
+- `freshforge inspect workflows/freshforge/mkrf_model_build_workflow.yaml --json`;
+- `freshforge plan workflows/freshforge/mkrf_model_build_workflow.yaml --json`;
+- `femic instance validate-spec --spec config/rebuild.spec.yaml`;
+- `femic instance rebuild --spec config/rebuild.spec.yaml --dry-run --run-id mkrf_freshforge_plan`;
+- `git annex find --not --in arbutus-s3` from the MKRF instance, which returned
+  no unpublished annex keys;
+- MKRF Sphinx docs build with `-W`;
+- parent Ruff, targeted mypy, FreshForge tests, parent Sphinx docs, package
+  build, `twine check`, pre-commit, and wheel entry-point inspection.
 
 ### Detailed Next Steps Notes
 
@@ -2283,19 +2337,16 @@ workflow passed on the feature branch.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P80` / `#220` is active: FEMIC exposes reusable model-building stages as a
-    plan-only FreshForge provider. Optional `femic[freshforge]` packaging,
-    provider entry-point discovery, provider metadata/validation, a generic
-    provider example graph, and focused docs/tests are implemented. K3Z-specific
-    FreshForge workflow composition is intentionally deferred to the K3Z
-    instance repository. Focused local verification, Sphinx, build, artifact
-    checks, and FreshForge CLI smoke checks pass. The boundary correction also
-    passes focused Ruff, targeted mypy/pytest, FreshForge CLI validate/plan,
-    Sphinx, build, `twine check`, and artifact inspection locally. PR `#226`
-    is green for docs and release-artifact checks on the corrected branch. The
-    remaining edge is merge/closeout after deciding how to handle existing
-    full-repo `mypy src` and `pytest` failures that are outside the new
-    integration.
+  - `P80` / `#220` is complete: FEMIC exposes reusable model-building stages as
+    a plan-only FreshForge provider. PR `#226` was squash-merged to `main`
+    after focused local verification plus green docs and release-artifact
+    checks.
+  - `P81` / `#227` is in final closeout: MKRF now owns the first real
+    instance-level FreshForge workflow contract at
+    `workflows/freshforge/mkrf_model_build_workflow.yaml`. MKRF PR
+    `UBC-FRESH/femic-mkrf-instance#36` was squash-merged, the parent branch has
+    been rebased onto P80 on `main`, and the remaining edge is final
+    post-rebase validation plus merge of parent PR `#228`.
   - `P79` / `#211` is planned: FEMIC will grow reusable open LiDAR
     acquisition, terrain-raster, slope, and terrain-derived hydrography
     workflows. The immediate TFL 6 instance uses a public DEM steep-slope

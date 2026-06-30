@@ -18609,3 +18609,42 @@
   direct sdist/wheel metadata inspection; and
 - verified PR `#226` docs and package-release checks passed on the corrected
   branch.
+
+## 2026-06-30 - Opened MKRF FreshForge workflow deployment lane
+
+- opened parent FEMIC issue `#227` and MKRF instance issue
+  `UBC-FRESH/femic-mkrf-instance#35` for the first concrete instance-owned
+  FreshForge workflow deployment;
+- created parent branch `feature/p81-mkrf-freshforge-workflow` stacked on the
+  P80 provider branch;
+- created MKRF instance branch `feature/freshforge-mkrf-rebuild-workflow`; and
+- recorded the Phase 81 boundary: MKRF owns the concrete FreshForge workflow
+  document while FEMIC core keeps only the reusable non-executing provider.
+
+## 2026-06-30 - Implemented MKRF FreshForge workflow deployment
+
+- added an instance-owned MKRF FreshForge workflow at
+  `external/femic-mkrf-instance/workflows/freshforge/mkrf_model_build_workflow.yaml`;
+- documented FreshForge validate/inspect/plan usage in the MKRF README, docs,
+  and rebuild runbook while preserving `femic instance rebuild` as the
+  execution surface;
+- used the current canonical MKRF Patchworks runtime config
+  `config/patchworks.runtime.mkrf_rebuild.windows.yaml` rather than the retained
+  PoC `config/patchworks.runtime.windows.yaml` surface;
+- added a parent FreshForge integration test that validates and plans the MKRF
+  workflow when the submodule is present; and
+- verified FreshForge CLI checks from the MKRF instance, FEMIC rebuild-spec
+  validation and dry-run, MKRF docs, parent Ruff/targeted mypy/tests/docs,
+  package build, `twine check`, pre-commit, wheel entry-point metadata, and the
+  MKRF annex publication audit.
+
+## 2026-06-30 - Closed out MKRF FreshForge workflow merge sequencing
+
+- squash-merged the Phase 80 FEMIC FreshForge provider PR `#226` to `main`;
+- squash-merged the MKRF instance FreshForge workflow PR
+  `UBC-FRESH/femic-mkrf-instance#36` to the MKRF `main` branch;
+- rebased the parent Phase 81 branch onto the updated FEMIC `main` and updated
+  the MKRF submodule pointer to the merged MKRF `main` commit; and
+- marked the P80 and P81 roadmap closeout checklists current while preserving
+  the boundary that `femic.freshforge` stays generic and MKRF owns the concrete
+  FreshForge workflow document.
