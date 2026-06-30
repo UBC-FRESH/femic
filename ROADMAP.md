@@ -2326,6 +2326,39 @@ Phase 81 focused verification passed with:
 - parent Ruff, targeted mypy, FreshForge tests, parent Sphinx docs, package
   build, `twine check`, pre-commit, and wheel entry-point inspection.
 
+## Phase 82: TFL6 Expanded Patchworks Model Materialization (`#230`)
+
+- [x] P82.1 Promote expanded non-scenario TFL6 `models/**` payloads to tracked
+  instance artifacts (`UBC-FRESH/femic-tfl6-instance#156`).
+  - [x] P82.1a Remove the TFL6 ignore boundary that leaves expanded
+    Patchworks runtime model directories untracked.
+  - [x] P82.1b Add annex policy for expanded model payloads so all
+    non-scenario files under `models/` are tracked without relying only on
+    release ZIP archives.
+  - [x] P82.1c Commit the expanded non-scenario model tree in the TFL6
+    instance repository.
+- [x] P82.2 Publish and verify TFL6 model payload materialization.
+  - [x] P82.2a Copy all annexed `models/**` keys to `arbutus-s3`.
+  - [x] P82.2b Verify no `models/**` files remain untracked.
+  - [x] P82.2c Verify no `models/**` annex keys are missing from
+    `arbutus-s3`.
+  - [x] P82.2d Prove fresh-environment materialization of the tracked model
+    tree.
+- [ ] P82.3 Update the parent FEMIC submodule pointer and closeout notes.
+  - [x] P82.3a Update `external/femic-tfl6-instance` to the repaired TFL6
+    commit.
+  - [x] P82.3b Record verification in parent and instance changelogs.
+  - [ ] P82.3c Push branches and synchronize GitHub issue status.
+
+Phase 82 supersedes the earlier TFL6 publication boundary for expanded
+Patchworks model directories. Release ZIP archives remain useful reviewed
+release artifacts, but runnable full materialization now requires the expanded
+non-scenario `models/**` tree itself to be tracked and publicly retrievable
+through the instance DataLad/git-annex surface. Patchworks smoke/scenario
+output directories under `models/**/analysis/p*/` and
+`models/**/analysis/headless_runs/` remain local run evidence, not required
+fresh-clone model inputs.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2337,6 +2370,11 @@ Phase 81 focused verification passed with:
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P82` / `#230` is active: expanded TFL6 Patchworks runtime model
+    directories, excluding scenario/run outputs under `analysis/`, must become
+    tracked, public-annexed instance payloads so recursive DataLad
+    materialization produces a runnable model tree without requiring a
+    separate archive-unpack step.
   - `P80` / `#220` is complete: FEMIC exposes reusable model-building stages as
     a plan-only FreshForge provider. PR `#226` was squash-merged to `main`
     after focused local verification plus green docs and release-artifact
