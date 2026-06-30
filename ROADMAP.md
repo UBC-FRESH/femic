@@ -2359,6 +2359,31 @@ output directories under `models/**/analysis/p*/` and
 `models/**/analysis/headless_runs/` remain local run evidence, not required
 fresh-clone model inputs.
 
+## Phase 83: TSA29 Runtime Tracking Hygiene (`#232`)
+
+- [x] P83.1 Remove tracked TSA29 `runtime/**` artifacts
+  (`UBC-FRESH/femic-tsa29-instance#13`).
+  - [x] P83.1a Add a broad TSA29 `runtime/` ignore rule.
+  - [x] P83.1b Remove all tracked TSA29 `runtime/**` files from the Git index
+    without deleting local working-tree copies.
+  - [x] P83.1c Verify `git ls-files runtime` is empty in the TSA29 instance.
+- [x] P83.2 Verify TSA29 clone and model materialization.
+  - [x] P83.2a Verify the Patchworks block payload remains present on
+    `arbutus-s3`.
+  - [x] P83.2b Prove a fresh short-path Windows clone can check out TSA29
+    without tracked `runtime/**` long-path failures.
+  - [x] P83.2c Prove `datalad get -r models/tsa29_patchworks_model/blocks`
+    materializes a valid polygon shapefile.
+- [x] P83.3 Update parent pointer and close out.
+  - [x] P83.3a Update `external/femic-tsa29-instance` to the cleaned TSA29
+    commit.
+  - [x] P83.3b Record verification in parent and instance changelogs.
+  - [x] P83.3c Push branches, open PRs, and synchronize GitHub issue status.
+
+Phase 83 treats TSA29 `runtime/` as local/generated only, matching MKRF and
+TFL6. Curated evidence that needs to remain durable must live outside
+`runtime/` in explicit evidence, docs, config, planning, or release surfaces.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2370,6 +2395,11 @@ fresh-clone model inputs.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P83` / `#232` is complete pending parent PR merge: tracked TSA29
+    `runtime/**` artifacts were removed from the instance Git index, the
+    cleaned TSA29 PR was merged, and a fresh short-path Windows clone
+    materialized `models/tsa29_patchworks_model/blocks` from `arbutus-s3` with
+    a valid polygon shapefile header.
   - `P82` / `#230` is active: expanded TFL6 Patchworks runtime model
     directories, excluding scenario/run outputs under `analysis/`, must become
     tracked, public-annexed instance payloads so recursive DataLad
