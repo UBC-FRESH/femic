@@ -17,6 +17,9 @@ freshforge = pytest.importorskip("freshforge")
 
 
 EXAMPLE_PATH = Path("examples/freshforge/model_build_workflow.yaml")
+MKRF_WORKFLOW_PATH = Path(
+    "external/femic-mkrf-instance/workflows/freshforge/mkrf_model_build_workflow.yaml"
+)
 EXPECTED_MODEL_BUILD_ORDER = [
     "validate_case",
     "geospatial_preflight",
@@ -235,3 +238,33 @@ def test_default_freshforge_registry_discovers_installed_femic_provider() -> Non
 
     assert not diagnostics
     assert registry.get("femic") is not None
+
+
+def test_mkrf_instance_workflow_validates_and_plans_when_available() -> None:
+    if not MKRF_WORKFLOW_PATH.exists():
+        pytest.skip("MKRF instance FreshForge workflow is not available")
+
+    from freshforge.loading import load_workflow
+    from freshforge.planning import create_run_plan
+    from freshforge.validation import validate_workflow_with_providers
+
+    spec, load_diagnostics = load_workflow(MKRF_WORKFLOW_PATH)
+    assert spec is not None
+    assert load_diagnostics == []
+    assert spec.id == "mkrf_model_build"
+
+    diagnostics = validate_workflow_with_providers(
+        spec,
+        registry=_registry_with_femic_provider(),
+        structural_diagnostics=load_diagnostics,
+    )
+    assert diagnostics == []
+
+    plan = create_run_plan(
+        spec,
+        diagnostics=diagnostics,
+        registry=_registry_with_femic_provider(),
+    )
+    assert not plan.has_errors
+    assert [node.id for node in plan.nodes] == EXPECTED_MODEL_BUILD_ORDER
+    assert {node.provider_id for node in plan.nodes} == {"femic"}
