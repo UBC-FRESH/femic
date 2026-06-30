@@ -18609,3 +18609,14 @@
   direct sdist/wheel metadata inspection; and
 - verified PR `#226` docs and package-release checks passed on the corrected
   branch.
+
+## 2026-06-30 - Opened MKRF FreshForge workflow deployment lane
+
+- opened parent FEMIC issue `#227` and MKRF instance issue
+  `UBC-FRESH/femic-mkrf-instance#35` for the first concrete instance-owned
+  FreshForge workflow deployment;
+- created parent branch `feature/p81-mkrf-freshforge-workflow` stacked on the
+  P80 provider branch;
+- created MKRF instance branch `feature/freshforge-mkrf-rebuild-workflow`; and
+- recorded the Phase 81 boundary: MKRF owns the concrete FreshForge workflow
+  document while FEMIC core keeps only the reusable non-executing provider.
