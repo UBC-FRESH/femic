@@ -18544,3 +18544,22 @@
 - preserved the explicit boundary that this phase does not add `freshforge run`,
   FreshForge-driven FEMIC execution, real BTC/Patchworks launch, artifact
   inspection, or replacement of `femic instance rebuild`.
+
+## 2026-06-30 - Implemented plan-only FEMIC FreshForge provider
+
+- added optional `femic[freshforge]` packaging and a `freshforge.providers`
+  entry point for provider id `femic`;
+- added `femic.freshforge` with a non-executing provider factory, K3Z
+  model-build node metadata, provider-owned broad parameter/artifact
+  validation, and helpers to build the canonical K3Z workflow document/spec;
+- added `examples/freshforge/k3z_model_build_workflow.yaml` as a public-safe
+  plan-only graph from validate-case through Patchworks matrix-build;
+- documented the integration in the README, a new guide, and a curated API
+  page, explicitly distinguishing FreshForge graph planning from
+  `femic instance rebuild` execution and named-pipeline TSR/THLB runbooks;
+- added tests for provider metadata, package metadata, lazy import behavior,
+  example/workflow parity, FreshForge validation/planning, missing-parameter
+  diagnostics, unknown node types, and entry-point discovery; and
+- verified focused lint, targeted mypy, targeted pytest, installed
+  `freshforge` CLI provider discovery/validate/plan smoke checks, and a
+  warning-clean Sphinx build.

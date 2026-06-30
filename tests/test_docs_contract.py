@@ -66,6 +66,7 @@ GUIDE_PAGES = [
     "data-access-inventory",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
+    "freshforge-provider-integration",
     "tsr-thlb-reconstruction-ladder",
     "public-data-mirror-runbook",
     "case-onboarding",

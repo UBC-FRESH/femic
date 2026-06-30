@@ -35,11 +35,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+freshforge = [
+    "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@v0.1.0a1",
+]
 figures = [
     "figrecover[pdf,cv,vlm] @ git+https://github.com/UBC-FRESH/figrecover.git@v0.1.0a1",
 ]
 dev = [
     "datalad[full]",
+    "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@v0.1.0a1",
     "ipywidgets",
     "mypy",
     "pre-commit",
@@ -53,6 +57,9 @@ dev = [
 
 [project.scripts]
 femic = "femic.cli.main:app"
+
+[project.entry-points."freshforge.providers"]
+femic = "femic.freshforge:provider_factory"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
