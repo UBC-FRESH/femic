@@ -18637,3 +18637,14 @@
   validation and dry-run, MKRF docs, parent Ruff/targeted mypy/tests/docs,
   package build, `twine check`, pre-commit, wheel entry-point metadata, and the
   MKRF annex publication audit.
+
+## 2026-06-30 - Closed out MKRF FreshForge workflow merge sequencing
+
+- squash-merged the Phase 80 FEMIC FreshForge provider PR `#226` to `main`;
+- squash-merged the MKRF instance FreshForge workflow PR
+  `UBC-FRESH/femic-mkrf-instance#36` to the MKRF `main` branch;
+- rebased the parent Phase 81 branch onto the updated FEMIC `main` and updated
+  the MKRF submodule pointer to the merged MKRF `main` commit; and
+- marked the P80 and P81 roadmap closeout checklists current while preserving
+  the boundary that `femic.freshforge` stays generic and MKRF owns the concrete
+  FreshForge workflow document.
