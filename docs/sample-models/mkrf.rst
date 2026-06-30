@@ -131,6 +131,8 @@ FEMIC-Local Integration Notes
 
 - MKRF instance runtime root in this repository:
   ``external/femic-mkrf-instance``
+- FreshForge workflow contract:
+  ``external/femic-mkrf-instance/workflows/freshforge/mkrf_model_build_workflow.yaml``
 - Current canonical rebuild runtime package path:
   ``external/femic-mkrf-instance/models/mkrf_patchworks_model``
 - Retained PoC benchmark package path:
