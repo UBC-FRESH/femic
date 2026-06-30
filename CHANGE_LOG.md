@@ -18667,3 +18667,17 @@
   missing locally; and
 - updated the parent FEMIC submodule pointer to the repaired TFL6 `main`
   commit `60f696d`.
+
+## 2026-06-30 - Removed tracked TSA29 runtime artifacts
+
+- opened parent issue `#232` and TSA29 instance issue
+  `UBC-FRESH/femic-tsa29-instance#13` for runtime tracking hygiene;
+- updated the TSA29 instance so `runtime/` is ignored broadly and 1,276
+  previously tracked `runtime/**` artifacts are removed from the Git index;
+- verified the TSA29 branch no longer tracks runtime paths and the Patchworks
+  block payload has no keys missing from `arbutus-s3`;
+- proved a fresh short-path Windows clone can check out TSA29 without tracked
+  runtime long-path failures and can materialize
+  `models/tsa29_patchworks_model/blocks` from `arbutus-s3`; and
+- updated the parent FEMIC submodule pointer to the cleaned TSA29 `main`
+  commit `a038a47`.
