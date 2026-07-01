@@ -2390,7 +2390,7 @@ Parent issue: #234
 
 Branch: `feature/p84-freshforge-execution-mkrf`
 
-Status: active
+Status: complete
 
 Goal: consume FreshForge Phase 6 execution support from FEMIC and MKRF so the
 MKRF FreshForge workflow can explicitly run the canonical rebuild lane through
@@ -2427,12 +2427,12 @@ runtime-package regeneration and Patchworks Matrix Builder.
   bundle files, and ForestModel XML.
   - [x] Inspect Matrix Builder manifest after the Patchworks license blocker is
         resolved.
-- [ ] P84.5 Close out execution integration (#239)
+- [x] P84.5 Close out execution integration (#239)
   - [x] Update roadmap and changelog closeout notes.
   - [x] Open PRs, merge implementation PRs, and verify checks.
   - [x] Record model-instance materialization as the next separate FreshForge
         workflow family.
-  - [ ] Close parent P84 after the portable-artifact closeout branch lands and
+  - [x] Close parent P84 after the portable-artifact closeout branch lands and
         the final issue comments are posted.
 
 Phase 84 deliberately does not add model-instance materialization workflow
@@ -2447,8 +2447,8 @@ Matrix Builder with `run_id=mkrf_freshforge_exec`; the Matrix Builder manifest
 reported `returncode=0`, stderr reported `Done Matrix Builder.`, and the tracks
 surface contained `features.csv` 98,413 rows, `protoaccounts.csv` 62 rows,
 `accounts.csv` 62 rows, `curves.csv` 2,684,869 rows, and `products.csv`
-140,196 rows. The remaining P84.5 closeout task is to land the portable tracked
-artifact fix, post the final GitHub comments, and close the parent issue.
+140,196 rows. The portable tracked artifact fix landed through MKRF PR
+`UBC-FRESH/femic-mkrf-instance#41` and parent PR `#243`; P84 is closed.
 
 ## Phase 85: FreshForge Instance Provider Boundary Repair
 

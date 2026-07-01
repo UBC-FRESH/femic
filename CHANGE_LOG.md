@@ -18769,3 +18769,15 @@
 - updated P84.4/#238 as complete while keeping P84.5 open until this
   portable-artifact closeout branch lands and the final GitHub issue comments
   are posted.
+
+## 2026-07-01 - Closed P84 MKRF FreshForge execution integration
+
+- merged MKRF PR `UBC-FRESH/femic-mkrf-instance#41`, normalizing the tracked
+  MKRF FreshForge runtime artifacts onto repo-relative paths;
+- merged FEMIC PR `#243`, bringing in the parent code/test portability fix,
+  P84 evidence updates, package validation, and the reconciled MKRF submodule
+  pointer;
+- confirmed parent PR checks passed (`build` and `package-release-checks`) after
+  the submodule pointer was updated to the MKRF merged commit; and
+- marked P84.5 and the P84 parent phase complete in `ROADMAP.md` before final
+  issue closure.
