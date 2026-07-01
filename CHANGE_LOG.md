@@ -18860,3 +18860,25 @@
   synchronized; and
 - left the broader K3Z/TSA29/TFL6 instance-reference cleanup and packaged
   Patchworks variant registry cleanup as follow-on lanes.
+
+## 2026-07-01 - Opened P88-P94 instance boundary decoupling sequence
+
+- opened parent FEMIC issues `#248` through `#254` for the full arms-length
+  separation of FEMIC core from example instance repositories;
+- added the P88-P94 roadmap sequence, starting with an instance-extension
+  boundary phase before the K3Z, TSA29, Patchworks registry, catalog, and final
+  closeout extraction phases;
+- documented the core-vs-instance ownership contract in the technical docs; and
+- added a source audit guard that freezes the current named-instance reference
+  baseline under `src/femic` so later phases can reduce the coupling without
+  allowing new instance-specific references to enter core.
+
+## 2026-07-01 - Completed P88 instance extension boundary guard
+
+- linked the new instance-extension boundary contract into the technical docs;
+- verified the named-instance source guard with
+  `pytest tests/test_instance_extension_boundaries.py`;
+- verified the docs surface with `sphinx-build -b html docs _build/html -W`;
+  and
+- marked P88 complete in `ROADMAP.md`, leaving P89 as the next implementation
+  lane for extracting K3Z bindings and pipeline policies.
