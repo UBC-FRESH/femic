@@ -2476,11 +2476,11 @@ id `mkrf`.
         commands.
   - [x] Add a follow-on phase for moving mature MKRF-specific workflow and
         pipeline code out of FEMIC core after the adapter path is proven.
-- [ ] P85.5 Verify, commit, push, and open PRs
+- [x] P85.5 Verify, commit, push, and open PRs
   - [x] Run focused parent and MKRF adapter tests.
   - [x] Verify provider metadata no longer advertises `femic.mkrf` from FEMIC
         and advertises `mkrf` only from the MKRF adapter.
-  - [ ] Open linked parent and MKRF PRs.
+  - [x] Open linked parent and MKRF PRs.
 
 Phase 85 intentionally does not remove the existing `femic instance mkrf-*`
 compatibility commands. Those commands remain the execution target for the
@@ -2531,7 +2531,8 @@ and `femic instance mkrf-*` CLI commands.
     metadata and command construction into the MKRF instance as provider id
     `mkrf`. Local verification has passed for focused Ruff, pytest, mypy,
     Sphinx, FreshForge CLI validate/inspect/plan/dry-run, package builds,
-    `twine check`, and wheel entry-point inspection. PR closeout remains.
+    `twine check`, wheel entry-point inspection, MKRF PR
+    `UBC-FRESH/femic-mkrf-instance#40`, and parent PR `#242`.
   - `P86` is planned: broader extraction of existing MKRF-specific FEMIC
     workflow and pipeline code should happen after the P85 adapter boundary is
     reviewed, rather than being bundled into the namespace repair.

@@ -18736,4 +18736,7 @@
   reviewed; and
 - verified focused parent and MKRF adapter Ruff, pytest, targeted mypy, parent
   and MKRF Sphinx builds, FreshForge CLI provider discovery/validate/inspect/
-  plan/dry-run, package builds, `twine check`, and wheel entry-point metadata.
+  plan/dry-run, package builds, `twine check`, and wheel entry-point metadata;
+  and
+- opened MKRF PR `UBC-FRESH/femic-mkrf-instance#40` and parent FEMIC PR `#242`
+  for review.
