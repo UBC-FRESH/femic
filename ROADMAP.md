@@ -2620,7 +2620,7 @@ Branch: `feature/p89-extract-k3z-bindings`
 
 K3Z branch: `feature/k3z-femic-package-policies`
 
-Status: active
+Status: complete
 
 Goal: create a K3Z-owned package/config surface and move K3Z-specific FMG
 adapter bindings, source filenames, run defaults, plot limits, target-stratum
@@ -2641,10 +2641,10 @@ defaults, and VDYP fit-policy decisions out of `src/femic`.
   - [x] Add generic FMG auxiliary-provider discovery.
   - [x] Replace K3Z-specific target-strata, plot-limit, and VDYP policy branches
         with config-driven generic options.
-- [ ] P89.4 Verify and close out
+- [x] P89.4 Verify and close out
   - [x] Run focused K3Z package tests and docs checks.
   - [x] Run focused parent tests, lint, Sphinx, build, and package checks.
-  - [ ] Merge K3Z first, update parent submodule pointer, then merge parent.
+  - [x] Merge K3Z first, update parent submodule pointer, then merge parent.
 
 ## Phase 90: Extract TSA29 Strict Locked-Chain Workflow From FEMIC Core
 

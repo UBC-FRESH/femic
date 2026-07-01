@@ -18925,3 +18925,11 @@
   focused surface, with failures in pre-existing/environment-sensitive Arbutus,
   BCDC, TSA29 strict-checkpoint, ws3, and broader recipe lanes. Those failures
   are not treated as P89 blockers.
+
+## 2026-07-01 - Closed P89 K3Z boundary extraction
+
+- merged K3Z instance PR `UBC-FRESH/femic-k3z-instance#30`;
+- reconciled the parent FEMIC submodule pointer to the merged K3Z main commit
+  `acd87a1`; and
+- marked P89 complete in `ROADMAP.md`, leaving P90 as the next named-instance
+  boundary extraction lane.
