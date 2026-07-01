@@ -18843,3 +18843,10 @@
   FreshForge validate/plan/dry-run, plus parent Ruff, targeted mypy, Patchworks
   tests, FreshForge integration tests, Sphinx, package build, and
   `twine check` on the moved boundary.
+
+## 2026-07-01 - Reconciled MKRF P87 merge into parent branch
+
+- merged MKRF PR `UBC-FRESH/femic-mkrf-instance#45` to the MKRF `main` branch;
+- updated the parent FEMIC P87 branch so `external/femic-mkrf-instance` points
+  at merged MKRF commit `c769e4c`; and
+- kept parent PR `#247` open for final parent checks and merge.
