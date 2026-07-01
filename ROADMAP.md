@@ -2678,9 +2678,9 @@ package or adapter.
         sequence, and ledger-validation logic into `tsa29_femic`.
   - [x] Migrate TSA29-specific strict-chain tests into the TSA29 package.
 - [ ] P90.4 Verify and close out
-  - [ ] Run focused parent checks for named pipelines, boundary guard, typing,
+  - [x] Run focused parent checks for named pipelines, boundary guard, typing,
         docs, and package artifacts.
-  - [ ] Run focused TSA29 package checks.
+  - [x] Run focused TSA29 package checks.
   - [ ] Merge TSA29 first, update the parent submodule pointer, then merge
         parent P90.
 

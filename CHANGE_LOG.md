@@ -18957,3 +18957,21 @@
 - updated focused parent tests so FEMIC core covers generic contract-handler
   registration, discovery, duplicate handling, pre-default dispatch, and
   post-default validation without carrying TSA29 contract implementation tests.
+
+## 2026-07-01 - Verified P90 focused checks before PR
+
+- Parent FEMIC checks passed:
+  - `ruff check src tests`;
+  - `mypy src/femic/named_pipelines.py`;
+  - focused pytest for named pipelines, pipeline CLI output, and the
+    instance-extension boundary guard;
+  - `sphinx-build -b html docs _build/html -W`; and
+  - `python -m build` plus `twine check dist/*`.
+- TSA29 instance checks passed:
+  - `python -m pip install -e .[dev]`;
+  - `ruff check src tests`;
+  - `pytest`;
+  - `sphinx-build -b html docs docs/_build/html -W`; and
+  - `python -m build` plus `twine check dist/*`.
+- Editable entry-point discovery resolved
+  `tsa29_locked_chain_strict = tsa29_femic.locked_chain:provider_factory`.
