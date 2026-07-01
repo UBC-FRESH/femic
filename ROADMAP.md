@@ -2543,7 +2543,7 @@ Parent issue: #246
 
 Branch: `feature/p87-extract-mkrf-legacy-xml-builder`
 
-Status: active
+Status: complete
 
 Goal: move the remaining MKRF-specific legacy ForestModel XML builder out of
 `femic.fmg` and into the MKRF instance package. FEMIC core keeps generic
@@ -2568,11 +2568,16 @@ audit for this lane is recorded in
         `src/femic/fmg/patchworks.py`.
   - [x] Reword generic export CLI help so it no longer uses MKRF-first
         terminology.
-- [ ] P87.4 Verify and close out the paired lifecycle
+- [x] P87.4 Verify and close out the paired lifecycle
   - [x] Run focused MKRF package tests and FreshForge workflow dry-run checks.
   - [x] Run focused parent FEMIC lint, tests, docs, and package checks.
-  - [ ] Merge MKRF first, update the parent submodule pointer, then merge the
+  - [x] Merge MKRF first, update the parent submodule pointer, then merge the
         parent PR.
+
+P87 is complete on the branch: MKRF PR `UBC-FRESH/femic-mkrf-instance#45`
+merged to MKRF `main`, the parent submodule pointer was reconciled to merged
+MKRF commit `c769e4c`, and parent PR `#247` passed package and docs checks
+before merge.
 
 ### Detailed Next Steps Notes
 
@@ -2586,9 +2591,11 @@ audit for this lane is recorded in
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P87` / `#246` is active: the remaining MKRF-specific legacy ForestModel
+  - `P87` / `#246` is complete: the remaining MKRF-specific legacy ForestModel
     XML builder moved from parent `femic.fmg` into the MKRF instance package
-    under `mkrf_femic.legacy_xml`; remaining work is PR/submodule closeout.
+    under `mkrf_femic.legacy_xml`; MKRF PR
+    `UBC-FRESH/femic-mkrf-instance#45` is merged and parent PR `#247` passed
+    required checks.
   - `P86` / `#244` is complete: MKRF-specific pipeline and workflow
     implementation now lives in the MKRF instance repository as installable
     package `mkrf_femic`, and parent FEMIC no longer exposes

@@ -18850,3 +18850,13 @@
 - updated the parent FEMIC P87 branch so `external/femic-mkrf-instance` points
   at merged MKRF commit `c769e4c`; and
 - kept parent PR `#247` open for final parent checks and merge.
+
+## 2026-07-01 - Closed P87 MKRF legacy XML builder extraction
+
+- confirmed parent PR `#247` passed GitHub `docs-pages` and
+  `package-release-checks` after the MKRF submodule pointer was reconciled to
+  merged MKRF `main`;
+- marked P87 complete in `ROADMAP.md` with parent and child roadmap tasks
+  synchronized; and
+- left the broader K3Z/TSA29/TFL6 instance-reference cleanup and packaged
+  Patchworks variant registry cleanup as follow-on lanes.
