@@ -2649,13 +2649,41 @@ defaults, and VDYP fit-policy decisions out of `src/femic`.
 ## Phase 90: Extract TSA29 Strict Locked-Chain Workflow From FEMIC Core
 
 Parent issue: #250
+Instance issue: UBC-FRESH/femic-tsa29-instance#15
 
-Status: planned
+Status: complete
 
 Goal: define a generic locked-chain validation interface, then move TSA29
 locked-chain row ordering, ledger interpretation, checkpoint restrictions,
 strict-chain preflight, and strict-sequence execution into a TSA29-owned
 package or adapter.
+
+- [ ] P90.1 Record lifecycle and planning surfaces
+  - [x] Create parent branch `feature/p90-extract-tsa29-strict-chain`.
+  - [x] Create TSA29 branch `feature/tsa29-femic-strict-chain`.
+  - [x] Link parent issue `#250` and TSA29 issue
+        `UBC-FRESH/femic-tsa29-instance#15`.
+  - [x] Record matching starting notes in parent and TSA29 changelogs.
+- [x] P90.2 Add generic named-pipeline contract-handler seam
+  - [x] Define the contract handler protocol and registration/discovery API.
+  - [x] Replace TSA29-specific branches in `femic.named_pipelines` with
+        handler dispatch and clear missing-handler errors.
+  - [x] Add fixture-handler tests for explicit registration, discovery,
+        duplicate handling, and generic dispatch.
+- [x] P90.3 Move TSA29 strict-chain contract into instance ownership
+  - [x] Add installable `tsa29_femic` package in the TSA29 instance repo.
+  - [x] Register `tsa29_locked_chain_strict` through
+        `femic.named_pipeline_contracts`.
+  - [x] Move TSA29 row-order, ledger, preflight, GLB materialization, strict
+        sequence, and ledger-validation logic into `tsa29_femic`.
+  - [x] Migrate TSA29-specific strict-chain tests into the TSA29 package.
+- [x] P90.4 Verify and close out
+  - [x] Run focused parent checks for named pipelines, boundary guard, typing,
+        docs, and package artifacts.
+  - [x] Run focused TSA29 package checks.
+  - [x] Merge TSA29 first and update the parent submodule pointer to the
+        merged TSA29 main commit.
+  - [x] Merge parent P90 after PR checks pass.
 
 ## Phase 91: Split TSR Engine From TSA29 Adjudication Overlays
 
@@ -2711,8 +2739,15 @@ example submodules present.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P89` / `#249` is active: create a K3Z-owned package/config surface and
-    move K3Z-specific FMG bindings and pipeline policies out of `src/femic`.
+  - `P91` / `#251` is next: keep generic TSR machinery in FEMIC core while
+    moving TSA29 adjudication overlays and interpretation text into
+    instance-owned surfaces.
+  - `P90` / `#250` is complete: generic named-pipeline contract-handler
+    dispatch now lives in FEMIC core, and the TSA29 strict locked-chain
+    contract implementation lives in the TSA29 instance package under issue
+    `UBC-FRESH/femic-tsa29-instance#15`.
+  - `P89` / `#249` is complete: K3Z-owned package/config surfaces now own the
+    K3Z FMG auxiliary support and pipeline policy defaults.
   - `P88` / `#248` is complete locally: the arms-length extension boundary is
     documented, P89-P94 issues are open, and a source guard now prevents new
     named-instance references from entering `src/femic` without an explicit

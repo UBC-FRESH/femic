@@ -18933,3 +18933,61 @@
   `acd87a1`; and
 - marked P89 complete in `ROADMAP.md`, leaving P90 as the next named-instance
   boundary extraction lane.
+
+## 2026-07-01 - Opened P90 TSA29 strict-chain extraction
+
+- created parent branch `feature/p90-extract-tsa29-strict-chain`;
+- created TSA29 branch `feature/tsa29-femic-strict-chain`;
+- linked parent issue `#250` with TSA29 instance issue
+  `UBC-FRESH/femic-tsa29-instance#15`;
+- recorded the P90 task breakdown in `ROADMAP.md`; and
+- locked the boundary: P90 moves only the TSA29 strict locked-chain
+  named-pipeline contract into the TSA29 instance package while leaving TSR
+  adjudication overlays, Patchworks variants, and instance catalogs to later
+  phases.
+
+## 2026-07-01 - Implemented P90 named-pipeline contract handler seam
+
+- added `femic.named_pipelines.NamedPipelineContractHandler` with explicit
+  registration and `femic.named_pipeline_contracts` entry-point discovery;
+- replaced the embedded TSA29 strict-chain branches in `run_named_pipeline_runbook`
+  with contract-handler dispatch and clear missing-handler errors;
+- moved TSA29 strict-chain behavior into the TSA29 instance package
+  `tsa29_femic`; and
+- updated focused parent tests so FEMIC core covers generic contract-handler
+  registration, discovery, duplicate handling, pre-default dispatch, and
+  post-default validation without carrying TSA29 contract implementation tests.
+
+## 2026-07-01 - Verified P90 focused checks before PR
+
+- Parent FEMIC checks passed:
+  - `ruff check src tests`;
+  - `mypy src/femic/named_pipelines.py`;
+  - focused pytest for named pipelines, pipeline CLI output, and the
+    instance-extension boundary guard;
+  - `sphinx-build -b html docs _build/html -W`; and
+  - `python -m build` plus `twine check dist/*`.
+- TSA29 instance checks passed:
+  - `python -m pip install -e .[dev]`;
+  - `ruff check src tests`;
+  - `pytest`;
+  - `sphinx-build -b html docs docs/_build/html -W`; and
+  - `python -m build` plus `twine check dist/*`.
+- Editable entry-point discovery resolved
+  `tsa29_locked_chain_strict = tsa29_femic.locked_chain:provider_factory`.
+
+## 2026-07-01 - Reconciled P90 TSA29 submodule pointer
+
+- merged TSA29 PR `UBC-FRESH/femic-tsa29-instance#16`;
+- updated the parent FEMIC submodule pointer to TSA29 main commit
+  `2817710`; and
+- left parent P90 merge as the only remaining P90.4 closeout item pending
+  parent PR checks.
+
+## 2026-07-01 - Closed P90 TSA29 strict-chain extraction
+
+- parent PR `#257` passed GitHub docs and package-release checks after the
+  TSA29 submodule pointer update;
+- marked P90 complete in `ROADMAP.md`; and
+- P90 closes with FEMIC core owning generic named-pipeline contract dispatch
+  while TSA29 owns the `tsa29_locked_chain_strict` implementation.
