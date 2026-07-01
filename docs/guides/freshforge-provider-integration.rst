@@ -31,7 +31,7 @@ Provider Discovery
 
 FEMIC registers provider entry points in the ``freshforge.providers`` group.
 When FEMIC is installed with the optional FreshForge dependency, FreshForge can
-discover provider IDs ``femic`` and ``femic.mkrf``:
+discover provider ID ``femic``:
 
 .. code-block:: bash
 
@@ -47,14 +47,10 @@ The generic provider references currently exposed for model-build workflows are:
 - ``femic.patchworks_preflight``
 - ``femic.matrix_build``
 
-The MKRF-specific provider references exposed for the first executable MKRF
-workflow are:
-
-- ``femic.mkrf.build_au_inputs``
-- ``femic.mkrf.select_aus``
-- ``femic.mkrf.build_managed_au_inputs``
-- ``femic.mkrf.build_managed_au_curves``
-- ``femic.mkrf.init_runtime_package``
+Instance-specific provider references are not shipped by FEMIC core. For
+example, the MKRF instance owns its executable adapter package and exposes
+provider references such as ``mkrf.build_au_inputs`` only when that instance
+adapter is installed.
 
 Generic Workflow Example
 ------------------------
@@ -106,7 +102,8 @@ workflow builders. Instance-specific FreshForge documents should live in the
 instance repository that owns the model-build contract. For example, the MKRF
 workflow document lives in the MKRF instance repository, while FEMIC core
 supplies reusable provider references such as ``femic.validate_case`` and
-``femic.matrix_build`` plus the MKRF command namespace ``femic.mkrf``.
+``femic.matrix_build``. The MKRF instance supplies its own provider namespace
+``mkrf`` through its adapter package.
 
 Boundaries
 ----------
@@ -125,7 +122,6 @@ API
 ---
 
 Use :func:`femic.freshforge.provider_factory` when a caller needs explicit
-registry control for the generic FEMIC provider. Use
-:func:`femic.freshforge.mkrf_provider_factory` for the MKRF-specific provider.
-Concrete workflow assembly is intentionally left to instance repositories or
+registry control for the generic FEMIC provider. Concrete workflow assembly and
+instance-specific providers are intentionally left to instance repositories or
 caller-owned workflow documents.

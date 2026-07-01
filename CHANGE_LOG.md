@@ -18716,3 +18716,24 @@
   model-input/runtime package surfaces and reached Patchworks Matrix Builder,
   but Matrix Builder did not complete because local Patchworks stderr reported
   `No matching license`.
+
+## 2026-07-01 - Restored FEMIC/MKRF FreshForge provider boundary
+
+- opened FEMIC issue `#241` and MKRF issue
+  `UBC-FRESH/femic-mkrf-instance#39` for the P85 namespace repair;
+- removed the MKRF-specific FreshForge provider id, factory, metadata, command
+  builders, and entry point from `femic.freshforge`, leaving FEMIC core with the
+  reusable executable `femic` provider only;
+- added an instance-owned MKRF adapter package in the MKRF repository that
+  exposes provider id `mkrf` through `freshforge.providers` and delegates
+  execution to existing `python -m femic instance mkrf-*` compatibility
+  commands;
+- updated the MKRF FreshForge workflow from `femic.mkrf.*` provider references
+  to `mkrf.*` and documented the adapter installation/ownership boundary in
+  parent and MKRF docs;
+- recorded Phase 86 as the follow-on lane for moving mature MKRF-specific
+  workflow and pipeline code out of FEMIC core after the adapter boundary is
+  reviewed; and
+- verified focused parent and MKRF adapter Ruff, pytest, targeted mypy, parent
+  and MKRF Sphinx builds, FreshForge CLI provider discovery/validate/inspect/
+  plan/dry-run, package builds, `twine check`, and wheel entry-point metadata.
