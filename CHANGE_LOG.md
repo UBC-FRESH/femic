@@ -18933,3 +18933,15 @@
   `acd87a1`; and
 - marked P89 complete in `ROADMAP.md`, leaving P90 as the next named-instance
   boundary extraction lane.
+
+## 2026-07-01 - Opened P90 TSA29 strict-chain extraction
+
+- created parent branch `feature/p90-extract-tsa29-strict-chain`;
+- created TSA29 branch `feature/tsa29-femic-strict-chain`;
+- linked parent issue `#250` with TSA29 instance issue
+  `UBC-FRESH/femic-tsa29-instance#15`;
+- recorded the P90 task breakdown in `ROADMAP.md`; and
+- locked the boundary: P90 moves only the TSA29 strict locked-chain
+  named-pipeline contract into the TSA29 instance package while leaving TSR
+  adjudication overlays, Patchworks variants, and instance catalogs to later
+  phases.
