@@ -2521,13 +2521,18 @@ and `femic instance mkrf-*` CLI commands.
         deprecated wrappers in FEMIC core.
   - [x] Keep FreshForge provider references as `mkrf.*`.
   - [x] Keep model-instance materialization out of P86.
-- [ ] P86.2 Move MKRF implementation behind the chosen package boundary
-  - [ ] Preserve current tests and command behavior during the move.
-  - [ ] Keep generic FEMIC package APIs instance-neutral.
-- [ ] P86.3 Update docs, tests, packaging, and FreshForge adapter commands
-  - [ ] Point the MKRF FreshForge adapter at the extracted implementation or
-        retained compatibility commands according to the P86 policy.
-  - [ ] Remove stale FEMIC-core MKRF ownership language.
+- [x] P86.2 Move MKRF implementation behind the chosen package boundary
+  - [x] Preserve current tests and command behavior during the move by
+        migrating MKRF-specific unit tests into the MKRF instance package.
+  - [x] Keep generic FEMIC package APIs instance-neutral by removing
+        `femic.pipeline.mkrf_*`, `femic.workflows.mkrf`, and
+        `femic instance mkrf-*` commands from FEMIC core.
+- [x] P86.3 Update docs, tests, packaging, and FreshForge adapter commands
+  - [x] Point the MKRF FreshForge adapter at `python -m mkrf_femic ...`
+        commands in the MKRF instance package.
+  - [x] Remove stale FEMIC-core MKRF ownership language from MKRF docs.
+  - [x] Verify parent packaging no longer includes the removed FEMIC MKRF
+        modules and still exposes only the generic `femic` FreshForge provider.
 
 ### Detailed Next Steps Notes
 
@@ -2540,10 +2545,10 @@ and `femic instance mkrf-*` CLI commands.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P86` / `#244` is active: move MKRF-specific pipeline and workflow
-    implementation out of FEMIC core and into the MKRF instance repository as an
-    installable `mkrf_femic` package. The paired MKRF issue is
-    `UBC-FRESH/femic-mkrf-instance#42`.
+  - `P86` / `#244` is active: MKRF-specific pipeline and workflow
+    implementation now lives in the MKRF instance repository as installable
+    package `mkrf_femic`; the remaining edge is PR/pointer closeout for the
+    paired MKRF issue `UBC-FRESH/femic-mkrf-instance#42`.
   - `P85` / `#241` is complete: FEMIC core owns the generic `femic`
     FreshForge provider, while the MKRF instance owns provider namespace
     `mkrf.*`.

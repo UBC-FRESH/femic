@@ -18794,3 +18794,22 @@
   model-instance materialization stays out of this phase; and
 - updated `ROADMAP.md` before implementation so the repo-hosted plan leads the
   code move.
+
+## 2026-07-01 - Implemented P86 MKRF package extraction
+
+- added an installable MKRF instance package, `mkrf_femic`, with both
+  `python -m mkrf_femic` and `mkrf-femic` command surfaces for the existing
+  MKRF workflow commands;
+- moved MKRF-specific pipeline/workflow implementation and migrated unit tests
+  into `external/femic-mkrf-instance`;
+- updated the MKRF FreshForge provider so `mkrf.*` nodes call
+  `python -m mkrf_femic ...` instead of removed parent
+  `python -m femic instance mkrf-*` commands;
+- removed `femic.pipeline.mkrf_*`, `femic.workflows.mkrf`, the parent
+  `femic instance mkrf-*` command blocks, and parent MKRF-specific tests from
+  FEMIC core; and
+- verified MKRF Ruff, pytest, Sphinx, FreshForge providers/validate/plan/dry-run,
+  package build, `twine check`, and wheel entry-point metadata, plus parent
+  Ruff, focused FreshForge tests, docs build, package build, `twine check`,
+  `mypy src/femic/freshforge.py`, `femic instance --help`, removed-module
+  searches, and parent wheel metadata.
