@@ -18813,3 +18813,15 @@
   Ruff, focused FreshForge tests, docs build, package build, `twine check`,
   `mypy src/femic/freshforge.py`, `femic instance --help`, removed-module
   searches, and parent wheel metadata.
+
+## 2026-07-01 - Opened P87 MKRF legacy XML builder extraction
+
+- opened FEMIC issue `#246` and MKRF issue
+  `UBC-FRESH/femic-mkrf-instance#44` for the remaining MKRF legacy ForestModel
+  XML builder boundary cleanup;
+- created parent branch `feature/p87-extract-mkrf-legacy-xml-builder` and MKRF
+  branch `feature/extract-legacy-xml-builder`;
+- recorded the parent instance-reference audit at
+  `planning/phase87_parent_instance_reference_audit.md`; and
+- updated `ROADMAP.md` so P86 is marked complete and P87 governs the active
+  implementation edge before code migration starts.
