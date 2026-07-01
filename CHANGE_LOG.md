@@ -18905,3 +18905,23 @@
   data injection; and
 - replaced K3Z-specific target-strata, plot-limit, and VDYP policy branches in
   core with config-driven generic options.
+
+## 2026-07-01 - Verified P89 focused checks
+
+- K3Z instance checks passed:
+  - `python -m pip install -e .[dev]`;
+  - `python -m ruff check src tests`;
+  - `python -m pytest`;
+  - `sphinx-build -b html docs docs/_build/html -W`; and
+  - `python -m build` plus `twine check dist/*`.
+- Parent FEMIC checks passed:
+  - `ruff check src tests`;
+  - focused pytest for FMG adapters, pipeline helpers, forced VDYP policy, and
+    instance-boundary guard;
+  - mypy on the new FMG/profile seam modules;
+  - `sphinx-build -b html docs _build/html -W`; and
+  - `python -m build` plus `twine check dist/*`.
+- A full parent `pytest` run was attempted and remains red outside the P89
+  focused surface, with failures in pre-existing/environment-sensitive Arbutus,
+  BCDC, TSA29 strict-checkpoint, ws3, and broader recipe lanes. Those failures
+  are not treated as P89 blockers.

@@ -2642,8 +2642,8 @@ defaults, and VDYP fit-policy decisions out of `src/femic`.
   - [x] Replace K3Z-specific target-strata, plot-limit, and VDYP policy branches
         with config-driven generic options.
 - [ ] P89.4 Verify and close out
-  - [ ] Run focused K3Z package tests and docs checks.
-  - [ ] Run focused parent tests, lint, Sphinx, build, and package checks.
+  - [x] Run focused K3Z package tests and docs checks.
+  - [x] Run focused parent tests, lint, Sphinx, build, and package checks.
   - [ ] Merge K3Z first, update parent submodule pointer, then merge parent.
 
 ## Phase 90: Extract TSA29 Strict Locked-Chain Workflow From FEMIC Core
