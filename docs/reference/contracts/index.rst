@@ -30,5 +30,6 @@ Contract Pages
    patchworks-model-semantics
    repo-runtime-invariants
    instance-and-data-roots
+   instance-extension-boundaries
    stage-boundaries-and-canonical-artifacts
    recovery-and-external-runtime-boundaries

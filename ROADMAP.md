@@ -2579,6 +2579,100 @@ merged to MKRF `main`, the parent submodule pointer was reconciled to merged
 MKRF commit `c769e4c`, and parent PR `#247` passed package and docs checks
 before merge.
 
+## Phase 88: Define Instance Extension Boundaries for Arms-Length Example Repos
+
+Parent issue: #248
+
+Branch: `feature/p88-instance-extension-boundaries`
+
+Status: complete
+
+Goal: define and begin enforcing the boundary that FEMIC core must not depend
+on named example instances linked under `external/`. FEMIC core owns generic
+engines, schemas, runners, validators, registry loading, and CLI plumbing.
+Instance repositories own instance-specific data, policies, registries,
+workflows, adapters, and scientific interpretation.
+
+- [x] P88.1 Record lifecycle and roadmap surfaces
+  - [x] Open parent FEMIC issue `#248`.
+  - [x] Open follow-on phase issues `#249` through `#254`.
+  - [x] Update `ROADMAP.md` and `CHANGE_LOG.md` with the P88-P94 sequence.
+- [x] P88.2 Document the boundary contract
+  - [x] Add an instance-extension boundary contract to the technical docs.
+  - [x] State that example submodules are deployments, not core package
+        dependencies.
+- [x] P88.3 Add a source audit guard
+  - [x] Capture the current named-instance reference baseline from `src/femic`.
+  - [x] Add a regression test that rejects new or increased named-instance
+        references unless deliberately allowlisted during migration.
+- [x] P88.4 Verify and close out P88
+  - [x] Run focused tests for the new source audit guard.
+  - [x] Run Sphinx warning-clean docs build.
+  - [x] Post progress comments on issue `#248`.
+
+## Phase 89: Extract K3Z Bindings and Pipeline Policies From FEMIC Core
+
+Parent issue: #249
+
+Status: planned
+
+Goal: create a K3Z-owned package/config surface and move K3Z-specific FMG
+adapter bindings, source filenames, run defaults, plot limits, target-stratum
+defaults, and VDYP fit-policy decisions out of `src/femic`.
+
+## Phase 90: Extract TSA29 Strict Locked-Chain Workflow From FEMIC Core
+
+Parent issue: #250
+
+Status: planned
+
+Goal: define a generic locked-chain validation interface, then move TSA29
+locked-chain row ordering, ledger interpretation, checkpoint restrictions,
+strict-chain preflight, and strict-sequence execution into a TSA29-owned
+package or adapter.
+
+## Phase 91: Split TSR Engine From TSA29 Adjudication Overlays
+
+Parent issue: #251
+
+Status: planned
+
+Goal: keep generic TSR discovery, extraction, recipe execution, schemas, and
+report primitives in FEMIC core while moving TSA29 interpretation text, no-op
+decisions, gap overrides, and comparison-report special cases into
+instance-owned overlays.
+
+## Phase 92: Externalize Patchworks Variant Registries
+
+Parent issue: #252
+
+Status: planned
+
+Goal: extend Patchworks variant loading so instance packages and explicit
+registry files can provide variants, then move K3Z and MKRF variant definitions
+out of FEMIC core packaged resources.
+
+## Phase 93: Remove Built-In Example Instance Catalog From FEMIC Core
+
+Parent issue: #253
+
+Status: planned
+
+Goal: replace the packaged K3Z/TSA29 built-in instance catalog with external
+catalog discovery or explicit user catalog files. FEMIC core should not ship
+named example instance metadata by default.
+
+## Phase 94: Complete Core Decoupling From Example Instances
+
+Parent issue: #254
+
+Status: planned
+
+Goal: scrub remaining named-instance references from `src/femic`, packaged
+resources, generic templates, and generic CLI help. Close the umbrella only
+after tests prove FEMIC core imports, builds, and passes generic checks without
+example submodules present.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2591,6 +2685,13 @@ before merge.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P89` / `#249` is the next boundary-cleanup lane: create a K3Z-owned
+    package/config surface and move K3Z-specific FMG bindings and pipeline
+    policies out of `src/femic`.
+  - `P88` / `#248` is complete locally: the arms-length extension boundary is
+    documented, P89-P94 issues are open, and a source guard now prevents new
+    named-instance references from entering `src/femic` without an explicit
+    roadmap-linked allowlist update.
   - `P87` / `#246` is complete: the remaining MKRF-specific legacy ForestModel
     XML builder moved from parent `femic.fmg` into the MKRF instance package
     under `mkrf_femic.legacy_xml`; MKRF PR
