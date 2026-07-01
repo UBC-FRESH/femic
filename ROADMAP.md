@@ -2681,8 +2681,9 @@ package or adapter.
   - [x] Run focused parent checks for named pipelines, boundary guard, typing,
         docs, and package artifacts.
   - [x] Run focused TSA29 package checks.
-  - [ ] Merge TSA29 first, update the parent submodule pointer, then merge
-        parent P90.
+  - [x] Merge TSA29 first and update the parent submodule pointer to the
+        merged TSA29 main commit.
+  - [ ] Merge parent P90 after PR checks pass.
 
 ## Phase 91: Split TSR Engine From TSA29 Adjudication Overlays
 

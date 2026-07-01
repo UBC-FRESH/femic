@@ -18975,3 +18975,11 @@
   - `python -m build` plus `twine check dist/*`.
 - Editable entry-point discovery resolved
   `tsa29_locked_chain_strict = tsa29_femic.locked_chain:provider_factory`.
+
+## 2026-07-01 - Reconciled P90 TSA29 submodule pointer
+
+- merged TSA29 PR `UBC-FRESH/femic-tsa29-instance#16`;
+- updated the parent FEMIC submodule pointer to TSA29 main commit
+  `2817710`; and
+- left parent P90 merge as the only remaining P90.4 closeout item pending
+  parent PR checks.
