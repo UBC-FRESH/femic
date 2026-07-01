@@ -2663,20 +2663,20 @@ package or adapter.
   - [x] Create TSA29 branch `feature/tsa29-femic-strict-chain`.
   - [x] Link parent issue `#250` and TSA29 issue
         `UBC-FRESH/femic-tsa29-instance#15`.
-  - [ ] Record matching starting notes in parent and TSA29 changelogs.
-- [ ] P90.2 Add generic named-pipeline contract-handler seam
-  - [ ] Define the contract handler protocol and registration/discovery API.
-  - [ ] Replace TSA29-specific branches in `femic.named_pipelines` with
+  - [x] Record matching starting notes in parent and TSA29 changelogs.
+- [x] P90.2 Add generic named-pipeline contract-handler seam
+  - [x] Define the contract handler protocol and registration/discovery API.
+  - [x] Replace TSA29-specific branches in `femic.named_pipelines` with
         handler dispatch and clear missing-handler errors.
-  - [ ] Add fixture-handler tests for explicit registration, discovery,
+  - [x] Add fixture-handler tests for explicit registration, discovery,
         duplicate handling, and generic dispatch.
-- [ ] P90.3 Move TSA29 strict-chain contract into instance ownership
-  - [ ] Add installable `tsa29_femic` package in the TSA29 instance repo.
-  - [ ] Register `tsa29_locked_chain_strict` through
+- [x] P90.3 Move TSA29 strict-chain contract into instance ownership
+  - [x] Add installable `tsa29_femic` package in the TSA29 instance repo.
+  - [x] Register `tsa29_locked_chain_strict` through
         `femic.named_pipeline_contracts`.
-  - [ ] Move TSA29 row-order, ledger, preflight, GLB materialization, strict
+  - [x] Move TSA29 row-order, ledger, preflight, GLB materialization, strict
         sequence, and ledger-validation logic into `tsa29_femic`.
-  - [ ] Migrate TSA29-specific strict-chain tests into the TSA29 package.
+  - [x] Migrate TSA29-specific strict-chain tests into the TSA29 package.
 - [ ] P90.4 Verify and close out
   - [ ] Run focused parent checks for named pipelines, boundary guard, typing,
         docs, and package artifacts.

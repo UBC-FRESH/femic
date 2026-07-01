@@ -116,6 +116,11 @@ Subcommands
 ``pipelines run`` resolves one machine-readable runbook, loads the built-in +
 optional user + optional instance-local named-pipeline registries, and runs
 the first proof-oriented named pipeline surface.
+Validation contracts are extension-owned: FEMIC core dispatches contract kinds
+through installed ``femic.named_pipeline_contracts`` handlers rather than
+hardcoding example-instance semantics. For example, TSA29's
+``tsa29_locked_chain_strict`` contract is available only when the TSA29
+instance package is installed in the active environment.
 
 Current proof-runner scope:
 

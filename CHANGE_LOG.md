@@ -18945,3 +18945,15 @@
   named-pipeline contract into the TSA29 instance package while leaving TSR
   adjudication overlays, Patchworks variants, and instance catalogs to later
   phases.
+
+## 2026-07-01 - Implemented P90 named-pipeline contract handler seam
+
+- added `femic.named_pipelines.NamedPipelineContractHandler` with explicit
+  registration and `femic.named_pipeline_contracts` entry-point discovery;
+- replaced the embedded TSA29 strict-chain branches in `run_named_pipeline_runbook`
+  with contract-handler dispatch and clear missing-handler errors;
+- moved TSA29 strict-chain behavior into the TSA29 instance package
+  `tsa29_femic`; and
+- updated focused parent tests so FEMIC core covers generic contract-handler
+  registration, discovery, duplicate handling, pre-default dispatch, and
+  post-default validation without carrying TSA29 contract implementation tests.
