@@ -18893,3 +18893,15 @@
 - locked the boundary: P89 moves K3Z FMG auxiliary support and pipeline policy
   defaults into a K3Z-owned package/config surface while leaving Patchworks
   variant registry extraction to P92.
+
+## 2026-07-01 - Implemented P89 K3Z FMG auxiliary and policy boundary
+
+- added an installable `k3z_femic` package in `external/femic-k3z-instance`
+  with a `femic.fmg_bundle_auxiliary` entry point;
+- moved K3Z FMG auxiliary source-file loading into the K3Z instance package;
+- added K3Z-owned target-strata, TIPSY-vs-VDYP plot-limit, and VDYP
+  curve-selection policy settings to `config/run_profile.k3z.yaml`;
+- added generic FEMIC FMG auxiliary-provider discovery and external auxiliary
+  data injection; and
+- replaced K3Z-specific target-strata, plot-limit, and VDYP policy branches in
+  core with config-driven generic options.

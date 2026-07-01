@@ -25,11 +25,12 @@ def tipsy_vdyp_plot_path(au: int, tsa_code: str, root: Path = Path("plots")) -> 
 def tipsy_vdyp_ylim_for_tsa(
     tsa_code: str,
     default: tuple[float, float] = (0.0, 600.0),
+    configured: tuple[float, float] | None = None,
 ) -> tuple[float, float]:
     """Return legacy TIPSY-vs-VDYP plot y-limits for a TSA/custom unit."""
-    tsa = str(tsa_code).strip().lower()
-    if tsa == "k3z":
-        return (0.0, 2000.0)
+    _ = tsa_code
+    if configured is not None:
+        return configured
     return default
 
 

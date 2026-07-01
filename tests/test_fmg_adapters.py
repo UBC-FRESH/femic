@@ -6,11 +6,14 @@ import pandas as pd
 import pytest
 
 from femic.fmg.adapters import (
+    BundleAuxiliaryData,
+    BundleAuxiliaryRequest,
+    discover_bundle_auxiliary_providers,
     build_bundle_model_context,
     build_bundle_model_context_from_tables,
     normalize_tsa_code,
 )
-from femic.fmg.core import CurvePoint
+from femic.fmg.core import CurvePoint, QmdSupportDefinition
 
 
 def _write_bundle_tables(bundle_dir: Path) -> None:
@@ -166,236 +169,153 @@ def test_build_bundle_model_context_thins_unmanaged_curves_to_decadal_knots() ->
     ]
 
 
-def test_build_bundle_model_context_loads_managed_stems_fallback_from_btc_input(
+def test_build_bundle_model_context_accepts_auxiliary_qmd_support(
     tmp_path: Path,
 ) -> None:
-    bundle_dir = tmp_path / "data" / "model_input_bundle"
-    bundle_dir.mkdir(parents=True, exist_ok=True)
     au_table = pd.DataFrame(
         [
             {
-                "au_id": 985502001,
-                "tsa": "k3z",
-                "stratum_code": "CWHvm_FDC+HW",
+                "au_id": 2001,
+                "tsa": "demo",
+                "stratum_code": "CWH_HW",
                 "si_level": "M",
-                "treated_curve_id": 985522001,
-                "untreated_curve_id": 985502001,
-                "source_local_au_id": 2001,
-                "source_managed_local_au_id": 22001,
-                "source_unmanaged_local_au_id": 2001,
+                "treated_curve_id": 22001,
+                "untreated_curve_id": 2001,
             }
         ]
     )
     curve_table = pd.DataFrame(
         [
-            {"curve_id": 985502001, "curve_type": "untreated"},
-            {"curve_id": 985522001, "curve_type": "treated"},
+            {"curve_id": 2001, "curve_type": "untreated"},
+            {"curve_id": 22001, "curve_type": "treated"},
         ]
     )
     curve_points = pd.DataFrame(
         [
-            {"curve_id": 985502001, "x": 0, "y": 0.0},
-            {"curve_id": 985502001, "x": 10, "y": 30.0},
-            {"curve_id": 985522001, "x": 0, "y": 0.0},
-            {"curve_id": 985522001, "x": 10, "y": 36.0},
+            {"curve_id": 2001, "x": 0, "y": 0.0},
+            {"curve_id": 2001, "x": 10, "y": 30.0},
+            {"curve_id": 22001, "x": 0, "y": 0.0},
+            {"curve_id": 22001, "x": 10, "y": 36.0},
         ]
     )
-    au_table.to_csv(bundle_dir / "au_table.csv", index=False)
-    curve_table.to_csv(bundle_dir / "curve_table.csv", index=False)
-    curve_points.to_csv(bundle_dir / "curve_points_table.csv", index=False)
-    pd.DataFrame(
-        [
-            {"AU": 22001, "Age": 0, "Yield": 0.0, "Height": 0.0, "TPH": float("nan")},
-            {"AU": 22001, "Age": 10, "Yield": 36.0, "Height": 4.0, "TPH": float("nan")},
-        ]
-    ).to_csv(tmp_path / "data" / "tipsy_curves_tsak3z.csv", index=False)
-    pd.DataFrame(
-        [
-            {
-                "feature_id": 22001,
-                "planted_density1": 630,
-                "planted_density2": 180,
-                "planted_density3": 90,
-                "natural_density1": 0,
-            }
-        ]
-    ).to_csv(tmp_path / "data" / "03_input-tsak3z.csv", index=False)
 
     context = build_bundle_model_context_from_tables(
         au_table=au_table,
         curve_table=curve_table,
         curve_points_table=curve_points,
-        tsa_list=["k3z"],
-        bundle_dir=bundle_dir,
+        tsa_list=["demo"],
+        bundle_dir=tmp_path,
+        auxiliary_data=BundleAuxiliaryData(
+            qmd_support_by_au={
+                2001: QmdSupportDefinition(
+                    site_index=27.5,
+                    unmanaged_stems_per_ha=450.0,
+                    managed_stems_per_ha=900.0,
+                    managed_height_points=(),
+                    managed_tph_points=(),
+                )
+            }
+        ),
     )
 
-    support = context.qmd_support_by_au[985502001]
+    support = context.qmd_support_by_au[2001]
+    assert support.site_index == pytest.approx(27.5)
+    assert support.unmanaged_stems_per_ha == pytest.approx(450.0)
     assert support.managed_stems_per_ha == pytest.approx(900.0)
-    assert support.managed_tph_points == ()
 
 
-def test_build_bundle_model_context_loads_log_grade_indicator_curves_from_tipsy(
+def test_build_bundle_model_context_uses_auxiliary_provider(
     tmp_path: Path,
 ) -> None:
-    bundle_dir = tmp_path / "data" / "model_input_bundle"
-    bundle_dir.mkdir(parents=True, exist_ok=True)
     au_table = pd.DataFrame(
         [
             {
-                "au_id": 985502001,
-                "tsa": "k3z",
-                "stratum_code": "CWHvm_FDC+HW",
+                "au_id": 2001,
+                "tsa": "demo",
+                "stratum_code": "CWH_HW",
                 "si_level": "M",
-                "treated_curve_id": 985522001,
-                "untreated_curve_id": 985502001,
-                "source_local_au_id": 2001,
-                "source_managed_local_au_id": 22001,
-                "source_unmanaged_local_au_id": 2001,
+                "treated_curve_id": 22001,
+                "untreated_curve_id": 2001,
             }
         ]
     )
     curve_table = pd.DataFrame(
         [
-            {"curve_id": 985502001, "curve_type": "untreated"},
-            {"curve_id": 985522001, "curve_type": "treated"},
+            {"curve_id": 2001, "curve_type": "untreated"},
+            {"curve_id": 22001, "curve_type": "treated"},
         ]
     )
     curve_points = pd.DataFrame(
         [
-            {"curve_id": 985502001, "x": 0, "y": 0.0},
-            {"curve_id": 985502001, "x": 10, "y": 30.0},
-            {"curve_id": 985502001, "x": 20, "y": 80.0},
-            {"curve_id": 985522001, "x": 0, "y": 0.0},
-            {"curve_id": 985522001, "x": 10, "y": 36.0},
-            {"curve_id": 985522001, "x": 20, "y": 90.0},
+            {"curve_id": 2001, "x": 0, "y": 0.0},
+            {"curve_id": 2001, "x": 10, "y": 30.0},
+            {"curve_id": 22001, "x": 0, "y": 0.0},
+            {"curve_id": 22001, "x": 10, "y": 36.0},
         ]
     )
-    au_table.to_csv(bundle_dir / "au_table.csv", index=False)
-    curve_table.to_csv(bundle_dir / "curve_table.csv", index=False)
-    curve_points.to_csv(bundle_dir / "curve_points_table.csv", index=False)
-    pd.DataFrame(
-        [
-            {
-                "AU": 22001,
-                "Age": 0,
-                "Yield": 0.0,
-                "Height": 0.0,
-                "TPH": 0.0,
-                "Logs_Grade_D": 0.0,
-                "Logs_Grade_All": 0.0,
-            },
-            {
-                "AU": 22001,
-                "Age": 10,
-                "Yield": 36.0,
-                "Height": 4.0,
-                "TPH": 900.0,
-                "Logs_Grade_D": 7.0,
-                "Logs_Grade_All": 14.0,
-            },
-            {
-                "AU": 22001,
-                "Age": 20,
-                "Yield": 90.0,
-                "Height": 9.0,
-                "TPH": 700.0,
-                "Logs_Grade_D": 18.0,
-                "Logs_Grade_All": 30.0,
-            },
-        ]
-    ).to_csv(tmp_path / "data" / "tipsy_curves_tsak3z.csv", index=False)
+
+    class DemoProvider:
+        provider_id = "demo"
+
+        def build_bundle_auxiliary(
+            self, request: BundleAuxiliaryRequest
+        ) -> BundleAuxiliaryData:
+            assert request.tsa_list == ("demo",)
+            return BundleAuxiliaryData(
+                managed_indicator_curves_by_au={
+                    2001: {
+                        "demo_curve": (
+                            CurvePoint(x=0.0, y=0.0),
+                            CurvePoint(x=10.0, y=12.0),
+                        )
+                    }
+                }
+            )
 
     context = build_bundle_model_context_from_tables(
         au_table=au_table,
         curve_table=curve_table,
         curve_points_table=curve_points,
-        tsa_list=["k3z"],
-        bundle_dir=bundle_dir,
+        tsa_list=["demo"],
+        bundle_dir=tmp_path,
+        auxiliary_providers=[DemoProvider()],
     )
 
-    indicator_curves = context.managed_indicator_curves_by_au[985502001]
-    assert indicator_curves["Logs_Grade_D"] == (
-        CurvePoint(x=0.0, y=0.0),
-        CurvePoint(x=10.0, y=7.0),
-        CurvePoint(x=20.0, y=18.0),
-    )
-    assert indicator_curves["Logs_Grade_All"] == (
-        CurvePoint(x=0.0, y=0.0),
-        CurvePoint(x=10.0, y=14.0),
-        CurvePoint(x=20.0, y=30.0),
-    )
-
-
-def test_build_bundle_model_context_uses_deterministic_managed_local_au_crosswalk(
-    tmp_path: Path,
-) -> None:
-    bundle_dir = tmp_path / "data" / "model_input_bundle"
-    bundle_dir.mkdir(parents=True, exist_ok=True)
-    au_table = pd.DataFrame(
-        [
-            {
-                "au_id": 985502001,
-                "tsa": "k3z",
-                "stratum_code": "CWHvm_FDC+HW",
-                "si_level": "M",
-                "treated_curve_id": 985522001,
-                "untreated_curve_id": 985502001,
-                "source_local_au_id": 2001,
-                "source_managed_local_au_id": 22001,
-                "source_unmanaged_local_au_id": 2001,
-            }
-        ]
-    )
-    curve_table = pd.DataFrame(
-        [
-            {"curve_id": 985502001, "curve_type": "untreated"},
-            {"curve_id": 985522001, "curve_type": "treated"},
-        ]
-    )
-    curve_points = pd.DataFrame(
-        [
-            {"curve_id": 985502001, "x": 0, "y": 0.0},
-            {"curve_id": 985502001, "x": 10, "y": 30.0},
-            {"curve_id": 985522001, "x": 0, "y": 0.0},
-            {"curve_id": 985522001, "x": 10, "y": 999.0},
-        ]
-    )
-    au_table.to_csv(bundle_dir / "au_table.csv", index=False)
-    curve_table.to_csv(bundle_dir / "curve_table.csv", index=False)
-    curve_points.to_csv(bundle_dir / "curve_points_table.csv", index=False)
-    pd.DataFrame(
-        [
-            {
-                "AU": 22001,
-                "Age": 0,
-                "Yield": 0.0,
-                "Height": 0.0,
-                "TPH": 0.0,
-                "Logs_Grade_J": 0.0,
-            },
-            {
-                "AU": 22001,
-                "Age": 10,
-                "Yield": 36.0,
-                "Height": 4.0,
-                "TPH": 900.0,
-                "Logs_Grade_J": 12.0,
-            },
-        ]
-    ).to_csv(tmp_path / "data" / "tipsy_curves_tsak3z.csv", index=False)
-
-    context = build_bundle_model_context_from_tables(
-        au_table=au_table,
-        curve_table=curve_table,
-        curve_points_table=curve_points,
-        tsa_list=["k3z"],
-        bundle_dir=bundle_dir,
-    )
-
-    assert context.managed_indicator_curves_by_au[985502001]["Logs_Grade_J"] == (
+    assert context.managed_indicator_curves_by_au[2001]["demo_curve"] == (
         CurvePoint(x=0.0, y=0.0),
         CurvePoint(x=10.0, y=12.0),
     )
+
+
+def test_discover_bundle_auxiliary_providers(monkeypatch: pytest.MonkeyPatch) -> None:
+    class DemoProvider:
+        provider_id = "demo"
+
+        def build_bundle_auxiliary(
+            self, request: BundleAuxiliaryRequest
+        ) -> BundleAuxiliaryData:
+            _ = request
+            return BundleAuxiliaryData()
+
+    class DemoEntryPoint:
+        name = "demo"
+
+        def load(self) -> object:
+            return DemoProvider
+
+    class DemoEntryPoints:
+        def select(self, *, group: str) -> tuple[DemoEntryPoint, ...]:
+            assert group == "femic.fmg_bundle_auxiliary"
+            return (DemoEntryPoint(),)
+
+    monkeypatch.setattr(
+        "femic.fmg.adapters.metadata.entry_points",
+        lambda: DemoEntryPoints(),
+    )
+
+    providers = discover_bundle_auxiliary_providers()
+
+    assert [provider.provider_id for provider in providers] == ["demo"]
 
 
 def test_build_bundle_model_context_requires_tsa(tmp_path: Path) -> None:

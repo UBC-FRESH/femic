@@ -197,7 +197,7 @@ def test_tsa_target_nstrata_lookup() -> None:
     assert target_nstrata_for("8") == 9
     assert target_nstrata_for("16") == 13
     assert target_nstrata_for("29") == DEFAULT_TARGET_NSTRATA
-    assert target_nstrata_for("k3z") == 4
+    assert target_nstrata_for("custom") == DEFAULT_TARGET_NSTRATA
     assert MIN_STANDCOUNT == 1000
 
 
@@ -755,13 +755,13 @@ def test_mean_thlb_for_geometry_returns_default_when_no_valid_cells() -> None:
 def test_plot_path_helpers() -> None:
     pdf_path, png_path = strata_plot_paths("8")
     tipsy_path = tipsy_vdyp_plot_path(23005, "08")
-    k3z_ylim = tipsy_vdyp_ylim_for_tsa("k3z")
+    configured_ylim = tipsy_vdyp_ylim_for_tsa("custom", configured=(0.0, 2000.0))
     default_ylim = tipsy_vdyp_ylim_for_tsa("08")
 
     assert pdf_path == Path("plots/strata-tsa08.pdf")
     assert png_path == Path("plots/strata-tsa08.png")
     assert tipsy_path == Path("plots/tipsy_vdyp_tsa08-23005.png")
-    assert k3z_ylim == (0.0, 2000.0)
+    assert configured_ylim == (0.0, 2000.0)
     assert default_ylim == (0.0, 600.0)
 
 
@@ -1121,6 +1121,12 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
                 "    species_combo_count: 2",
                 "    include_tm_species2_for_single: false",
                 "    top_area_coverage: 0.95",
+                "    target_nstrata: 4",
+                "plots:",
+                "  tipsy_vdyp_ylim: [0.0, 2000.0]",
+                "vdyp_curve_selection:",
+                "  force_tail_blend: true",
+                "  enable_late_gate_rescue: false",
                 "source_paths:",
                 "  vri_rel_candidates:",
                 "    - bc/vri/2025/VEG_COMP_LYR_R1_POLY_2025.gdb",
@@ -1169,6 +1175,8 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
     assert profile.strat_species_combo_count == 2
     assert profile.strat_include_tm_species2_for_single is False
     assert profile.strat_top_area_coverage == pytest.approx(0.95)
+    assert profile.strat_target_nstrata == 4
+    assert profile.tipsy_vdyp_ylim == (0.0, 2000.0)
     assert profile.vri_rel_candidates == [
         Path("bc/vri/2025/VEG_COMP_LYR_R1_POLY_2025.gdb"),
         Path("bc/vri/2024/VEG_COMP_LYR_R1_POLY_2024.gdb"),
@@ -1181,6 +1189,8 @@ def test_load_pipeline_run_profile_from_yaml(tmp_path: Path) -> None:
     assert profile.vdyp_two_pass_rebin is True
     assert profile.vdyp_min_stands_per_si_bin == 10
     assert profile.vdyp_toe_shift_years == pytest.approx(15.0)
+    assert profile.vdyp_force_tail_blend is True
+    assert profile.vdyp_enable_late_gate_rescue is False
     assert profile.managed_curve_mode == "vdyp_transform"
     assert profile.managed_curve_x_scale == pytest.approx(0.8)
     assert profile.managed_curve_y_scale == pytest.approx(1.2)
@@ -1218,10 +1228,14 @@ def test_resolve_effective_run_options_merges_profile_and_cli() -> None:
     assert resolved.strat_species_combo_count is None
     assert resolved.strat_include_tm_species2_for_single is None
     assert resolved.strat_top_area_coverage is None
+    assert resolved.strat_target_nstrata is None
+    assert resolved.tipsy_vdyp_ylim is None
     assert resolved.vdyp_sampling_mode is None
     assert resolved.vdyp_two_pass_rebin is None
     assert resolved.vdyp_min_stands_per_si_bin is None
     assert resolved.vdyp_toe_shift_years is None
+    assert resolved.vdyp_force_tail_blend is None
+    assert resolved.vdyp_enable_late_gate_rescue is None
     assert resolved.managed_curve_mode is None
     assert resolved.managed_curve_x_scale is None
     assert resolved.managed_curve_y_scale is None
@@ -1296,10 +1310,14 @@ def test_build_legacy_execution_plan_resolves_env_and_paths(tmp_path: Path) -> N
         strat_species_combo_count=2,
         strat_include_tm_species2_for_single=False,
         strat_top_area_coverage=0.95,
+        strat_target_nstrata=4,
+        tipsy_vdyp_ylim=(0.0, 2000.0),
         vdyp_sampling_mode="all",
         vdyp_two_pass_rebin=True,
         vdyp_min_stands_per_si_bin=10,
         vdyp_toe_shift_years=15.0,
+        vdyp_force_tail_blend=True,
+        vdyp_enable_late_gate_rescue=False,
         managed_curve_mode="vdyp_transform",
         managed_curve_x_scale=0.8,
         managed_curve_y_scale=1.2,
@@ -1346,10 +1364,14 @@ def test_build_legacy_execution_plan_resolves_env_and_paths(tmp_path: Path) -> N
     assert plan.env["FEMIC_STRAT_SPECIES_COMBO_COUNT"] == "2"
     assert plan.env["FEMIC_STRAT_INCLUDE_TM_SPECIES2_FOR_SINGLE"] == "0"
     assert plan.env["FEMIC_STRAT_TOP_AREA_COVERAGE"] == "0.95"
+    assert plan.env["FEMIC_STRAT_TARGET_NSTRATA"] == "4"
+    assert plan.env["FEMIC_TIPSY_VDYP_YLIM"] == "0.0,2000.0"
     assert plan.env["FEMIC_VDYP_SAMPLING_MODE"] == "all"
     assert plan.env["FEMIC_VDYP_TWO_PASS_REBIN"] == "1"
     assert plan.env["FEMIC_VDYP_MIN_STANDS_PER_SI_BIN"] == "10"
     assert plan.env["FEMIC_VDYP_TOE_SHIFT_YEARS"] == "15.0"
+    assert plan.env["FEMIC_VDYP_FORCE_TAIL_BLEND"] == "1"
+    assert plan.env["FEMIC_VDYP_ENABLE_LATE_GATE_RESCUE"] == "0"
     assert plan.env["FEMIC_MANAGED_CURVE_MODE"] == "vdyp_transform"
     assert plan.env["FEMIC_MANAGED_CURVE_X_SCALE"] == "0.8"
     assert plan.env["FEMIC_MANAGED_CURVE_Y_SCALE"] == "1.2"

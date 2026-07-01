@@ -14,8 +14,6 @@ TARGET_NSTRATA_BY_TSA: dict[str, int] = {
     "24": 8,
     "40": 7,
     "41": 10,
-    # Small custom CFA test unit (North Island Community Forest)
-    "k3z": 4,
 }
 DEFAULT_TARGET_NSTRATA = 10
 MIN_STANDCOUNT = 1000
@@ -26,7 +24,7 @@ def normalize_tsa_code(tsa_code: Any) -> str:
 
     Numeric values are normalized to zero-padded width-2 strings (for example
     ``8`` -> ``"08"``). Non-numeric tokens are stripped and lower-cased so
-    named custom-boundary codes (for example ``K3Z``) remain stable.
+    named custom-boundary codes remain stable.
     """
     text = str(tsa_code).strip()
     if text.isdigit():
@@ -40,7 +38,7 @@ def target_nstrata_for(tsa_code: str) -> int:
     Unknown TSA codes fall back to a conservative default so ad-hoc TSA runs
     (for example, pipeline smoke tests on new TSA codes) do not hard-fail.
     """
-    tsa = str(tsa_code).zfill(2)
+    tsa = normalize_tsa_code(tsa_code)
     return TARGET_NSTRATA_BY_TSA.get(tsa, DEFAULT_TARGET_NSTRATA)
 
 
@@ -127,9 +125,9 @@ def build_strata_summary(
     strata_df["coverage"] = strata_gb2.totalarea_p.sum()
     strata_df["crown_closure"] = strata_gb2.CROWN_CLOSURE.median()
     filtered = strata_df[strata_df.stand_count >= min_standcount]
-    # Small custom-boundary runs (for example K3Z) can have far fewer stands per
-    # stratum than provincial TSA runs; retain top strata instead of producing an
-    # empty/NaN summary table.
+    # Small custom-boundary runs can have far fewer stands per stratum than
+    # provincial TSA runs; retain top strata instead of producing an empty/NaN
+    # summary table.
     if filtered.empty and not strata_df.empty:
         filtered = strata_df.copy()
     if target_coverage is not None and not filtered.empty:

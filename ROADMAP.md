@@ -2632,14 +2632,14 @@ defaults, and VDYP fit-policy decisions out of `src/femic`.
   - [x] Create parent branch `feature/p89-extract-k3z-bindings`.
   - [x] Create K3Z branch `feature/k3z-femic-package-policies`.
   - [x] Update `ROADMAP.md` and `CHANGE_LOG.md` before implementation.
-- [ ] P89.2 Add K3Z-owned package and policy surfaces
-  - [ ] Add installable `k3z_femic` package in the K3Z instance repo.
-  - [ ] Move K3Z FMG auxiliary support loaders into `k3z_femic`.
-  - [ ] Add K3Z-owned target-strata, plot-limit, and VDYP selection-policy config.
-- [ ] P89.3 Add generic FEMIC extension seams
-  - [ ] Let FMG context construction accept external auxiliary support data.
-  - [ ] Add generic FMG auxiliary-provider discovery.
-  - [ ] Replace K3Z-specific target-strata, plot-limit, and VDYP policy branches
+- [x] P89.2 Add K3Z-owned package and policy surfaces
+  - [x] Add installable `k3z_femic` package in the K3Z instance repo.
+  - [x] Move K3Z FMG auxiliary support loaders into `k3z_femic`.
+  - [x] Add K3Z-owned target-strata, plot-limit, and VDYP selection-policy config.
+- [x] P89.3 Add generic FEMIC extension seams
+  - [x] Let FMG context construction accept external auxiliary support data.
+  - [x] Add generic FMG auxiliary-provider discovery.
+  - [x] Replace K3Z-specific target-strata, plot-limit, and VDYP policy branches
         with config-driven generic options.
 - [ ] P89.4 Verify and close out
   - [ ] Run focused K3Z package tests and docs checks.

@@ -23,11 +23,7 @@ ALLOWED_INSTANCE_REFERENCE_COUNTS = {
     "src/femic/named_pipelines.py": {"tsa29": 21},
     "src/femic/patchworks_runtime.py": {"k3z": 2},
     "src/femic/cli/main.py": {"k3z": 3, "tsa29": 2},
-    "src/femic/fmg/adapters.py": {"k3z": 10},
-    "src/femic/pipeline/plots.py": {"k3z": 1},
-    "src/femic/pipeline/tsa.py": {"k3z": 3},
     "src/femic/pipeline/vdyp_overrides.py": {"tsa29": 1},
-    "src/femic/pipeline/vdyp_stage.py": {"k3z": 8},
     "src/femic/tsr_catalog/recipes.py": {
         "tsa29": 61,
         "tsa_29": 1,

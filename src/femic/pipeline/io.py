@@ -100,10 +100,14 @@ class PipelineRunConfig:
     strat_species_combo_count: int | None = None
     strat_include_tm_species2_for_single: bool | None = None
     strat_top_area_coverage: float | None = None
+    strat_target_nstrata: int | None = None
+    tipsy_vdyp_ylim: tuple[float, float] | None = None
     vdyp_sampling_mode: str | int | None = None
     vdyp_two_pass_rebin: bool | None = None
     vdyp_min_stands_per_si_bin: int | None = None
     vdyp_toe_shift_years: float | None = None
+    vdyp_force_tail_blend: bool | None = None
+    vdyp_enable_late_gate_rescue: bool | None = None
     managed_curve_mode: str | None = None
     managed_curve_x_scale: float | None = None
     managed_curve_y_scale: float | None = None
@@ -135,10 +139,14 @@ class PipelineRunProfile:
     strat_species_combo_count: int | None = None
     strat_include_tm_species2_for_single: bool | None = None
     strat_top_area_coverage: float | None = None
+    strat_target_nstrata: int | None = None
+    tipsy_vdyp_ylim: tuple[float, float] | None = None
     vdyp_sampling_mode: str | int | None = None
     vdyp_two_pass_rebin: bool | None = None
     vdyp_min_stands_per_si_bin: int | None = None
     vdyp_toe_shift_years: float | None = None
+    vdyp_force_tail_blend: bool | None = None
+    vdyp_enable_late_gate_rescue: bool | None = None
     managed_curve_mode: str | None = None
     managed_curve_x_scale: float | None = None
     managed_curve_y_scale: float | None = None
@@ -169,10 +177,14 @@ class EffectiveRunOptions:
     strat_species_combo_count: int | None
     strat_include_tm_species2_for_single: bool | None
     strat_top_area_coverage: float | None
+    strat_target_nstrata: int | None
+    tipsy_vdyp_ylim: tuple[float, float] | None
     vdyp_sampling_mode: str | int | None
     vdyp_two_pass_rebin: bool | None
     vdyp_min_stands_per_si_bin: int | None
     vdyp_toe_shift_years: float | None
+    vdyp_force_tail_blend: bool | None
+    vdyp_enable_late_gate_rescue: bool | None
     managed_curve_mode: str | None
     managed_curve_x_scale: float | None
     managed_curve_y_scale: float | None
@@ -641,6 +653,20 @@ def _normalize_optional_float(value: object, *, field_name: str) -> float | None
     return float(value)
 
 
+def _normalize_optional_float_pair(
+    value: object, *, field_name: str
+) -> tuple[float, float] | None:
+    if value is None:
+        return None
+    if not isinstance(value, list | tuple) or len(value) != 2:
+        raise ValueError(f"{field_name} must be a two-item numeric list")
+    lo = _normalize_optional_float(value[0], field_name=f"{field_name}[0]")
+    hi = _normalize_optional_float(value[1], field_name=f"{field_name}[1]")
+    if lo is None or hi is None or lo >= hi:
+        raise ValueError(f"{field_name} must satisfy low < high")
+    return (lo, hi)
+
+
 def _normalize_optional_path(value: object, *, field_name: str) -> Path | None:
     if value is None:
         return None
@@ -737,6 +763,16 @@ def load_pipeline_run_profile(config_path: Path) -> PipelineRunProfile:
         source_paths = {}
     if not isinstance(source_paths, dict):
         raise ValueError("source_paths must be a mapping")
+    plots = parsed.get("plots", {})
+    if plots is None:
+        plots = {}
+    if not isinstance(plots, dict):
+        raise ValueError("plots must be a mapping")
+    vdyp_curve_selection = parsed.get("vdyp_curve_selection", {})
+    if vdyp_curve_selection is None:
+        vdyp_curve_selection = {}
+    if not isinstance(vdyp_curve_selection, dict):
+        raise ValueError("vdyp_curve_selection must be a mapping")
     stratification = selection.get("stratification", {})
     if stratification is None:
         stratification = {}
@@ -779,6 +815,14 @@ def load_pipeline_run_profile(config_path: Path) -> PipelineRunProfile:
             stratification.get("top_area_coverage"),
             field_name="selection.stratification.top_area_coverage",
         ),
+        strat_target_nstrata=_normalize_optional_positive_int(
+            stratification.get("target_nstrata"),
+            field_name="selection.stratification.target_nstrata",
+        ),
+        tipsy_vdyp_ylim=_normalize_optional_float_pair(
+            plots.get("tipsy_vdyp_ylim"),
+            field_name="plots.tipsy_vdyp_ylim",
+        ),
         vdyp_sampling_mode=_normalize_optional_vdyp_sampling_mode(
             modes.get("vdyp_sampling_mode"),
             field_name="modes.vdyp_sampling_mode",
@@ -798,6 +842,22 @@ def load_pipeline_run_profile(config_path: Path) -> PipelineRunProfile:
         vdyp_toe_shift_years=_normalize_optional_float(
             modes.get("vdyp_toe_shift_years"),
             field_name="modes.vdyp_toe_shift_years",
+        ),
+        vdyp_force_tail_blend=(
+            _normalize_optional_bool(
+                vdyp_curve_selection.get("force_tail_blend"),
+                field_name="vdyp_curve_selection.force_tail_blend",
+            )
+            if "force_tail_blend" in vdyp_curve_selection
+            else None
+        ),
+        vdyp_enable_late_gate_rescue=(
+            _normalize_optional_bool(
+                vdyp_curve_selection.get("enable_late_gate_rescue"),
+                field_name="vdyp_curve_selection.enable_late_gate_rescue",
+            )
+            if "enable_late_gate_rescue" in vdyp_curve_selection
+            else None
         ),
         managed_curve_mode=_normalize_optional_managed_curve_mode(
             modes.get("managed_curve_mode"),
@@ -901,10 +961,14 @@ def resolve_effective_run_options(
             active_profile.strat_include_tm_species2_for_single
         ),
         strat_top_area_coverage=active_profile.strat_top_area_coverage,
+        strat_target_nstrata=active_profile.strat_target_nstrata,
+        tipsy_vdyp_ylim=active_profile.tipsy_vdyp_ylim,
         vdyp_sampling_mode=active_profile.vdyp_sampling_mode,
         vdyp_two_pass_rebin=active_profile.vdyp_two_pass_rebin,
         vdyp_min_stands_per_si_bin=active_profile.vdyp_min_stands_per_si_bin,
         vdyp_toe_shift_years=active_profile.vdyp_toe_shift_years,
+        vdyp_force_tail_blend=active_profile.vdyp_force_tail_blend,
+        vdyp_enable_late_gate_rescue=active_profile.vdyp_enable_late_gate_rescue,
         managed_curve_mode=active_profile.managed_curve_mode,
         managed_curve_x_scale=active_profile.managed_curve_x_scale,
         managed_curve_y_scale=active_profile.managed_curve_y_scale,
@@ -952,10 +1016,14 @@ def build_pipeline_run_config(
     strat_species_combo_count: int | None = None,
     strat_include_tm_species2_for_single: bool | None = None,
     strat_top_area_coverage: float | None = None,
+    strat_target_nstrata: int | None = None,
+    tipsy_vdyp_ylim: tuple[float, float] | None = None,
     vdyp_sampling_mode: str | int | None = None,
     vdyp_two_pass_rebin: bool | None = None,
     vdyp_min_stands_per_si_bin: int | None = None,
     vdyp_toe_shift_years: float | None = None,
+    vdyp_force_tail_blend: bool | None = None,
+    vdyp_enable_late_gate_rescue: bool | None = None,
     managed_curve_mode: str | None = None,
     managed_curve_x_scale: float | None = None,
     managed_curve_y_scale: float | None = None,
@@ -984,10 +1052,14 @@ def build_pipeline_run_config(
         strat_species_combo_count=strat_species_combo_count,
         strat_include_tm_species2_for_single=strat_include_tm_species2_for_single,
         strat_top_area_coverage=strat_top_area_coverage,
+        strat_target_nstrata=strat_target_nstrata,
+        tipsy_vdyp_ylim=tipsy_vdyp_ylim,
         vdyp_sampling_mode=vdyp_sampling_mode,
         vdyp_two_pass_rebin=vdyp_two_pass_rebin,
         vdyp_min_stands_per_si_bin=vdyp_min_stands_per_si_bin,
         vdyp_toe_shift_years=vdyp_toe_shift_years,
+        vdyp_force_tail_blend=vdyp_force_tail_blend,
+        vdyp_enable_late_gate_rescue=vdyp_enable_late_gate_rescue,
         managed_curve_mode=managed_curve_mode,
         managed_curve_x_scale=managed_curve_x_scale,
         managed_curve_y_scale=managed_curve_y_scale,
@@ -1077,6 +1149,12 @@ def build_legacy_execution_plan(
         env["FEMIC_STRAT_TOP_AREA_COVERAGE"] = str(
             float(run_config.strat_top_area_coverage)
         )
+    if run_config.strat_target_nstrata is not None:
+        env["FEMIC_STRAT_TARGET_NSTRATA"] = str(int(run_config.strat_target_nstrata))
+    if run_config.tipsy_vdyp_ylim is not None:
+        env["FEMIC_TIPSY_VDYP_YLIM"] = ",".join(
+            str(float(value)) for value in run_config.tipsy_vdyp_ylim
+        )
     if run_config.vdyp_sampling_mode is not None:
         env["FEMIC_VDYP_SAMPLING_MODE"] = str(run_config.vdyp_sampling_mode)
     if run_config.vdyp_two_pass_rebin is not None:
@@ -1089,6 +1167,14 @@ def build_legacy_execution_plan(
         )
     if run_config.vdyp_toe_shift_years is not None:
         env["FEMIC_VDYP_TOE_SHIFT_YEARS"] = str(float(run_config.vdyp_toe_shift_years))
+    if run_config.vdyp_force_tail_blend is not None:
+        env["FEMIC_VDYP_FORCE_TAIL_BLEND"] = (
+            "1" if run_config.vdyp_force_tail_blend else "0"
+        )
+    if run_config.vdyp_enable_late_gate_rescue is not None:
+        env["FEMIC_VDYP_ENABLE_LATE_GATE_RESCUE"] = (
+            "1" if run_config.vdyp_enable_late_gate_rescue else "0"
+        )
     if run_config.managed_curve_mode is not None:
         env["FEMIC_MANAGED_CURVE_MODE"] = str(run_config.managed_curve_mode)
     if run_config.managed_curve_x_scale is not None:

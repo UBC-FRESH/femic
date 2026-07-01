@@ -129,6 +129,7 @@ def run_tsa(
         stratum_col=stratum_col,
         pd_module=pd,
         tsa_code=tsa,
+        target_nstrata=runtime_config.target_nstrata,
         target_coverage=runtime_config.target_area_coverage,
     )
     print("mean stratum SI IQR", site_index_iqr_mean)
@@ -575,6 +576,8 @@ def run_tsa(
             toe_fit_func=toe_fit_func,
             toe_fit_func_bounds_func=toe_fit_func_bounds_func,
             use_au_first_growth_selector=use_au_first_growth_selector,
+            force_tail_blend_candidate=runtime_config.force_tail_blend_candidate,
+            enable_late_gate_rescue=runtime_config.enable_late_gate_rescue,
             message_fn=print,
         )
         plot_curve_overlays(

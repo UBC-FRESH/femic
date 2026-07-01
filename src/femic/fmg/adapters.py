@@ -2,19 +2,13 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+from importlib import metadata
 from pathlib import Path
-from typing import Any, Iterable, cast
+from typing import Any, Iterable, Protocol, cast
 
 import numpy as np
 import pandas as pd
-
-from femic.pipeline.bundle import tsa_curve_id_prefix
-from femic.pipeline.tsa import (
-    assign_si_levels_from_stratum_quantiles,
-    assign_stratum_matches_from_au_table,
-    lookup_scsi_au_base,
-)
-from femic.pipeline.vri import assign_stratum_codes_with_lexmatch
 
 from .core import (
     AnalysisUnitDefinition,
@@ -23,6 +17,43 @@ from .core import (
     CurvePoint,
     QmdSupportDefinition,
 )
+
+FMG_BUNDLE_AUXILIARY_ENTRY_POINT_GROUP = "femic.fmg_bundle_auxiliary"
+
+
+@dataclass(frozen=True)
+class BundleAuxiliaryData:
+    """Auxiliary bundle data supplied by instance-owned providers."""
+
+    qmd_support_by_au: dict[int, QmdSupportDefinition] = field(default_factory=dict)
+    managed_indicator_curves_by_au: dict[int, dict[str, tuple[CurvePoint, ...]]] = (
+        field(default_factory=dict)
+    )
+
+
+@dataclass(frozen=True)
+class BundleAuxiliaryRequest:
+    """Context passed to an FMG bundle auxiliary provider."""
+
+    bundle_dir: Path | None
+    analysis_units: tuple[AnalysisUnitDefinition, ...]
+    au_table: pd.DataFrame
+    curve_table: pd.DataFrame
+    curve_points_table: pd.DataFrame
+    points_by_id: dict[int, list[CurvePoint]]
+    tsa_list: tuple[str, ...]
+
+
+class BundleAuxiliaryProvider(Protocol):
+    """Protocol for instance-owned FMG bundle auxiliary providers."""
+
+    provider_id: str
+
+    def build_bundle_auxiliary(
+        self, request: BundleAuxiliaryRequest
+    ) -> BundleAuxiliaryData:
+        """Return auxiliary QMD and indicator data for a bundle context."""
+        ...
 
 
 def normalize_tsa_code(value: Any) -> str:
@@ -184,380 +215,77 @@ def _species_curve_maps(
 
 
 _DEFAULT_QMD_SITE_INDEX_BY_LEVEL = {"L": 15.0, "M": 25.0, "H": 35.0}
-_MANAGED_BANK_INDICATOR_COLUMNS = (
-    "MAI",
-    "BasalArea000",
-    "DBHg000",
-    "Logs_Grade_D",
-    "Logs_Grade_F",
-    "Logs_Grade_H",
-    "Logs_Grade_I",
-    "Logs_Grade_J",
-    "Logs_Grade_U",
-    "Logs_Grade_X",
-    "Logs_Grade_Y",
-    "Logs_Grade_All",
-    "SPH000",
-    "StemCount000",
-    "StemCount125",
-    "StemCount175",
-)
-
-
-def _derive_local_au_from_namespaced_curve_id(*, tsa: str, curve_id: int) -> int | None:
-    prefix = 100000 * tsa_curve_id_prefix(normalize_tsa_code(tsa))
-    local_au = int(curve_id) - prefix
-    if local_au <= 0:
-        return None
-    return int(local_au)
-
-
-def _resolve_source_managed_local_au_id(au: AnalysisUnitDefinition) -> int | None:
-    if au.source_managed_local_au_id is not None:
-        return int(au.source_managed_local_au_id)
-    if int(au.managed_curve_id) == int(au.unmanaged_curve_id):
-        return None
-    derived = _derive_local_au_from_namespaced_curve_id(
-        tsa=au.tsa,
-        curve_id=int(au.managed_curve_id),
-    )
-    if derived is not None and derived != int(au.managed_curve_id):
-        return int(derived)
-    return None
-
-
-def _load_site_index_by_au_from_tipsy_input(data_dir: Path) -> dict[int, float]:
-    workbook_path = data_dir / "tipsy_params_tsak3z.xlsx"
-    if not workbook_path.is_file():
-        return {}
-    input_df = pd.read_excel(
-        workbook_path,
-        sheet_name="TIPSY_inputTBL",
-        usecols=["AU", "SI"],
-    )
-    input_df["AU"] = pd.to_numeric(input_df["AU"], errors="coerce")
-    input_df["SI"] = pd.to_numeric(input_df["SI"], errors="coerce")
-    input_df = input_df.dropna(subset=["AU", "SI"])
-    if input_df.empty:
-        return {}
-    return {
-        _coerce_int(au): float(si)
-        for au, si in input_df.groupby("AU")["SI"].median().items()
-        if np.isfinite(float(si))
-    }
-
-
-def _load_managed_stems_per_ha_by_au_from_btc_input(
-    data_dir: Path,
-) -> dict[int, float]:
-    input_path = data_dir / "03_input-tsak3z.csv"
-    if not input_path.is_file():
-        return {}
-    input_df = pd.read_csv(input_path)
-    if "feature_id" not in input_df.columns:
-        return {}
-    density_cols = [
-        column
-        for column in input_df.columns
-        if column.startswith("planted_density") or column.startswith("natural_density")
-    ]
-    if not density_cols:
-        return {}
-    input_df["feature_id"] = pd.to_numeric(input_df["feature_id"], errors="coerce")
-    for column in density_cols:
-        input_df[column] = pd.to_numeric(input_df[column], errors="coerce").fillna(0.0)
-    input_df = input_df.dropna(subset=["feature_id"])
-    if input_df.empty:
-        return {}
-    input_df["managed_stems_per_ha"] = input_df.loc[:, density_cols].sum(axis=1)
-    summary = (
-        input_df.groupby("feature_id", as_index=False)
-        .agg(managed_stems_per_ha=("managed_stems_per_ha", "median"))
-        .dropna(subset=["managed_stems_per_ha"])
-    )
-    summary["managed_stems_per_ha"] = pd.to_numeric(
-        summary["managed_stems_per_ha"], errors="coerce"
-    )
-    return {
-        _coerce_int(row.feature_id): float(cast(float, managed_stems_per_ha))
-        for row in summary.itertuples(index=False)
-        for managed_stems_per_ha in [row.managed_stems_per_ha]
-        if pd.notna(managed_stems_per_ha)
-        and np.isfinite(float(cast(float, managed_stems_per_ha)))
-        and float(cast(float, managed_stems_per_ha)) > 0.0
-    }
-
-
-def _load_managed_qmd_support_from_tipsy(
-    *,
-    data_dir: Path,
-    analysis_units: tuple[AnalysisUnitDefinition, ...],
-    points_by_id: dict[int, list[CurvePoint]],
-) -> dict[int, dict[str, Any]]:
-    tipsy_path = data_dir / "tipsy_curves_tsak3z.csv"
-    if not tipsy_path.is_file():
-        return {}
-    tipsy_df = pd.read_csv(tipsy_path)
-    required = {"AU", "Age", "Yield", "Height", "TPH"}
-    if not required.issubset(tipsy_df.columns):
-        return {}
-    tipsy_df["AU"] = pd.to_numeric(tipsy_df["AU"], errors="coerce")
-    tipsy_df["Age"] = pd.to_numeric(tipsy_df["Age"], errors="coerce")
-    tipsy_df["Yield"] = pd.to_numeric(tipsy_df["Yield"], errors="coerce")
-    tipsy_df["Height"] = pd.to_numeric(tipsy_df["Height"], errors="coerce")
-    tipsy_df["TPH"] = pd.to_numeric(tipsy_df["TPH"], errors="coerce")
-    tipsy_df = tipsy_df.dropna(subset=["AU", "Age", "Yield"])
-    if tipsy_df.empty:
-        return {}
-
-    site_index_by_local_au = _load_site_index_by_au_from_tipsy_input(data_dir=data_dir)
-    managed_stems_per_ha_by_local_au = _load_managed_stems_per_ha_by_au_from_btc_input(
-        data_dir=data_dir
-    )
-    grouped = {_coerce_int(au): sub.copy() for au, sub in tipsy_df.groupby("AU")}
-    out: dict[int, dict[str, Any]] = {}
-    for au in analysis_units:
-        matched_local_au = _resolve_source_managed_local_au_id(au)
-        if matched_local_au is None:
-            continue
-        matched_rows = grouped[matched_local_au].sort_values("Age")
-        height_points = tuple(
-            CurvePoint(x=float(age), y=float(height))
-            for age, height in zip(
-                matched_rows["Age"].tolist(), matched_rows["Height"].tolist()
-            )
-            if np.isfinite(float(age)) and np.isfinite(float(height))
-        )
-        tph_points = tuple(
-            CurvePoint(x=float(age), y=float(tph))
-            for age, tph in zip(
-                matched_rows["Age"].tolist(), matched_rows["TPH"].tolist()
-            )
-            if np.isfinite(float(age)) and np.isfinite(float(tph))
-        )
-        out[int(au.au_id)] = {
-            "site_index": site_index_by_local_au.get(matched_local_au),
-            "managed_stems_per_ha": managed_stems_per_ha_by_local_au.get(
-                matched_local_au
-            ),
-            "managed_height_points": height_points,
-            "managed_tph_points": tph_points,
-        }
-    return out
-
-
-def _load_managed_indicator_curves_from_tipsy(
-    *,
-    data_dir: Path,
-    analysis_units: tuple[AnalysisUnitDefinition, ...],
-    points_by_id: dict[int, list[CurvePoint]],
-) -> dict[int, dict[str, tuple[CurvePoint, ...]]]:
-    tipsy_path = data_dir / "tipsy_curves_tsak3z.csv"
-    if not tipsy_path.is_file():
-        return {}
-    tipsy_df = pd.read_csv(tipsy_path)
-    required = {"AU", "Age", *_MANAGED_BANK_INDICATOR_COLUMNS}
-    available = required.intersection(set(tipsy_df.columns))
-    if not {"AU", "Age"}.issubset(tipsy_df.columns) or len(available) <= 2:
-        return {}
-    tipsy_df["AU"] = pd.to_numeric(tipsy_df["AU"], errors="coerce")
-    tipsy_df["Age"] = pd.to_numeric(tipsy_df["Age"], errors="coerce")
-    for column in _MANAGED_BANK_INDICATOR_COLUMNS:
-        if column in tipsy_df.columns:
-            tipsy_df[column] = pd.to_numeric(tipsy_df[column], errors="coerce")
-    tipsy_df = tipsy_df.dropna(subset=["AU", "Age"])
-    if tipsy_df.empty:
-        return {}
-
-    rows_by_local_au = {
-        _coerce_int(au): subdf.sort_values("Age").copy()
-        for au, subdf in tipsy_df.groupby("AU")
-    }
-    out: dict[int, dict[str, tuple[CurvePoint, ...]]] = {}
-    for au in analysis_units:
-        matched_local_au = _resolve_source_managed_local_au_id(au)
-        if matched_local_au is None:
-            continue
-        managed_rows = rows_by_local_au.get(matched_local_au)
-        if managed_rows is None or managed_rows.empty:
-            continue
-        curves_by_name: dict[str, tuple[CurvePoint, ...]] = {}
-        for column in _MANAGED_BANK_INDICATOR_COLUMNS:
-            if column not in managed_rows.columns:
-                continue
-            points = tuple(
-                CurvePoint(x=float(age), y=float(value))
-                for age, value in zip(
-                    managed_rows["Age"].tolist(), managed_rows[column].tolist()
-                )
-                if np.isfinite(float(age))
-                and pd.notna(value)
-                and np.isfinite(float(value))
-            )
-            if points:
-                curves_by_name[column] = points
-        if curves_by_name:
-            out[int(au.au_id)] = curves_by_name
-    return out
-
-
-def _load_unmanaged_qmd_support_from_checkpoint(
-    *,
-    data_dir: Path,
-    au_table: pd.DataFrame,
-) -> dict[int, dict[str, Any]]:
-    checkpoint_path = data_dir / "ria_vri_vclr1p_checkpoint1-tsak3z.feather"
-    vdyp_layer_path = data_dir / "vdyp_lyr-tsak3z.feather"
-    if not checkpoint_path.is_file() or not vdyp_layer_path.is_file():
-        return {}
-
-    checkpoint = pd.read_feather(checkpoint_path)
-    vdyp_lyr = pd.read_feather(vdyp_layer_path)
-    if "FEATURE_ID" not in checkpoint.columns or "FEATURE_ID" not in vdyp_lyr.columns:
-        return {}
-
-    def _row_apply(table: pd.DataFrame, func: Any, axis: int = 1) -> Any:
-        _ = axis
-        return table.apply(func, axis=1)
-
-    assigned = checkpoint.copy()
-    assigned["tsa_code"] = "k3z"
-    assigned = assign_stratum_codes_with_lexmatch(
-        f_table=assigned,
-        row_apply_fn=_row_apply,
-        bec_grouping="subzone",
-        species_combo_count=2,
-        include_tm_species2_for_single=True,
-    )
-    assigned["stratum_matched"] = None
-    assigned = assign_stratum_matches_from_au_table(
-        f_table=assigned,
-        au_table=au_table,
-        tsa_list=["k3z"],
-        stratum_col="stratum",
-        message_fn=lambda *_: None,
-    )
-    allowed_levels_by_stratum: dict[str, list[str]] = {
-        str(stratum_code): sorted({str(value) for value in levels.dropna().values})
-        for stratum_code, levels in au_table.groupby("stratum_code")["si_level"]
-    }
-    assigned, _ = assign_si_levels_from_stratum_quantiles(
-        f_table=assigned,
-        si_levelquants={"L": [5, 20, 35], "M": [35, 50, 65], "H": [65, 80, 95]},
-        allowed_levels_by_stratum=allowed_levels_by_stratum,
-        stratum_matched_col="stratum_matched",
-        site_index_col="SITE_INDEX",
-        si_level_col="si_level",
-        message_fn=lambda *_: None,
-    )
-    assigned["au_base"] = [
-        lookup_scsi_au_base(
-            scsi_au={
-                "k3z": {
-                    (str(row.stratum_code), str(row.si_level)): _coerce_int(row.au_id)
-                    for row in au_table.itertuples(index=False)
-                }
-            },
-            tsa_code="k3z",
-            stratum_code=stratum_code,
-            si_level=si_level,
-        )
-        for stratum_code, si_level in zip(
-            assigned["stratum_matched"].tolist(), assigned["si_level"].tolist()
-        )
-    ]
-    assigned = assigned.reset_index()
-    merged = assigned.merge(
-        vdyp_lyr.loc[:, ["FEATURE_ID", "STEMS_PER_HA_75"]],
-        on="FEATURE_ID",
-        how="left",
-    )
-    merged["SITE_INDEX"] = pd.to_numeric(merged["SITE_INDEX"], errors="coerce")
-    merged["STEMS_PER_HA_75"] = pd.to_numeric(
-        merged["STEMS_PER_HA_75"], errors="coerce"
-    )
-    merged = merged.dropna(subset=["au_base"])
-    if merged.empty:
-        return {}
-
-    summary = (
-        merged.groupby("au_base", as_index=False)
-        .agg(
-            site_index=("SITE_INDEX", "median"),
-            unmanaged_stems_per_ha=("STEMS_PER_HA_75", "median"),
-        )
-        .dropna(subset=["site_index"], how="all")
-    )
-    return {
-        _coerce_int(row.au_base): {
-            "site_index": (
-                float(row.site_index)
-                if pd.notna(row.site_index) and np.isfinite(float(row.site_index))
-                else None
-            ),
-            "unmanaged_stems_per_ha": (
-                float(row.unmanaged_stems_per_ha)
-                if pd.notna(row.unmanaged_stems_per_ha)
-                and np.isfinite(float(row.unmanaged_stems_per_ha))
-                else None
-            ),
-        }
-        for row in summary.itertuples(index=False)
-    }
 
 
 def _build_qmd_support_by_au(
     *,
-    bundle_dir: Path,
     analysis_units: tuple[AnalysisUnitDefinition, ...],
-    au_table: pd.DataFrame,
-    points_by_id: dict[int, list[CurvePoint]],
-) -> tuple[
-    dict[int, QmdSupportDefinition], dict[int, dict[str, tuple[CurvePoint, ...]]]
-]:
-    data_dir = bundle_dir.parent
-    unmanaged_support = _load_unmanaged_qmd_support_from_checkpoint(
-        data_dir=data_dir,
-        au_table=au_table,
-    )
-    managed_support = _load_managed_qmd_support_from_tipsy(
-        data_dir=data_dir,
-        analysis_units=analysis_units,
-        points_by_id=points_by_id,
-    )
-    managed_indicator_curves_by_au = _load_managed_indicator_curves_from_tipsy(
-        data_dir=data_dir,
-        analysis_units=analysis_units,
-        points_by_id=points_by_id,
-    )
+    auxiliary_data: BundleAuxiliaryData,
+) -> dict[int, QmdSupportDefinition]:
     out: dict[int, QmdSupportDefinition] = {}
     for au in analysis_units:
         fallback_site_index = _DEFAULT_QMD_SITE_INDEX_BY_LEVEL.get(
             str(au.si_level).strip().upper()
         )
-        unmanaged_payload = unmanaged_support.get(int(au.au_id), {})
-        managed_payload = managed_support.get(int(au.au_id), {})
-        site_index = managed_payload.get(
-            "site_index", unmanaged_payload.get("site_index", fallback_site_index)
-        )
+        provider_support = auxiliary_data.qmd_support_by_au.get(int(au.au_id))
+        if provider_support is None:
+            out[int(au.au_id)] = QmdSupportDefinition(
+                site_index=fallback_site_index,
+                unmanaged_stems_per_ha=None,
+                managed_stems_per_ha=None,
+                managed_height_points=(),
+                managed_tph_points=(),
+            )
+            continue
         out[int(au.au_id)] = QmdSupportDefinition(
-            site_index=float(site_index) if site_index is not None else None,
-            unmanaged_stems_per_ha=(
-                float(unmanaged_payload["unmanaged_stems_per_ha"])
-                if unmanaged_payload.get("unmanaged_stems_per_ha") is not None
-                else None
+            site_index=(
+                provider_support.site_index
+                if provider_support.site_index is not None
+                else fallback_site_index
             ),
-            managed_stems_per_ha=(
-                float(managed_payload["managed_stems_per_ha"])
-                if managed_payload.get("managed_stems_per_ha") is not None
-                else None
-            ),
-            managed_height_points=tuple(
-                managed_payload.get("managed_height_points", ())
-            ),
-            managed_tph_points=tuple(managed_payload.get("managed_tph_points", ())),
+            unmanaged_stems_per_ha=provider_support.unmanaged_stems_per_ha,
+            managed_stems_per_ha=provider_support.managed_stems_per_ha,
+            managed_height_points=tuple(provider_support.managed_height_points),
+            managed_tph_points=tuple(provider_support.managed_tph_points),
         )
-    return out, managed_indicator_curves_by_au
+    return out
+
+
+def discover_bundle_auxiliary_providers() -> tuple[BundleAuxiliaryProvider, ...]:
+    """Load installed FMG bundle auxiliary providers from Python entry points."""
+    selected = metadata.entry_points().select(
+        group=FMG_BUNDLE_AUXILIARY_ENTRY_POINT_GROUP
+    )
+    providers: list[BundleAuxiliaryProvider] = []
+    for entry_point in selected:
+        loaded = entry_point.load()
+        provider = loaded() if callable(loaded) else loaded
+        if not hasattr(provider, "provider_id") or not hasattr(
+            provider, "build_bundle_auxiliary"
+        ):
+            raise TypeError(
+                "FMG bundle auxiliary entry point "
+                f"{entry_point.name!r} did not return a provider"
+            )
+        providers.append(cast(BundleAuxiliaryProvider, provider))
+    return tuple(sorted(providers, key=lambda provider: str(provider.provider_id)))
+
+
+def _merge_auxiliary_data(
+    sources: Iterable[BundleAuxiliaryData],
+) -> BundleAuxiliaryData:
+    qmd_support_by_au: dict[int, QmdSupportDefinition] = {}
+    managed_indicator_curves_by_au: dict[int, dict[str, tuple[CurvePoint, ...]]] = {}
+    for source in sources:
+        qmd_support_by_au.update(
+            {int(key): value for key, value in source.qmd_support_by_au.items()}
+        )
+        for au_id, curves in source.managed_indicator_curves_by_au.items():
+            managed_indicator_curves_by_au.setdefault(int(au_id), {}).update(curves)
+    return BundleAuxiliaryData(
+        qmd_support_by_au=qmd_support_by_au,
+        managed_indicator_curves_by_au=managed_indicator_curves_by_au,
+    )
 
 
 def build_bundle_model_context_from_tables(
@@ -567,6 +295,9 @@ def build_bundle_model_context_from_tables(
     curve_points_table: pd.DataFrame,
     tsa_list: Iterable[str] | None = None,
     bundle_dir: Path | None = None,
+    auxiliary_data: BundleAuxiliaryData | None = None,
+    auxiliary_providers: Iterable[BundleAuxiliaryProvider] | None = None,
+    discover_auxiliary: bool = False,
 ) -> BundleModelContext:
     """Build shared bundle context from in-memory bundle tables."""
     if tsa_list is None:
@@ -635,15 +366,35 @@ def build_bundle_model_context_from_tables(
     managed_species_curve_ids, unmanaged_species_curve_ids = _species_curve_maps(
         curve_table=curve_table
     )
-    qmd_support_by_au, managed_indicator_curves_by_au = (
-        _build_qmd_support_by_au(
+    auxiliary_sources: list[BundleAuxiliaryData] = []
+    if auxiliary_data is not None:
+        auxiliary_sources.append(auxiliary_data)
+    providers = list(auxiliary_providers or ())
+    if discover_auxiliary:
+        providers.extend(discover_bundle_auxiliary_providers())
+    if providers:
+        request = BundleAuxiliaryRequest(
             bundle_dir=bundle_dir,
             analysis_units=analysis_units,
             au_table=deduped_au,
+            curve_table=curve_table,
+            curve_points_table=curve_points_table,
             points_by_id=points_by_id,
+            tsa_list=tuple(normalized_tsa),
         )
-        if bundle_dir is not None
-        else ({}, {})
+        for provider in sorted(providers, key=lambda item: str(item.provider_id)):
+            auxiliary_sources.append(provider.build_bundle_auxiliary(request))
+    merged_auxiliary_data = _merge_auxiliary_data(auxiliary_sources)
+    qmd_support_by_au = (
+        _build_qmd_support_by_au(
+            analysis_units=analysis_units,
+            auxiliary_data=merged_auxiliary_data,
+        )
+        if bundle_dir is not None or auxiliary_sources
+        else {}
+    )
+    managed_indicator_curves_by_au = (
+        merged_auxiliary_data.managed_indicator_curves_by_au
     )
     return BundleModelContext(
         tsa_list=normalized_tsa,
@@ -661,6 +412,8 @@ def build_bundle_model_context(
     *,
     bundle_dir: Path,
     tsa_list: Iterable[str],
+    auxiliary_providers: Iterable[BundleAuxiliaryProvider] | None = None,
+    discover_auxiliary: bool = True,
 ) -> BundleModelContext:
     """Build shared bundle context from bundle directory CSV files."""
     au_table, curve_table, curve_points_table = _load_bundle_tables(
@@ -672,5 +425,7 @@ def build_bundle_model_context(
         curve_points_table=curve_points_table,
         tsa_list=tsa_list,
         bundle_dir=bundle_dir,
+        auxiliary_providers=auxiliary_providers,
+        discover_auxiliary=discover_auxiliary,
     )
     return context

@@ -2020,12 +2020,11 @@ def test_execute_curve_smoothing_runs_logs_insufficient_support_in_selector_mode
     assert selection_events[-1].get("selected_path") == "insufficient_source_stands"
 
 
-def test_execute_curve_smoothing_runs_prefers_tail_blend_for_k3z_output(
+def test_execute_curve_smoothing_runs_prefers_tail_blend_when_forced(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("FEMIC_K3Z_FORCE_TAIL_BLEND", "1")
     events: list[dict[str, object]] = []
 
     def append_event(_path: str | Path, payload: object) -> None:
@@ -2046,8 +2045,8 @@ def test_execute_curve_smoothing_runs_prefers_tail_blend_for_k3z_output(
         }
     )
     smoothed_runs = execute_curve_smoothing_runs(
-        tsa="k3z",
-        run_id="run-k3z",
+        tsa="demo",
+        run_id="run-tail-blend-forced",
         results_for_tsa=[(1, "CWH_HW", {})],
         si_levels=["L"],
         vdyp_results_for_tsa={1: {"L": {101: vdyp_obs}}},
@@ -2060,13 +2059,15 @@ def test_execute_curve_smoothing_runs_prefers_tail_blend_for_k3z_output(
         body_fit_func_bounds_func=lambda *_a, **_k: None,
         toe_fit_func=lambda *_a, **_k: None,
         toe_fit_func_bounds_func=lambda *_a, **_k: None,
+        force_tail_blend_candidate=True,
+        enable_late_gate_rescue=False,
         message_fn=lambda *_args, **_kwargs: None,
     )
 
     assert len(smoothed_runs) == 1
     assert smoothed_runs[0].stratum_code == "CWH_HW"
     assert smoothed_runs[0].si_level == "L"
-    # K3Z output curves should use the tail-blend candidate when available.
+    # Forced output curves should use the tail-blend candidate when available.
     assert list(smoothed_runs[0].y) == [0.0, 220.0, 260.0]
     assert any(
         event.get("stage") == "fit_quality_gate"

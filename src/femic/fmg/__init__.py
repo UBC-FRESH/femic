@@ -19,8 +19,12 @@ from .patchworks import (
     validate_fragments_geodataframe,
 )
 from .adapters import (
+    BundleAuxiliaryData,
+    BundleAuxiliaryProvider,
+    BundleAuxiliaryRequest,
     build_bundle_model_context,
     build_bundle_model_context_from_tables,
+    discover_bundle_auxiliary_providers,
     normalize_tsa_code,
 )
 from .core import (
@@ -31,6 +35,7 @@ from .core import (
     CurvePoint,
     DefineFieldDefinition,
     ForestModelDefinition,
+    QmdSupportDefinition,
     RetentionDefinition,
     SelectDefinition,
     SuccessionDefinition,
@@ -73,10 +78,15 @@ __all__ = [
     "SelectDefinition",
     "SuccessionDefinition",
     "ForestModelDefinition",
+    "QmdSupportDefinition",
     "RetentionDefinition",
     "normalize_tsa_code",
+    "BundleAuxiliaryData",
+    "BundleAuxiliaryProvider",
+    "BundleAuxiliaryRequest",
     "build_bundle_model_context",
     "build_bundle_model_context_from_tables",
+    "discover_bundle_auxiliary_providers",
     "DEFAULT_WOODSTOCK_CC_MAX_AGE",
     "DEFAULT_WOODSTOCK_CC_MIN_AGE",
     "DEFAULT_WOODSTOCK_OUTPUT_DIR",
