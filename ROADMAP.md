@@ -2456,7 +2456,7 @@ Parent issue: #241
 
 Branch: `feature/p85-freshforge-instance-provider-boundary`
 
-Status: active
+Status: complete
 
 Goal: restore the provider namespace boundary after the Phase 84 executable
 prototype put MKRF-specific FreshForge provider logic under `femic.mkrf` in
@@ -2505,7 +2505,7 @@ Parent issue: #244
 
 Branch: `feature/p86-extract-mkrf-workflow-code`
 
-Status: active
+Status: complete
 
 Goal: move mature MKRF-specific pipeline and workflow implementation out of
 FEMIC core after the P85 adapter package boundary is proven. The current
@@ -2534,9 +2534,55 @@ and `femic instance mkrf-*` CLI commands.
   - [x] Verify parent packaging no longer includes the removed FEMIC MKRF
         modules and still exposes only the generic `femic` FreshForge provider.
 
+P86 was merged through parent PR `#245` after the MKRF instance package PR
+merged and the parent submodule pointer was reconciled.
+
+## Phase 87: Extract MKRF Legacy ForestModel XML Builder From FEMIC Core
+
+Parent issue: #246
+
+Branch: `feature/p87-extract-mkrf-legacy-xml-builder`
+
+Status: complete
+
+Goal: move the remaining MKRF-specific legacy ForestModel XML builder out of
+`femic.fmg` and into the MKRF instance package. FEMIC core keeps generic
+Patchworks/ForestModel primitives and generic export wording; the MKRF instance
+owns the MKRF legacy builder API, tests, and docs. The broad instance-reference
+audit for this lane is recorded in
+`planning/phase87_parent_instance_reference_audit.md`.
+
+- [x] P87.1 Record lifecycle and planning surfaces
+  - [x] Open parent FEMIC issue `#246`.
+  - [x] Open MKRF instance issue `UBC-FRESH/femic-mkrf-instance#44`.
+  - [x] Commit the parent instance-reference audit report.
+- [x] P87.2 Move MKRF legacy XML builder ownership into MKRF
+  - [x] Add `mkrf_femic.legacy_xml` with the migrated MKRF builder API.
+  - [x] Move MKRF-specific builder constants, helper functions, and tests out
+        of parent FEMIC and into the MKRF instance package.
+  - [x] Preserve generated XML behavior and output contracts.
+- [x] P87.3 Remove MKRF legacy builder coupling from FEMIC core
+  - [x] Remove `build_legacy_mkrf_forestmodel_xml_tree` and
+        `emit_legacy_mkrf_forestmodel_xml` from `femic.fmg`.
+  - [x] Remove MKRF-specific legacy XML helper code from
+        `src/femic/fmg/patchworks.py`.
+  - [x] Reword generic export CLI help so it no longer uses MKRF-first
+        terminology.
+- [x] P87.4 Verify and close out the paired lifecycle
+  - [x] Run focused MKRF package tests and FreshForge workflow dry-run checks.
+  - [x] Run focused parent FEMIC lint, tests, docs, and package checks.
+  - [x] Merge MKRF first, update the parent submodule pointer, then merge the
+        parent PR.
+
+P87 is complete on the branch: MKRF PR `UBC-FRESH/femic-mkrf-instance#45`
+merged to MKRF `main`, the parent submodule pointer was reconciled to merged
+MKRF commit `c769e4c`, and parent PR `#247` passed package and docs checks
+before merge.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase87_parent_instance_reference_audit.md`
   - `planning/phase78_figrecover_integration_notes.md`
   - `planning/phase75_bcdata_resolver_evaluation_notes.md`
   - `planning/phase74_tfl6_instance_bootstrap_notes.md`
@@ -2545,10 +2591,15 @@ and `femic instance mkrf-*` CLI commands.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P86` / `#244` is active: MKRF-specific pipeline and workflow
+  - `P87` / `#246` is complete: the remaining MKRF-specific legacy ForestModel
+    XML builder moved from parent `femic.fmg` into the MKRF instance package
+    under `mkrf_femic.legacy_xml`; MKRF PR
+    `UBC-FRESH/femic-mkrf-instance#45` is merged and parent PR `#247` passed
+    required checks.
+  - `P86` / `#244` is complete: MKRF-specific pipeline and workflow
     implementation now lives in the MKRF instance repository as installable
-    package `mkrf_femic`; the remaining edge is PR/pointer closeout for the
-    paired MKRF issue `UBC-FRESH/femic-mkrf-instance#42`.
+    package `mkrf_femic`, and parent FEMIC no longer exposes
+    `femic instance mkrf-*`.
   - `P85` / `#241` is complete: FEMIC core owns the generic `femic`
     FreshForge provider, while the MKRF instance owns provider namespace
     `mkrf.*`.

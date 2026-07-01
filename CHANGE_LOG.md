@@ -18813,3 +18813,50 @@
   Ruff, focused FreshForge tests, docs build, package build, `twine check`,
   `mypy src/femic/freshforge.py`, `femic instance --help`, removed-module
   searches, and parent wheel metadata.
+
+## 2026-07-01 - Opened P87 MKRF legacy XML builder extraction
+
+- opened FEMIC issue `#246` and MKRF issue
+  `UBC-FRESH/femic-mkrf-instance#44` for the remaining MKRF legacy ForestModel
+  XML builder boundary cleanup;
+- created parent branch `feature/p87-extract-mkrf-legacy-xml-builder` and MKRF
+  branch `feature/extract-legacy-xml-builder`;
+- recorded the parent instance-reference audit at
+  `planning/phase87_parent_instance_reference_audit.md`; and
+- updated `ROADMAP.md` so P86 is marked complete and P87 governs the active
+  implementation edge before code migration starts.
+
+## 2026-07-01 - Moved MKRF legacy XML builder into the MKRF package
+
+- added `mkrf_femic.legacy_xml` in the MKRF instance package with the migrated
+  `build_legacy_mkrf_forestmodel_xml_tree` and
+  `emit_legacy_mkrf_forestmodel_xml` APIs;
+- moved the MKRF-specific legacy XML constants, helper functions, Attrib review
+  extracts, and behavior tests out of parent FEMIC and into
+  `external/femic-mkrf-instance`;
+- removed the MKRF legacy builder exports and helper implementation from
+  parent `femic.fmg`, while keeping generic legacy input-variable export
+  helpers in FEMIC core;
+- reworded the parent Patchworks export CLI help so the legacy
+  input-variables option is no longer described as MKRF-first; and
+- verified MKRF Ruff, pytest, Sphinx, package build, `twine check`, and
+  FreshForge validate/plan/dry-run, plus parent Ruff, targeted mypy, Patchworks
+  tests, FreshForge integration tests, Sphinx, package build, and
+  `twine check` on the moved boundary.
+
+## 2026-07-01 - Reconciled MKRF P87 merge into parent branch
+
+- merged MKRF PR `UBC-FRESH/femic-mkrf-instance#45` to the MKRF `main` branch;
+- updated the parent FEMIC P87 branch so `external/femic-mkrf-instance` points
+  at merged MKRF commit `c769e4c`; and
+- kept parent PR `#247` open for final parent checks and merge.
+
+## 2026-07-01 - Closed P87 MKRF legacy XML builder extraction
+
+- confirmed parent PR `#247` passed GitHub `docs-pages` and
+  `package-release-checks` after the MKRF submodule pointer was reconciled to
+  merged MKRF `main`;
+- marked P87 complete in `ROADMAP.md` with parent and child roadmap tasks
+  synchronized; and
+- left the broader K3Z/TSA29/TFL6 instance-reference cleanup and packaged
+  Patchworks variant registry cleanup as follow-on lanes.

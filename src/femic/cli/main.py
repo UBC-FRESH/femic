@@ -1245,7 +1245,7 @@ EXPORT_LEGACY_INPUT_VARIABLES_CONFIG_OPTION = typer.Option(
     None,
     "--legacy-input-variables-config",
     help=(
-        "Optional MKRF-first translated Input Variables YAML. When provided, "
+        "Optional translated legacy Input Variables YAML. When provided, "
         "its live fields override the default ForestModel description/start/"
         "horizon export values."
     ),
