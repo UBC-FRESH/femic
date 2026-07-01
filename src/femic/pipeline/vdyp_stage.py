@@ -2316,6 +2316,8 @@ def execute_curve_smoothing_runs(
     toe_fit_func: Callable[..., Any],
     toe_fit_func_bounds_func: Callable[..., Any],
     use_au_first_growth_selector: bool = False,
+    force_tail_blend_candidate: bool = False,
+    enable_late_gate_rescue: bool = True,
     message_fn: Callable[..., Any] = print,
 ) -> list[SmoothedCurveResult]:
     """Build smoothed VDYP curves for each stratum/SI combination."""
@@ -3588,17 +3590,13 @@ def execute_curve_smoothing_runs(
                 selected_metrics = dict(
                     fit_metrics.get("merchantable_floor", selected_metrics)
                 )
-            # Preserve an escape hatch for the earlier K3Z tail-blend override,
-            # but keep it disabled by default so K3Z follows the same candidate
-            # selection policy as other cases unless explicitly requested.
-            force_k3z_tail_blend = os.environ.get(
-                "FEMIC_K3Z_FORCE_TAIL_BLEND", "0"
-            ).strip().lower() in ("1", "true", "yes", "on")
-            if force_k3z_tail_blend and str(tsa).strip().lower() == "k3z":
-                tail_curve = candidate_curves.get("tail_blend")
+            if force_tail_blend_candidate:
+                tail_curve = candidate_curves.get(
+                    "tail_blend_selected"
+                ) or candidate_curves.get("tail_blend")
                 if tail_curve is not None:
                     output_x, output_y = tail_curve
-                    selected_path = "tail_blend_override_k3z"
+                    selected_path = "tail_blend_forced"
                     selected_metrics = dict(
                         fit_metrics.get("tail_blend", selected_metrics)
                     )
@@ -3641,7 +3639,7 @@ def execute_curve_smoothing_runs(
                     dict(fit_metrics.get("merchantable_floor", {})),
                 )
 
-            if str(tsa).strip().lower() != "k3z" and selected_gate_fail_reasons:
+            if enable_late_gate_rescue and selected_gate_fail_reasons:
                 gate_by_path: dict[str, list[str]] = {}
                 for path_name, (curve_xy, curve_metrics) in path_candidates.items():
                     gate_by_path[path_name] = _evaluate_fit_quality_gate(

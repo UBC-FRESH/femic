@@ -175,6 +175,17 @@ def run_tsa(
     allow_stale_tipsy_output = os.environ.get(
         "FEMIC_ALLOW_STALE_TIPSY_OUTPUT", "0"
     ).strip().lower() in {"1", "true", "yes"}
+    tipsy_vdyp_ylim_raw = os.environ.get("FEMIC_TIPSY_VDYP_YLIM")
+    tipsy_vdyp_ylim = None
+    if tipsy_vdyp_ylim_raw:
+        parts = [part.strip() for part in tipsy_vdyp_ylim_raw.split(",")]
+        if len(parts) == 2:
+            try:
+                parsed_ylim = (float(parts[0]), float(parts[1]))
+            except ValueError:
+                parsed_ylim = None
+            if parsed_ylim is not None and parsed_ylim[0] < parsed_ylim[1]:
+                tipsy_vdyp_ylim = parsed_ylim
     strict_timestamp_mismatch = os.environ.get(
         "FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH", "0"
     ).strip().lower() in {"1", "true", "yes"}
@@ -348,7 +359,7 @@ def run_tsa(
 
     yield_df.set_index(["AU", "Age"], inplace=True)
     tipsy_curves[tsa] = yield_df
-    y_limits = tipsy_vdyp_ylim_for_tsa(tsa)
+    y_limits = tipsy_vdyp_ylim_for_tsa(tsa, configured=tipsy_vdyp_ylim)
 
     for i, au in enumerate(yield_df.index.unique(level=0)):
         print(i, au)

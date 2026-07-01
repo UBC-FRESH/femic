@@ -27,9 +27,12 @@ class Legacy01ARuntimeConfig:
     vdyp_out_cache: dict[str, Any] | None = None
     curve_fit_impl: Any = None
     target_area_coverage: float | None = None
+    target_nstrata: int | None = None
     vdyp_sampling_mode: str | int = "auto"
     vdyp_two_pass_rebin: bool = False
     min_stands_per_si_bin: int = 25
+    force_tail_blend_candidate: bool = False
+    enable_late_gate_rescue: bool = True
 
 
 @dataclass(frozen=True)
@@ -59,9 +62,12 @@ def build_legacy_01a_runtime_config(
     vdyp_out_cache: dict[str, Any] | None = None,
     curve_fit_impl: Any = None,
     target_area_coverage: float | None = None,
+    target_nstrata: int | None = None,
     vdyp_sampling_mode: str | int = "auto",
     vdyp_two_pass_rebin: bool = False,
     min_stands_per_si_bin: int = 25,
+    force_tail_blend_candidate: bool = False,
+    enable_late_gate_rescue: bool = True,
 ) -> Legacy01ARuntimeConfig:
     """Build typed runtime config payload for a single 01a TSA run."""
     vdyp_cache_paths = build_vdyp_cache_paths(
@@ -84,9 +90,12 @@ def build_legacy_01a_runtime_config(
         vdyp_out_cache=vdyp_out_cache,
         curve_fit_impl=curve_fit_impl,
         target_area_coverage=target_area_coverage,
+        target_nstrata=target_nstrata,
         vdyp_sampling_mode=vdyp_sampling_mode,
         vdyp_two_pass_rebin=bool(vdyp_two_pass_rebin),
         min_stands_per_si_bin=max(int(min_stands_per_si_bin), 1),
+        force_tail_blend_candidate=bool(force_tail_blend_candidate),
+        enable_late_gate_rescue=bool(enable_late_gate_rescue),
     )
 
 

@@ -2614,11 +2614,37 @@ workflows, adapters, and scientific interpretation.
 
 Parent issue: #249
 
-Status: planned
+K3Z issue: UBC-FRESH/femic-k3z-instance#29
+
+Branch: `feature/p89-extract-k3z-bindings`
+
+K3Z branch: `feature/k3z-femic-package-policies`
+
+Status: complete
 
 Goal: create a K3Z-owned package/config surface and move K3Z-specific FMG
 adapter bindings, source filenames, run defaults, plot limits, target-stratum
 defaults, and VDYP fit-policy decisions out of `src/femic`.
+
+- [x] P89.1 Record lifecycle and planning surfaces
+  - [x] Use parent FEMIC issue `#249`.
+  - [x] Open K3Z instance issue `UBC-FRESH/femic-k3z-instance#29`.
+  - [x] Create parent branch `feature/p89-extract-k3z-bindings`.
+  - [x] Create K3Z branch `feature/k3z-femic-package-policies`.
+  - [x] Update `ROADMAP.md` and `CHANGE_LOG.md` before implementation.
+- [x] P89.2 Add K3Z-owned package and policy surfaces
+  - [x] Add installable `k3z_femic` package in the K3Z instance repo.
+  - [x] Move K3Z FMG auxiliary support loaders into `k3z_femic`.
+  - [x] Add K3Z-owned target-strata, plot-limit, and VDYP selection-policy config.
+- [x] P89.3 Add generic FEMIC extension seams
+  - [x] Let FMG context construction accept external auxiliary support data.
+  - [x] Add generic FMG auxiliary-provider discovery.
+  - [x] Replace K3Z-specific target-strata, plot-limit, and VDYP policy branches
+        with config-driven generic options.
+- [x] P89.4 Verify and close out
+  - [x] Run focused K3Z package tests and docs checks.
+  - [x] Run focused parent tests, lint, Sphinx, build, and package checks.
+  - [x] Merge K3Z first, update parent submodule pointer, then merge parent.
 
 ## Phase 90: Extract TSA29 Strict Locked-Chain Workflow From FEMIC Core
 
@@ -2685,9 +2711,8 @@ example submodules present.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P89` / `#249` is the next boundary-cleanup lane: create a K3Z-owned
-    package/config surface and move K3Z-specific FMG bindings and pipeline
-    policies out of `src/femic`.
+  - `P89` / `#249` is active: create a K3Z-owned package/config surface and
+    move K3Z-specific FMG bindings and pipeline policies out of `src/femic`.
   - `P88` / `#248` is complete locally: the arms-length extension boundary is
     documented, P89-P94 issues are open, and a source guard now prevents new
     named-instance references from entering `src/femic` without an explicit

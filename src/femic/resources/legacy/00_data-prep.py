@@ -331,11 +331,18 @@ _femic_strat_include_tm_species2_raw = os.environ.get(
 _femic_strat_top_area_coverage_raw = os.environ.get(
     "FEMIC_STRAT_TOP_AREA_COVERAGE", "0.8"
 )
+_femic_strat_target_nstrata_raw = os.environ.get("FEMIC_STRAT_TARGET_NSTRATA")
 _femic_vdyp_sampling_mode_raw = os.environ.get("FEMIC_VDYP_SAMPLING_MODE", "auto")
 _femic_vdyp_two_pass_rebin_raw = os.environ.get("FEMIC_VDYP_TWO_PASS_REBIN", "0")
 _femic_vdyp_min_stands_per_si_bin_raw = os.environ.get(
     "FEMIC_VDYP_MIN_STANDS_PER_SI_BIN", "25"
 )
+_femic_vdyp_force_tail_blend = os.environ.get(
+    "FEMIC_VDYP_FORCE_TAIL_BLEND", "0"
+).strip().lower() in ("1", "true", "yes")
+_femic_vdyp_enable_late_gate_rescue = os.environ.get(
+    "FEMIC_VDYP_ENABLE_LATE_GATE_RESCUE", "1"
+).strip().lower() in ("1", "true", "yes")
 _femic_thlb_diagnostics = _femic_thlb_diag_raw.strip().lower() in (
     "1",
     "true",
@@ -378,6 +385,24 @@ if _femic_strat_top_area_coverage is not None and not (
         % _femic_strat_top_area_coverage_raw
     )
     _femic_strat_top_area_coverage = None
+try:
+    _femic_strat_target_nstrata = (
+        int(_femic_strat_target_nstrata_raw)
+        if _femic_strat_target_nstrata_raw not in (None, "")
+        else None
+    )
+except ValueError:
+    print(
+        "warning: invalid FEMIC_STRAT_TARGET_NSTRATA=%s; expected positive integer, ignoring"
+        % _femic_strat_target_nstrata_raw
+    )
+    _femic_strat_target_nstrata = None
+if _femic_strat_target_nstrata is not None and _femic_strat_target_nstrata <= 0:
+    print(
+        "warning: invalid FEMIC_STRAT_TARGET_NSTRATA=%s; expected positive integer, ignoring"
+        % _femic_strat_target_nstrata_raw
+    )
+    _femic_strat_target_nstrata = None
 _femic_vdyp_two_pass_rebin = _femic_vdyp_two_pass_rebin_raw.strip().lower() in (
     "1",
     "true",
@@ -427,20 +452,23 @@ if _femic_custom_boundary:
         % (_femic_boundary_path_raw, _femic_boundary_layer or "<default>")
     )
 print(
-    "stratum key config: bec_grouping=%s species_combo_count=%d include_tm_species2_for_single=%s top_area_coverage=%s"
+    "stratum key config: bec_grouping=%s species_combo_count=%d include_tm_species2_for_single=%s top_area_coverage=%s target_nstrata=%s"
     % (
         _femic_strat_bec_grouping,
         _femic_strat_species_combo_count,
         _femic_strat_include_tm_species2_for_single,
         _femic_strat_top_area_coverage,
+        _femic_strat_target_nstrata,
     )
 )
 print(
-    "vdyp run config: sampling_mode=%s two_pass_rebin=%s min_stands_per_si_bin=%s"
+    "vdyp run config: sampling_mode=%s two_pass_rebin=%s min_stands_per_si_bin=%s force_tail_blend=%s enable_late_gate_rescue=%s"
     % (
         _femic_vdyp_sampling_mode,
         _femic_vdyp_two_pass_rebin,
         _femic_vdyp_min_stands_per_si_bin,
+        _femic_vdyp_force_tail_blend,
+        _femic_vdyp_enable_late_gate_rescue,
     )
 )
 
@@ -742,9 +770,12 @@ def _build_01a_run_kwargs(tsa):
         vdyp_out_cache=vdyp_out_cache,
         curve_fit_impl=curve_fit_impl,
         target_area_coverage=_femic_strat_top_area_coverage,
+        target_nstrata=_femic_strat_target_nstrata,
         vdyp_sampling_mode=_femic_vdyp_sampling_mode,
         vdyp_two_pass_rebin=_femic_vdyp_two_pass_rebin,
         min_stands_per_si_bin=_femic_vdyp_min_stands_per_si_bin,
+        force_tail_blend_candidate=_femic_vdyp_force_tail_blend,
+        enable_late_gate_rescue=_femic_vdyp_enable_late_gate_rescue,
     )
     return dict(
         tsa=tsa,
