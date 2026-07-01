@@ -18781,3 +18781,35 @@
   the submodule pointer was updated to the MKRF merged commit; and
 - marked P84.5 and the P84 parent phase complete in `ROADMAP.md` before final
   issue closure.
+
+## 2026-07-01 - Opened P86 MKRF implementation extraction
+
+- opened FEMIC issue `#244` and MKRF issue
+  `UBC-FRESH/femic-mkrf-instance#42` for the extraction lane;
+- created parent branch `feature/p86-extract-mkrf-workflow-code` and MKRF
+  branch `feature/extract-mkrf-workflow-code`;
+- locked the P86 boundary decision: MKRF-specific implementation moves into the
+  MKRF instance repository, existing `femic instance mkrf-*` commands are
+  removed without deprecated wrappers, FreshForge refs remain `mkrf.*`, and
+  model-instance materialization stays out of this phase; and
+- updated `ROADMAP.md` before implementation so the repo-hosted plan leads the
+  code move.
+
+## 2026-07-01 - Implemented P86 MKRF package extraction
+
+- added an installable MKRF instance package, `mkrf_femic`, with both
+  `python -m mkrf_femic` and `mkrf-femic` command surfaces for the existing
+  MKRF workflow commands;
+- moved MKRF-specific pipeline/workflow implementation and migrated unit tests
+  into `external/femic-mkrf-instance`;
+- updated the MKRF FreshForge provider so `mkrf.*` nodes call
+  `python -m mkrf_femic ...` instead of removed parent
+  `python -m femic instance mkrf-*` commands;
+- removed `femic.pipeline.mkrf_*`, `femic.workflows.mkrf`, the parent
+  `femic instance mkrf-*` command blocks, and parent MKRF-specific tests from
+  FEMIC core; and
+- verified MKRF Ruff, pytest, Sphinx, FreshForge providers/validate/plan/dry-run,
+  package build, `twine check`, and wheel entry-point metadata, plus parent
+  Ruff, focused FreshForge tests, docs build, package build, `twine check`,
+  `mypy src/femic/freshforge.py`, `femic instance --help`, removed-module
+  searches, and parent wheel metadata.
