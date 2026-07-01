@@ -2879,7 +2879,7 @@ def initialize_mkrf_runtime_package(
         ("speciesShareAuditCsv", species_share_audit_path),
     ):
         child = et.SubElement(source_node, tag)
-        child.text = str(path.resolve())
+        child.text = _manifest_path_value(path)
     aus_node = et.SubElement(root, "analysisUnits")
     for row in runtime_curve_status.itertuples(index=False):
         au_node = et.SubElement(aus_node, "au")
@@ -4200,40 +4200,56 @@ def initialize_mkrf_runtime_package(
 
     manifest_payload = {
         "schema_version": 1,
-        "package_root": str(package_root),
+        "package_root": _manifest_path_value(package_root),
         "runtime_generation_status": "initialized_only",
         "source_contracts": {
-            "selected_au_csv": str(selected_au_csv.resolve()),
-            "stand_origin_assignment_csv": str(stand_origin_assignment_csv.resolve()),
-            "stand_au_assignment_csv": str(stand_au_assignment_csv.resolve()),
-            "managed_bootstrap_csv": str(managed_bootstrap_csv.resolve()),
-            "first_growth_curves_csv": str(first_growth_curves_csv.resolve()),
-            "first_growth_diagnostics_csv": str(first_growth_diagnostics_csv.resolve()),
-            "managed_curves_csv": str(managed_curves_csv.resolve()),
-            "managed_run_manifest_json": str(managed_run_manifest_json.resolve()),
-            "bad_curve_audit_summary_csv": str(bad_curve_audit_summary_csv.resolve()),
-            "runtime_curve_status_csv": str(curve_status_path.resolve()),
-            "analysis_au_runtime_status_csv": str(
-                analysis_au_runtime_status_path.resolve()
+            "selected_au_csv": _manifest_path_value(selected_au_csv),
+            "stand_origin_assignment_csv": _manifest_path_value(
+                stand_origin_assignment_csv
             ),
-            "analysis_au_curve_refs_csv": str(analysis_au_curve_refs_path.resolve()),
-            "runtime_au_remap_audit_csv": str(runtime_au_remap_audit_path.resolve()),
-            "runtime_species_share_audit_csv": str(species_share_audit_path.resolve()),
-            "ct_eligibility_audit_csv": str(ct_eligibility_audit_path.resolve()),
-            "ct_intensity_audit_csv": str(ct_intensity_audit_path.resolve()),
-            "ct_intensity_summary_csv": str(ct_intensity_summary_path.resolve()),
-            "hw_ingrowth_overlay_audit_csv": str(
-                hw_ingrowth_overlay_audit_path.resolve()
+            "stand_au_assignment_csv": _manifest_path_value(stand_au_assignment_csv),
+            "managed_bootstrap_csv": _manifest_path_value(managed_bootstrap_csv),
+            "first_growth_curves_csv": _manifest_path_value(first_growth_curves_csv),
+            "first_growth_diagnostics_csv": _manifest_path_value(
+                first_growth_diagnostics_csv
             ),
-            "hw_ingrowth_overlay_summary_csv": str(
-                hw_ingrowth_overlay_summary_path.resolve()
+            "managed_curves_csv": _manifest_path_value(managed_curves_csv),
+            "managed_run_manifest_json": _manifest_path_value(
+                managed_run_manifest_json
             ),
-            "runtime_curve_contract_xml": str(xml_contract_path.resolve()),
-            "runtime_curve_bank_xml": str(xml_curve_bank_path.resolve()),
-            "forestmodel_xml": str(forestmodel_xml_path.resolve()),
-            "analysis_pin": str(analysis_pin_path.resolve()),
-            "headless_runtime_common_bsh": str(headless_runtime_common_path.resolve()),
-            "flow_targets_bsh": str(flow_targets_script_path.resolve()),
+            "bad_curve_audit_summary_csv": _manifest_path_value(
+                bad_curve_audit_summary_csv
+            ),
+            "runtime_curve_status_csv": _manifest_path_value(curve_status_path),
+            "analysis_au_runtime_status_csv": _manifest_path_value(
+                analysis_au_runtime_status_path
+            ),
+            "analysis_au_curve_refs_csv": _manifest_path_value(
+                analysis_au_curve_refs_path
+            ),
+            "runtime_au_remap_audit_csv": _manifest_path_value(
+                runtime_au_remap_audit_path
+            ),
+            "runtime_species_share_audit_csv": _manifest_path_value(
+                species_share_audit_path
+            ),
+            "ct_eligibility_audit_csv": _manifest_path_value(ct_eligibility_audit_path),
+            "ct_intensity_audit_csv": _manifest_path_value(ct_intensity_audit_path),
+            "ct_intensity_summary_csv": _manifest_path_value(ct_intensity_summary_path),
+            "hw_ingrowth_overlay_audit_csv": _manifest_path_value(
+                hw_ingrowth_overlay_audit_path
+            ),
+            "hw_ingrowth_overlay_summary_csv": _manifest_path_value(
+                hw_ingrowth_overlay_summary_path
+            ),
+            "runtime_curve_contract_xml": _manifest_path_value(xml_contract_path),
+            "runtime_curve_bank_xml": _manifest_path_value(xml_curve_bank_path),
+            "forestmodel_xml": _manifest_path_value(forestmodel_xml_path),
+            "analysis_pin": _manifest_path_value(analysis_pin_path),
+            "headless_runtime_common_bsh": _manifest_path_value(
+                headless_runtime_common_path
+            ),
+            "flow_targets_bsh": _manifest_path_value(flow_targets_script_path),
         },
         "counts": {
             "selected_au_count": selected_au_count,

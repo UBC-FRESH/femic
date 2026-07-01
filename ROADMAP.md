@@ -2417,23 +2417,23 @@ runtime-package regeneration and Patchworks Matrix Builder.
         model package paths.
   - [x] Update MKRF README/docs/runbook language from plan-only to explicit
         `freshforge run` execution.
-- [ ] P84.4 Validate MKRF FreshForge execution cycle (#238)
+- [x] P84.4 Validate MKRF FreshForge execution cycle (#238)
   - [x] Verify providers, validate, inspect, plan, and dry-run output.
   - [x] Attempt full local execution through Matrix Builder.
-  - [ ] Rerun after this machine has a usable Patchworks license; the previous
+  - [x] Rerun after this machine has a usable Patchworks license; the previous
         FreshForge run reached `femic patchworks matrix-build`, then Patchworks
         exited with `No matching license`.
   - [x] Inspect produced run reports, FEMIC logs, regenerated model-input
-        bundle files, and ForestModel XML.
-  - [ ] Inspect Matrix Builder manifest after the Patchworks license blocker is
+  bundle files, and ForestModel XML.
+  - [x] Inspect Matrix Builder manifest after the Patchworks license blocker is
         resolved.
 - [ ] P84.5 Close out execution integration (#239)
   - [x] Update roadmap and changelog closeout notes.
   - [x] Open PRs, merge implementation PRs, and verify checks.
   - [x] Record model-instance materialization as the next separate FreshForge
         workflow family.
-  - [ ] Close parent P84 only after P84.4/#238 Matrix Builder acceptance is
-        complete.
+  - [ ] Close parent P84 after the portable-artifact closeout branch lands and
+        the final issue comments are posted.
 
 Phase 84 deliberately does not add model-instance materialization workflow
 support. That is the next FreshForge deployment family after executable
@@ -2441,12 +2441,14 @@ workflow semantics are proven because it solves the separate user problem of
 bootstrapping Git, Python, DataLad, git-annex, special remotes, virtual
 environments, and required payload materialization before model workflows run.
 
-P84.5 remains open even though the implementation PRs have landed because
-P84.4/#238 has not yet proven a completed Matrix Builder run. The previous
-FreshForge run reached `femic patchworks matrix-build`, but Patchworks exited
-with `No matching license` on this machine. Do not close P84.5 or the P84
-parent issue until Matrix Builder completes and the resulting manifest/output
-inspection is recorded.
+P84.4/#238 is now validated. After connecting this machine through the UBC VPN,
+the MKRF FreshForge run completed all nine planned nodes through Patchworks
+Matrix Builder with `run_id=mkrf_freshforge_exec`; the Matrix Builder manifest
+reported `returncode=0`, stderr reported `Done Matrix Builder.`, and the tracks
+surface contained `features.csv` 98,413 rows, `protoaccounts.csv` 62 rows,
+`accounts.csv` 62 rows, `curves.csv` 2,684,869 rows, and `products.csv`
+140,196 rows. The remaining P84.5 closeout task is to land the portable tracked
+artifact fix, post the final GitHub comments, and close the parent issue.
 
 ## Phase 85: FreshForge Instance Provider Boundary Repair
 

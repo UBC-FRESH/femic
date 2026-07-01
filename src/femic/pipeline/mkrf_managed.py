@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
+import json
 from pathlib import Path
 from typing import Any, Mapping
-import json
 
 import numpy as np
 import pandas as pd
@@ -18,6 +19,18 @@ from femic.pipeline.tipsy import (
 
 _MANAGED_TIPSY_SPECIES_COLUMNS = ("BA", "CW", "DR", "FD", "HW", "PW", "SS", "YC")
 _DEFAULT_MANAGED_RULE_KEY = "families"
+
+
+def _portable_path_value(path: Path | str | None) -> str | None:
+    if path is None:
+        return None
+    candidate = Path(path)
+    try:
+        return os.path.relpath(candidate.resolve(), Path.cwd().resolve()).replace(
+            "\\", "/"
+        )
+    except Exception:
+        return candidate.name
 
 
 @dataclass(frozen=True)
@@ -328,7 +341,7 @@ def build_mkrf_managed_au_bootstrap_table(
             "leading_species_1": str(selected_row["leading_species_1"]),
             "leading_species_2": str(selected_row["leading_species_2"]),
             "managed_curve_id": 60000 + int(selected_row["selected_rank"]),
-            "managed_rule_source": str(rule_config.path.as_posix()),
+            "managed_rule_source": _portable_path_value(rule_config.path),
             "origin_fire_min_age": float(rule_config.fire_origin_min_age),
             "origin_classification": "AGE_2020 threshold",
             "logging_origin_stand_count": int(

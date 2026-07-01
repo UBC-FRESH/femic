@@ -18750,3 +18750,22 @@
   `No matching license` on this machine; and
 - kept P84/P84.5 open until Matrix Builder completes and the resulting
   manifest/output inspection is recorded.
+
+## 2026-07-01 - Completed P84 MKRF FreshForge execution acceptance
+
+- fixed the MKRF runtime-package metadata writer so tracked manifests and XML
+  source-contract records use portable repo-relative paths instead of
+  machine-specific absolute paths;
+- reran `freshforge run workflows/freshforge/mkrf_model_build_workflow.yaml
+  --run-id mkrf_freshforge_exec --report
+  runtime/freshforge/runs/mkrf_freshforge_exec.json --json` from the MKRF
+  instance after connecting through the UBC VPN;
+- verified the full nine-node FreshForge plan completed through Patchworks
+  Matrix Builder with `returncode=0`, `Done Matrix Builder.` in stderr, and
+  `accounts_sync.status=synced`;
+- inspected rebuilt track-table row counts: `features.csv` 98,413 rows,
+  `protoaccounts.csv` 62 rows, `accounts.csv` 62 rows, `curves.csv` 2,684,869
+  rows, and `products.csv` 140,196 rows; and
+- updated P84.4/#238 as complete while keeping P84.5 open until this
+  portable-artifact closeout branch lands and the final GitHub issue comments
+  are posted.
