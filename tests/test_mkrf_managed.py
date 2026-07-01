@@ -338,6 +338,8 @@ def test_build_mkrf_managed_au_bootstrap_table_uses_expert_rules_and_si_fallback
     assert vm1["managed_species_3"] == "PW"
     assert vm1["density_total"] == 1500
     assert bool(vm1["ct_eligible"]) is True
+    assert vm1["managed_rule_source"].endswith("tsamkrf.yaml")
+    assert ":" not in vm1["managed_rule_source"]
 
     vm2 = out.loc[out["au_id"] == "cwh_vm_2_cw_hw"].iloc[0]
     assert vm2["bootstrap_status"] == "expert_rule"

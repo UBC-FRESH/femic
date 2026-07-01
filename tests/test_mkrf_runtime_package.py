@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from xml.etree import ElementTree as et
 
 import pandas as pd
 import pytest
 
 from femic.workflows.mkrf import (
-    audit_mkrf_runtime_sanity,
     _build_unmanaged_species_share_table,
+    _manifest_path_value,
+    audit_mkrf_runtime_sanity,
     initialize_mkrf_runtime_package,
 )
 
@@ -272,35 +274,50 @@ def test_initialize_mkrf_runtime_package_writes_manifest(tmp_path: Path) -> None
     assert payload["counts"]["first_growth_missing_au_count"] == 1
     assert payload["counts"]["managed_only_runtime_au_count"] == 1
     assert payload["curve_policy"]["first_growth_borrowing_allowed"] is False
-    assert payload["source_contracts"]["stand_origin_assignment_csv"] == str(
-        stand_origin_assignment_csv.resolve()
+    assert payload["package_root"] == _manifest_path_value(package_root)
+    assert payload["source_contracts"]["stand_origin_assignment_csv"] == (
+        _manifest_path_value(stand_origin_assignment_csv)
     )
-    assert payload["source_contracts"]["stand_au_assignment_csv"] == str(
-        stand_au_assignment_csv.resolve()
+    assert payload["source_contracts"]["stand_au_assignment_csv"] == (
+        _manifest_path_value(stand_au_assignment_csv)
     )
-    assert payload["source_contracts"]["managed_bootstrap_csv"] == str(
-        managed_bootstrap_csv.resolve()
+    assert payload["source_contracts"]["managed_bootstrap_csv"] == (
+        _manifest_path_value(managed_bootstrap_csv)
     )
-    assert payload["source_contracts"]["runtime_au_remap_audit_csv"] == str(
-        result.runtime_au_remap_audit_path.resolve()
+    assert payload["source_contracts"]["runtime_au_remap_audit_csv"] == (
+        _manifest_path_value(result.runtime_au_remap_audit_path)
     )
-    assert payload["source_contracts"]["runtime_species_share_audit_csv"] == str(
-        result.species_share_audit_path.resolve()
+    assert payload["source_contracts"]["runtime_species_share_audit_csv"] == (
+        _manifest_path_value(result.species_share_audit_path)
     )
-    assert payload["source_contracts"]["analysis_pin"] == str(
-        result.analysis_pin_path.resolve()
+    assert payload["source_contracts"]["analysis_pin"] == _manifest_path_value(
+        result.analysis_pin_path
     )
-    assert payload["source_contracts"]["headless_runtime_common_bsh"] == str(
-        result.headless_runtime_common_path.resolve()
+    assert payload["source_contracts"]["headless_runtime_common_bsh"] == (
+        _manifest_path_value(result.headless_runtime_common_path)
     )
-    assert payload["source_contracts"]["flow_targets_bsh"] == str(
-        result.flow_targets_script_path.resolve()
+    assert payload["source_contracts"]["flow_targets_bsh"] == _manifest_path_value(
+        result.flow_targets_script_path
     )
     assert (
         payload["managed_only_runtime_policy"]["insufficient_support_borrowing"]
         == "forbidden"
     )
     assert payload["runtime_au_normalization"]["remapped_source_au_count"] == 1
+
+    xml_root = et.parse(result.xml_contract_path).getroot()
+    source_contracts_node = xml_root.find("sourceContracts")
+    assert source_contracts_node is not None
+    xml_source_contracts = {child.tag: child.text for child in source_contracts_node}
+    assert xml_source_contracts["standOriginAssignmentCsv"] == _manifest_path_value(
+        stand_origin_assignment_csv
+    )
+    assert xml_source_contracts["managedBootstrapCsv"] == _manifest_path_value(
+        managed_bootstrap_csv
+    )
+    assert xml_source_contracts["runtimeCurveStatusCsv"] == _manifest_path_value(
+        result.curve_status_path
+    )
 
     curve_status = pd.read_csv(result.curve_status_path)
     assert curve_status["au_id"].tolist() == ["cwh_vm_1_dr_hw", "cwh_vm_1_hw_cw"]
