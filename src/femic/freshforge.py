@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from typing import Any
 
 FEMIC_PROVIDER_ID = "femic"
-FEMIC_MKRF_PROVIDER_ID = "femic.mkrf"
 FEMIC_PROVIDER_VERSION = "0.1.0a1"
 
 CommandRunner = Callable[[tuple[str, ...]], subprocess.CompletedProcess[str]]
@@ -92,53 +91,6 @@ _NODE_CONTRACTS: tuple[_NodeContract, ...] = (
     ),
 )
 
-_MKRF_NODE_CONTRACTS: tuple[_NodeContract, ...] = (
-    _NodeContract(
-        id="build_au_inputs",
-        name="Build MKRF AU inputs",
-        description="Build MKRF AU and stand-assignment inputs from Resultant.gdb.",
-        outputs=("au_inputs",),
-        parameters=("instance_root", "resultant_gdb"),
-        artifacts=("au_table", "stand_assignment"),
-    ),
-    _NodeContract(
-        id="select_aus",
-        name="Select MKRF analysis units",
-        description="Publish the canonical MKRF selected AU subset.",
-        inputs=("au_inputs",),
-        outputs=("selected_aus",),
-        parameters=("instance_root",),
-        artifacts=("selected_au_table",),
-    ),
-    _NodeContract(
-        id="build_managed_au_inputs",
-        name="Build MKRF managed AU inputs",
-        description="Build managed AU bootstrap and MSYT input surfaces.",
-        inputs=("selected_aus",),
-        outputs=("managed_au_inputs",),
-        parameters=("instance_root", "resultant_gdb"),
-        artifacts=("stand_origin_assignment", "managed_au_msyt"),
-    ),
-    _NodeContract(
-        id="build_managed_au_curves",
-        name="Build MKRF managed AU curves",
-        description="Run the managed AU BTC curve-building seam.",
-        inputs=("managed_au_inputs",),
-        outputs=("managed_au_curves",),
-        parameters=("instance_root", "run_id"),
-        artifacts=("managed_au_curves", "managed_run_manifest"),
-    ),
-    _NodeContract(
-        id="init_runtime_package",
-        name="Initialize MKRF runtime package",
-        description="Initialize the canonical MKRF Patchworks runtime package.",
-        inputs=("managed_au_curves",),
-        outputs=("patchworks_package",),
-        parameters=("instance_root",),
-        artifacts=("forestmodel_xml", "runtime_manifest"),
-    ),
-)
-
 
 class FemicFreshForgeProvider:
     """FreshForge provider for generic FEMIC workflow stages."""
@@ -162,59 +114,7 @@ class FemicFreshForgeProvider:
         self, node: Any, node_type: Any, *, location: str
     ) -> tuple[Any, ...]:
         """Validate broad FEMIC node shape without executing FEMIC."""
-        diagnostic, severity = _freshforge_diagnostic_types()
-        diagnostics: list[Any] = []
-        diagnostics.extend(
-            _missing_key_diagnostics(
-                diagnostic=diagnostic,
-                severity=severity,
-                required=tuple(node_type.inputs),
-                actual=node.inputs,
-                field_name="inputs",
-                location=location,
-            )
-        )
-        diagnostics.extend(
-            _missing_key_diagnostics(
-                diagnostic=diagnostic,
-                severity=severity,
-                required=tuple(node_type.outputs),
-                actual=node.outputs,
-                field_name="outputs",
-                location=location,
-            )
-        )
-        diagnostics.extend(
-            _missing_key_diagnostics(
-                diagnostic=diagnostic,
-                severity=severity,
-                required=tuple(node_type.parameters),
-                actual=node.parameters,
-                field_name="parameters",
-                location=location,
-            )
-        )
-        artifacts = node.artifacts if isinstance(node.artifacts, dict) else {}
-        diagnostics.extend(
-            _missing_key_diagnostics(
-                diagnostic=diagnostic,
-                severity=severity,
-                required=tuple(node_type.artifacts),
-                actual=artifacts,
-                field_name="artifacts",
-                location=location,
-            )
-        )
-        diagnostics.extend(
-            _empty_parameter_diagnostics(
-                diagnostic=diagnostic,
-                severity=severity,
-                parameters=node.parameters,
-                required=tuple(node_type.parameters),
-                location=location,
-            )
-        )
-        return tuple(diagnostics)
+        return _validate_contract_node(node, node_type, location=location)
 
     def execute_node(self, node: Any, node_type: Any, *, context: Any) -> Any:
         """Execute one generic FEMIC node through the installed FEMIC CLI."""
@@ -229,51 +129,9 @@ class FemicFreshForgeProvider:
         )
 
 
-class FemicMkrfFreshForgeProvider:
-    """FreshForge provider for MKRF-specific runtime-package regeneration."""
-
-    def __init__(self, command_runner: CommandRunner | None = None) -> None:
-        self._command_runner = command_runner or _default_command_runner
-
-    def metadata(self) -> Any:
-        """Return FreshForge provider metadata."""
-        return _provider_metadata(
-            provider_id=FEMIC_MKRF_PROVIDER_ID,
-            name="FEMIC MKRF model-build provider",
-            description=(
-                "Provider for MKRF-specific FEMIC runtime-package regeneration "
-                "validation, planning, and explicit execution."
-            ),
-            contracts=_MKRF_NODE_CONTRACTS,
-        )
-
-    def validate_node(
-        self, node: Any, node_type: Any, *, location: str
-    ) -> tuple[Any, ...]:
-        """Validate broad MKRF node shape without executing FEMIC."""
-        return _validate_contract_node(node, node_type, location=location)
-
-    def execute_node(self, node: Any, node_type: Any, *, context: Any) -> Any:
-        """Execute one MKRF node through the installed FEMIC CLI."""
-        builders = _mkrf_command_builders()
-        return _execute_with_builder(
-            node=node,
-            node_type=node_type,
-            context=context,
-            provider_id=FEMIC_MKRF_PROVIDER_ID,
-            builders=builders,
-            runner=self._command_runner,
-        )
-
-
 def provider_factory() -> FemicFreshForgeProvider:
     """Return the FEMIC FreshForge provider for entry-point discovery."""
     return FemicFreshForgeProvider()
-
-
-def mkrf_provider_factory() -> FemicMkrfFreshForgeProvider:
-    """Return the MKRF FreshForge provider for entry-point discovery."""
-    return FemicMkrfFreshForgeProvider()
 
 
 def _provider_metadata(
@@ -526,16 +384,6 @@ def _generic_command_builders() -> dict[str, Callable[[Any, Any], tuple[str, ...
     }
 
 
-def _mkrf_command_builders() -> dict[str, Callable[[Any, Any], tuple[str, ...]]]:
-    return {
-        "build_au_inputs": _build_mkrf_au_inputs_command,
-        "select_aus": _build_mkrf_select_aus_command,
-        "build_managed_au_inputs": _build_mkrf_managed_au_inputs_command,
-        "build_managed_au_curves": _build_mkrf_managed_au_curves_command,
-        "init_runtime_package": _build_mkrf_init_runtime_package_command,
-    }
-
-
 def _build_validate_case_command(node: Any, _context: Any) -> tuple[str, ...]:
     rebuild_spec = _optional_parameter(node, "rebuild_spec")
     if rebuild_spec is not None:
@@ -645,119 +493,6 @@ def _build_matrix_build_command(node: Any, _context: Any) -> tuple[str, ...]:
         )
     )
     _append_option(command, node, "log_dir", "--log-dir")
-    return tuple(command)
-
-
-def _build_mkrf_au_inputs_command(node: Any, _context: Any) -> tuple[str, ...]:
-    command = list(
-        _python_m_femic(
-            "instance",
-            "mkrf-build-au-inputs",
-            "--instance-root",
-            _parameter(node, "instance_root"),
-            "--resultant-gdb",
-            _parameter(node, "resultant_gdb"),
-        )
-    )
-    _append_option(command, node, "output_dir", "--output-dir")
-    return tuple(command)
-
-
-def _build_mkrf_select_aus_command(node: Any, _context: Any) -> tuple[str, ...]:
-    command = list(
-        _python_m_femic(
-            "instance",
-            "mkrf-select-aus",
-            "--instance-root",
-            _parameter(node, "instance_root"),
-        )
-    )
-    _append_option(command, node, "au_table_csv", "--au-table-csv")
-    _append_option(command, node, "assignment_csv", "--assignment-csv")
-    _append_option(command, node, "output_csv", "--output-csv")
-    _append_option(command, node, "target_coverage", "--target-coverage")
-    return tuple(command)
-
-
-def _build_mkrf_managed_au_inputs_command(node: Any, _context: Any) -> tuple[str, ...]:
-    command = list(
-        _python_m_femic(
-            "instance",
-            "mkrf-build-managed-au-inputs",
-            "--instance-root",
-            _parameter(node, "instance_root"),
-            "--resultant-gdb",
-            _parameter(node, "resultant_gdb"),
-        )
-    )
-    _append_option(command, node, "tipsy_rules_yaml", "--tipsy-rules-yaml")
-    _append_option(command, node, "selected_au_csv", "--selected-au-csv")
-    _append_option(command, node, "assignment_csv", "--assignment-csv")
-    _append_option(command, node, "output_dir", "--output-dir")
-    return tuple(command)
-
-
-def _build_mkrf_managed_au_curves_command(node: Any, _context: Any) -> tuple[str, ...]:
-    command = list(
-        _python_m_femic(
-            "instance",
-            "mkrf-build-managed-au-curves",
-            "--instance-root",
-            _parameter(node, "instance_root"),
-            "--run-id",
-            _parameter(node, "run_id"),
-        )
-    )
-    _append_option(command, node, "bootstrap_csv", "--bootstrap-csv")
-    _append_option(command, node, "msyt_csv", "--msyt-csv")
-    _append_option(command, node, "output_dir", "--output-dir")
-    _append_option(command, node, "log_dir", "--log-dir")
-    _append_option(command, node, "btc_executable", "--btc-executable")
-    return tuple(command)
-
-
-def _build_mkrf_init_runtime_package_command(
-    node: Any, _context: Any
-) -> tuple[str, ...]:
-    command = list(
-        _python_m_femic(
-            "instance",
-            "mkrf-init-runtime-package",
-            "--instance-root",
-            _parameter(node, "instance_root"),
-        )
-    )
-    _append_option(command, node, "package_root", "--package-root")
-    _append_option(command, node, "selected_au_csv", "--selected-au-csv")
-    _append_option(
-        command,
-        node,
-        "stand_origin_assignment_csv",
-        "--stand-origin-assignment-csv",
-    )
-    _append_option(
-        command, node, "stand_au_assignment_csv", "--stand-au-assignment-csv"
-    )
-    _append_option(command, node, "managed_bootstrap_csv", "--managed-bootstrap-csv")
-    _append_option(
-        command, node, "first_growth_curves_csv", "--first-growth-curves-csv"
-    )
-    _append_option(
-        command,
-        node,
-        "first_growth_diagnostics_csv",
-        "--first-growth-diagnostics-csv",
-    )
-    _append_option(command, node, "managed_curves_csv", "--managed-curves-csv")
-    _append_option(
-        command, node, "managed_run_manifest_json", "--managed-run-manifest-json"
-    )
-    _append_option(
-        command,
-        node,
-        "bad_curve_audit_summary_csv",
-        "--bad-curve-audit-summary-csv",
-    )
     return tuple(command)
 
 

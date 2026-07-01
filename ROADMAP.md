@@ -2438,6 +2438,83 @@ workflow semantics are proven because it solves the separate user problem of
 bootstrapping Git, Python, DataLad, git-annex, special remotes, virtual
 environments, and required payload materialization before model workflows run.
 
+## Phase 85: FreshForge Instance Provider Boundary Repair
+
+Parent issue: #241
+
+Branch: `feature/p85-freshforge-instance-provider-boundary`
+
+Status: active
+
+Goal: restore the provider namespace boundary after the Phase 84 executable
+prototype put MKRF-specific FreshForge provider logic under `femic.mkrf` in
+FEMIC core. FEMIC core should expose reusable FEMIC stages through provider id
+`femic`; MKRF-specific orchestration belongs to the MKRF instance as provider
+id `mkrf`.
+
+- [x] P85.1 Remove MKRF FreshForge provider ownership from FEMIC core
+  - [x] Remove the `femic.mkrf` provider id, factory, metadata, command
+        builders, and entry point from `femic.freshforge`.
+  - [x] Keep generic executable `femic.*` stages and lazy FreshForge imports.
+  - [x] Update parent tests and docs so FEMIC core is instance-neutral.
+- [x] P85.2 Add the MKRF-owned FreshForge adapter package
+      (MKRF issue UBC-FRESH/femic-mkrf-instance#39)
+  - [x] Add a lightweight installable `mkrf_freshforge` package in the MKRF
+        instance repository.
+  - [x] Register provider id `mkrf` through the `freshforge.providers` entry
+        point.
+  - [x] Move MKRF provider metadata and command construction into the instance
+        adapter while continuing to call existing `python -m femic ...`
+        compatibility commands.
+- [x] P85.3 Update MKRF workflow and docs for `mkrf.*`
+  - [x] Rewrite MKRF workflow provider references from `femic.mkrf.*` to
+        `mkrf.*`.
+  - [x] Document adapter installation and the boundary between FEMIC core,
+        FreshForge, and instance-owned orchestration.
+- [x] P85.4 Record the broader MKRF core extraction follow-up
+  - [x] Inventory MKRF-specific core modules and `femic instance mkrf-*`
+        commands.
+  - [x] Add a follow-on phase for moving mature MKRF-specific workflow and
+        pipeline code out of FEMIC core after the adapter path is proven.
+- [x] P85.5 Verify, commit, push, and open PRs
+  - [x] Run focused parent and MKRF adapter tests.
+  - [x] Verify provider metadata no longer advertises `femic.mkrf` from FEMIC
+        and advertises `mkrf` only from the MKRF adapter.
+  - [x] Open linked parent and MKRF PRs.
+
+Phase 85 intentionally does not remove the existing `femic instance mkrf-*`
+compatibility commands. Those commands remain the execution target for the
+MKRF adapter until a separate extraction phase moves mature MKRF-specific
+scientific and workflow code into an instance-owned or companion package.
+
+## Phase 86: Extract MKRF-Specific Workflow Code From FEMIC Core
+
+Parent issue: pending
+
+Branch: pending
+
+Status: planned
+
+Goal: move mature MKRF-specific pipeline and workflow implementation out of
+FEMIC core after the P85 adapter package boundary is proven. The current
+inventory found MKRF-specific implementation surfaces in
+`src/femic/workflows/mkrf.py`, `src/femic/pipeline/mkrf_au.py`,
+`src/femic/pipeline/mkrf_first_growth.py`, `src/femic/pipeline/mkrf_managed.py`,
+and `femic instance mkrf-*` CLI commands.
+
+- [ ] P86.1 Define the extraction target and compatibility policy
+  - [ ] Decide whether mature MKRF code moves into the MKRF instance package or
+        a separately named companion package.
+  - [ ] Define temporary compatibility wrappers for existing
+        `femic instance mkrf-*` commands.
+- [ ] P86.2 Move MKRF implementation behind the chosen package boundary
+  - [ ] Preserve current tests and command behavior during the move.
+  - [ ] Keep generic FEMIC package APIs instance-neutral.
+- [ ] P86.3 Update docs, tests, packaging, and FreshForge adapter commands
+  - [ ] Point the MKRF FreshForge adapter at the extracted implementation or
+        retained compatibility commands according to the P86 policy.
+  - [ ] Remove stale FEMIC-core MKRF ownership language.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2449,6 +2526,16 @@ environments, and required payload materialization before model workflows run.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P85` / `#241` is active: restore the FreshForge provider boundary by
+    removing `femic.mkrf` from FEMIC core and moving MKRF executable provider
+    metadata and command construction into the MKRF instance as provider id
+    `mkrf`. Local verification has passed for focused Ruff, pytest, mypy,
+    Sphinx, FreshForge CLI validate/inspect/plan/dry-run, package builds,
+    `twine check`, wheel entry-point inspection, MKRF PR
+    `UBC-FRESH/femic-mkrf-instance#40`, and parent PR `#242`.
+  - `P86` is planned: broader extraction of existing MKRF-specific FEMIC
+    workflow and pipeline code should happen after the P85 adapter boundary is
+    reviewed, rather than being bundled into the namespace repair.
   - `P84` / `#234` is active: FEMIC will consume FreshForge Phase 6 execution
     support and MKRF owns the first executable instance workflow. Provider
     hooks, the MKRF provider namespace, docs, validation, planning, dry-run, and

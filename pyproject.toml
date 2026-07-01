@@ -60,7 +60,6 @@ femic = "femic.cli.main:app"
 
 [project.entry-points."freshforge.providers"]
 femic = "femic.freshforge:provider_factory"
-femic_mkrf = "femic.freshforge:mkrf_provider_factory"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
