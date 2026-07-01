@@ -18781,3 +18781,16 @@
   the submodule pointer was updated to the MKRF merged commit; and
 - marked P84.5 and the P84 parent phase complete in `ROADMAP.md` before final
   issue closure.
+
+## 2026-07-01 - Opened P86 MKRF implementation extraction
+
+- opened FEMIC issue `#244` and MKRF issue
+  `UBC-FRESH/femic-mkrf-instance#42` for the extraction lane;
+- created parent branch `feature/p86-extract-mkrf-workflow-code` and MKRF
+  branch `feature/extract-mkrf-workflow-code`;
+- locked the P86 boundary decision: MKRF-specific implementation moves into the
+  MKRF instance repository, existing `femic instance mkrf-*` commands are
+  removed without deprecated wrappers, FreshForge refs remain `mkrf.*`, and
+  model-instance materialization stays out of this phase; and
+- updated `ROADMAP.md` before implementation so the repo-hosted plan leads the
+  code move.
