@@ -18983,3 +18983,11 @@
   `2817710`; and
 - left parent P90 merge as the only remaining P90.4 closeout item pending
   parent PR checks.
+
+## 2026-07-01 - Closed P90 TSA29 strict-chain extraction
+
+- parent PR `#257` passed GitHub docs and package-release checks after the
+  TSA29 submodule pointer update;
+- marked P90 complete in `ROADMAP.md`; and
+- P90 closes with FEMIC core owning generic named-pipeline contract dispatch
+  while TSA29 owns the `tsa29_locked_chain_strict` implementation.

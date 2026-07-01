@@ -2651,7 +2651,7 @@ defaults, and VDYP fit-policy decisions out of `src/femic`.
 Parent issue: #250
 Instance issue: UBC-FRESH/femic-tsa29-instance#15
 
-Status: active
+Status: complete
 
 Goal: define a generic locked-chain validation interface, then move TSA29
 locked-chain row ordering, ledger interpretation, checkpoint restrictions,
@@ -2677,13 +2677,13 @@ package or adapter.
   - [x] Move TSA29 row-order, ledger, preflight, GLB materialization, strict
         sequence, and ledger-validation logic into `tsa29_femic`.
   - [x] Migrate TSA29-specific strict-chain tests into the TSA29 package.
-- [ ] P90.4 Verify and close out
+- [x] P90.4 Verify and close out
   - [x] Run focused parent checks for named pipelines, boundary guard, typing,
         docs, and package artifacts.
   - [x] Run focused TSA29 package checks.
   - [x] Merge TSA29 first and update the parent submodule pointer to the
         merged TSA29 main commit.
-  - [ ] Merge parent P90 after PR checks pass.
+  - [x] Merge parent P90 after PR checks pass.
 
 ## Phase 91: Split TSR Engine From TSA29 Adjudication Overlays
 
@@ -2739,9 +2739,13 @@ example submodules present.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P90` / `#250` is active: add the generic named-pipeline contract-handler
-    seam and move the TSA29 strict locked-chain contract into the TSA29
-    instance package under issue `UBC-FRESH/femic-tsa29-instance#15`.
+  - `P91` / `#251` is next: keep generic TSR machinery in FEMIC core while
+    moving TSA29 adjudication overlays and interpretation text into
+    instance-owned surfaces.
+  - `P90` / `#250` is complete: generic named-pipeline contract-handler
+    dispatch now lives in FEMIC core, and the TSA29 strict locked-chain
+    contract implementation lives in the TSA29 instance package under issue
+    `UBC-FRESH/femic-tsa29-instance#15`.
   - `P89` / `#249` is complete: K3Z-owned package/config surfaces now own the
     K3Z FMG auxiliary support and pipeline policy defaults.
   - `P88` / `#248` is complete locally: the arms-length extension boundary is
