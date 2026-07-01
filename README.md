@@ -74,19 +74,22 @@ femic prep validate-case --instance-root external/femic-k3z-instance --run-confi
 femic prep geospatial-preflight
 ```
 
-FreshForge can inspect plan-only FEMIC model-build graphs when FEMIC is
-installed with the optional integration. FEMIC core ships a generic provider
-example; concrete K3Z or other instance workflow documents belong in the
-corresponding instance repositories.
+FreshForge can inspect, plan, and explicitly run provider-backed FEMIC
+model-build graphs when FEMIC is installed with the optional integration. FEMIC
+core ships a generic provider example; concrete K3Z, MKRF, or other instance
+workflow documents belong in the corresponding instance repositories.
 
 ```bash
 freshforge providers
 freshforge validate examples/freshforge/model_build_workflow.yaml
 freshforge plan examples/freshforge/model_build_workflow.yaml
+freshforge run examples/freshforge/model_build_workflow.yaml --run-id smoke --dry-run
 ```
 
-FreshForge validation and planning do not run FEMIC stages, launch BTC,
-launch Patchworks, read declared artifacts, or replace `femic instance rebuild`.
+FreshForge validation, inspection, and planning are non-mutating. `freshforge
+run` launches provider-owned FEMIC commands only when called explicitly. It does
+not materialize DataLad content, read declared artifacts, or replace
+`femic instance rebuild`.
 
 If `git annex version` fails, install `git-annex` at the OS level and re-open
 the shell before retrying.

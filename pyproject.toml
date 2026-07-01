@@ -36,14 +36,14 @@ dependencies = [
 
 [project.optional-dependencies]
 freshforge = [
-    "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@v0.1.0a1",
+    "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@feature/p6-execution-engine",
 ]
 figures = [
     "figrecover[pdf,cv,vlm] @ git+https://github.com/UBC-FRESH/figrecover.git@v0.1.0a1",
 ]
 dev = [
     "datalad[full]",
-    "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@v0.1.0a1",
+    "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@feature/p6-execution-engine",
     "ipywidgets",
     "mypy",
     "pre-commit",

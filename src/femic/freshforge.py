@@ -1,17 +1,21 @@
 """FreshForge provider integration for FEMIC model-build workflows.
 
-This module is intentionally non-executing. It describes FEMIC workflow stages
-for FreshForge validation and planning, but it does not call FEMIC runtime
-commands, inspect artifacts, or touch model inputs.
+Validation and planning remain non-mutating. Execution is only available when a
+caller explicitly invokes ``freshforge run`` against providers from this module.
 """
 
 from __future__ import annotations
 
+import subprocess
+import sys
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
 FEMIC_PROVIDER_ID = "femic"
 FEMIC_PROVIDER_VERSION = "0.1.0a1"
+
+CommandRunner = Callable[[tuple[str, ...]], subprocess.CompletedProcess[str]]
 
 
 @dataclass(frozen=True)
@@ -89,95 +93,134 @@ _NODE_CONTRACTS: tuple[_NodeContract, ...] = (
 
 
 class FemicFreshForgeProvider:
-    """Non-executing FreshForge provider for FEMIC workflow stages."""
+    """FreshForge provider for generic FEMIC workflow stages."""
+
+    def __init__(self, command_runner: CommandRunner | None = None) -> None:
+        self._command_runner = command_runner or _default_command_runner
 
     def metadata(self) -> Any:
         """Return FreshForge provider metadata."""
-        node_type_metadata, provider_metadata = _freshforge_metadata_types()
-        return provider_metadata(
-            id=FEMIC_PROVIDER_ID,
-            version=FEMIC_PROVIDER_VERSION,
+        return _provider_metadata(
+            provider_id=FEMIC_PROVIDER_ID,
             name="FEMIC model-build provider",
             description=(
-                "Non-executing provider for FEMIC model-build workflow "
-                "validation, inspection, and planning."
+                "Provider for FEMIC model-build workflow validation, planning, "
+                "and explicit execution."
             ),
-            node_types=tuple(
-                node_type_metadata(
-                    id=contract.id,
-                    name=contract.name,
-                    description=contract.description,
-                    inputs=contract.inputs,
-                    outputs=contract.outputs,
-                    parameters=contract.parameters,
-                    artifacts=contract.artifacts,
-                )
-                for contract in _NODE_CONTRACTS
-            ),
+            contracts=_NODE_CONTRACTS,
         )
 
     def validate_node(
         self, node: Any, node_type: Any, *, location: str
     ) -> tuple[Any, ...]:
         """Validate broad FEMIC node shape without executing FEMIC."""
-        diagnostic, severity = _freshforge_diagnostic_types()
-        diagnostics: list[Any] = []
-        diagnostics.extend(
-            _missing_key_diagnostics(
-                diagnostic=diagnostic,
-                severity=severity,
-                required=tuple(node_type.inputs),
-                actual=node.inputs,
-                field_name="inputs",
-                location=location,
-            )
+        return _validate_contract_node(node, node_type, location=location)
+
+    def execute_node(self, node: Any, node_type: Any, *, context: Any) -> Any:
+        """Execute one generic FEMIC node through the installed FEMIC CLI."""
+        builders = _generic_command_builders()
+        return _execute_with_builder(
+            node=node,
+            node_type=node_type,
+            context=context,
+            provider_id=FEMIC_PROVIDER_ID,
+            builders=builders,
+            runner=self._command_runner,
         )
-        diagnostics.extend(
-            _missing_key_diagnostics(
-                diagnostic=diagnostic,
-                severity=severity,
-                required=tuple(node_type.outputs),
-                actual=node.outputs,
-                field_name="outputs",
-                location=location,
-            )
-        )
-        diagnostics.extend(
-            _missing_key_diagnostics(
-                diagnostic=diagnostic,
-                severity=severity,
-                required=tuple(node_type.parameters),
-                actual=node.parameters,
-                field_name="parameters",
-                location=location,
-            )
-        )
-        artifacts = node.artifacts if isinstance(node.artifacts, dict) else {}
-        diagnostics.extend(
-            _missing_key_diagnostics(
-                diagnostic=diagnostic,
-                severity=severity,
-                required=tuple(node_type.artifacts),
-                actual=artifacts,
-                field_name="artifacts",
-                location=location,
-            )
-        )
-        diagnostics.extend(
-            _empty_parameter_diagnostics(
-                diagnostic=diagnostic,
-                severity=severity,
-                parameters=node.parameters,
-                required=tuple(node_type.parameters),
-                location=location,
-            )
-        )
-        return tuple(diagnostics)
 
 
 def provider_factory() -> FemicFreshForgeProvider:
     """Return the FEMIC FreshForge provider for entry-point discovery."""
     return FemicFreshForgeProvider()
+
+
+def _provider_metadata(
+    *,
+    provider_id: str,
+    name: str,
+    description: str,
+    contracts: Sequence[_NodeContract],
+) -> Any:
+    node_type_metadata, provider_metadata = _freshforge_metadata_types()
+    return provider_metadata(
+        id=provider_id,
+        version=FEMIC_PROVIDER_VERSION,
+        name=name,
+        description=description,
+        node_types=tuple(
+            node_type_metadata(
+                id=contract.id,
+                name=contract.name,
+                description=contract.description,
+                inputs=contract.inputs,
+                outputs=contract.outputs,
+                parameters=contract.parameters,
+                artifacts=contract.artifacts,
+            )
+            for contract in contracts
+        ),
+    )
+
+
+def _validate_contract_node(
+    node: Any,
+    node_type: Any,
+    *,
+    location: str,
+) -> tuple[Any, ...]:
+    diagnostic, severity = _freshforge_diagnostic_types()
+    diagnostics: list[Any] = []
+    diagnostics.extend(
+        _missing_key_diagnostics(
+            diagnostic=diagnostic,
+            severity=severity,
+            required=tuple(node_type.inputs),
+            actual=node.inputs,
+            field_name="inputs",
+            location=location,
+        )
+    )
+    diagnostics.extend(
+        _missing_key_diagnostics(
+            diagnostic=diagnostic,
+            severity=severity,
+            required=tuple(node_type.outputs),
+            actual=node.outputs,
+            field_name="outputs",
+            location=location,
+        )
+    )
+    diagnostics.extend(
+        _missing_key_diagnostics(
+            diagnostic=diagnostic,
+            severity=severity,
+            required=tuple(node_type.parameters),
+            actual=node.parameters,
+            field_name="parameters",
+            location=location,
+        )
+    )
+    artifacts = node.artifacts if isinstance(node.artifacts, dict) else {}
+    diagnostics.extend(
+        _missing_key_diagnostics(
+            diagnostic=diagnostic,
+            severity=severity,
+            required=tuple(node_type.artifacts),
+            actual=artifacts,
+            field_name="artifacts",
+            location=location,
+        )
+    )
+    diagnostics.extend(
+        _empty_parameter_diagnostics(
+            diagnostic=diagnostic,
+            severity=severity,
+            parameters=node.parameters,
+            required=tuple(node_type.parameters),
+            location=location,
+        )
+    )
+    return tuple(diagnostics)
 
 
 def _freshforge_metadata_types() -> tuple[Any, Any]:
@@ -208,6 +251,251 @@ def _freshforge_diagnostic_types() -> tuple[Any, Any]:
     return Diagnostic, DiagnosticSeverity
 
 
+def _freshforge_execution_result_type() -> Any:
+    try:
+        from freshforge.records import ProviderExecutionResult  # type: ignore[import-untyped]
+    except ModuleNotFoundError as exc:
+        raise RuntimeError(
+            "The FEMIC FreshForge integration requires the optional "
+            "`femic[freshforge]` dependency."
+        ) from exc
+    return ProviderExecutionResult
+
+
+def _execute_with_builder(
+    *,
+    node: Any,
+    node_type: Any,
+    context: Any,
+    provider_id: str,
+    builders: dict[str, Callable[[Any, Any], tuple[str, ...]]],
+    runner: CommandRunner,
+) -> Any:
+    result_type = _freshforge_execution_result_type()
+    diagnostic, severity = _freshforge_diagnostic_types()
+    builder = builders.get(str(node_type.id))
+    if builder is None:
+        return result_type(
+            diagnostics=(
+                diagnostic(
+                    severity=severity.ERROR,
+                    code="femic.execution.unsupported",
+                    message=(
+                        f"FEMIC provider '{provider_id}' has no execution hook "
+                        f"for node type '{node_type.id}'."
+                    ),
+                    location=f"nodes.{node.id}",
+                ),
+            )
+        )
+    try:
+        command = builder(node, context)
+    except ValueError as exc:
+        return result_type(
+            diagnostics=(
+                diagnostic(
+                    severity=severity.ERROR,
+                    code="femic.execution.parameters.invalid",
+                    message=str(exc),
+                    location=f"nodes.{node.id}.parameters",
+                ),
+            )
+        )
+    completed = runner(command)
+    metadata: dict[str, Any] = {"returncode": completed.returncode}
+    if completed.stdout:
+        metadata["stdout"] = completed.stdout
+    if completed.stderr:
+        metadata["stderr"] = completed.stderr
+    diagnostics: tuple[Any, ...] = ()
+    if completed.returncode != 0:
+        diagnostics = (
+            diagnostic(
+                severity=severity.ERROR,
+                code="femic.execution.command.failed",
+                message=(
+                    f"FEMIC command for node '{node.id}' exited with "
+                    f"return code {completed.returncode}."
+                ),
+                location=f"nodes.{node.id}",
+            ),
+        )
+    artifacts = node.artifacts if isinstance(node.artifacts, dict) else {}
+    return result_type(
+        metadata=metadata,
+        command=command,
+        diagnostics=diagnostics,
+        artifacts=artifacts,
+    )
+
+
+def _default_command_runner(
+    command: tuple[str, ...],
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        list(command),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+
+def _python_m_femic(*args: str) -> tuple[str, ...]:
+    return (sys.executable, "-m", "femic", *args)
+
+
+def _parameter(node: Any, key: str) -> str:
+    value = node.parameters.get(key)
+    if value is None:
+        raise ValueError(f"FEMIC node '{node.id}' requires parameter '{key}'.")
+    if isinstance(value, str):
+        if not value.strip():
+            raise ValueError(
+                f"FEMIC node '{node.id}' parameter '{key}' must be nonempty."
+            )
+        return value
+    return str(value)
+
+
+def _optional_parameter(node: Any, key: str) -> str | None:
+    value = node.parameters.get(key)
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return value if value.strip() else None
+    return str(value)
+
+
+def _append_option(command: list[str], node: Any, key: str, option: str) -> None:
+    value = _optional_parameter(node, key)
+    if value is not None:
+        command.extend([option, value])
+
+
+def _generic_command_builders() -> dict[str, Callable[[Any, Any], tuple[str, ...]]]:
+    return {
+        "validate_case": _build_validate_case_command,
+        "geospatial_preflight": _build_geospatial_preflight_command,
+        "compile_upstream": _build_compile_upstream_command,
+        "btc_post_tipsy": _build_btc_post_tipsy_command,
+        "export_patchworks": _build_export_patchworks_command,
+        "patchworks_preflight": _build_patchworks_preflight_command,
+        "matrix_build": _build_matrix_build_command,
+    }
+
+
+def _build_validate_case_command(node: Any, _context: Any) -> tuple[str, ...]:
+    rebuild_spec = _optional_parameter(node, "rebuild_spec")
+    if rebuild_spec is not None:
+        return _python_m_femic(
+            "instance",
+            "validate-spec",
+            "--instance-root",
+            _parameter(node, "instance_root"),
+            "--spec",
+            rebuild_spec,
+        )
+    command = list(
+        _python_m_femic(
+            "prep",
+            "validate-case",
+            "--instance-root",
+            _parameter(node, "instance_root"),
+            "--run-config",
+            _parameter(node, "run_config"),
+        )
+    )
+    _append_option(command, node, "tipsy_config_dir", "--tipsy-config-dir")
+    return tuple(command)
+
+
+def _build_geospatial_preflight_command(node: Any, _context: Any) -> tuple[str, ...]:
+    _ = _parameter(node, "instance_root")
+    return _python_m_femic("prep", "geospatial-preflight")
+
+
+def _build_compile_upstream_command(node: Any, _context: Any) -> tuple[str, ...]:
+    command = list(
+        _python_m_femic(
+            "run",
+            "--instance-root",
+            _parameter(node, "instance_root"),
+            "--run-config",
+            _parameter(node, "run_config"),
+            "--run-id",
+            _parameter(node, "run_id"),
+        )
+    )
+    _append_option(command, node, "log_dir", "--log-dir")
+    return tuple(command)
+
+
+def _build_btc_post_tipsy_command(node: Any, _context: Any) -> tuple[str, ...]:
+    command = list(
+        _python_m_femic(
+            "tsa",
+            "btc-post-tipsy",
+            "--instance-root",
+            _parameter(node, "instance_root"),
+            "--run-config",
+            _parameter(node, "run_config"),
+            "--tsa",
+            _parameter(node, "tsa"),
+            "--run-id",
+            _parameter(node, "run_id"),
+        )
+    )
+    _append_option(command, node, "log_dir", "--log-dir")
+    _append_option(command, node, "btc_exe", "--btc-exe")
+    _append_option(command, node, "scratch_dir", "--scratch-dir")
+    return tuple(command)
+
+
+def _build_export_patchworks_command(node: Any, _context: Any) -> tuple[str, ...]:
+    command = list(
+        _python_m_femic(
+            "export",
+            "patchworks",
+            "--instance-root",
+            _parameter(node, "instance_root"),
+            "--tsa",
+            _parameter(node, "tsa"),
+        )
+    )
+    _append_option(command, node, "bundle_dir", "--bundle-dir")
+    _append_option(command, node, "checkpoint", "--checkpoint")
+    _append_option(command, node, "output_dir", "--output-dir")
+    return tuple(command)
+
+
+def _build_patchworks_preflight_command(node: Any, _context: Any) -> tuple[str, ...]:
+    return _python_m_femic(
+        "patchworks",
+        "preflight",
+        "--instance-root",
+        _parameter(node, "instance_root"),
+        "--config",
+        _parameter(node, "patchworks_config"),
+    )
+
+
+def _build_matrix_build_command(node: Any, _context: Any) -> tuple[str, ...]:
+    command = list(
+        _python_m_femic(
+            "patchworks",
+            "matrix-build",
+            "--instance-root",
+            _parameter(node, "instance_root"),
+            "--config",
+            _parameter(node, "patchworks_config"),
+            "--run-id",
+            _parameter(node, "run_id"),
+        )
+    )
+    _append_option(command, node, "log_dir", "--log-dir")
+    return tuple(command)
+
+
 def _missing_key_diagnostics(
     *,
     diagnostic: Any,
@@ -223,7 +511,7 @@ def _missing_key_diagnostics(
             code=f"femic.{field_name}.missing",
             message=(
                 f"FEMIC node requires {field_name} key '{key}' for "
-                "non-executing workflow planning."
+                "FreshForge validation, planning, and execution."
             ),
             location=f"{location}.{field_name}.{key}",
         )
