@@ -18681,3 +18681,38 @@
   `models/tsa29_patchworks_model/blocks` from `arbutus-s3`; and
 - updated the parent FEMIC submodule pointer to the cleaned TSA29 `main`
   commit `a038a47`.
+
+## 2026-06-30 - Opened FreshForge execution phase for MKRF
+
+- opened FEMIC issue `#234` with child issues `#235` through `#239` for
+  executable FreshForge provider hooks, the MKRF provider namespace, the MKRF
+  executable workflow/docs, validation, and closeout;
+- opened MKRF instance issue `UBC-FRESH/femic-mkrf-instance#37` for the
+  instance-owned workflow and documentation updates;
+- created parent branch `feature/p84-freshforge-execution-mkrf` and MKRF branch
+  `feature/freshforge-executable-workflow`; and
+- recorded the execution/materialization boundary: Phase 84 proves explicit
+  `freshforge run` execution for MKRF model rebuilding, while deterministic
+  model-instance materialization remains the next separate workflow family.
+
+## 2026-06-30 - Implemented FreshForge execution hooks and MKRF graph
+
+- extended `femic.freshforge` with lazy provider execution hooks backed by
+  `sys.executable -m femic` commands while preserving non-mutating validation,
+  inspection, and planning behavior;
+- added the `femic.mkrf` provider namespace and entry point for MKRF-owned
+  runtime-package regeneration commands;
+- updated the MKRF FreshForge workflow to an executable, source-aware graph that
+  validates the rebuild spec, runs geospatial preflight, regenerates MKRF AU and
+  managed-curve inputs, initializes the runtime package, preflights Patchworks,
+  and invokes Matrix Builder;
+- updated FEMIC and MKRF docs/runbooks to distinguish non-mutating
+  validate/inspect/plan from explicit `freshforge run` execution, and to keep
+  model-instance materialization as the next separate workflow family;
+- verified provider discovery, MKRF workflow validation/planning/dry-run,
+  focused provider tests, `ruff check src tests`, targeted mypy, warning-clean
+  Sphinx docs, package build, and `twine check`; and
+- attempted full MKRF execution locally. The workflow regenerated MKRF
+  model-input/runtime package surfaces and reached Patchworks Matrix Builder,
+  but Matrix Builder did not complete because local Patchworks stderr reported
+  `No matching license`.

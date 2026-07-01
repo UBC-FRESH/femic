@@ -2384,6 +2384,60 @@ Phase 83 treats TSA29 `runtime/` as local/generated only, matching MKRF and
 TFL6. Curated evidence that needs to remain durable must live outside
 `runtime/` in explicit evidence, docs, config, planning, or release surfaces.
 
+## Phase 84: FreshForge Execution For MKRF Workflows
+
+Parent issue: #234
+
+Branch: `feature/p84-freshforge-execution-mkrf`
+
+Status: active
+
+Goal: consume FreshForge Phase 6 execution support from FEMIC and MKRF so the
+MKRF FreshForge workflow can explicitly run the canonical rebuild lane through
+runtime-package regeneration and Patchworks Matrix Builder.
+
+- [x] P84.1 Add executable FEMIC provider hooks (#235)
+  - [x] Keep `femic.freshforge` lazy-import safe.
+  - [x] Preserve validation, inspection, and planning behavior for existing
+        provider references.
+  - [x] Map generic FEMIC node types to existing `python -m femic ...`
+        commands.
+  - [x] Add command construction and mocked execution tests.
+- [x] P84.2 Add MKRF executable provider namespace (#236)
+  - [x] Add `femic.mkrf.*` metadata for MKRF runtime-package regeneration
+        commands.
+  - [x] Add provider validation for required broad parameters such as
+        `instance_root`, `resultant_gdb`, and `run_id`.
+  - [x] Register the MKRF provider through the `freshforge.providers` entry
+        point without adding instance-specific workflow builders to FEMIC core.
+- [x] P84.3 Update MKRF executable workflow and docs (#237;
+       MKRF issue UBC-FRESH/femic-mkrf-instance#37)
+  - [x] Replace the plan-only MKRF workflow with an explicit executable graph.
+  - [x] Use the accepted MKRF source input, run config, Patchworks config, and
+        model package paths.
+  - [x] Update MKRF README/docs/runbook language from plan-only to explicit
+        `freshforge run` execution.
+- [ ] P84.4 Validate MKRF FreshForge execution cycle (#238)
+  - [x] Verify providers, validate, inspect, plan, and dry-run output.
+  - [x] Attempt full local execution through Matrix Builder.
+  - [ ] Resolve local Patchworks license blocker and rerun Matrix Builder to
+        completion.
+  - [x] Inspect produced run reports, FEMIC logs, regenerated model-input
+        bundle files, and ForestModel XML.
+  - [ ] Inspect Matrix Builder manifest after the Patchworks license blocker is
+        resolved.
+- [ ] P84.5 Close out execution integration (#239)
+  - [x] Update roadmap and changelog closeout notes.
+  - [ ] Open PRs and verify checks.
+  - [ ] Record model-instance materialization as the next separate FreshForge
+        workflow family.
+
+Phase 84 deliberately does not add model-instance materialization workflow
+support. That is the next FreshForge deployment family after executable
+workflow semantics are proven because it solves the separate user problem of
+bootstrapping Git, Python, DataLad, git-annex, special remotes, virtual
+environments, and required payload materialization before model workflows run.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2395,6 +2449,12 @@ TFL6. Curated evidence that needs to remain durable must live outside
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P84` / `#234` is active: FEMIC will consume FreshForge Phase 6 execution
+    support and MKRF owns the first executable instance workflow. Provider
+    hooks, the MKRF provider namespace, docs, validation, planning, dry-run, and
+    runtime-package regeneration are working locally. The remaining acceptance
+    blocker is Patchworks Matrix Builder licensing: the full run reaches
+    Matrix Builder, then stderr reports `No matching license`.
   - `P83` / `#232` is complete pending parent PR merge: tracked TSA29
     `runtime/**` artifacts were removed from the instance Git index, the
     cleaned TSA29 PR was merged, and a fresh short-path Windows clone
@@ -2409,12 +2469,10 @@ TFL6. Curated evidence that needs to remain durable must live outside
     a plan-only FreshForge provider. PR `#226` was squash-merged to `main`
     after focused local verification plus green docs and release-artifact
     checks.
-  - `P81` / `#227` is in final closeout: MKRF now owns the first real
-    instance-level FreshForge workflow contract at
-    `workflows/freshforge/mkrf_model_build_workflow.yaml`. MKRF PR
-    `UBC-FRESH/femic-mkrf-instance#36` was squash-merged, the parent branch has
-    been rebased onto P80 on `main`, and the remaining edge is final
-    post-rebase validation plus merge of parent PR `#228`.
+  - `P81` / `#227` is complete: MKRF owns the first real instance-level
+    FreshForge workflow contract at
+    `workflows/freshforge/mkrf_model_build_workflow.yaml`; the next evolution is
+    P84 executable orchestration.
   - `P79` / `#211` is planned: FEMIC will grow reusable open LiDAR
     acquisition, terrain-raster, slope, and terrain-derived hydrography
     workflows. The immediate TFL 6 instance uses a public DEM steep-slope
