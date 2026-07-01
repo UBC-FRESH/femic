@@ -18882,3 +18882,14 @@
   and
 - marked P88 complete in `ROADMAP.md`, leaving P89 as the next implementation
   lane for extracting K3Z bindings and pipeline policies.
+
+## 2026-07-01 - Opened P89 K3Z binding and policy extraction
+
+- created parent branch `feature/p89-extract-k3z-bindings` and K3Z branch
+  `feature/k3z-femic-package-policies`;
+- opened K3Z instance issue `UBC-FRESH/femic-k3z-instance#29` alongside parent
+  FEMIC issue `#249`;
+- recorded the P89 task breakdown in `ROADMAP.md`; and
+- locked the boundary: P89 moves K3Z FMG auxiliary support and pipeline policy
+  defaults into a K3Z-owned package/config surface while leaving Patchworks
+  variant registry extraction to P92.
