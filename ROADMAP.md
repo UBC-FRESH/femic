@@ -2420,23 +2420,33 @@ runtime-package regeneration and Patchworks Matrix Builder.
 - [ ] P84.4 Validate MKRF FreshForge execution cycle (#238)
   - [x] Verify providers, validate, inspect, plan, and dry-run output.
   - [x] Attempt full local execution through Matrix Builder.
-  - [ ] Resolve local Patchworks license blocker and rerun Matrix Builder to
-        completion.
+  - [ ] Rerun after this machine has a usable Patchworks license; the previous
+        FreshForge run reached `femic patchworks matrix-build`, then Patchworks
+        exited with `No matching license`.
   - [x] Inspect produced run reports, FEMIC logs, regenerated model-input
         bundle files, and ForestModel XML.
   - [ ] Inspect Matrix Builder manifest after the Patchworks license blocker is
         resolved.
 - [ ] P84.5 Close out execution integration (#239)
   - [x] Update roadmap and changelog closeout notes.
-  - [ ] Open PRs and verify checks.
-  - [ ] Record model-instance materialization as the next separate FreshForge
+  - [x] Open PRs, merge implementation PRs, and verify checks.
+  - [x] Record model-instance materialization as the next separate FreshForge
         workflow family.
+  - [ ] Close parent P84 only after P84.4/#238 Matrix Builder acceptance is
+        complete.
 
 Phase 84 deliberately does not add model-instance materialization workflow
 support. That is the next FreshForge deployment family after executable
 workflow semantics are proven because it solves the separate user problem of
 bootstrapping Git, Python, DataLad, git-annex, special remotes, virtual
 environments, and required payload materialization before model workflows run.
+
+P84.5 remains open even though the implementation PRs have landed because
+P84.4/#238 has not yet proven a completed Matrix Builder run. The previous
+FreshForge run reached `femic patchworks matrix-build`, but Patchworks exited
+with `No matching license` on this machine. Do not close P84.5 or the P84
+parent issue until Matrix Builder completes and the resulting manifest/output
+inspection is recorded.
 
 ## Phase 85: FreshForge Instance Provider Boundary Repair
 
@@ -2540,8 +2550,9 @@ and `femic instance mkrf-*` CLI commands.
     support and MKRF owns the first executable instance workflow. Provider
     hooks, the MKRF provider namespace, docs, validation, planning, dry-run, and
     runtime-package regeneration are working locally. The remaining acceptance
-    blocker is Patchworks Matrix Builder licensing: the full run reaches
-    Matrix Builder, then stderr reports `No matching license`.
+    task is plain: rerun on a machine/session where Patchworks has a usable
+    license. The previous full run reached Matrix Builder, then Patchworks
+    exited with `No matching license`.
   - `P83` / `#232` is complete pending parent PR merge: tracked TSA29
     `runtime/**` artifacts were removed from the instance Git index, the
     cleaned TSA29 PR was merged, and a fresh short-path Windows clone

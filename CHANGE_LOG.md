@@ -18740,3 +18740,13 @@
   and
 - opened MKRF PR `UBC-FRESH/femic-mkrf-instance#40` and parent FEMIC PR `#242`
   for review.
+
+## 2026-07-01 - Corrected P84 closeout status
+
+- reopened issue `#239` after recognizing that closing P84.5 while P84.4/#238
+  remained incomplete violated the roadmap parent/child closeout contract;
+- clarified the remaining P84 task in plain terms: FreshForge reached
+  `femic patchworks matrix-build`, but Patchworks exited with
+  `No matching license` on this machine; and
+- kept P84/P84.5 open until Matrix Builder completes and the resulting
+  manifest/output inspection is recorded.
