@@ -49,7 +49,7 @@
         <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
     </features>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track />
   </select>
   <select statement="AU eq 985501000 and IFM eq 'managed' and ORIGIN eq 'natural' and SILV_STATE eq 'baseline'">
@@ -76,7 +76,7 @@
     <retention factor="RETENTION">
       <assign field="IFM" value="'unmanaged'" />
     </retention>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track>
       <treatment label="CC" minage="0" maxage="1000">
         <produce>
@@ -123,7 +123,7 @@
         <curve idref="au_CWHvm_HW_FDC_L_og2" />
       </attribute>
     </features>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track />
   </select>
   <select statement="AU eq 985501000 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'">
@@ -150,7 +150,7 @@
     <retention factor="RETENTION">
       <assign field="IFM" value="'unmanaged'" />
     </retention>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track>
       <treatment label="CC" minage="0" maxage="1000">
         <produce>

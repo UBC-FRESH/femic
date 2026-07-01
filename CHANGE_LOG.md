@@ -18825,3 +18825,21 @@
   `planning/phase87_parent_instance_reference_audit.md`; and
 - updated `ROADMAP.md` so P86 is marked complete and P87 governs the active
   implementation edge before code migration starts.
+
+## 2026-07-01 - Moved MKRF legacy XML builder into the MKRF package
+
+- added `mkrf_femic.legacy_xml` in the MKRF instance package with the migrated
+  `build_legacy_mkrf_forestmodel_xml_tree` and
+  `emit_legacy_mkrf_forestmodel_xml` APIs;
+- moved the MKRF-specific legacy XML constants, helper functions, Attrib review
+  extracts, and behavior tests out of parent FEMIC and into
+  `external/femic-mkrf-instance`;
+- removed the MKRF legacy builder exports and helper implementation from
+  parent `femic.fmg`, while keeping generic legacy input-variable export
+  helpers in FEMIC core;
+- reworded the parent Patchworks export CLI help so the legacy
+  input-variables option is no longer described as MKRF-first; and
+- verified MKRF Ruff, pytest, Sphinx, package build, `twine check`, and
+  FreshForge validate/plan/dry-run, plus parent Ruff, targeted mypy, Patchworks
+  tests, FreshForge integration tests, Sphinx, package build, and
+  `twine check` on the moved boundary.

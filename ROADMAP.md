@@ -2552,25 +2552,25 @@ owns the MKRF legacy builder API, tests, and docs. The broad instance-reference
 audit for this lane is recorded in
 `planning/phase87_parent_instance_reference_audit.md`.
 
-- [ ] P87.1 Record lifecycle and planning surfaces
+- [x] P87.1 Record lifecycle and planning surfaces
   - [x] Open parent FEMIC issue `#246`.
   - [x] Open MKRF instance issue `UBC-FRESH/femic-mkrf-instance#44`.
-  - [ ] Commit the parent instance-reference audit report.
-- [ ] P87.2 Move MKRF legacy XML builder ownership into MKRF
-  - [ ] Add `mkrf_femic.legacy_xml` with the migrated MKRF builder API.
-  - [ ] Move MKRF-specific builder constants, helper functions, and tests out
+  - [x] Commit the parent instance-reference audit report.
+- [x] P87.2 Move MKRF legacy XML builder ownership into MKRF
+  - [x] Add `mkrf_femic.legacy_xml` with the migrated MKRF builder API.
+  - [x] Move MKRF-specific builder constants, helper functions, and tests out
         of parent FEMIC and into the MKRF instance package.
-  - [ ] Preserve generated XML behavior and output contracts.
-- [ ] P87.3 Remove MKRF legacy builder coupling from FEMIC core
-  - [ ] Remove `build_legacy_mkrf_forestmodel_xml_tree` and
+  - [x] Preserve generated XML behavior and output contracts.
+- [x] P87.3 Remove MKRF legacy builder coupling from FEMIC core
+  - [x] Remove `build_legacy_mkrf_forestmodel_xml_tree` and
         `emit_legacy_mkrf_forestmodel_xml` from `femic.fmg`.
-  - [ ] Remove MKRF-specific legacy XML helper code from
+  - [x] Remove MKRF-specific legacy XML helper code from
         `src/femic/fmg/patchworks.py`.
-  - [ ] Reword generic export CLI help so it no longer uses MKRF-first
+  - [x] Reword generic export CLI help so it no longer uses MKRF-first
         terminology.
 - [ ] P87.4 Verify and close out the paired lifecycle
-  - [ ] Run focused MKRF package tests and FreshForge workflow dry-run checks.
-  - [ ] Run focused parent FEMIC lint, tests, docs, and package checks.
+  - [x] Run focused MKRF package tests and FreshForge workflow dry-run checks.
+  - [x] Run focused parent FEMIC lint, tests, docs, and package checks.
   - [ ] Merge MKRF first, update the parent submodule pointer, then merge the
         parent PR.
 
@@ -2587,8 +2587,8 @@ audit for this lane is recorded in
   - `planning/roadmap_notes_archive.md`
 - Current edge:
   - `P87` / `#246` is active: the remaining MKRF-specific legacy ForestModel
-    XML builder in parent `femic.fmg` will move into the MKRF instance package
-    under `mkrf_femic.legacy_xml`.
+    XML builder moved from parent `femic.fmg` into the MKRF instance package
+    under `mkrf_femic.legacy_xml`; remaining work is PR/submodule closeout.
   - `P86` / `#244` is complete: MKRF-specific pipeline and workflow
     implementation now lives in the MKRF instance repository as installable
     package `mkrf_femic`, and parent FEMIC no longer exposes

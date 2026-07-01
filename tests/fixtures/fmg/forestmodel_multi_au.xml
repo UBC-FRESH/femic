@@ -165,7 +165,7 @@
         <curve idref="unmanaged_prop_PL_SBPS_PLI_L_1001001" />
       </attribute>
     </features>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track />
   </select>
   <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'natural' and SILV_STATE eq 'baseline'">
@@ -204,7 +204,7 @@
     <retention factor="RETENTION">
       <assign field="IFM" value="'unmanaged'" />
     </retention>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track>
       <treatment label="CC" minage="0" maxage="1000">
         <produce>
@@ -281,7 +281,7 @@
         <curve idref="managed_prop_PL_SBPS_PLI_L_21001001" />
       </attribute>
     </features>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track />
   </select>
   <select statement="AU eq 1001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'">
@@ -320,7 +320,7 @@
     <retention factor="RETENTION">
       <assign field="IFM" value="'unmanaged'" />
     </retention>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track>
       <treatment label="CC" minage="0" maxage="1000">
         <produce>
@@ -397,7 +397,7 @@
         <curve idref="unmanaged_prop_SW_IDF_FD_M_1002001" />
       </attribute>
     </features>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track />
   </select>
   <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'natural' and SILV_STATE eq 'baseline'">
@@ -436,7 +436,7 @@
     <retention factor="RETENTION">
       <assign field="IFM" value="'unmanaged'" />
     </retention>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track>
       <treatment label="CC" minage="0" maxage="1000">
         <produce>
@@ -513,7 +513,7 @@
         <curve idref="managed_prop_SW_IDF_FD_M_21002001" />
       </attribute>
     </features>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track />
   </select>
   <select statement="AU eq 1002 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'">
@@ -552,7 +552,7 @@
     <retention factor="RETENTION">
       <assign field="IFM" value="'unmanaged'" />
     </retention>
-    <succession breakup="1000" renew="1000" />
+    <succession breakup="999" renew="0" />
     <track>
       <treatment label="CC" minage="0" maxage="1000">
         <produce>
