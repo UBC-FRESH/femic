@@ -19117,3 +19117,14 @@
   instance-catalog tests, and the boundary guard. Verified focused K3Z and
   TSA29 provider tests after editable installs, and confirmed live discovery
   returns `k3z` and `tsa29`.
+
+## 2026-07-01 - Closed P93 instance catalog externalization
+
+- Merged K3Z PR `UBC-FRESH/femic-k3z-instance#34` and updated the parent K3Z
+  submodule pointer to merged commit `cb5c272`.
+- Merged TSA29 PR `UBC-FRESH/femic-tsa29-instance#20` and updated the parent
+  TSA29 submodule pointer to merged commit `c50b53b`.
+- Marked P93 complete in `ROADMAP.md` and advanced the current edge to P94.
+- P93 closes with FEMIC core no longer shipping named K3Z/TSA29 installable
+  instance metadata by default; installed instance packages or explicit user
+  catalog YAML files now provide example instance catalog entries.

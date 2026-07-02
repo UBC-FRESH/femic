@@ -2749,7 +2749,7 @@ Parent issue: #253
 K3Z issue: UBC-FRESH/femic-k3z-instance#33
 TSA29 issue: UBC-FRESH/femic-tsa29-instance#19
 
-Status: active
+Status: complete
 
 Goal: replace the packaged K3Z/TSA29 built-in instance catalog with external
 catalog discovery or explicit user catalog files. FEMIC core should not ship
@@ -2766,7 +2766,7 @@ named example instance metadata by default.
       built-in FEMIC metadata with generic instance-catalog behavior.
 - [x] P93.5 Reduce `src/femic/resources/builtins/instances.builtin.yaml` to an
       empty generic catalog shell and lower the P88 boundary allowlist.
-- [ ] P93.6 Verify parent plus K3Z/TSA29 instance checks, merge instance PRs
+- [x] P93.6 Verify parent plus K3Z/TSA29 instance checks, merge instance PRs
       first, update parent submodule pointers, and close P93.
 
 ## Phase 94: Complete Core Decoupling From Example Instances
@@ -2792,9 +2792,14 @@ example submodules present.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P93` / `#253` is active: replace the packaged K3Z/TSA29 built-in instance
-    catalog with external catalog discovery or explicit user catalog files so
-    FEMIC core no longer ships named example instance metadata by default.
+  - `P94` / `#254` is next: scrub remaining named-instance references from
+    `src/femic`, packaged resources, generic templates, and generic CLI help,
+    then prove FEMIC core imports, builds, and passes generic checks without
+    example submodules present.
+  - `P93` / `#253` is complete: the packaged K3Z/TSA29 built-in instance
+    catalog is now replaced by external catalog discovery and explicit user
+    catalog file support. K3Z and TSA29 own their installable instance catalog
+    metadata through installed instance-package providers.
   - `P92` / `#252` is complete: Patchworks variant registry discovery now
     supports installed instance providers and user overlays, while K3Z/MKRF
     Patchworks variant definitions live in their instance packages under
