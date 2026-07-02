@@ -19371,3 +19371,31 @@
 - Replaced GitHub-tag FreshForge install examples in README/docs with the
   normal FEMIC extra install path and updated the public-safe materialization
   fixture overlay to reference the PyPI package.
+
+## 2026-07-01 - Launched P100 TFL6 FreshForge materialization overlay
+
+- Opened parent issue `#276` and TFL6 issue `#160` for the first real
+  FreshForge model-instance materialization workflow.
+- Added `planning/phase100_tfl6_materialization_overlay.md` and coordinated
+  with the TFL6 Phase 18 overlay/workflow surfaces.
+- Hardened `femic.materialization.check_python_environment` so an existing
+  configured venv is validated instead of recreated, after the first real TFL6
+  run exposed that active-venv bootstrap case.
+- Validated provider discovery, `freshforge validate`, `freshforge inspect`,
+  `freshforge plan`, and a bounded `freshforge run` against the TFL6
+  materialization workflow from the parent checkout.
+- Verified the run wrote only ignored `runtime/freshforge/` output locally and
+  that `git annex find --not --in arbutus-s3 -- models` reported no TFL6 model
+  payload gaps.
+
+## 2026-07-01 - Closed P100 TFL6 FreshForge materialization overlay
+
+- Merged the TFL6 Phase 18 PR and advanced the parent TFL6 submodule pointer to
+  the merged TFL6 `main` commit.
+- Re-ran parent-checkout `freshforge validate`, `freshforge inspect`, and
+  `freshforge plan` against the merged TFL6 materialization workflow.
+- Re-ran the TFL6 model payload audit with
+  `git annex find --not --in arbutus-s3 -- models`; no required model payload
+  gaps were reported.
+- Marked P100 complete in `ROADMAP.md`; follow-on instance materialization
+  overlays for MKRF, K3Z, and TSA29 remain separate phases.

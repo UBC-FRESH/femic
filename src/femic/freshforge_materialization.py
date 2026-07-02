@@ -413,6 +413,9 @@ def _check_toolchain_commands(
 def _python_environment_commands(
     overlay: MaterializationOverlay,
 ) -> tuple[tuple[str, ...], ...]:
+    python = _venv_python(overlay.venv_path)
+    if Path(python).exists():
+        return ((python, "--version"),)
     return ((sys.executable, "-m", "venv", str(overlay.venv_path)),)
 
 
