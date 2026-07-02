@@ -19305,3 +19305,14 @@
 - GitHub `package-release-checks` and docs `build` checks passed on the PR.
 - The PR is clean against `main`; P97 closeout is ready to merge after the
   final issue comment.
+
+## 2026-07-01 - Planned P98 FreshForge model-instance materialization template
+
+- Opened parent issue `#270` for a reusable FreshForge workflow template that
+  turns the Git submodule, virtualenv, DataLad, git-annex, `arbutus-s3`, and
+  targeted materialization ritual into an inspectable workflow.
+- Added `planning/phase98_freshforge_materialization_template.md` to capture
+  the generic node families, overlay configuration shape, and boundary that
+  concrete instance values stay outside FEMIC core.
+- Added P98 roadmap tasks while keeping implementation separate from the first
+  TFL6 FreshForge model-build workflow.
