@@ -381,6 +381,16 @@ pipelines_app = typer.Typer(
     no_args_is_help=True,
     help="Resolve and run narrow proof-oriented named pipelines from runbooks.",
 )
+freshforge_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Inspect optional FreshForge workflow documents.",
+)
+freshforge_workflows_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Discover FreshForge workflows and print user commands.",
+)
 tsr_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
@@ -10208,6 +10218,86 @@ def fansier_run_and_parse(
     )
 
 
+@freshforge_workflows_app.command("list")
+def freshforge_workflows_list(
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit deterministic JSON instead of a text summary.",
+    ),
+) -> None:
+    """List FreshForge workflow documents discoverable from this checkout."""
+
+    from femic.freshforge_workflows import (
+        FreshForgeWorkflowDiscoveryError,
+        discover_freshforge_workflows,
+    )
+
+    try:
+        records = discover_freshforge_workflows(Path.cwd())
+    except FreshForgeWorkflowDiscoveryError as exc:
+        console.print(f"[red]FreshForge workflow discovery failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    if json_output:
+        typer.echo(json.dumps([record.to_dict() for record in records], indent=2))
+        return
+
+    if not records:
+        console.print("No FreshForge workflow documents found.")
+        return
+
+    for record in records:
+        label = record.workflow_id or "(unreadable)"
+        console.print(f"{record.path.as_posix()} [{record.kind}] {label}")
+        if record.name:
+            console.print(f"  name: {record.name}")
+        if record.provider_refs:
+            console.print(f"  providers: {', '.join(record.provider_refs)}")
+        if record.diagnostics:
+            console.print(f"  diagnostics: {'; '.join(record.diagnostics)}")
+
+
+@freshforge_workflows_app.command("commands")
+def freshforge_workflows_commands(
+    workflow_path: Path = typer.Argument(
+        ...,
+        help="FreshForge workflow YAML path.",
+    ),
+    namespace: str | None = typer.Option(
+        None,
+        "--namespace",
+        help="Override the suggested FreshForge run namespace.",
+    ),
+    workdir: Path = typer.Option(
+        Path("runtime/freshforge"),
+        "--workdir",
+        help="FreshForge run work directory.",
+    ),
+) -> None:
+    """Print copy-paste FreshForge commands for a workflow document."""
+
+    from femic.freshforge_workflows import (
+        FreshForgeWorkflowDiscoveryError,
+        build_freshforge_command_block,
+    )
+
+    try:
+        commands = build_freshforge_command_block(
+            workflow_path,
+            namespace=namespace,
+            workdir=workdir,
+        )
+    except FreshForgeWorkflowDiscoveryError as exc:
+        console.print(
+            f"[red]FreshForge workflow command generation failed:[/red] {exc}"
+        )
+        raise typer.Exit(code=1) from exc
+
+    for command in commands:
+        typer.echo(command)
+
+
 app.add_typer(prep_app, name="prep")
 app.add_typer(vdyp_app, name="vdyp")
 app.add_typer(tsa_app, name="tsa")
@@ -10217,6 +10307,8 @@ app.add_typer(data_app, name="data")
 doc_app.add_typer(doc_figures_app, name="figures")
 app.add_typer(doc_app, name="doc")
 app.add_typer(pipelines_app, name="pipelines")
+freshforge_app.add_typer(freshforge_workflows_app, name="workflows")
+app.add_typer(freshforge_app, name="freshforge")
 app.add_typer(tsr_app, name="tsr")
 app.add_typer(export_app, name="export")
 patchworks_app.add_typer(patchworks_instances_app, name="instances")
