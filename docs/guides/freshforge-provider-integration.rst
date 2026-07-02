@@ -19,18 +19,20 @@ runtime configuration, and artifact names are owned.
 Install
 -------
 
-FreshForge is optional and currently installed from its source repository until
-it has a PyPI release. For development or runtime use, install FEMIC first and
-then install FreshForge explicitly:
+FreshForge is optional. Install FEMIC with the FreshForge extra when you need
+workflow orchestration:
 
 .. code-block:: bash
 
-   python -m pip install femic
-   python -m pip install "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@v0.1.0a4"
+   python -m pip install "femic[freshforge]"
 
-The ``femic[freshforge]`` extra is retained as a PyPI-safe compatibility
-marker, but it does not install FreshForge while FreshForge has no PyPI
-distribution.
+For local development, install the editable checkout with:
+
+.. code-block:: bash
+
+   python -m pip install -e ".[freshforge]"
+
+The extra currently pins ``freshforge==0.1.0a5``.
 
 Provider Discovery
 ------------------
@@ -101,7 +103,7 @@ Validate and plan it with:
    freshforge plan examples/freshforge/model_build_workflow.yaml
    freshforge run examples/freshforge/model_build_workflow.yaml --workdir runtime/freshforge --namespace smoke
 
-FreshForge `v0.1.0a4` also exposes workflow matrix commands through
+FreshForge also exposes workflow matrix commands through
 ``freshforge matrix``. Matrix examples and command-output namespace routing
 are planned as later compatibility phases; this guide keeps the first
 released-tag example focused on direct provider discovery, validation,
