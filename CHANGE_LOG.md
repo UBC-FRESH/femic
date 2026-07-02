@@ -19199,3 +19199,19 @@
   pandas/SciPy/VDYP typing debt. Full release-audit `pytest` reports 19 known
   non-P95 environment/runtime/baseline failures; focused P95 release
   validation is green.
+
+## 2026-07-01 - Fixed P95 PyPI optional-dependency metadata blocker
+
+- Tagged merged `main` as `v0.2.0a1` and dispatched the TestPyPI publish
+  workflow.
+- The TestPyPI publish failed before smoke install because PyPI rejects direct
+  Git URL dependencies in package metadata. FEMIC's optional metadata still
+  listed GitHub installs for FreshForge and figrecover.
+- Removed direct Git URL dependencies from publishable optional-dependency
+  metadata and retained `freshforge` / `figures` as PyPI-safe compatibility
+  marker extras.
+- Updated README and docs to explain that FreshForge and figrecover must be
+  installed explicitly from their source repositories until they have PyPI
+  releases.
+- Added release-test coverage that fails if future optional-dependency metadata
+  reintroduces `git+` direct URLs.

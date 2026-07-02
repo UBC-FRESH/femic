@@ -12,12 +12,15 @@ require ``figrecover``.
 Install
 -------
 
-Install FEMIC with the figure-recovery extra only on workstations that will
+Install figrecover from its source repository only on workstations that will
 prepare or review document figures:
 
 .. code-block:: bash
 
-   python -m pip install -e ".[figures]"
+   python -m pip install "figrecover[pdf,cv,vlm] @ git+https://github.com/UBC-FRESH/figrecover.git@v0.1.0a1"
+
+The ``femic[figures]`` extra is retained as a PyPI-safe compatibility marker,
+but it does not install figrecover while figrecover has no PyPI distribution.
 
 Then verify the optional stack:
 

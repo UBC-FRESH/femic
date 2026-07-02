@@ -2845,8 +2845,13 @@ example-instance coupling from `src/femic`.
   - [ ] Require GitHub build and `package-release-checks` to pass.
   - [ ] Merge to `main` after release-prep checks pass.
 - [ ] P95.6 Publish staged and public release artifacts
-  - [ ] Tag `v0.2.0a1` from merged `main`.
+  - [x] Tag `v0.2.0a1` from merged `main`.
   - [ ] Run `publish-testpypi` and confirm TestPyPI smoke install.
+        First TestPyPI attempt failed because publishable optional dependency
+        metadata contained direct Git URL dependencies for FreshForge and
+        figrecover. P95 now removes those direct URL dependencies from
+        publishable package metadata and documents explicit source installs
+        until those optional packages have PyPI releases.
   - [ ] Create GitHub pre-release `FEMIC 0.2.0a1`.
   - [ ] Run `publish-pypi` and confirm PyPI smoke install for
         `femic==0.2.0a1`.
@@ -2871,9 +2876,13 @@ example-instance coupling from `src/femic`.
     decoupling alpha release. Version surfaces are synchronized,
     `RELEASE_NOTES.md` is in place, `--version` works through both
     `python -m femic` and the console script, and focused release validation
-    plus artifact inspection passed. The current edge is PR publication and
-    GitHub release-check validation. The unrelated `external/femic-public-data`
-    submodule state remains out of scope for this release branch.
+    plus artifact inspection passed. PR `#263` merged and tag `v0.2.0a1` was
+    pushed, but the first TestPyPI publish failed because PyPI rejects direct
+    Git URL dependencies in optional-dependency metadata. The current edge is
+    a P95 metadata-fix PR that removes those direct URLs, reruns release
+    checks, moves the tag to the corrected commit, and retries TestPyPI. The
+    unrelated `external/femic-public-data` submodule state remains out of
+    scope for this release branch.
   - `P94` / `#254` is complete: remaining named-instance references were
     scrubbed from `src/femic`, packaged resources, generic templates, and
     generic CLI help. The boundary guard now rejects any new named

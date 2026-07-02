@@ -46,10 +46,16 @@ python -m pip install -r requirements-dev.txt
 This installs FEMIC in editable mode (`-e .`) plus development tools and
 DataLad (`datalad[full]`).
 
-The development extra also installs the optional FreshForge integration used
-to validate and plan FEMIC model-build workflow graphs without executing FEMIC
-stages. For a runtime install that only needs that integration, use
-`femic[freshforge]`.
+FreshForge is optional and currently installed from its source repository until
+it has a PyPI release. To use FreshForge orchestration with FEMIC, install
+FreshForge explicitly after the FEMIC dev install:
+
+```bash
+python -m pip install "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@feature/p6-execution-engine"
+```
+
+The `femic[freshforge]` extra is retained as a PyPI-safe compatibility marker,
+but it does not install FreshForge while FreshForge has no PyPI distribution.
 
 Then bootstrap annex-backed submodules and materialize real file content:
 
@@ -75,8 +81,8 @@ femic prep geospatial-preflight
 ```
 
 FreshForge can inspect, plan, and explicitly run provider-backed FEMIC
-model-build graphs when FEMIC is installed with the optional integration. FEMIC
-core ships a generic provider example; concrete K3Z, MKRF, or other instance
+model-build graphs when FreshForge is installed alongside FEMIC. FEMIC core
+ships a generic provider example; concrete K3Z, MKRF, or other instance
 workflow documents belong in the corresponding instance repositories.
 
 ```bash

@@ -4,8 +4,9 @@
 The :mod:`femic.freshforge` module owns FEMIC's optional FreshForge provider
 integration.
 
-It intentionally keeps FreshForge behind the optional ``femic[freshforge]``
-dependency boundary. Normal FEMIC imports do not import FreshForge eagerly.
+It intentionally keeps FreshForge optional. Normal FEMIC imports do not import
+FreshForge eagerly, and users install FreshForge alongside FEMIC when they need
+workflow orchestration.
 
 Responsibilities
 ----------------
