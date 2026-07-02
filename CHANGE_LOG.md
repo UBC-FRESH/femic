@@ -19258,3 +19258,10 @@
 - FreshForge CLI smoke checks passed for provider discovery, validation,
   inspection, planning, `freshforge matrix --help`, and a safe one-node
   `freshforge run --namespace smoke --json` geospatial-preflight workflow.
+
+## 2026-07-01 - Opened and verified P96 FreshForge compatibility PR
+
+- Opened PR `#267` for the P96 FreshForge `v0.1.0a4` compatibility refresh.
+- GitHub `package-release-checks` and docs `build` checks passed on the PR.
+- The PR is clean against `main`; P96 closeout is ready to merge after the
+  final issue comment.

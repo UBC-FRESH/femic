@@ -2866,7 +2866,7 @@ Parent issue: #266
 
 Branch: `feature/freshforge-v0.1.0a4-compatibility-refresh`
 
-Status: active
+Status: complete
 
 Goal: align FEMIC's optional FreshForge provider integration with the released
 FreshForge `v0.1.0a4` provider protocol while keeping FEMIC's package metadata
@@ -2899,10 +2899,10 @@ PyPI-safe and preserving the explicit execution boundary.
   - [x] Install FreshForge from tag `v0.1.0a4` and run provider discovery,
         validation, inspection, planning, and safe run smoke checks.
   - [x] Run focused lint, type, pytest, Sphinx, build, and twine checks.
-- [ ] P96.5 Close out the compatibility refresh
+- [x] P96.5 Close out the compatibility refresh
   - [x] Update `CHANGE_LOG.md`.
-  - [ ] Post progress and closeout comments on issue `#266`.
-  - [ ] Open and merge the P96 PR after checks pass.
+  - [x] Post progress and closeout comments on issue `#266`.
+  - [x] Open and merge the P96 PR after checks pass.
 
 ### Detailed Next Steps Notes
 
