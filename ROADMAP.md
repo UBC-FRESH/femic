@@ -3130,7 +3130,7 @@ plain-git storage mode without requiring DataLad/git-annex.
 
 ## Phase 103: FreshForge Materialization Overlay For TSA29 (`#282`)
 
-Status: in progress
+Status: complete
 
 Goal: add TSA29 as the fourth model-instance materialization workflow using the
 generic `femic.materialization` provider, with annex-enabled DataLad/git-annex
@@ -3156,11 +3156,11 @@ materialization through `arbutus-s3`.
   - [x] Run the bounded FreshForge materialization workflow from the parent
         checkout.
   - [x] Verify required payload availability and `arbutus-s3` remote coverage.
-- [ ] P103.4 Close out.
-  - [ ] Merge the TSA29 materialization PR first.
-  - [ ] Update the parent TSA29 submodule pointer.
-  - [ ] Re-run parent validation after the pointer update.
-  - [ ] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
+- [x] P103.4 Close out.
+  - [x] Merge the TSA29 materialization PR first.
+  - [x] Update the parent TSA29 submodule pointer.
+  - [x] Re-run parent validation after the pointer update.
+  - [x] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
 
 ### Detailed Next Steps Notes
 
@@ -3178,13 +3178,12 @@ materialization through `arbutus-s3`.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P103` / `#282` is active: the fourth real `femic.materialization`
+  - `P103` / `#282` is complete: the fourth real `femic.materialization`
     FreshForge workflow targets the TSA29 submodule from the parent FEMIC
     checkout. TSA29 is a DataLad/git-annex dataset, so the first overlay uses
     `annex.enabled: true` and `arbutus-s3` for the launch-critical model
-    materialization path. Implementation and validation are complete locally;
-    next step is TSA29 PR review/merge, parent submodule pointer update, and
-    final closeout.
+    materialization path. The TSA29 PR has merged, the parent submodule pointer
+    has been updated, and merged-pointer validation passed.
   - `P102` / `#280` is complete: the third real `femic.materialization`
     FreshForge workflow targets the K3Z submodule from the parent FEMIC
     checkout. K3Z is a plain-git snapshot, generic `annex.enabled: false`

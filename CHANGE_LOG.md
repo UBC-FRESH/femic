@@ -19486,3 +19486,13 @@
   `0.1.0a5`.
 - Verified the selected TSA29 audit paths report no payload gaps with
   `git annex find --not --in arbutus-s3`.
+
+## 2026-07-02 - Closed P103 TSA29 FreshForge materialization overlay
+
+- Merged the TSA29 materialization PR and advanced the parent TSA29 submodule
+  pointer to merged TSA29 `main` commit `0570596`.
+- Re-ran parent-checkout `freshforge validate`, `freshforge inspect`, and
+  `freshforge plan` against the merged TSA29 materialization workflow.
+- Re-ran focused materialization provider tests and the selected TSA29
+  `arbutus-s3` payload audit after the pointer update.
+- Marked P103 complete in `ROADMAP.md`.
