@@ -2800,6 +2800,58 @@ example submodules present.
 - [x] P94.6 Run parent validation, open/merge the P94 PR, and close the
       P88-P94 core decoupling sequence.
 
+## Phase 95: Publish FEMIC 0.2.0a1 Core Decoupling Alpha
+
+Parent issue: #262
+
+Branch: `feature/p95-femic-0.2.0a1-release`
+
+Status: active
+
+Goal: prepare and publish an alpha FEMIC release that marks the P80-P94
+architecture milestone: FreshForge integration, instance-owned extension
+boundaries, externalized registries/catalogs, and final removal of named
+example-instance coupling from `src/femic`.
+
+- [x] P95.1 Prepare release lifecycle surfaces
+  - [x] Create parent branch `feature/p95-femic-0.2.0a1-release`.
+  - [x] Open parent GitHub issue `#262`.
+  - [x] Record the release checklist in `ROADMAP.md` before release edits.
+- [x] P95.2 Synchronize package version surfaces
+  - [x] Update `pyproject.toml` to `0.2.0a1`.
+  - [x] Update `src/femic/__init__.py` to `0.2.0a1`.
+  - [x] Add a focused test proving package metadata and `femic.__version__`
+        remain synchronized.
+- [x] P95.3 Add public release notes
+  - [x] Add `RELEASE_NOTES.md` for `FEMIC 0.2.0a1`.
+  - [x] Summarize P80-P94 as the release boundary.
+  - [x] State alpha/provisional scope and known non-P95 baseline caveats.
+- [ ] P95.4 Run local release validation
+  - [ ] Run `ruff format src tests`.
+  - [ ] Run `ruff check src tests`.
+  - [ ] Run targeted `mypy` for touched release/version modules.
+  - [ ] Run the focused version metadata test and P94 boundary/catalog tests.
+  - [ ] Run `sphinx-build -b html docs _build/html -W`.
+  - [ ] Run `python -m build`.
+  - [ ] Run `twine check dist/*`.
+  - [ ] Inspect built wheel/sdist metadata for version `0.2.0a1`.
+  - [ ] Run full `mypy src` and full `pytest` as release-audit checks, noting
+        known non-P95 baseline failures separately from release blockers.
+- [ ] P95.5 Open and merge the release PR
+  - [ ] Push the release branch and open the PR.
+  - [ ] Require GitHub build and `package-release-checks` to pass.
+  - [ ] Merge to `main` after release-prep checks pass.
+- [ ] P95.6 Publish staged and public release artifacts
+  - [ ] Tag `v0.2.0a1` from merged `main`.
+  - [ ] Run `publish-testpypi` and confirm TestPyPI smoke install.
+  - [ ] Create GitHub pre-release `FEMIC 0.2.0a1`.
+  - [ ] Run `publish-pypi` and confirm PyPI smoke install for
+        `femic==0.2.0a1`.
+- [ ] P95.7 Close out P95
+  - [ ] Update `CHANGE_LOG.md` with release-prep and publication results.
+  - [ ] Post required progress and closeout comments on issue `#262`.
+  - [ ] Close issue `#262` after publication and smoke checks pass.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2812,6 +2864,12 @@ example submodules present.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P95` / `#262` is active: publish FEMIC `0.2.0a1` as the core
+    decoupling alpha release. Version surfaces are synchronized and
+    `RELEASE_NOTES.md` is in place. The current edge is focused release
+    validation, artifact inspection, and PR publication. The unrelated
+    `external/femic-public-data` submodule state remains out of scope for this
+    release branch.
   - `P94` / `#254` is complete: remaining named-instance references were
     scrubbed from `src/femic`, packaged resources, generic templates, and
     generic CLI help. The boundary guard now rejects any new named

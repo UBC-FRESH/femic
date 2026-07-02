@@ -19169,3 +19169,15 @@
 - Full local `mypy src` and full `pytest` still expose existing non-P94
   baseline issues in unrelated typing, local environment, and
   example-submodule-payload checks; P94-specific validation and CI are green.
+
+## 2026-07-01 - Opened P95 FEMIC 0.2.0a1 release prep
+
+- Created parent branch `feature/p95-femic-0.2.0a1-release` and GitHub issue
+  `#262` for the FEMIC `0.2.0a1` core decoupling alpha release.
+- Added the P95 release checklist to `ROADMAP.md` before release edits.
+- Synchronized `pyproject.toml` and `src/femic/__init__.py` at `0.2.0a1`.
+- Added `tests/test_version_metadata.py` so package metadata and
+  `femic.__version__` cannot drift silently.
+- Added `RELEASE_NOTES.md` summarizing the P80-P94 milestone, alpha scope,
+  known non-P95 baseline caveats, and optional example-instance deployment
+  boundary.
