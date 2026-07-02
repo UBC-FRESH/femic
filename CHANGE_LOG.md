@@ -19156,3 +19156,16 @@
 - Updated deployment/root-contract docs to describe example instances as
   optional source-checkout deployments or installed providers, not bundled
   FEMIC core dependencies.
+
+## 2026-07-01 - Closed P94 core decoupling sequence
+
+- Opened parent PR `#261` for P94 and verified GitHub build/package checks
+  passed.
+- Marked P94 complete in `ROADMAP.md`, closing the P88-P94 arms-length
+  separation sequence.
+- Final P94 validation included zero named-instance matches under `src/femic`,
+  focused boundary/catalog/CLI tests, targeted mypy for touched modules,
+  Sphinx docs, package build, and twine artifact checks.
+- Full local `mypy src` and full `pytest` still expose existing non-P94
+  baseline issues in unrelated typing, local environment, and
+  example-submodule-payload checks; P94-specific validation and CI are green.
