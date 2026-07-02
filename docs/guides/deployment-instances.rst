@@ -166,33 +166,21 @@ instance setup:
 Registry-Backed Patchworks Variants
 -----------------------------------
 
-FEMIC now ships built-in Patchworks registry entries and merges them at runtime
-with an optional user overlay at ``~/.femic/variants.yaml``.
+FEMIC now loads Patchworks variants from installed instance packages, explicit
+in-process providers, and an optional user overlay at
+``~/.femic/variants.yaml``. Core FEMIC no longer ships K3Z or MKRF Patchworks
+variant definitions by default.
 
-Important implication:
-
-- built-ins are available out of the box;
-- FEMIC does not mutate the user home directory at install time just to make
-  built-ins visible.
-- built-ins resolve from repo-local ``external/...`` paths when you are in a
-  source checkout with submodules present;
-- otherwise they resolve from the configured managed built-in root recorded in
-  ``user.yaml``.
-
-For packaged installs, list and install built-ins with:
+In a source checkout, install the example instance packages before using their
+registry entries:
 
 .. code-block:: bash
 
-   python -m femic instance builtins list
-   python -m femic instance builtins install k3z
-   python -m femic instance builtins install all
+   python -m pip install -e external/femic-k3z-instance
+   python -m pip install -e external/femic-mkrf-instance
 
-Install does **not** run ``datalad get`` automatically; it only clones the
-standalone built-in instance repositories plus any declared support
-repositories. Payload materialization still happens on demand at runtime.
-
-Use the registry-backed surfaces when launching shipped K3Z Patchworks
-variants:
+Use the registry-backed surfaces when launching installed K3Z or MKRF
+Patchworks variants:
 
 .. code-block:: bash
 
@@ -204,9 +192,9 @@ For the fuller operator-facing workflow, including scenarios, scenario sets,
 and materialization consent, see
 ``docs/guides/patchworks-variant-and-scenario-management.rst``.
 
-If you request a built-in variant that FEMIC cannot find either in repo-local
-``external/...`` or under the configured managed built-in root, FEMIC now
-fails with a direct install hint instead of a vague file-missing error.
+If you request a variant whose owning instance package or user registry is not
+installed/loaded, FEMIC reports the variant as unknown. Install the owning
+instance package or provide an explicit registry overlay.
 
 At minimum, materialize annex-backed payloads before case preflight:
 

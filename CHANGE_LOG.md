@@ -19034,3 +19034,52 @@
 - P91 closes with FEMIC core owning generic TSR adjudication overlay dispatch
   while TSA29 owns its row classification, checkpoint policy,
   reconstruction-gap interpretation, and active report-note decisions.
+
+## 2026-07-01 - Opened P92 Patchworks variant registry externalization
+
+- Created parent branch `feature/p92-externalize-patchworks-variants`.
+- Created K3Z branch `feature/k3z-patchworks-variant-registry`.
+- Created MKRF branch `feature/mkrf-patchworks-variant-registry`.
+- Linked parent issue `#252` and recorded the P92 task breakdown in
+  `ROADMAP.md`.
+- Locked the boundary: FEMIC core keeps generic Patchworks registry loading,
+  validation, merge, and CLI behavior; K3Z and MKRF own their
+  instance-specific Patchworks variant definitions through instance-package
+  providers.
+
+## 2026-07-01 - Implemented P92 Patchworks registry provider seam
+
+- Added generic FEMIC Patchworks variant registry provider registration and
+  entry-point discovery through `femic.patchworks_variant_registries`.
+- Moved K3Z Patchworks variant and scenario-set definitions into
+  `k3z_femic` on branch `feature/k3z-patchworks-variant-registry`.
+- Moved MKRF Patchworks variant definitions into `mkrf_femic` on branch
+  `feature/mkrf-patchworks-variant-registry`.
+- Reduced `src/femic/resources/patchworks/variants.builtin.yaml` to an empty
+  generic registry shell and removed its K3Z/MKRF allowlist from the named
+  instance boundary guard.
+- Updated Patchworks variant docs so K3Z/MKRF availability is described as
+  installed instance-package provider availability, not core built-in
+  availability.
+- Verified focused parent checks for ruff, mypy on
+  `src/femic/patchworks_variants.py`, provider/overlay tests, and the
+  instance-extension boundary guard. Verified focused K3Z and MKRF provider
+  tests after editable installs.
+
+## 2026-07-01 - Reconciled P92 K3Z and MKRF submodule pointers
+
+- Merged K3Z PR `UBC-FRESH/femic-k3z-instance#32`.
+- Merged MKRF PR `UBC-FRESH/femic-mkrf-instance#47`.
+- Updated the parent FEMIC submodule pointers to merged K3Z main commit
+  `1cbbeb4` and merged MKRF main commit `4839ddd`.
+- Left parent P92 closeout pending final parent PR checks and issue closure.
+
+## 2026-07-01 - Closed P92 Patchworks variant registry externalization
+
+- Parent PR `#259` passed GitHub docs and package-release checks after the
+  merged K3Z/MKRF submodule pointer update.
+- Marked P92 complete in `ROADMAP.md` and advanced the current edge to P93.
+- P92 closes with FEMIC core owning generic Patchworks variant registry
+  parsing, provider discovery, merge, user-overlay, and CLI behavior while K3Z
+  and MKRF own their Patchworks variant definitions through installed
+  instance-package providers.

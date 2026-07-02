@@ -1297,7 +1297,7 @@ Subcommands
 
 ``patchworks instances list`` options
 
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 
 ``patchworks matrix-build`` options
 
@@ -1334,7 +1334,7 @@ Subcommands
 ``patchworks run-variant`` options
 
 - ``VARIANT_ID`` argument (required)
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 - ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional)
 - ``--stage-label TEXT`` (optional)
@@ -1350,23 +1350,23 @@ Subcommands
 ``patchworks scenarios list`` options
 
 - ``VARIANT_ID`` argument (required)
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 
 ``patchworks scenario-sets list`` options
 
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 - ``--instance-id TEXT`` (optional instance id filter)
 
 ``patchworks scenario-sets show`` options
 
 - ``SCENARIO_SET_ID`` argument (required)
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 
 ``patchworks run-scenario`` options
 
 - ``VARIANT_ID`` argument (required)
 - ``SCENARIO_ID`` argument (required)
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 - ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional)
 - ``--stage-label TEXT`` (optional override; falls back to the registry scenario when set there)
@@ -1377,7 +1377,7 @@ Subcommands
 ``patchworks run-default-scenario`` options
 
 - ``VARIANT_ID`` argument (required)
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 - ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional)
 - ``--stage-label TEXT`` (optional override; falls back to the registry default scenario when set there)
@@ -1388,7 +1388,7 @@ Subcommands
 ``patchworks run-default-scenario-set`` options
 
 - ``INSTANCE_ID`` argument (required)
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 - ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional; step runs derive ``_01``, ``_02``, ...)
 - ``--stage-label TEXT`` (optional; per-step stage labels derive ``_01``,
@@ -1400,7 +1400,7 @@ Subcommands
 ``patchworks run-scenario-set`` options
 
 - ``SCENARIO_SET_ID`` argument (required)
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 - ``--log-dir PATH`` (default: ``runtime/logs``)
 - ``--run-id TEXT`` (optional; step runs derive ``_01``, ``_02``, ...)
 - ``--stage-label TEXT`` (optional; per-step stage labels derive ``_01``,
@@ -1411,7 +1411,7 @@ Subcommands
 
 ``patchworks variants list`` options
 
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 - ``--instance-id TEXT`` (optional filter)
 
 ``patchworks variants register`` options
@@ -1450,14 +1450,14 @@ Subcommands
 ``patchworks variants show`` options
 
 - ``VARIANT_ID`` argument (required)
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 - ``--materialization-threshold-mib INTEGER`` (default: ``100``; used when
   summarizing registry-declared materialization)
 
 ``patchworks variants materialization-plan`` options
 
 - ``VARIANT_ID`` argument (required)
-- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; built-ins always loaded)
+- ``--registry PATH`` (default: ``~/.femic/variants.yaml``; installed providers and user overlay loaded)
 - ``--materialization-threshold-mib INTEGER`` (default: ``100``; used when
   deciding whether the current plan would require confirmation)
 
@@ -1470,7 +1470,7 @@ Both ``patchworks variants show`` and
 
 Operational notes:
 
-- built-ins are always loaded from FEMIC's packaged registry;
+- installed instance-package providers are discovered through entry points;
 - ``~/.femic/variants.yaml`` is a writable user overlay, not the only source
   of truth;
 - launch-time materialization consent is driven by the grouped dataset summary

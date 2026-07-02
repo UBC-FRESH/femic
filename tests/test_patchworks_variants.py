@@ -12,9 +12,11 @@ from femic.patchworks_variants import (
     PatchworksScenarioSetMember,
     builtins_install_hint_for_variant,
     build_patchworks_variant_materialization_plan,
+    clear_patchworks_variant_registry_providers,
     load_patchworks_variant_registry,
     load_patchworks_user_registry_overlay,
     materialize_patchworks_variant,
+    register_patchworks_variant_registry_provider,
     remove_patchworks_user_variant_entry,
     summarize_patchworks_variant_materialization_by_dataset,
     upsert_patchworks_user_variant_entry,
@@ -22,84 +24,122 @@ from femic.patchworks_variants import (
 from femic.user_config import FemicUserConfig, FemicUserPaths, write_femic_user_config
 
 
-def test_load_patchworks_variant_registry_includes_builtin_k3z_base() -> None:
-    registry = load_patchworks_variant_registry()
+class _FixturePatchworksVariantRegistryProvider:
+    provider_id = "fixture"
 
-    variant = registry.get_variant("k3z.base")
-    assert variant.instance_id == "k3z"
+    def __init__(self, base_dir: Path) -> None:
+        self.registry_base_dir = base_dir
+
+    def load_registry_payload(self) -> dict:
+        return {
+            "instances": [
+                {
+                    "instance_id": "demo",
+                    "label": "Demo instance",
+                    "default_scenario_set_id": "demo.proving_ground",
+                }
+            ],
+            "variants": [
+                {
+                    "variant_id": "demo.base",
+                    "label": "Demo base",
+                    "instance_id": "demo",
+                    "variant_family": "baseline",
+                    "kind": "patchworks",
+                    "instance_root": ".",
+                    "analysis_pin": "models/demo/analysis/base.pin",
+                    "runtime_config": "config/patchworks.runtime.yaml",
+                    "default": True,
+                    "default_scenario_id": "even_flow_smoke",
+                    "notes": ["Demo provider variant."],
+                    "scenarios": [
+                        {
+                            "scenario_id": "even_flow_smoke",
+                            "label": "Demo even-flow smoke",
+                            "mode": "max-even-flow-smoke",
+                            "target": "product.Yield.managed.Total",
+                            "iterations": 100000,
+                            "improvement": 0.0,
+                        }
+                    ],
+                }
+            ],
+            "scenario_sets": [
+                {
+                    "scenario_set_id": "demo.proving_ground",
+                    "label": "Demo proving-ground scenario smoke set",
+                    "instance_id": "demo",
+                    "scenario_set_family": "proving_ground",
+                    "default": True,
+                    "notes": ["Sequential demo smoke set."],
+                    "mode": "sequential",
+                    "scenarios": ["demo.base/even_flow_smoke"],
+                }
+            ],
+        }
+
+
+@pytest.fixture(autouse=True)
+def _clear_patchworks_variant_registry_providers() -> None:
+    clear_patchworks_variant_registry_providers()
+    yield
+    clear_patchworks_variant_registry_providers()
+
+
+def test_load_patchworks_variant_registry_core_has_no_named_instance_variants() -> None:
+    registry = load_patchworks_variant_registry(include_entry_points=False)
+
+    assert registry.variants == ()
+    assert registry.instances == ()
+    assert registry.scenario_sets == ()
+
+
+def test_load_patchworks_variant_registry_includes_registered_provider(
+    tmp_path: Path,
+) -> None:
+    register_patchworks_variant_registry_provider(
+        _FixturePatchworksVariantRegistryProvider(tmp_path)
+    )
+    registry = load_patchworks_variant_registry(include_entry_points=False)
+
+    variant = registry.get_variant("demo.base")
+    assert variant.instance_id == "demo"
     assert variant.default is True
     assert variant.analysis_pin.name == "base.pin"
-    assert variant.runtime_config.name == "patchworks.runtime.windows.yaml"
+    assert (
+        variant.analysis_pin == (tmp_path / "models/demo/analysis/base.pin").resolve()
+    )
+    assert variant.runtime_config.name == "patchworks.runtime.yaml"
+    assert variant.source == "provider:fixture"
     assert variant.scenarios[0].scenario_id == "even_flow_smoke"
     assert variant.scenarios[0].mode == "max-even-flow-smoke"
     assert variant.scenarios[0].target == "product.Yield.managed.Total"
-    scenario_set = registry.get_scenario_set("k3z.proving_ground")
+    scenario_set = registry.get_scenario_set("demo.proving_ground")
     assert scenario_set.mode == "sequential"
-    assert scenario_set.instance_id == "k3z"
+    assert scenario_set.instance_id == "demo"
     assert scenario_set.scenario_set_family == "proving_ground"
     assert scenario_set.default is True
     assert scenario_set.notes
-    assert scenario_set.scenarios[0].variant_id == "k3z.base"
-    assert scenario_set.scenarios[1].variant_id == "k3z.intensive_light_standstructure"
-    default_variant, default_scenario = registry.get_default_scenario("k3z.base")
-    assert default_variant.variant_id == "k3z.base"
+    assert scenario_set.scenarios[0].variant_id == "demo.base"
+    default_variant, default_scenario = registry.get_default_scenario("demo.base")
+    assert default_variant.variant_id == "demo.base"
     assert default_scenario.scenario_id == "even_flow_smoke"
-    default_scenario_set = registry.get_default_scenario_set("k3z")
-    assert default_scenario_set.scenario_set_id == "k3z.proving_ground"
-    assert registry.iter_scenario_sets(instance_id="k3z") == (scenario_set,)
+    default_scenario_set = registry.get_default_scenario_set("demo")
+    assert default_scenario_set.scenario_set_id == "demo.proving_ground"
+    assert registry.iter_scenario_sets(instance_id="demo") == (scenario_set,)
 
 
-def test_load_patchworks_variant_registry_includes_builtin_mkrf_base() -> None:
-    registry = load_patchworks_variant_registry()
-
-    variant = registry.get_variant("mkrf.base")
-    assert variant.instance_id == "mkrf"
-    assert variant.default is True
-    assert variant.analysis_pin.name == "base.pin"
-    assert variant.runtime_config.name == "patchworks.runtime.windows.yaml"
-
-    instance = next(item for item in registry.instances if item.instance_id == "mkrf")
-    assert instance.label == "MKRF PoC intermediate instance"
-    assert instance.default_variant_id == "mkrf.base"
-
-
-def test_load_patchworks_variant_registry_uses_managed_root_for_builtins(
+def test_register_patchworks_variant_registry_provider_rejects_duplicate(
     tmp_path: Path,
 ) -> None:
-    config_path = tmp_path / "user.yaml"
-    write_femic_user_config(
-        FemicUserConfig(
-            config_path=config_path,
-            exists=False,
-            paths=FemicUserPaths(
-                managed_external_root=tmp_path / "managed-external",
-                user_instance_root=tmp_path / "instances",
-            ),
+    register_patchworks_variant_registry_provider(
+        _FixturePatchworksVariantRegistryProvider(tmp_path)
+    )
+
+    with pytest.raises(PatchworksVariantRegistryError, match="Duplicate"):
+        register_patchworks_variant_registry_provider(
+            _FixturePatchworksVariantRegistryProvider(tmp_path)
         )
-    )
-
-    registry = load_patchworks_variant_registry(
-        source_root=tmp_path / "source-root",
-        user_config_path=config_path,
-    )
-
-    variant = registry.get_variant("k3z.base")
-    assert (
-        variant.instance_root
-        == (tmp_path / "managed-external" / "femic-k3z-instance").resolve()
-    )
-    assert (
-        variant.analysis_pin
-        == (
-            tmp_path
-            / "managed-external"
-            / "femic-k3z-instance"
-            / "models"
-            / "k3z_patchworks_model"
-            / "analysis"
-            / "base.pin"
-        ).resolve()
-    )
 
 
 def test_load_patchworks_variant_registry_user_overlay_can_override_builtin(
@@ -125,7 +165,10 @@ def test_load_patchworks_variant_registry_user_overlay_can_override_builtin(
         encoding="utf-8",
     )
 
-    registry = load_patchworks_variant_registry(user_registry_path=overlay_path)
+    registry = load_patchworks_variant_registry(
+        user_registry_path=overlay_path,
+        include_entry_points=False,
+    )
 
     variant = registry.get_variant("k3z.base")
     assert variant.label == "Overridden K3Z base"
@@ -134,7 +177,7 @@ def test_load_patchworks_variant_registry_user_overlay_can_override_builtin(
 
 
 def test_patchworks_variant_registry_unknown_variant_raises() -> None:
-    registry = load_patchworks_variant_registry()
+    registry = load_patchworks_variant_registry(include_entry_points=False)
 
     with pytest.raises(PatchworksVariantRegistryError):
         registry.get_variant("missing.variant")
@@ -168,7 +211,10 @@ def test_load_patchworks_variant_registry_parses_materialization_actions(
         encoding="utf-8",
     )
 
-    registry = load_patchworks_variant_registry(user_registry_path=overlay_path)
+    registry = load_patchworks_variant_registry(
+        user_registry_path=overlay_path,
+        include_entry_points=False,
+    )
 
     variant = registry.get_variant("k3z.base")
     assert len(variant.materialization) == 1
@@ -434,7 +480,10 @@ def test_load_patchworks_variant_registry_parses_scenarios_from_overlay(
         encoding="utf-8",
     )
 
-    registry = load_patchworks_variant_registry(user_registry_path=overlay_path)
+    registry = load_patchworks_variant_registry(
+        user_registry_path=overlay_path,
+        include_entry_points=False,
+    )
 
     variant, scenario = registry.get_scenario("demo.base", "smoke")
     assert variant.variant_id == "demo.base"
@@ -480,7 +529,10 @@ def test_load_patchworks_variant_registry_parses_scenario_sets_from_overlay(
         encoding="utf-8",
     )
 
-    registry = load_patchworks_variant_registry(user_registry_path=overlay_path)
+    registry = load_patchworks_variant_registry(
+        user_registry_path=overlay_path,
+        include_entry_points=False,
+    )
 
     scenario_set = registry.get_scenario_set("demo.set")
     assert scenario_set.label == "Demo set"
@@ -529,7 +581,10 @@ def test_load_patchworks_variant_registry_parses_instance_default_scenario_set(
         encoding="utf-8",
     )
 
-    registry = load_patchworks_variant_registry(user_registry_path=overlay_path)
+    registry = load_patchworks_variant_registry(
+        user_registry_path=overlay_path,
+        include_entry_points=False,
+    )
 
     default_set = registry.get_default_scenario_set("demo")
     assert default_set.scenario_set_id == "demo.set"
@@ -560,7 +615,10 @@ def test_load_patchworks_variant_registry_default_scenario_falls_back_to_single(
         encoding="utf-8",
     )
 
-    registry = load_patchworks_variant_registry(user_registry_path=overlay_path)
+    registry = load_patchworks_variant_registry(
+        user_registry_path=overlay_path,
+        include_entry_points=False,
+    )
 
     variant, scenario = registry.get_default_scenario("demo.base")
     assert variant.variant_id == "demo.base"

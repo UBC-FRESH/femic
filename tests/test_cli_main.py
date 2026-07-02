@@ -2064,6 +2064,7 @@ def test_patchworks_matrix_build_emits_logs(monkeypatch: pytest.MonkeyPatch) -> 
                 "vdyp_io/logs/patchworks_matrixbuilder_manifest-pwtest.json"
             ),
             failures=(),
+            warnings=(),
         ),
     )
 

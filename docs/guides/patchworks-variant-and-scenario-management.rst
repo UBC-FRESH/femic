@@ -8,39 +8,32 @@ This guide explains FEMIC's registry-backed Patchworks operator surface.
 
 Use this page when you want to:
 
-- launch a shipped Patchworks variant without passing a raw `.pin`;
-- inspect built-in or user-defined variant metadata;
+- launch an installed instance-owned Patchworks variant without passing a raw `.pin`;
+- inspect instance-package or user-defined variant metadata;
 - run a named scenario or scenario set; or
 - understand what FEMIC will materialize before a Patchworks launch.
 
 Registry Shape
 --------------
 
-FEMIC merges two registry sources at runtime:
+FEMIC merges three registry sources at runtime:
 
-- packaged built-ins shipped with FEMIC; and
+- the generic packaged registry shell shipped with FEMIC;
+- installed instance-owned registry providers exposed through
+  ``femic.patchworks_variant_registries``; and
 - an optional user overlay at ``~/.femic/variants.yaml``.
 
-Built-ins are available out of the box. FEMIC does **not** install them into
-the user home directory at package install time.
+K3Z and MKRF Patchworks variants are no longer built into FEMIC core. They
+appear when the corresponding instance package is installed in the active
+environment.
 
-Built-in path resolution now works in two modes:
-
-1. source checkout:
-   repo-local ``external/...`` wins when the bundled instance submodule is
-   present;
-2. packaged install:
-   FEMIC falls back to the configured managed built-in root from
-   ``~/.femic/user.yaml`` (or the Windows equivalent).
-
-Use the instance/builtins surfaces when you want to inspect or install those
-managed built-ins explicitly:
+In the parent source checkout, install the example instance packages from their
+submodules before using their registry entries:
 
 .. code-block:: powershell
 
-   python -m femic instance config show
-   python -m femic instance builtins list
-   python -m femic instance builtins install k3z
+   python -m pip install -e external/femic-k3z-instance
+   python -m pip install -e external/femic-mkrf-instance
 
 The registry currently carries:
 
@@ -52,11 +45,16 @@ The registry currently carries:
 - default scenario set per instance when available; and
 - optional materialization actions that FEMIC can execute before launch.
 
-Canonical built-in K3Z examples are:
+Canonical K3Z provider examples are:
 
 - ``k3z.base``
 - ``k3z.intensive_light_standstructure``
 - ``k3z.proving_ground``
+
+Canonical MKRF provider examples are:
+
+- ``mkrf.base``
+- ``mkrf.poc_base``
 
 Read-Only Inspection Flows
 --------------------------
@@ -73,8 +71,7 @@ Use these commands first when orienting yourself:
    python -m femic patchworks scenario-sets show k3z.proving_ground
 
 Use ``variants show`` when you want the resolved instance root, runtime
-config, `.pin`, built-in install status, and materialization summary for one
-variant.
+config, `.pin`, provider source, and materialization summary for one variant.
 
 Use ``variants materialization-plan`` when you want the richer pre-launch
 download/materialization view:
@@ -116,11 +113,9 @@ variant:
      --run-id k3z_variant_smoke `
      --scenario-mode max-even-flow-smoke
 
-If a built-in variant is not available in either repo-local ``external/...``
-or the configured managed built-in root, FEMIC now stops early with a direct
-install hint of the form:
-
-``femic instance builtins install <instance-id>``
+If an instance package is not installed, FEMIC reports the variant as unknown.
+Install the owning package or provide an explicit user registry overlay before
+launching the variant.
 
 Use ``run-scenario`` when the registry already defines a named scenario:
 
@@ -172,7 +167,7 @@ FEMIC also ships user-overlay mutation commands for the writable registry:
 - ``variants remove``
 
 Use these when you want to add or override local Patchworks variant entries
-without mutating the packaged built-ins.
+without mutating instance-package registries.
 
 Example:
 
