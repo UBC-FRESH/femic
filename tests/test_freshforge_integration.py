@@ -152,6 +152,7 @@ def test_pyproject_declares_freshforge_extra_and_entry_point() -> None:
 
     optional = pyproject["project"]["optional-dependencies"]
     assert "freshforge" in optional
+    assert optional["freshforge"] == ["freshforge==0.1.0a5"]
     assert all("git+" not in item for deps in optional.values() for item in deps)
     entry_points = pyproject["project"]["entry-points"]["freshforge.providers"]
     assert entry_points["femic"] == "femic.freshforge:provider_factory"

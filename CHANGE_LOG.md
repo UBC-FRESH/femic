@@ -19359,3 +19359,15 @@
 - Verified that `freshforge` is not yet resolvable from PyPI as `freshforge` in
   this environment, so FEMIC's FreshForge install guidance remains on the
   released GitHub tag until the PyPI package name or propagation is confirmed.
+
+## 2026-07-01 - Switched FreshForge optional extra to PyPI package
+
+- Opened issue `#274` for the follow-up dependency cleanup after FreshForge
+  became available as a normal PyPI package.
+- Verified PyPI JSON reports `freshforge` version `0.1.0a5` and that
+  `pip install --index-url https://pypi.org/simple --dry-run
+  freshforge==0.1.0a5` resolves in this environment.
+- Updated `femic[freshforge]` to install `freshforge==0.1.0a5`.
+- Replaced GitHub-tag FreshForge install examples in README/docs with the
+  normal FEMIC extra install path and updated the public-safe materialization
+  fixture overlay to reference the PyPI package.

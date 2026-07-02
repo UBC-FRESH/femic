@@ -46,16 +46,15 @@ python -m pip install -r requirements-dev.txt
 This installs FEMIC in editable mode (`-e .`) plus development tools and
 DataLad (`datalad[full]`).
 
-FreshForge is optional and currently installed from its source repository until
-it has a PyPI release. To use FreshForge orchestration with FEMIC, install
-FreshForge explicitly after the FEMIC dev install:
+FreshForge is optional. To use FreshForge orchestration with FEMIC, install the
+FreshForge extra:
 
 ```bash
-python -m pip install "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@v0.1.0a4"
+python -m pip install -e ".[freshforge]"
 ```
 
-The `femic[freshforge]` extra is retained as a PyPI-safe compatibility marker,
-but it does not install FreshForge while FreshForge has no PyPI distribution.
+For non-editable installs, use the same extra with the packaged FEMIC
+distribution. The extra currently pins `freshforge==0.1.0a5`.
 
 Then bootstrap annex-backed submodules and materialize real file content:
 

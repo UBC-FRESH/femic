@@ -10,7 +10,7 @@ install:
     - dev
     - freshforge
   packages:
-    - freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@v0.1.0a4
+    - freshforge==0.1.0a5
 annex:
   special_remote: arbutus-s3
 materialization:

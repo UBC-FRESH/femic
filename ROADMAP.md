@@ -2998,6 +2998,28 @@ from prose documentation.
         inspect, plan, and run.
   - [x] Keep the first real instance overlay as a later TFL6 phase.
 
+## Phase 99: FreshForge PyPI Dependency Cleanup (`#274`)
+
+Status: complete; PR closeout pending
+
+Goal: switch FEMIC's optional FreshForge dependency and install guidance from
+the temporary GitHub tag workflow to the PyPI-published FreshForge alpha.
+
+- [x] P99.1 Verify FreshForge PyPI availability.
+  - [x] Confirm PyPI JSON reports `freshforge` version `0.1.0a5`.
+  - [x] Confirm `pip install --index-url https://pypi.org/simple --dry-run
+        freshforge==0.1.0a5` resolves in this environment.
+- [x] P99.2 Update FEMIC dependency and docs.
+  - [x] Set `femic[freshforge]` to install `freshforge==0.1.0a5`.
+  - [x] Replace GitHub-tag install examples with PyPI extra guidance.
+  - [x] Update the public-safe materialization fixture overlay package
+        reference.
+- [x] P99.3 Validate and close out.
+  - [x] Run focused FreshForge provider/materialization tests.
+  - [x] Run package metadata checks proving the extra carries
+        `freshforge==0.1.0a5`.
+  - [x] Update `CHANGE_LOG.md` and issue `#274`.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -3012,24 +3034,28 @@ from prose documentation.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P98` / `#270` is implemented locally and awaiting PR closeout. The
-    reusable `femic.materialization` FreshForge provider now supplies generic
-    materialization nodes, overlay parsing/validation, mocked execution tests,
-    and a public-safe report-only fixture workflow. Real MKRF, TFL6, K3Z, and
-    TSA29 overlays remain follow-on instance phases. The next planning edge is
-    to start with a TFL6-owned materialization overlay once P98 merges.
+  - `P99` / `#274` is complete locally and awaiting PR closeout: FreshForge is
+    now published on PyPI as `freshforge==0.1.0a5`, and FEMIC's optional
+    dependency metadata plus docs now use the normal `femic[freshforge]`
+    install path.
+  - `P98` / `#270` is complete: the reusable `femic.materialization`
+    FreshForge provider supplies generic materialization nodes, overlay
+    parsing/validation, mocked execution tests, and a public-safe report-only
+    fixture workflow. Real MKRF, TFL6, K3Z, and TSA29 overlays remain
+    follow-on instance phases.
   - `P97` / `#268` is complete: report-only namespace-aware FreshForge
     artifact metadata resolves workflow-declared artifact paths through
     FreshForge `RunContext.resolve_path(...)` for provider run records. FEMIC
     command construction remains unchanged, validation/inspection/planning
     remain non-mutating, and command-output routing remains deferred.
-  - `P96` / `#266` is complete locally: FEMIC's optional FreshForge provider
+  - `P96` / `#266` is complete: FEMIC's optional FreshForge provider
     integration now targets released FreshForge `v0.1.0a4`. The provider
     exposes `run_node(...)`, returns `ProviderRunResult`, reports provider
-    version `0.2.0a1`, preserves the empty PyPI-safe `femic[freshforge]` extra,
-    and keeps validation/inspection/planning non-mutating. Local smoke checks
-    verified provider discovery, validate, inspect, plan, matrix help, and a
-    safe one-node `freshforge run --namespace smoke --json` path.
+    version `0.2.0a1`, and keeps validation/inspection/planning non-mutating.
+    P99 superseded the temporary empty `femic[freshforge]` extra after the
+    FreshForge PyPI package became available. Local smoke checks verified
+    provider discovery, validate, inspect, plan, matrix help, and a safe
+    one-node `freshforge run --namespace smoke --json` path.
   - `P95` / `#262` is complete: FEMIC `0.2.0a1` is published as the core
     decoupling alpha release. GitHub prerelease `FEMIC 0.2.0a1`, tag
     `v0.2.0a1`, TestPyPI workflow `28562782006`, and PyPI workflow
