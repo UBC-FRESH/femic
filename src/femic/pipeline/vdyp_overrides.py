@@ -32,7 +32,7 @@ DEFAULT_VDYP_KWARG_OVERRIDES: dict[str, CurveOverrideMap] = {
         ("SWB_SX", "L"): {"skip1": 60, "dx_c1": 1.0, "dx_c2": 0.0},
     },
     "41": {("ESSF_BL", "L"): {"skip1": 60}, ("ESSF_SE", "M"): {"skip1": 30}},
-    # TSA29: suppress pathological early-age spike for SBPS_PL low-SI curve.
+    # reviewed TSA: suppress pathological early-age spike for SBPS_PL low-SI curve.
     "29": {("SBPS_PL", "L"): {"skip1": 50}},
 }
 

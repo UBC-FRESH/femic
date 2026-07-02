@@ -1,4 +1,4 @@
-log-grades:
+﻿log-grades:
   # Exclude Logs_Grade_All by default. The explicit grades behave like a
   # partition of merchantable yield, while Logs_Grade_All behaves like a
   # separate scaled-log metric that can exceed Yield.
@@ -28,7 +28,7 @@ log-grades:
     Logs_Grade_U: 1.0
     Logs_Grade_X: 1.0
     Logs_Grade_Y: 1.0
-  # The current K3Z teaching contract treats CT as early-age thinning from
+  # The current teaching-example contract treats CT as early-age thinning from
   # below, so CT output should skew toward lower-grade small-log material.
   # These weights intentionally suppress premium sawlogs and favor J/U/X/Y.
   # Rationale: BC Coast Scaling Manual Chapter 10, especially the J/U/X/Y
@@ -68,7 +68,7 @@ log-grades:
       by_origin:
         natural: old_growth_coast_2025
         planted: second_growth_coast_2025
-    # These are explicit market-species proxies for the active K3Z species set.
+    # These are explicit market-species proxies for the active teaching example species set.
     # We avoid silent averaging so users can see and override every bridge
     # assumption directly. Current rationale:
     # - CW -> Cedar

@@ -1733,7 +1733,7 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
         "instance-and-data-roots": [
             "Purpose",
             "Instance Root Resolution",
-            "Bundled Example Instances",
+            "Source-Checkout Example Instances",
             "External Data Root",
             "Fallback Behavior To Remember",
             "Common Mistakes",
@@ -1765,7 +1765,7 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
         "instance-and-data-roots": [
             "--instance-root",
             "FEMIC_INSTANCE_ROOT",
-            "external/femic-k3z-instance",
+            "optional deployments, not FEMIC core",
             "external/femic-public-data",
             "misc.thlb.tif",
         ],

@@ -2773,12 +2773,32 @@ named example instance metadata by default.
 
 Parent issue: #254
 
-Status: planned
+Branch: `feature/p94-final-core-decoupling`
+
+Status: active
 
 Goal: scrub remaining named-instance references from `src/femic`, packaged
 resources, generic templates, and generic CLI help. Close the umbrella only
 after tests prove FEMIC core imports, builds, and passes generic checks without
 example submodules present.
+
+- [x] P94.1 Audit the post-P93 `src/femic` named-instance reference baseline
+      and classify the remaining references as generic template/help debt,
+      test-fixture debt, or allowed historical documentation outside core.
+- [x] P94.2 Remove remaining named-instance references from `src/femic` code
+      comments, generic CLI help text, packaged template resources, and generic
+      runtime configuration templates.
+- [x] P94.3 Tighten the P88 boundary guard so any named `mkrf`, `k3z`,
+      `tsa29`, `tfl6`, or `femic-*-instance` reference under `src/femic`
+      fails unless a future roadmap phase deliberately reopens the allowlist.
+- [x] P94.4 Add regression coverage proving core catalog/variant behavior and
+      package import paths work without installed example-instance providers or
+      initialized `external/femic-*` submodules.
+- [x] P94.5 Update docs and changelog to describe the final arms-length
+      boundary: example instances are optional deployments, not FEMIC core
+      package dependencies.
+- [ ] P94.6 Run parent validation, open/merge the P94 PR, and close the
+      P88-P94 core decoupling sequence.
 
 ### Detailed Next Steps Notes
 
@@ -2792,7 +2812,7 @@ example submodules present.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P94` / `#254` is next: scrub remaining named-instance references from
+  - `P94` / `#254` is active: scrub remaining named-instance references from
     `src/femic`, packaged resources, generic templates, and generic CLI help,
     then prove FEMIC core imports, builds, and passes generic checks without
     example submodules present.

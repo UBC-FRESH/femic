@@ -628,7 +628,7 @@ TSR_THLB_CHECKPOINT_PATH_OPTION = typer.Option(
     help=(
         "Optional stand checkpoint vector dataset used as the THLB netdown execution base. "
         "Explicit inputs may be Feather or a readable vector dataset such as GeoPackage. "
-        "Current TSA29 strict validation must use an explicit validated checkpoint "
+        "Current strict validation must use an explicit validated checkpoint "
         "under `data/tsr/`; legacy `ria_vri_vclr1p_checkpoint*.feather` fallbacks are rejected."
     ),
     show_default=False,
@@ -1089,7 +1089,7 @@ CASE_RUN_CONFIG_OPTION = typer.Option(
 CASE_TIPSY_CONFIG_DIR_OPTION = typer.Option(
     Path("config/tipsy"),
     "--tipsy-config-dir",
-    help="Directory containing case TIPSY config files (legacy tsaXX.yaml / tsak3z.yaml names).",
+    help="Directory containing case TIPSY config files.",
 )
 CASE_STRICT_WARNINGS_OPTION = typer.Option(
     False,
@@ -1264,7 +1264,7 @@ EXPORT_WOODSTOCK_OUTPUT_DIR_OPTION = typer.Option(
 EXPORT_RELEASE_CASE_ID_OPTION = typer.Option(
     None,
     "--case-id",
-    help="Case identifier used in release bundle naming (for example: k3z, fmu-tsa-29).",
+    help="Case identifier used in release bundle naming.",
     show_default=False,
 )
 EXPORT_RELEASE_OUTPUT_ROOT_OPTION = typer.Option(
@@ -1273,7 +1273,7 @@ EXPORT_RELEASE_OUTPUT_ROOT_OPTION = typer.Option(
     help="Root directory where versioned release bundle folders are created.",
 )
 EXPORT_RELEASE_PATCHWORKS_DIR_OPTION = typer.Option(
-    Path("output/patchworks_k3z_validated"),
+    Path("output/patchworks_validated"),
     "--patchworks-dir",
     help="Patchworks output directory to package (contains forestmodel.xml + fragments).",
 )
@@ -4763,7 +4763,7 @@ def tsr_thlb_reconstruction_compare(
         ),
     ),
 ) -> None:
-    """Emit a TSA29-first strict-vs-reviewed THLB comparison report."""
+    """Emit a strict-vs-reviewed THLB comparison report."""
 
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
     resolved_recipe_path = (

@@ -81,6 +81,27 @@ def test_load_instance_catalog_core_has_no_named_example_instances() -> None:
     assert catalog.support_repos == ()
 
 
+def test_core_catalog_status_does_not_require_external_submodules(
+    tmp_path: Path,
+) -> None:
+    source_root = tmp_path / "repo-without-submodules"
+    config_path = _write_user_config(tmp_path)
+
+    catalog = load_instance_catalog(
+        include_entry_points=False,
+    )
+    status = resolve_builtin_repo_status(
+        target_dirname="demo-instance",
+        source_root=source_root,
+        user_config_path=config_path,
+    )
+
+    assert catalog.instances == ()
+    assert catalog.support_repos == ()
+    assert status.status == "missing"
+    assert status.path == (tmp_path / "managed-external" / "demo-instance").resolve()
+
+
 def test_load_instance_catalog_includes_registered_provider() -> None:
     register_instance_catalog_provider(_FixtureInstanceCatalogProvider())
 

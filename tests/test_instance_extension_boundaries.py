@@ -17,20 +17,7 @@ INSTANCE_REFERENCE_TERMS = (
 )
 
 
-# P88 migration baseline. These counts are maximums, not required counts: later
-# extraction phases are expected to drive them down to zero.
-ALLOWED_INSTANCE_REFERENCE_COUNTS = {
-    "src/femic/named_pipelines.py": {"tsa29": 21},
-    "src/femic/patchworks_runtime.py": {"k3z": 2},
-    "src/femic/cli/main.py": {"k3z": 3, "tsa29": 2},
-    "src/femic/pipeline/vdyp_overrides.py": {"tsa29": 1},
-    "src/femic/tsr_catalog/recipes.py": {"tsa29": 38},
-    "src/femic/resources/patchworks/btc_indicator_bank_compile_recipes.yaml": {
-        "k3z": 2
-    },
-    "src/femic/resources/instance/config/patchworks.runtime.windows.yaml": {"k3z": 3},
-    "src/femic/resources/instance/config/tipsy/template.case.yaml": {"k3z": 1},
-}
+ALLOWED_INSTANCE_REFERENCE_COUNTS: dict[str, dict[str, int]] = {}
 
 
 def _repo_root() -> Path:
@@ -67,8 +54,7 @@ def test_no_new_named_instance_references_enter_femic_core() -> None:
                 )
 
     assert not violations, (
-        "Named example-instance references in src/femic are migration debt. "
-        "Move new instance-specific behavior into an instance package or update "
-        "the P88 migration allowlist with a roadmap-linked rationale.\n"
-        + "\n".join(violations)
+        "Named example-instance references are not allowed in src/femic. Move "
+        "instance-specific behavior into an instance package or explicit user "
+        "configuration.\n" + "\n".join(violations)
     )

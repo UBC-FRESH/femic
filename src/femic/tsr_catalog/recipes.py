@@ -2572,7 +2572,7 @@ def _build_draft_subrules_for_parent_step(
                     "treat the tiny mapped overlap as the full existing-RTL deduction."
                 ),
                 "rationale": (
-                    "TSA29 section 6.2.3 says existing roads, trails, and landings are "
+                    "The TSR data package section 6.2.3 says existing roads, trails, and landings are "
                     "modeled non-spatially because the features are too small and "
                     "incomplete to track reliably at landscape scale."
                 ),
@@ -2633,7 +2633,7 @@ def _build_draft_subrules_for_parent_step(
                     "across the current AFLB working land base."
                 ),
                 "rationale": (
-                    "TSA29 section 6.2.3 says future roads, trails, and landings are "
+                    "The TSR data package section 6.2.3 says future roads, trails, and landings are "
                     "estimated from current performance and RESULTS data rather than "
                     "mapped as a present-day spatial road network."
                 ),
@@ -2667,7 +2667,7 @@ def _build_draft_subrules_for_parent_step(
                     "features that are not auto-mapped into a public exclusion layer here."
                 ),
                 "rationale": (
-                    "TSA29 section 6.4.9 says archaeological sites are protected under the "
+                    "The TSR data package section 6.4.9 says archaeological sites are protected under the "
                     "Heritage Conservation Act and cultural heritage resources are managed "
                     "through permit/FSP practice, not by citing a single downloadable "
                     "public exclusion layer."
@@ -2775,7 +2775,7 @@ def _build_draft_subrules_for_parent_step(
                     "Cariboo lake-class spatial source is adopted."
                 ),
                 "rationale": (
-                    "Table 15 includes L1-L4 lake classes, but the current TSA29 instance "
+                    "Table 15 includes L1-L4 lake classes, but the current reviewed TSA instance "
                     "does not yet have a trustworthy lake-class vector artifact wired into "
                     "the notebook bridge."
                 ),
@@ -2798,7 +2798,7 @@ def _build_draft_subrules_for_parent_step(
                     "Chilcotin SRDZ as a later reviewed refinement."
                 ),
                 "rationale": (
-                    "TSA29 section 6.4.2 increases the S4 riparian area width to 30 metres "
+                    "The TSR data package section 6.4.2 increases the S4 riparian area width to 30 metres "
                     "in the Niut and South Chilcotin SRDZs to protect dolly varden trout habitat."
                 ),
                 "candidate_layers": [
@@ -2828,7 +2828,7 @@ def _build_draft_subrules_for_parent_step(
                     "Section 93.4 LAO / Map 4 source, not wildlife proxy layers."
                 ),
                 "rationale": (
-                    "TSA29 section 6.3.4 says critical fish habitat boundaries come "
+                    "The TSR data package section 6.3.4 says critical fish habitat boundaries come "
                     "from the Section 93.4 LAO establishing objectives for the CCLUP, "
                     "Map 4."
                 ),
@@ -2890,7 +2890,7 @@ def _build_draft_subrules_for_parent_step(
                     "areas and VQO preservation should be excluded here."
                 ),
                 "rationale": (
-                    "TSA29 section 6.3.5 says only Class A lakes with legal buffer "
+                    "The TSR data package section 6.3.5 says only Class A lakes with legal buffer "
                     "areas overlapping visual quality objective class "
                     "'preservation' are excluded from the LHLB."
                 ),
@@ -2910,7 +2910,7 @@ def _build_draft_subrules_for_parent_step(
                 ],
                 "candidate_operation_type": "review",
                 "field_mapping_notes": [
-                    "The currently adopted public layers do not yet expose a trusted Class A lake discriminator for TSA29.",
+                    "The currently adopted public layers do not yet expose a trusted Class A lake discriminator for reviewed TSA.",
                     "Do not use the whole scenic-PR legal surface as a surrogate; it overcuts badly.",
                 ],
                 "confidence": "needs_review",
@@ -2933,7 +2933,7 @@ def _build_draft_subrules_for_parent_step(
                 "candidate_values": ["Section 7.2.6 later assumptions"],
                 "candidate_operation_type": "reference_only",
                 "field_mapping_notes": [
-                    "This step is tiny in the TSR benchmark and is being skipped for detailed TSA29 validation."
+                    "This step is tiny in the TSR benchmark and is being skipped for detailed reviewed TSA validation."
                 ],
                 "confidence": "needs_review",
                 "review_status": "draft",
@@ -2954,7 +2954,7 @@ def _build_draft_subrules_for_parent_step(
                     "concern polygons from the harvestable land base."
                 ),
                 "rationale": (
-                    "TSA29 section 6.3.7 says CASC areas are no-harvest polygons "
+                    "The TSR data package section 6.3.7 says CASC areas are no-harvest polygons "
                     "designated in the LUO to address CCLUP objectives."
                 ),
                 "candidate_layers": [
@@ -2990,7 +2990,7 @@ def _build_draft_subrules_for_parent_step(
                     "the unique consultation / authorization regime."
                 ),
                 "rationale": (
-                    "TSA29 section 6.4.1 says the PRA will be excluded from the THLB "
+                    "The TSR data package section 6.4.1 says the PRA will be excluded from the THLB "
                     "because deep consultation is required and very few provincial "
                     "authorizations have been made there since 2014."
                 ),
@@ -3186,8 +3186,8 @@ def _specialized_compiled_logic_for_parent_step(
                 ],
                 "execution_notes": [
                     "Notebook execution now uses F_OWN ownership descriptions for the first-pass 6.2.1 exclusion buckets instead of the older OWN != {62,69} shortcut.",
-                    "Woodlots and parks/protected areas stay in AFLB here and are handled later or retained, consistent with the TSA29 prose.",
-                    "Tree Farm Licence schedule polygons and the broad `Crown Lease - Misc. lease` bucket stay in AFLB here because including them materially overcuts the TSA29 step-2 benchmark; any narrower lease-only exclusions need a more specific reviewed discriminator.",
+                    "Woodlots and parks/protected areas stay in AFLB here and are handled later or retained, consistent with the the TSR data-package prose.",
+                    "Tree Farm Licence schedule polygons and the broad `Crown Lease - Misc. lease` bucket stay in AFLB here because including them materially overcuts the reviewed TSA step-2 benchmark; any narrower lease-only exclusions need a more specific reviewed discriminator.",
                 ],
             }
         )
@@ -3209,7 +3209,7 @@ def _specialized_compiled_logic_for_parent_step(
                 ),
                 "linked_source_entry_ids": [],
                 "notes": [
-                    "The TSA29 prose cites separate excluded areas for NStQ Interim Treaty Agreement parcels (2,702 ha) and Tsilhqot'in title lands (188,544 ha).",
+                    "The the TSR data-package prose cites separate excluded areas for NStQ Interim Treaty Agreement parcels (2,702 ha) and Tsilhqot'in title lands (188,544 ha).",
                     "Because those dedicated overlay polygons are not publicly materialized in the current FEMIC source-layer lane, the strict runner uses the documented combined excluded area (191,246 ha) as an explicit AFLB aspatial fallback.",
                 ],
             }
@@ -3329,7 +3329,7 @@ def _specialized_compiled_logic_for_parent_step(
                 "linked_source_entry_ids": [],
                 "subtract_parent_exact_removed_area": True,
                 "notes": [
-                    "TSA29 section 6.2.3 says existing roads, trails, and landings are modeled non-spatially through partial AFLB reductions because the mapped features are too small and incomplete to track reliably at landscape scale.",
+                    "The TSR data package section 6.2.3 says existing roads, trails, and landings are modeled non-spatially through partial AFLB reductions because the mapped features are too small and incomplete to track reliably at landscape scale.",
                     "Use the TSR benchmark marginal deduction of 50,434 ha for this step; do not use the conflicting 32,526 ha prose sentence as the governing fallback target.",
                     "Subtract any exact same-parent permanent-road overlap already removed so the fallback only fills the remaining benchmark gap.",
                 ],
@@ -3368,10 +3368,10 @@ def _specialized_compiled_logic_for_parent_step(
                 "required": True,
                 "subtract_parent_exact_removed_area": True,
                 "notes": [
-                    "TSA29 Table 7 removes woodlots and a small crown/miscellaneous-lease remainder as part of step 6, but current public F_OWN is too blunt to separate the active subset TSR actually removed.",
+                    "The TSR data package table 7 removes woodlots and a small crown/miscellaneous-lease remainder as part of step 6, but current public F_OWN is too blunt to separate the active subset TSR actually removed.",
                     "Use the exact same-parent parks/protected removal first, then apply the residual aspatial target so total step-6 net deduction stays aligned to the TSR benchmark.",
                     "Current public F_OWN remains supporting/reference provenance for this seam, but it is not the executable overlay source in the strict lane because it does not expose a reliable active/inactive woodlot status split.",
-                    "Community forest agreements and first nations woodland licences were already netted out upstream in TSA29 step 2 and are therefore intentionally excluded from this step-6 residual bridge.",
+                    "Community forest agreements and first nations woodland licences were already netted out upstream in reviewed TSA step 2 and are therefore intentionally excluded from this step-6 residual bridge.",
                 ],
             }
         )
@@ -3433,7 +3433,7 @@ def _specialized_compiled_logic_for_parent_step(
                     }
                 ],
                 "notes": [
-                    "TSA29 section 6.3.3 states that only no-harvest wildlife areas are excluded at this stage.",
+                    "The TSR data package section 6.3.3 states that only no-harvest wildlife areas are excluded at this stage.",
                     "Conditional harvest zones are deferred to later forest-management assumptions and silviculture logic.",
                 ],
             }
@@ -3532,7 +3532,7 @@ def _specialized_compiled_logic_for_parent_step(
                     },
                 ],
                 "notes": [
-                    "TSA29 section 6.3.7 points to LUO / CCLUP Map 5 boundaries, so notebook execution uses the legal CCLUP planning polygons instead of broad designated-area overlays.",
+                    "The TSR data package section 6.3.7 points to LUO / CCLUP Map 5 boundaries, so notebook execution uses the legal CCLUP planning polygons instead of broad designated-area overlays.",
                     "The legal-planning source encodes CASC harvest semantics in repeated LEGAL_FEAT_ATRB name/value slots; row 11 narrows execution to the ART / IR / STR source harvest categories instead of excluding the full CASC polygon set.",
                 ],
             }
@@ -3574,7 +3574,7 @@ def _specialized_compiled_logic_for_parent_step(
                     },
                 ],
                 "notes": [
-                    "TSA29 section 6.3.4 cites the Section 93.4 LAO establishing objectives for the CCLUP, Map 4, as the critical-fish-habitat source.",
+                    "The TSR data package section 6.3.4 cites the Section 93.4 LAO establishing objectives for the CCLUP, Map 4, as the critical-fish-habitat source.",
                     "Notebook execution therefore uses the legal-planning fish objective polygons instead of wildlife-habitat proxy layers.",
                     "If the full-TSA result still runs materially high, the next refinement seam is inside the legal fish objective attributes themselves, not a return to wildlife proxy sources.",
                 ],
@@ -3603,8 +3603,8 @@ def _specialized_compiled_logic_for_parent_step(
                 "step_status": "manual_review_required",
                 "required": False,
                 "notes": [
-                    "TSA29 section 6.3.5 is a very small benchmark step and only applies to Class A lakes overlapping preservation VQO.",
-                    "The currently adopted public layers do not yet expose a trusted Class A lake discriminator for TSA29.",
+                    "The TSR data package section 6.3.5 is a very small benchmark step and only applies to Class A lakes overlapping preservation VQO.",
+                    "The currently adopted public layers do not yet expose a trusted Class A lake discriminator for reviewed TSA.",
                     "Do not substitute the whole scenic-PR legal surface; it materially overcuts.",
                     "Class B-E lakes are deferred to Section 7.2.6 assumptions logic, not excluded here.",
                 ],
@@ -3670,7 +3670,7 @@ def _specialized_compiled_logic_for_parent_step(
                     "whse_imagery_and_base_maps_mot_highway_profiles_sp",
                 ],
                 "notes": [
-                    "TSA29 section 6.4.3 splits steep-slope exclusions east and west of Highway 97.",
+                    "The TSR data package section 6.4.3 splits steep-slope exclusions east and west of Highway 97.",
                     "Checkpoint execution expects `femic_slope_pct_median`, `femic_hwy97_side`, and `femic_step13_steep_slope_flag` to be precompiled onto the curve-ready checkpoint.",
                     "Strict public-data threshold GIS materially over-selects the TSR Table 16 steep-slope exclusion benchmark even after the late-stage terrain and DEM diagnostics.",
                     "This branch therefore applies a benchmark-anchored partial rollback only on the already-selected steep polygons, leaving the terrain-stability substep as the exact public-data branch.",
@@ -3746,7 +3746,7 @@ def _specialized_compiled_logic_for_parent_step(
                     }
                 ],
                 "notes": [
-                    "TSA29 section 6.4.4 raises the threshold to 250 m3/ha on steep slopes.",
+                    "The TSR data package section 6.4.4 raises the threshold to 250 m3/ha on steep slopes.",
                     "Notebook execution uses the current assigned bundle curves and evaluates volume at age 160, matching the TSR wording for low-productivity stands.",
                     "This branch reuses the accepted step-13 steep-slope flag and applies the 250 m3/ha threshold only where `femic_step13_steep_slope_flag == True`.",
                     f"Together with the calibrated non-steep {_STEP14_CALIBRATED_NON_STEEP_THRESHOLD_M3_PER_HA:g} m3/ha branch, this keeps the step-14 partition mutually exclusive and avoids applying the lower threshold to steep stands.",
@@ -3784,7 +3784,7 @@ def _specialized_compiled_logic_for_parent_step(
                     },
                 ],
                 "notes": [
-                    "TSA29 section 6.4.5 excludes broadleaf-leading stands from THLB.",
+                    "The TSR data package section 6.4.5 excludes broadleaf-leading stands from THLB.",
                     "Notebook execution uses the leading VRI species code on the late-stage curve-ready checkpoint surface.",
                     "The strict lane currently uses `PROJ_AGE_1 >= 95` as the minimum-age proxy for the TSR's physically operable / minimum-harvestable-age screen.",
                     "The deciduous component of conifer-leading stands is explicitly deferred to the later broadleaf volume-exclusion assumption.",
@@ -3816,7 +3816,7 @@ def _specialized_compiled_logic_for_parent_step(
                     }
                 ],
                 "notes": [
-                    "TSA29 section 6.4.6 excludes identified recreation areas and features from THLB.",
+                    "The TSR data package section 6.4.6 excludes identified recreation areas and features from THLB.",
                     "Notebook execution currently auto-runs the active FTEN recreation polygon subset only.",
                     "Recreation trails and FSP consultation/procedure language remain out of scope for this first runnable bridge pass.",
                 ],
@@ -3914,7 +3914,7 @@ def _specialized_compiled_logic_for_parent_step(
                 "required": False,
                 "notes": [
                     "Table 15 includes lake classes L1-B, L2, and L3/L4, but the "
-                    "current TSA29 instance does not yet have a trustworthy lake-class "
+                    "current reviewed TSA instance does not yet have a trustworthy lake-class "
                     "artifact wired into the notebook bridge."
                 ],
             }
@@ -3940,7 +3940,7 @@ def _specialized_compiled_logic_for_parent_step(
                 "step_status": "manual_review_required",
                 "required": False,
                 "notes": [
-                    "TSA29 section 6.4.2 increases the S4 riparian area width in the "
+                    "The TSR data package section 6.4.2 increases the S4 riparian area width in the "
                     "Niut SRDZ and South Chilcotin SRDZ to protect dolly varden trout "
                     "habitat. This first runnable pass leaves that special-case refinement "
                     "as reviewed/manual logic."
@@ -3976,7 +3976,7 @@ def _specialized_compiled_logic_for_parent_step(
                 ],
                 "buffer_distance_m": -7.5,
                 "notes": [
-                    "TSA29 section 6.3.6 says at least 85% of the area within the 100-metre trail corridor will not be available for harvest.",
+                    "The TSR data package section 6.3.6 says at least 85% of the area within the 100-metre trail corridor will not be available for harvest.",
                     "Notebook execution models that rule by shrinking the legal 100-metre buffered-trail polygons inward by 7.5 metres on each side, yielding an 85-metre equivalent full-exclusion corridor.",
                 ],
             }
@@ -4000,7 +4000,7 @@ def _specialized_compiled_logic_for_parent_step(
                 "linked_source_entry_ids": [],
                 "direct_target_removed_area": True,
                 "notes": [
-                    "TSA29 section 6.4.8 says existing mapped WTRA remain in THLB and are deferred from harvest for 80 years.",
+                    "The TSR data package section 6.4.8 says existing mapped WTRA remain in THLB and are deferred from harvest for 80 years.",
                     "Notebook execution models only the future WTRA requirement here as an aspatial THLB reduction factor.",
                     "The deduction magnitude is anchored directly to the TSR benchmark area for the full-TSA strict lane.",
                 ],
@@ -4029,7 +4029,7 @@ def _specialized_compiled_logic_for_parent_step(
                 ),
                 "linked_source_entry_ids": [],
                 "notes": [
-                    "TSA29 section 6.2.3 says future roads are estimated from current performance and RESULTS data rather than a mapped future-road layer.",
+                    "The TSR data package section 6.2.3 says future roads are estimated from current performance and RESULTS data rather than a mapped future-road layer.",
                     "Notebook execution treats this as an early-stage AFLB area reduction and scales stand-area fields directly.",
                     "Do not reuse the existing present-day roads spatial overlay for this parent step.",
                     "Do not use THLB retention for this step because the deducted area is non-forested road footprint.",
@@ -4055,7 +4055,7 @@ def _specialized_compiled_logic_for_parent_step(
                 "linked_source_entry_ids": [],
                 "direct_target_removed_area": True,
                 "notes": [
-                    "TSA29 section 6.4.9 models this as an aspatial THLB reduction rather than a single public spatial layer.",
+                    "The TSR data package section 6.4.9 models this as an aspatial THLB reduction rather than a single public spatial layer.",
                     "The deduction is anchored to the TSR benchmark area and informed by TNG plus FSP practice (Tolko #780, West Fraser #755, BCTS #828).",
                     "Do not infer road or other generic spatial layers from the permit/FSP discussion in this subsection.",
                 ],
@@ -4085,7 +4085,7 @@ def _specialized_compiled_logic_for_parent_step(
                 "linked_source_entry_ids": [],
                 "direct_target_removed_area": True,
                 "notes": [
-                    "TSA29 section 6.4.1 defines the Proven Aboriginal Rights area conceptually but does not cite a clean public vector source in the data-package text.",
+                    "The TSR data package section 6.4.1 defines the Proven Aboriginal Rights area conceptually but does not cite a clean public vector source in the data-package text.",
                     "The approved public-data lane keeps this as a benchmark-anchored aspatial bridge because no trustworthy public PRA boundary is available for defensible automated exclusion.",
                     "When the row-11 chained input state changes, row 12 can absorb the AFLB-to-LHLB stage residual so the stage lands on the TSR cumulative target.",
                 ],
@@ -14385,7 +14385,7 @@ def run_tsr_thlb_parent_step(
     target_label = str(target_parent.get("parent_label", "")).strip()
     if target_label.casefold() not in _THLB_NOTEBOOK_RUNNABLE_PARENT_LABELS:
         raise TsrRecipeError(
-            "Notebook execution is currently limited to the first TSA29 activation tranche: "
+            "Notebook execution is currently limited to the first reviewed activation tranche: "
             + ", ".join(sorted(_THLB_NOTEBOOK_RUNNABLE_PARENT_LABELS))
         )
     if execution_mode not in _TSR_THLB_PARENT_STEP_EXECUTION_MODES:
@@ -14909,7 +14909,7 @@ def _summarize_parallel_benchmark_markdown(
     run_results: Sequence[TsrThlbParallelBenchmarkRunResult],
 ) -> str:
     lines = [
-        "# TSA29 THLB LU-Parallel Benchmark",
+        "# Reviewed TSA THLB LU-Parallel Benchmark",
         "",
         f"- Recipe: `{recipe_path}`",
         f"- Landscape units: `{', '.join(landscape_units) if landscape_units else 'all intersecting LUs'}`",
@@ -15963,7 +15963,7 @@ def _default_reconstruction_gap_interpretation(
             "reviewed_bridge_choice",
             "accepted_reviewed_override",
             "The reviewed lane is intentionally carrying a skip, calibration, no-op, or reviewed bridge choice here.",
-            "Change this only if you intend to reopen the accepted reviewed TSA29 bridge choice.",
+            "Change this only if you intend to reopen the accepted reviewed bridge choice.",
         ),
         "aspatial_bridge_difference": (
             "reviewed_bridge_choice",
@@ -17197,7 +17197,7 @@ def build_tsr_thlb_reconstruction_comparison(
     output_markdown_path: Path | None = None,
     output_json_path: Path | None = None,
 ) -> TsrThlbReconstructionComparisonBuildResult:
-    """Emit a TSA29-first THLB comparison report with strict-vs-TSR as primary."""
+    """Emit a strict THLB comparison report with strict-vs-TSR as primary."""
 
     (
         recipe,
@@ -18543,7 +18543,7 @@ def _execute_tsr_thlb_recipe_steps_reconstructed_lu(
                 updated_step["lu_chunk_count"] = touched_chunk_count
                 updated_step["run_notes"] = [
                     "Applied the TSR area target as a documented reconstructed-mode aspatial fallback because no exact spatial implementation is available for this recipe row.",
-                    "The fallback was applied across the current LU-wise reconstructed state without changing the reviewed TSA29 parent-step lane.",
+                    "The fallback was applied across the current LU-wise reconstructed state without changing the reviewed reviewed parent-step lane.",
                 ]
                 if bool(updated_step.get("direct_target_removed_area")):
                     updated_step["run_notes"].append(
