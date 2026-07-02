@@ -90,7 +90,7 @@ freshforge providers
 freshforge validate examples/freshforge/model_build_workflow.yaml
 freshforge inspect examples/freshforge/model_build_workflow.yaml
 freshforge plan examples/freshforge/model_build_workflow.yaml
-freshforge run examples/freshforge/model_build_workflow.yaml --namespace smoke
+freshforge run examples/freshforge/model_build_workflow.yaml --workdir runtime/freshforge --namespace smoke
 ```
 
 FreshForge validation, inspection, and planning are non-mutating. `freshforge
@@ -99,6 +99,12 @@ not materialize DataLad content, read declared artifacts, or replace
 `femic instance rebuild`. The generic example workflow is public-safe for
 validation, inspection, and planning, but a real run requires a real instance
 root and matching configuration.
+
+When `freshforge run` is called with `--workdir` and `--namespace`, FEMIC
+returns namespace-resolved declared artifact paths in the FreshForge run record.
+This is report-only metadata: FEMIC does not automatically reroute command
+outputs, logs, or Patchworks package paths unless the workflow parameters
+already pass those paths to the underlying FEMIC command.
 
 If `git annex version` fails, install `git-annex` at the OS level and re-open
 the shell before retrying.

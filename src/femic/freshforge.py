@@ -10,6 +10,7 @@ import subprocess
 import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from femic import __version__
@@ -339,7 +340,7 @@ def _execute_with_builder(
                 location=f"nodes.{node.id}",
             ),
         )
-    artifacts = node.artifacts if isinstance(node.artifacts, dict) else {}
+    artifacts = _resolved_artifacts(node, context)
     outputs = node.outputs if isinstance(node.outputs, dict) else {}
     return result_type(
         status=run_status.SUCCESS if completed.returncode == 0 else run_status.FAILED,
@@ -348,6 +349,20 @@ def _execute_with_builder(
         artifacts=artifacts,
         data=data,
     )
+
+
+def _resolved_artifacts(node: Any, context: Any) -> dict[str, Any]:
+    artifacts = node.artifacts if isinstance(node.artifacts, dict) else {}
+    resolve_path = getattr(context, "resolve_path", None)
+    if not callable(resolve_path):
+        return dict(artifacts)
+    resolved: dict[str, Any] = {}
+    for key, value in artifacts.items():
+        if isinstance(value, (str, Path)):
+            resolved[key] = str(resolve_path(value))
+        else:
+            resolved[key] = value
+    return resolved
 
 
 def _default_command_runner(
