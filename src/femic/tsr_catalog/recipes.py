@@ -91,6 +91,12 @@ from femic.workflows.legacy import (
     run_post_tipsy_bundle_with_manifest,
 )
 
+from .adjudication import (
+    TsrAdjudicationOverlayError,
+    TsrAdjudicationOverlayProvider,
+    TsrLandBaseSummaryRowClassification,
+    resolve_tsr_adjudication_overlay_provider,
+)
 from .overlay import TsrOverlayTsaRecord
 from .report import TsrFactReviewRow, report_tsr_candidate_facts
 from .source_overrides import (
@@ -264,137 +270,6 @@ _YIELD_BRIDGE_SI_LEVEL_QUANTILES: dict[str, list[int]] = {
     "L": [5, 20, 35],
     "M": [35, 50, 65],
     "H": [65, 80, 95],
-}
-
-
-@dataclass(frozen=True)
-class _LandBaseSummaryRowClassification:
-    land_base_stage: str
-    execution_class: str
-    benchmark_role: str
-
-
-_TSA29_TABLE3_ROW_CLASSIFICATIONS: dict[str, _LandBaseSummaryRowClassification] = {
-    "total tsa area": _LandBaseSummaryRowClassification(
-        land_base_stage="reference_target",
-        execution_class="reference_only",
-        benchmark_role="reference_total",
-    ),
-    "land not administered by the province": _LandBaseSummaryRowClassification(
-        land_base_stage="glb_to_aflb",
-        execution_class="drop_from_universe",
-        benchmark_role="deduction",
-    ),
-    "non-forest": _LandBaseSummaryRowClassification(
-        land_base_stage="glb_to_aflb",
-        execution_class="drop_from_universe",
-        benchmark_role="deduction",
-    ),
-    "roads and landings": _LandBaseSummaryRowClassification(
-        land_base_stage="glb_to_aflb",
-        execution_class="drop_from_universe",
-        benchmark_role="deduction",
-    ),
-    "analysis forest land base": _LandBaseSummaryRowClassification(
-        land_base_stage="glb_to_aflb",
-        execution_class="reference_only",
-        benchmark_role="reference_cumulative",
-    ),
-    "parks, protected areas, area-base tenures": _LandBaseSummaryRowClassification(
-        land_base_stage="aflb_to_lhlb",
-        execution_class="legal_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "old growth management areas": _LandBaseSummaryRowClassification(
-        land_base_stage="aflb_to_lhlb",
-        execution_class="legal_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "wildlife habitat areas": _LandBaseSummaryRowClassification(
-        land_base_stage="aflb_to_lhlb",
-        execution_class="legal_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "critical habitat for fish": _LandBaseSummaryRowClassification(
-        land_base_stage="aflb_to_lhlb",
-        execution_class="legal_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "lakeshore management": _LandBaseSummaryRowClassification(
-        land_base_stage="aflb_to_lhlb",
-        execution_class="legal_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "community areas of special concern": _LandBaseSummaryRowClassification(
-        land_base_stage="aflb_to_lhlb",
-        execution_class="legal_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "proven aboriginal rights areas": _LandBaseSummaryRowClassification(
-        land_base_stage="aflb_to_lhlb",
-        execution_class="legal_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "areas considered inoperable": _LandBaseSummaryRowClassification(
-        land_base_stage="lhlb_to_thlb",
-        execution_class="projected_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "sites with low growing timber potential": _LandBaseSummaryRowClassification(
-        land_base_stage="lhlb_to_thlb",
-        execution_class="projected_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "non-merchantable timber profiles": _LandBaseSummaryRowClassification(
-        land_base_stage="lhlb_to_thlb",
-        execution_class="projected_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "recreation features": _LandBaseSummaryRowClassification(
-        land_base_stage="lhlb_to_thlb",
-        execution_class="projected_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "growth and yield permanent sample plots": _LandBaseSummaryRowClassification(
-        land_base_stage="lhlb_to_thlb",
-        execution_class="projected_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "riparian areas": _LandBaseSummaryRowClassification(
-        land_base_stage="lhlb_to_thlb",
-        execution_class="projected_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "buffered trails": _LandBaseSummaryRowClassification(
-        land_base_stage="lhlb_to_thlb",
-        execution_class="projected_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "wildlife tree retention areas": _LandBaseSummaryRowClassification(
-        land_base_stage="lhlb_to_thlb",
-        execution_class="projected_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "cultural heritage and archaeological resources": _LandBaseSummaryRowClassification(
-        land_base_stage="lhlb_to_thlb",
-        execution_class="projected_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "timber harvesting land base": _LandBaseSummaryRowClassification(
-        land_base_stage="lhlb_to_thlb",
-        execution_class="reference_only",
-        benchmark_role="reference_cumulative",
-    ),
-    "future roads": _LandBaseSummaryRowClassification(
-        land_base_stage="lhlb_to_thlb",
-        execution_class="projected_harvest_exclusion",
-        benchmark_role="deduction",
-    ),
-    "long-term thlb": _LandBaseSummaryRowClassification(
-        land_base_stage="reference_target",
-        execution_class="reference_only",
-        benchmark_role="reference_cumulative",
-    ),
 }
 
 
@@ -2279,10 +2154,14 @@ def _infer_parent_row_stage(
     seen_aflb_row: bool,
     seen_thlb_row: bool,
     tsa_code: str | None = None,
+    adjudication_provider: TsrAdjudicationOverlayProvider | None = None,
 ) -> tuple[str, str]:
     lower = label.casefold()
-    if str(tsa_code or "").strip() == "29":
-        classification = _TSA29_TABLE3_ROW_CLASSIFICATIONS.get(lower)
+    _ = tsa_code
+    if adjudication_provider is not None:
+        classification = adjudication_provider.classify_land_base_summary_row(
+            label=lower
+        )
         if classification is not None:
             return classification.land_base_stage, classification.execution_class
     if linked_subsection is not None:
@@ -2308,17 +2187,21 @@ def _classify_land_base_summary_row(
     seen_aflb_row: bool,
     seen_thlb_row: bool,
     tsa_code: str | None = None,
-) -> _LandBaseSummaryRowClassification:
+    adjudication_provider: TsrAdjudicationOverlayProvider | None = None,
+) -> TsrLandBaseSummaryRowClassification:
     stage, execution_class = _infer_parent_row_stage(
         label=label,
         linked_subsection=linked_subsection,
         seen_aflb_row=seen_aflb_row,
         seen_thlb_row=seen_thlb_row,
         tsa_code=tsa_code,
+        adjudication_provider=adjudication_provider,
     )
     lower = label.casefold()
-    if str(tsa_code or "").strip() == "29":
-        classification = _TSA29_TABLE3_ROW_CLASSIFICATIONS.get(lower)
+    if adjudication_provider is not None:
+        classification = adjudication_provider.classify_land_base_summary_row(
+            label=lower
+        )
         if classification is not None:
             return classification
     if lower == "total tsa area":
@@ -2334,7 +2217,7 @@ def _classify_land_base_summary_row(
         benchmark_role = "context"
     else:
         benchmark_role = "deduction"
-    return _LandBaseSummaryRowClassification(
+    return TsrLandBaseSummaryRowClassification(
         land_base_stage=stage,
         execution_class=execution_class,
         benchmark_role=benchmark_role,
@@ -4392,6 +4275,7 @@ def _build_parent_steps_from_land_base_summary(
     subsections: Sequence[dict[str, Any]],
     source_index: tuple[dict[str, Any], ...],
     tsa_code: str | None = None,
+    adjudication_provider: TsrAdjudicationOverlayProvider | None = None,
 ) -> tuple[tuple[dict[str, Any], ...], tuple[dict[str, Any], ...]]:
     parent_steps: list[dict[str, Any]] = []
     compiled_steps: list[dict[str, Any]] = []
@@ -4433,6 +4317,7 @@ def _build_parent_steps_from_land_base_summary(
             seen_aflb_row=seen_aflb_row,
             seen_thlb_row=seen_thlb_row,
             tsa_code=tsa_code,
+            adjudication_provider=adjudication_provider,
         )
         land_base_stage = classification.land_base_stage
         execution_class = classification.execution_class
@@ -5199,6 +5084,9 @@ def build_tsr_thlb_netdown_recipe(
         source_root_resolved, recipe.canonical_inputs.documents_path
     )
     instance_root = recipe_path.expanduser().resolve().parents[2]
+    adjudication_provider = _resolve_instance_adjudication_provider(
+        instance_root=instance_root
+    )
     source_layer_recipe_path = _resolve_instance_path(
         instance_root, recipe.instance_inputs.source_layer_recipe_path
     )
@@ -5242,6 +5130,7 @@ def build_tsr_thlb_netdown_recipe(
                 subsections=subsections,
                 source_index=source_index,
                 tsa_code=recipe.tsa.tsa_code,
+                adjudication_provider=adjudication_provider,
             )
         )
         parent_steps = _merge_preserved_thlb_parent_step_metadata(
@@ -5665,13 +5554,26 @@ def run_tsr_source_layers_recipe(
     )
 
 
+def _resolve_instance_adjudication_provider(
+    *, instance_root: Path
+) -> TsrAdjudicationOverlayProvider | None:
+    try:
+        return resolve_tsr_adjudication_overlay_provider(instance_root=instance_root)
+    except TsrAdjudicationOverlayError as exc:
+        raise TsrRecipeError(str(exc)) from exc
+
+
 def _find_tsr_checkpoint_path(*, instance_root: Path, mode: str) -> Path:
     resolved_instance_root = instance_root.expanduser().resolve()
-    if resolved_instance_root.name.casefold() == "femic-tsa29-instance":
-        raise TsrRecipeError(
-            "Legacy `data/ria_vri_vclr1p_checkpoint*.feather` fallback discovery is "
-            "disabled for TSA29. Use an explicit strict-lane seam checkpoint under "
-            "`data/tsr/` instead."
+    adjudication_provider = _resolve_instance_adjudication_provider(
+        instance_root=resolved_instance_root
+    )
+    if adjudication_provider is not None:
+        _validate_adjudication_checkpoint_path(
+            instance_root=resolved_instance_root,
+            checkpoint_path=resolved_instance_root
+            / "data"
+            / "ria_vri_vclr1p_checkpoint0.feather",
         )
     candidates = sorted(
         resolved_instance_root.glob("data/ria_vri_vclr1p_checkpoint*.feather")
@@ -5709,11 +5611,15 @@ def _find_curve_ready_thlb_checkpoint_path(*, instance_root: Path) -> Path:
     if official_curve_ready_path.exists():
         return official_curve_ready_path
     resolved_instance_root = instance_root.expanduser().resolve()
-    if resolved_instance_root.name.casefold() == "femic-tsa29-instance":
-        raise TsrRecipeError(
-            "Legacy curve-ready checkpoint fallback is disabled for TSA29. "
-            "Publish `data/tsr/lhlb_curve_ready_checkpoint.feather` from the "
-            "validated strict lane instead."
+    adjudication_provider = _resolve_instance_adjudication_provider(
+        instance_root=resolved_instance_root
+    )
+    if adjudication_provider is not None:
+        _validate_adjudication_checkpoint_path(
+            instance_root=resolved_instance_root,
+            checkpoint_path=resolved_instance_root
+            / "data"
+            / "ria_vri_vclr1p_checkpoint0.feather",
         )
     candidates = sorted(
         resolved_instance_root.glob("data/ria_vri_vclr1p_checkpoint*.feather")
@@ -5759,37 +5665,39 @@ def _default_workbench_checkpoint_path(
     return _find_curve_ready_thlb_checkpoint_path(instance_root=instance_root)
 
 
-def _reject_tsa29_legacy_checkpoint_path(
+def _validate_adjudication_checkpoint_path(
     *, instance_root: Path, checkpoint_path: Path
 ) -> None:
     resolved_instance_root = instance_root.expanduser().resolve()
-    if resolved_instance_root.name.casefold() != "femic-tsa29-instance":
-        return
-    if re.search(
-        r"ria_vri_vclr1p_checkpoint\d+(?:-tsa[\w-]+)?\.feather$",
-        checkpoint_path.name,
-        flags=re.IGNORECASE,
-    ):
-        raise TsrRecipeError(
-            "Legacy `ria_vri_vclr1p_checkpoint*.feather` inputs are disabled for "
-            "TSA29 strict/workbench validation. Use an explicit validated TSA29 "
-            "checkpoint under `data/tsr/` instead."
-        )
+    adjudication_provider = _resolve_instance_adjudication_provider(
+        instance_root=resolved_instance_root
+    )
+    if adjudication_provider is not None:
+        try:
+            adjudication_provider.validate_checkpoint_path(
+                instance_root=resolved_instance_root,
+                checkpoint_path=checkpoint_path.expanduser().resolve(),
+            )
+        except TsrAdjudicationOverlayError as exc:
+            raise TsrRecipeError(str(exc)) from exc
 
 
-def _is_tsa29_strict_seam_checkpoint_path(
+def _is_instance_strict_seam_checkpoint_path(
     *, instance_root: Path, checkpoint_path: Path
 ) -> bool:
     resolved_instance_root = instance_root.expanduser().resolve()
-    if resolved_instance_root.name.casefold() != "femic-tsa29-instance":
+    adjudication_provider = _resolve_instance_adjudication_provider(
+        instance_root=resolved_instance_root
+    )
+    if adjudication_provider is None:
         return False
-    resolved_checkpoint_path = checkpoint_path.expanduser().resolve()
-    strict_root = (resolved_instance_root / "data" / "tsr").resolve()
     try:
-        resolved_checkpoint_path.relative_to(strict_root)
-    except ValueError:
-        return False
-    return resolved_checkpoint_path.suffix.casefold() == ".feather"
+        return adjudication_provider.is_strict_seam_checkpoint_path(
+            instance_root=resolved_instance_root,
+            checkpoint_path=checkpoint_path.expanduser().resolve(),
+        )
+    except TsrAdjudicationOverlayError as exc:
+        raise TsrRecipeError(str(exc)) from exc
 
 
 def _additional_supporting_provenance_ids(*, parent_label: str) -> tuple[str, ...]:
@@ -10070,7 +9978,7 @@ def _compute_legacy_reference_managed_area_ha(
     instance_root: Path,
     checkpoint_path: Path,
 ) -> float | None:
-    if _is_tsa29_strict_seam_checkpoint_path(
+    if _is_instance_strict_seam_checkpoint_path(
         instance_root=instance_root,
         checkpoint_path=checkpoint_path,
     ):
@@ -13012,7 +12920,7 @@ def _execute_workbench_compiled_item(
     return _finalize(checkpoint, marginal_not_applicable=True)
 
 
-def _resolve_compiled_operation_type(compiled_item: dict[str, Any]) -> str:
+def _resolve_compiled_operation_type(compiled_item: Mapping[str, Any]) -> str:
     operation_type = (
         str(compiled_item.get("compiled_operation_type", "")).strip()
         or str(compiled_item.get("operation_type", "")).strip()
@@ -13740,7 +13648,7 @@ def run_tsr_thlb_locked_parent_step(
         source_entry_map=source_entry_map,
     )
     resolved_checkpoint_path = checkpoint_path.expanduser().resolve()
-    _reject_tsa29_legacy_checkpoint_path(
+    _validate_adjudication_checkpoint_path(
         instance_root=instance_root,
         checkpoint_path=resolved_checkpoint_path,
     )
@@ -14492,7 +14400,7 @@ def run_tsr_thlb_parent_step(
             instance_root=instance_root, target_parent=target_parent
         )
     )
-    _reject_tsa29_legacy_checkpoint_path(
+    _validate_adjudication_checkpoint_path(
         instance_root=instance_root, checkpoint_path=resolved_checkpoint_path
     )
     if checkpoint_path is not None and _is_aflb_yield_ready_restart_checkpoint_path(
@@ -16081,139 +15989,6 @@ def _default_reconstruction_gap_interpretation(
     )
 
 
-def _tsa29_reconstruction_gap_interpretation_override(
-    *,
-    recipe: TsrThlbNetdownRecipeRecord,
-    parent_step: dict[str, Any],
-) -> tuple[str, str, str, str] | None:
-    if str(recipe.tsa.tsa_id).strip() != "tsa_29":
-        return None
-    parent_step_id = str(parent_step.get("parent_step_id", "")).strip()
-    overrides: dict[str, tuple[str, str, str, str]] = {
-        "thlb_parent_002_land_not_administered_by_the_province": (
-            "model_endogenous",
-            "strict_logic_overcut",
-            "The strict lane is using a broader ownership interpretation than the reviewed bridge, so it is cutting too much area here.",
-            "Tighten the strict ownership mapping and separate the dedicated title/treaty exclusions from the generic F_OWN ownership classes.",
-        ),
-        "thlb_parent_003_non_forest": (
-            "model_endogenous",
-            "reviewed_bridge_semantics",
-            "The strict lane is only doing a narrow direct waterbody removal here, while the reviewed lane is carrying a much broader non-forest interpretation; in addition, this early GLB-to-AFLB comparison is conditioned by checkpoint1/AFLB initialization rather than a literal raw-GLB replay.",
-            "Decide and document the intended strict non-forest semantics before changing code again; this is not just a missing-data problem, and the current stepwise delta should be read as a baseline-conditioned diagnostic rather than a literal raw-GLB replay.",
-        ),
-        "thlb_parent_004_roads_and_landings": (
-            "mixed",
-            "accepted_aspatial_bridge",
-            "The TSR itself says existing roads, trails, and landings are modeled non-spatially through partial AFLB reductions because the features are too small and incomplete to track cleanly at landscape scale. The strict lane should therefore be judged against the documented aspatial benchmark first, with the narrow permanent-road overlays treated as supporting evidence only.",
-            "Keep the documented step-4 aspatial AFLB fallback in place unless you later adopt a better exact road-footprint contract.",
-        ),
-        "thlb_parent_006_parks_protected_areas_area_base_tenures": (
-            "mixed",
-            "strict_logic_undercut",
-            "The strict lane is lighter than the reviewed lane here, likely because tenure and ownership semantics are still not fully aligned.",
-            "Refine the strict tenure/ownership logic first, then reassess whether any supporting data gaps remain material.",
-        ),
-        "thlb_parent_007_old_growth_management_areas": (
-            "model_endogenous",
-            "strict_logic_overcut",
-            "The strict lane is likely treating OGMA area too broadly relative to the reviewed TSA29 interpretation.",
-            "Tighten the OGMA logic before looking for new data; this looks like an over-selection problem.",
-        ),
-        "thlb_parent_008_wildlife_habitat_areas": (
-            "model_endogenous",
-            "strict_logic_overcut",
-            "The strict lane is selecting far more wildlife-area land than either the reviewed lane or the TSR benchmark supports.",
-            "Audit the strict no-harvest selection logic and keep conditional/modified zones out unless the TSR clearly says otherwise.",
-        ),
-        "thlb_parent_009_critical_habitat_for_fish": (
-            "model_endogenous",
-            "strict_logic_overcut",
-            "The strict lane is applying a much broader legal fish-objective surface than the reviewed lane or TSR benchmark supports.",
-            "Narrow the strict fish-habitat interpretation; this is one of the clearest strict overcut seams in the whole ladder.",
-        ),
-        "thlb_parent_010_lakeshore_management": (
-            "data_exogenous",
-            "missing_or_blocked_data",
-            "This step depends on a trusted Class A lake discriminator that the current public-input lane still does not have.",
-            "Keep the reviewed skip or a tiny aspatial fallback unless a trustworthy lake-class source appears.",
-        ),
-        "thlb_parent_011_community_areas_of_special_concern": (
-            "model_endogenous",
-            "reviewed_bridge_semantics",
-            "The strict literal source choice is not reproducing the reviewed meaning of this step at all.",
-            "Fix the strict semantics/source interpretation instead of treating this as a pure missing-data problem.",
-        ),
-        "thlb_parent_012_proven_aboriginal_rights_areas": (
-            "data_exogenous",
-            "missing_or_blocked_data",
-            "The strict lane still lacks a trustworthy public boundary source for this step.",
-            "Keep this as a reviewed skip or documented fallback until a real source is available.",
-        ),
-        "thlb_parent_013_areas_considered_inoperable": (
-            "reviewed_bridge_choice",
-            "accepted_reviewed_override",
-            "The reviewed lane uses accepted derived-attribute and calibrated bridge logic here that the strict checkpoint1 lane does not share.",
-            "Keep the accepted reviewed bridge unless you explicitly decide to port its late-stage derived attributes into strict semantics.",
-        ),
-        "thlb_parent_014_sites_with_low_growing_timber_potential": (
-            "mixed",
-            "missing_late_stage_semantics",
-            "The strict lane is blocked because this is late-stage curve-ready logic, not because the universe of land is inherently unknowable.",
-            "Bridge or port the late-stage curve logic explicitly; do not mislabel this as a simple raw-data problem.",
-        ),
-        "thlb_parent_015_non_merchantable_timber_profiles": (
-            "model_endogenous",
-            "missing_late_stage_semantics",
-            "The strict lane is missing the later broadleaf-leading yield logic that the reviewed lane applies here.",
-            "Port the reviewed late-stage logic or keep this as an explicit bridge/fallback step.",
-        ),
-        "thlb_parent_016_recreation_features": (
-            "mixed",
-            "partial_strict_logic",
-            "The strict lane only captures part of the reviewed recreation exclusion logic.",
-            "Low-priority cleanup: improve strict logic if this step later matters to the remaining gap.",
-        ),
-        "thlb_parent_017_growth_and_yield_permanent_sample_plots": (
-            "data_exogenous",
-            "weak_public_coverage",
-            "The strict lane undercuts here, but the public PSP geometry signal is weak and the absolute area is small.",
-            "Treat this as a lower-priority data-coverage seam unless a better PSP source becomes available.",
-        ),
-        "thlb_parent_018_riparian_areas": (
-            "mixed",
-            "missing_or_blocked_data",
-            "The strict lane is still missing some of the lake-class and special-case riparian inputs that the reviewed bridge used.",
-            "Improve source coverage first, then revisit the strict riparian logic if the gap remains large.",
-        ),
-        "thlb_parent_019_buffered_trails": (
-            "reviewed_bridge_choice",
-            "accepted_reviewed_override",
-            "The reviewed lane uses an accepted equivalent-corridor bridge here, while the strict lane currently does not reproduce that bridge.",
-            "Keep the accepted bridge unless you explicitly decide to formalize the same equivalent-corridor logic in strict mode.",
-        ),
-        "thlb_parent_020_wildlife_tree_retention_areas": (
-            "reviewed_bridge_choice",
-            "accepted_aspatial_bridge",
-            "This step is intentionally being modeled as an aspatial future-WTRA bridge rather than an exact mapped exclusion.",
-            "Keep the documented aspatial fallback unless a better exact contract is deliberately adopted later.",
-        ),
-        "thlb_parent_021_cultural_heritage_and_archaeological_resources": (
-            "reviewed_bridge_choice",
-            "accepted_aspatial_bridge",
-            "This step is intentionally being modeled as an aspatial THLB bridge rather than a single exact spatial layer.",
-            "Keep the documented aspatial fallback unless a defensible exact spatial contract is introduced later.",
-        ),
-        "thlb_parent_023_future_roads": (
-            "reviewed_bridge_choice",
-            "accepted_skip_or_noop",
-            "The accepted TSA29 closeout keeps this as an explicit 0 ha no-op tail step after step 21.",
-            "Leave it alone unless you intentionally reopen the reviewed closeout decision.",
-        ),
-    }
-    return overrides.get(parent_step_id)
-
-
 def _classify_thlb_reconstruction_gap_entry(
     *,
     parent_step: dict[str, Any],
@@ -16296,6 +16071,7 @@ def _classify_thlb_reconstruction_gap_entry(
 def _build_tsr_thlb_reconstruction_comparison_payload(
     *,
     recipe: TsrThlbNetdownRecipeRecord,
+    adjudication_provider: TsrAdjudicationOverlayProvider | None = None,
     reconstructed_audit_payload: dict[str, Any],
     locked_chain_payload: dict[str, Any] | None,
     recipe_relative_path: str,
@@ -16466,9 +16242,13 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             bucket=comparison_bucket,
             parent_step=item,
         )
-        override_interpretation = _tsa29_reconstruction_gap_interpretation_override(
-            recipe=recipe,
-            parent_step=item,
+        override_interpretation = (
+            adjudication_provider.reconstruction_gap_interpretation(
+                recipe_tsa_id=str(recipe.tsa.tsa_id).strip(),
+                parent_step=item,
+            )
+            if adjudication_provider is not None
+            else None
         )
         if override_interpretation is not None:
             (
@@ -16476,7 +16256,12 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
                 difference_nature,
                 engineering_interpretation,
                 recommended_next_move,
-            ) = override_interpretation
+            ) = (
+                override_interpretation.problem_ownership,
+                override_interpretation.difference_nature,
+                override_interpretation.engineering_interpretation,
+                override_interpretation.recommended_next_move,
+            )
         strict_vs_tsr_delta_ha = (
             ((reconstructed_removed_area_ha or 0.0) - benchmark_marginal_area_ha)
             if benchmark_marginal_area_ha is not None
@@ -16869,6 +16654,15 @@ def _build_tsr_thlb_reconstruction_comparison_payload(
             stage: len(parent_stage_groups.get(stage, ()))
             for stage in _THLB_STAGE_ORDER
         },
+        "adjudication_report_notes": (
+            list(
+                adjudication_provider.report_notes(
+                    recipe_tsa_id=str(recipe.tsa.tsa_id).strip()
+                )
+            )
+            if adjudication_provider is not None
+            else []
+        ),
         "stepwise_adjudication_queue": stepwise_adjudication_queue,
         "entries": entries,
     }
@@ -17216,10 +17010,14 @@ def _build_tsr_thlb_reconstruction_comparison_markdown(
             "- This report does not change THLB logic. It explains how the strict reconstructed lane fits against the TSR benchmark and uses the reviewed lane as supporting context.",
             "- The governing question is whether strict is close enough to TSR, not whether strict matches reviewed step-for-step.",
             "- Reviewed differences still matter, but mainly because they explain accepted bridges, skips, calibrations, or semantic differences that the strict lane does not automatically share.",
-            "- For the current TSA29 adjudication pass, this report is an active repair ledger: once a parent step is understood well enough to choose an actionable next move, land that change before moving to the next step.",
-            "- Only leave a step as analysis-only when the chosen action is explicitly to defer, keep a reviewed bridge for now, or wait on missing data/source improvements.",
         ]
     )
+    adjudication_report_notes = comparison_payload.get("adjudication_report_notes", ())
+    if isinstance(adjudication_report_notes, list):
+        for note in adjudication_report_notes:
+            note_text = str(note).strip()
+            if note_text:
+                lines.append(f"- {note_text}")
     if milestone_entries:
         lines.extend(["", "## Backbone Milestones", ""])
         for item in milestone_entries:
@@ -17451,8 +17249,12 @@ def build_tsr_thlb_reconstruction_comparison(
         if resolved_locked_chain_ledger_path.exists()
         else None
     )
+    adjudication_provider = _resolve_instance_adjudication_provider(
+        instance_root=instance_root
+    )
     comparison_payload = _build_tsr_thlb_reconstruction_comparison_payload(
         recipe=recipe,
+        adjudication_provider=adjudication_provider,
         reconstructed_audit_payload=reconstructed_audit_payload,
         locked_chain_payload=locked_chain_payload,
         recipe_relative_path=str(
@@ -19784,7 +19586,7 @@ def run_tsr_thlb_netdown_recipe(
             ),
         )
     )
-    _reject_tsa29_legacy_checkpoint_path(
+    _validate_adjudication_checkpoint_path(
         instance_root=instance_root, checkpoint_path=resolved_checkpoint_path
     )
     if (
@@ -20426,7 +20228,7 @@ def run_tsr_thlb_reconstructed_diagnostic_slice(
             else _find_tsr_checkpoint_path(instance_root=instance_root, mode="earliest")
         )
     )
-    _reject_tsa29_legacy_checkpoint_path(
+    _validate_adjudication_checkpoint_path(
         instance_root=instance_root, checkpoint_path=resolved_checkpoint_path
     )
     if _is_lhlb_restart_checkpoint_path(resolved_checkpoint_path):
