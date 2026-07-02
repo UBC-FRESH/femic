@@ -3053,6 +3053,41 @@ checkout acceptance case.
   - [x] Re-run parent validation after the pointer update.
   - [x] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
 
+## Phase 101: FreshForge Materialization Overlay For MKRF (`#278`)
+
+Status: complete
+
+Goal: add the second real model-instance materialization workflow using the
+generic `femic.materialization` FreshForge provider, with MKRF as the parent
+checkout acceptance case after TFL6.
+
+- [x] P101.1 Create lifecycle and planning surfaces.
+  - [x] Open parent issue `#278` and MKRF issue `UBC-FRESH/femic-mkrf-instance#48`.
+  - [x] Create parent branch `feature/p101-mkrf-materialization-overlay`.
+  - [x] Create MKRF branch `feature/freshforge-materialization-overlay`.
+  - [x] Add `planning/phase101_mkrf_materialization_overlay.md`.
+- [x] P101.2 Add MKRF-owned overlay and workflow.
+  - [x] Add MKRF materialization overlay and workflow YAML under
+        `external/femic-mkrf-instance/workflows/freshforge/`.
+  - [x] Use only the generic `femic.materialization.*` provider namespace.
+  - [x] Install the MKRF editable adapter package during materialization so
+        the `mkrf` FreshForge provider is available after bootstrap.
+- [x] P101.3 Update MKRF docs and validate surfaces.
+  - [x] Document parent-checkout materialization commands.
+  - [x] Replace stale branch-era FreshForge `--run-id` / `--report` examples
+        with the released `--workdir` / `--namespace` CLI shape.
+  - [x] Run provider discovery, validate, inspect, and plan from the parent
+        checkout.
+  - [x] Run the bounded FreshForge materialization workflow from the parent
+        checkout.
+  - [x] Verify `models` and `data/source` payload availability and Arbutus
+        remote coverage.
+- [x] P101.4 Close out.
+  - [x] Merge the MKRF materialization PR first.
+  - [x] Update the parent MKRF submodule pointer.
+  - [x] Re-run parent validation after the pointer update.
+  - [x] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -3067,10 +3102,15 @@ checkout acceptance case.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P100` / `#276` is complete locally and ready for parent PR review: the
-    first real `femic.materialization` FreshForge workflow targets the TFL6
-    submodule materialization ritual from the parent FEMIC checkout. The TFL6
-    Phase 18 PR has merged, the parent submodule pointer has been updated, and
+  - `P101` / `#278` is complete locally and ready for parent PR review: the
+    second real `femic.materialization` FreshForge workflow targets the MKRF
+    submodule materialization ritual from the parent FEMIC checkout. The MKRF
+    materialization PR has merged, the parent submodule pointer has been
+    updated, and merged-pointer validation passed.
+  - `P100` / `#276` is complete and merged: the first real
+    `femic.materialization` FreshForge workflow targets the TFL6 submodule
+    materialization ritual from the parent FEMIC checkout. The TFL6 Phase 18 PR
+    has merged, the parent submodule pointer has been updated, and
     merged-pointer validation passed.
   - `P99` / `#274` is complete and merged: FreshForge is now published on PyPI
     as `freshforge==0.1.0a5`, and FEMIC's optional dependency metadata plus

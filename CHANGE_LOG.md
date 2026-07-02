@@ -19399,3 +19399,36 @@
   gaps were reported.
 - Marked P100 complete in `ROADMAP.md`; follow-on instance materialization
   overlays for MKRF, K3Z, and TSA29 remain separate phases.
+
+## 2026-07-01 - Launched P101 MKRF FreshForge materialization overlay
+
+- Opened parent issue `#278` and MKRF issue
+  `UBC-FRESH/femic-mkrf-instance#48` for the second real FreshForge
+  model-instance materialization workflow.
+- Added `planning/phase101_mkrf_materialization_overlay.md` and coordinated
+  with MKRF-owned workflow, overlay, and planning-note surfaces.
+- Added an MKRF materialization overlay that targets the parent checkout,
+  installs `.[dev,freshforge]`, installs `external/femic-mkrf-instance`
+  editable, enables `arbutus-s3`, materializes `models`, `config`,
+  `workflows`, and `data/source`, and audits `models` plus `data/source`.
+- Updated MKRF README/runbook/docs to use the released FreshForge
+  `--workdir` / `--namespace` run CLI shape instead of stale branch-era
+  `--run-id` / `--report` examples.
+- Validated provider discovery, `freshforge validate`, `freshforge inspect`,
+  `freshforge plan`, and a bounded `freshforge run` against the MKRF
+  materialization workflow from the parent checkout.
+- Verified the run wrote only ignored `runtime/freshforge/` output locally and
+  that `git annex find --not --in arbutus-s3 -- models data/source` reported
+  no MKRF payload gaps.
+
+## 2026-07-01 - Closed P101 MKRF FreshForge materialization overlay
+
+- Merged the MKRF materialization PR and advanced the parent MKRF submodule
+  pointer to the merged MKRF `main` commit.
+- Re-ran parent-checkout `freshforge validate`, `freshforge inspect`, and
+  `freshforge plan` against the merged MKRF materialization workflow.
+- Re-ran the MKRF payload audit with
+  `git annex find --not --in arbutus-s3 -- models data/source`; no required
+  model or source payload gaps were reported.
+- Marked P101 complete in `ROADMAP.md`; follow-on instance materialization
+  overlays for K3Z and TSA29 remain separate phases.
