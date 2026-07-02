@@ -19462,3 +19462,27 @@
 - Re-ran focused materialization provider tests after the pointer update.
 - Marked P102 complete in `ROADMAP.md`; TSA29 remains the next separate
   materialization acceptance case.
+
+## 2026-07-02 - Launched P103 TSA29 FreshForge materialization overlay
+
+- Opened parent issue `#282` and TSA29 issue
+  `UBC-FRESH/femic-tsa29-instance#21` for the fourth real FreshForge
+  model-instance materialization workflow.
+- Added `planning/phase103_tsa29_materialization_overlay.md` to record the
+  TSA29 boundary: annex-enabled materialization for the published model package
+  and editable validated export surface, not a TSR/THLB strict-chain
+  reconstruction workflow.
+- Created parent branch `feature/p103-tsa29-materialization-overlay` and TSA29
+  branch `feature/freshforge-materialization-overlay`.
+- Added TSA29-owned materialization overlay/workflow files that enable
+  `arbutus-s3`, materialize launch-critical model payloads plus
+  `output/patchworks_tsa29_validated`, install the editable TSA29 package, and
+  write ignored runtime reports.
+- Updated TSA29 README, getting-started docs, and rebuild runbook with the
+  released FreshForge `--workdir` / `--namespace` CLI shape.
+- Validated provider discovery, `freshforge validate`, `freshforge inspect`,
+  `freshforge plan`, and a bounded `freshforge run` against the TSA29
+  materialization workflow from the parent checkout using FreshForge
+  `0.1.0a5`.
+- Verified the selected TSA29 audit paths report no payload gaps with
+  `git annex find --not --in arbutus-s3`.

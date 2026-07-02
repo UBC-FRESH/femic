@@ -3128,9 +3128,44 @@ plain-git storage mode without requiring DataLad/git-annex.
   - [x] Re-run parent validation after the pointer update.
   - [x] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
 
+## Phase 103: FreshForge Materialization Overlay For TSA29 (`#282`)
+
+Status: in progress
+
+Goal: add TSA29 as the fourth model-instance materialization workflow using the
+generic `femic.materialization` provider, with annex-enabled DataLad/git-annex
+materialization through `arbutus-s3`.
+
+- [x] P103.1 Create lifecycle and planning surfaces.
+  - [x] Open parent issue `#282` and TSA29 issue
+        `UBC-FRESH/femic-tsa29-instance#21`.
+  - [x] Create parent branch `feature/p103-tsa29-materialization-overlay`.
+  - [x] Create TSA29 branch `feature/freshforge-materialization-overlay`.
+  - [x] Add `planning/phase103_tsa29_materialization_overlay.md`.
+- [x] P103.2 Add TSA29-owned overlay and workflow.
+  - [x] Add TSA29 materialization overlay and workflow YAML under
+        `external/femic-tsa29-instance/workflows/freshforge/`.
+  - [x] Use only the generic `femic.materialization.*` provider namespace.
+  - [x] Install the TSA29 editable package during materialization so TSA29-owned
+        FEMIC extension entry points are available after bootstrap.
+- [x] P103.3 Update TSA29 docs and validate surfaces.
+  - [x] Document parent-checkout materialization commands in TSA29 README,
+        getting-started docs, and rebuild runbook.
+  - [x] Run provider discovery, validate, inspect, and plan from the parent
+        checkout.
+  - [x] Run the bounded FreshForge materialization workflow from the parent
+        checkout.
+  - [x] Verify required payload availability and `arbutus-s3` remote coverage.
+- [ ] P103.4 Close out.
+  - [ ] Merge the TSA29 materialization PR first.
+  - [ ] Update the parent TSA29 submodule pointer.
+  - [ ] Re-run parent validation after the pointer update.
+  - [ ] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase103_tsa29_materialization_overlay.md`
   - `planning/phase102_k3z_materialization_overlay.md`
   - `planning/phase98_materialization_execution_surface.md`
   - `planning/phase98_freshforge_materialization_template.md`
@@ -3143,6 +3178,13 @@ plain-git storage mode without requiring DataLad/git-annex.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P103` / `#282` is active: the fourth real `femic.materialization`
+    FreshForge workflow targets the TSA29 submodule from the parent FEMIC
+    checkout. TSA29 is a DataLad/git-annex dataset, so the first overlay uses
+    `annex.enabled: true` and `arbutus-s3` for the launch-critical model
+    materialization path. Implementation and validation are complete locally;
+    next step is TSA29 PR review/merge, parent submodule pointer update, and
+    final closeout.
   - `P102` / `#280` is complete: the third real `femic.materialization`
     FreshForge workflow targets the K3Z submodule from the parent FEMIC
     checkout. K3Z is a plain-git snapshot, generic `annex.enabled: false`
