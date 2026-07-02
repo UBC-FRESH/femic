@@ -2720,11 +2720,26 @@ instance-owned overlays.
 
 Parent issue: #252
 
-Status: planned
+Status: active
 
 Goal: extend Patchworks variant loading so instance packages and explicit
 registry files can provide variants, then move K3Z and MKRF variant definitions
 out of FEMIC core packaged resources.
+
+- [ ] P92.1 Add a generic Patchworks variant registry-provider seam in FEMIC
+      core, including explicit registration, entry-point discovery, duplicate
+      detection, and clear provider load diagnostics.
+- [ ] P92.2 Move K3Z Patchworks variant/scenario-set registry definitions into
+      the K3Z instance package and expose them through an installed provider.
+- [ ] P92.3 Move MKRF Patchworks variant registry definitions into the MKRF
+      instance package and expose them through an installed provider.
+- [ ] P92.4 Preserve explicit user registry overlays and CLI behavior while
+      changing built-in K3Z/MKRF availability into installed-provider
+      availability.
+- [ ] P92.5 Update docs, boundary guards, tests, and packaged resources so
+      FEMIC core no longer ships K3Z/MKRF Patchworks variant definitions.
+- [ ] P92.6 Verify parent plus K3Z/MKRF instance checks, merge instance PRs
+      first, update parent submodule pointers, and close P92.
 
 ## Phase 93: Remove Built-In Example Instance Catalog From FEMIC Core
 
@@ -2759,7 +2774,7 @@ example submodules present.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P92` / `#252` is next: externalize Patchworks variant registries so
+  - `P92` / `#252` is active: externalize Patchworks variant registries so
     instance packages and explicit registry files can provide K3Z/MKRF variants
     without FEMIC core shipping named example-instance definitions.
   - `P91` / `#251` is complete: generic TSR adjudication overlay dispatch now

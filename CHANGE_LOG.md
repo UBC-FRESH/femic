@@ -19034,3 +19034,15 @@
 - P91 closes with FEMIC core owning generic TSR adjudication overlay dispatch
   while TSA29 owns its row classification, checkpoint policy,
   reconstruction-gap interpretation, and active report-note decisions.
+
+## 2026-07-01 - Opened P92 Patchworks variant registry externalization
+
+- Created parent branch `feature/p92-externalize-patchworks-variants`.
+- Created K3Z branch `feature/k3z-patchworks-variant-registry`.
+- Created MKRF branch `feature/mkrf-patchworks-variant-registry`.
+- Linked parent issue `#252` and recorded the P92 task breakdown in
+  `ROADMAP.md`.
+- Locked the boundary: FEMIC core keeps generic Patchworks registry loading,
+  validation, merge, and CLI behavior; K3Z and MKRF own their
+  instance-specific Patchworks variant definitions through instance-package
+  providers.
