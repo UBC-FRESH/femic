@@ -19215,3 +19215,19 @@
   releases.
 - Added release-test coverage that fails if future optional-dependency metadata
   reintroduces `git+` direct URLs.
+
+## 2026-07-01 - Published FEMIC 0.2.0a1
+
+- Merged P95 release-prep PR `#263`, then metadata-fix PR `#264`.
+- Moved tag `v0.2.0a1` to the corrected release commit after the TestPyPI
+  metadata blocker was fixed.
+- TestPyPI workflow `28562782006` passed, including publish and smoke install.
+- Created GitHub prerelease `FEMIC 0.2.0a1` at
+  `https://github.com/UBC-FRESH/femic/releases/tag/v0.2.0a1`.
+- PyPI workflow `28562848866` passed, including publish and smoke install.
+- Direct PyPI JSON verification confirmed version `0.2.0a1` with
+  `femic-0.2.0a1-py3-none-any.whl` and `femic-0.2.0a1.tar.gz`.
+- The release closes the P80-P94 architecture milestone: FreshForge
+  integration, instance-owned extension boundaries, externalized
+  registries/catalogs, and no named example-instance coupling under
+  `src/femic`.
