@@ -19181,3 +19181,21 @@
 - Added `RELEASE_NOTES.md` summarizing the P80-P94 milestone, alpha scope,
   known non-P95 baseline caveats, and optional example-instance deployment
   boundary.
+
+## 2026-07-01 - Validated P95 local release artifacts
+
+- Fixed the root CLI `--version` option so both `python -m femic --version`
+  and the installed `femic --version` console script report `0.2.0a1`.
+- Added `RELEASE_NOTES.md` to the source distribution through `MANIFEST.in`.
+- Focused release validation passed: `ruff format src tests`, `ruff check src
+  tests`, targeted `mypy` for touched version/CLI modules, focused
+  version/boundary/catalog/variant tests, Sphinx warning-clean docs build,
+  `python -m build`, `twine check dist/*`, CLI help/version smoke, and direct
+  artifact metadata inspection.
+- Built artifacts report `Version: 0.2.0a1`; the wheel retains the `femic`
+  console script and `freshforge.providers` entry point, and the sdist includes
+  `RELEASE_NOTES.md`.
+- Full release-audit `mypy src` still reports the known non-P95
+  pandas/SciPy/VDYP typing debt. Full release-audit `pytest` reports 19 known
+  non-P95 environment/runtime/baseline failures; focused P95 release
+  validation is green.

@@ -2826,17 +2826,20 @@ example-instance coupling from `src/femic`.
   - [x] Add `RELEASE_NOTES.md` for `FEMIC 0.2.0a1`.
   - [x] Summarize P80-P94 as the release boundary.
   - [x] State alpha/provisional scope and known non-P95 baseline caveats.
-- [ ] P95.4 Run local release validation
-  - [ ] Run `ruff format src tests`.
-  - [ ] Run `ruff check src tests`.
-  - [ ] Run targeted `mypy` for touched release/version modules.
-  - [ ] Run the focused version metadata test and P94 boundary/catalog tests.
-  - [ ] Run `sphinx-build -b html docs _build/html -W`.
-  - [ ] Run `python -m build`.
-  - [ ] Run `twine check dist/*`.
-  - [ ] Inspect built wheel/sdist metadata for version `0.2.0a1`.
-  - [ ] Run full `mypy src` and full `pytest` as release-audit checks, noting
+- [x] P95.4 Run local release validation
+  - [x] Run `ruff format src tests`.
+  - [x] Run `ruff check src tests`.
+  - [x] Run targeted `mypy` for touched release/version modules.
+  - [x] Run the focused version metadata test and P94 boundary/catalog tests.
+  - [x] Run `sphinx-build -b html docs _build/html -W`.
+  - [x] Run `python -m build`.
+  - [x] Run `twine check dist/*`.
+  - [x] Inspect built wheel/sdist metadata for version `0.2.0a1`.
+  - [x] Run full `mypy src` and full `pytest` as release-audit checks, noting
         known non-P95 baseline failures separately from release blockers.
+        Full `mypy src` still reports the known pandas/SciPy/VDYP typing debt.
+        Full `pytest` reports 19 known environment/runtime/baseline failures;
+        focused P95 release validation is green.
 - [ ] P95.5 Open and merge the release PR
   - [ ] Push the release branch and open the PR.
   - [ ] Require GitHub build and `package-release-checks` to pass.
@@ -2865,11 +2868,12 @@ example-instance coupling from `src/femic`.
   - `planning/roadmap_notes_archive.md`
 - Current edge:
   - `P95` / `#262` is active: publish FEMIC `0.2.0a1` as the core
-    decoupling alpha release. Version surfaces are synchronized and
-    `RELEASE_NOTES.md` is in place. The current edge is focused release
-    validation, artifact inspection, and PR publication. The unrelated
-    `external/femic-public-data` submodule state remains out of scope for this
-    release branch.
+    decoupling alpha release. Version surfaces are synchronized,
+    `RELEASE_NOTES.md` is in place, `--version` works through both
+    `python -m femic` and the console script, and focused release validation
+    plus artifact inspection passed. The current edge is PR publication and
+    GitHub release-check validation. The unrelated `external/femic-public-data`
+    submodule state remains out of scope for this release branch.
   - `P94` / `#254` is complete: remaining named-instance references were
     scrubbed from `src/femic`, packaged resources, generic templates, and
     generic CLI help. The boundary guard now rejects any new named
