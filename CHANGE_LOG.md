@@ -19065,3 +19065,11 @@
   `src/femic/patchworks_variants.py`, provider/overlay tests, and the
   instance-extension boundary guard. Verified focused K3Z and MKRF provider
   tests after editable installs.
+
+## 2026-07-01 - Reconciled P92 K3Z and MKRF submodule pointers
+
+- Merged K3Z PR `UBC-FRESH/femic-k3z-instance#32`.
+- Merged MKRF PR `UBC-FRESH/femic-mkrf-instance#47`.
+- Updated the parent FEMIC submodule pointers to merged K3Z main commit
+  `1cbbeb4` and merged MKRF main commit `4839ddd`.
+- Left parent P92 closeout pending final parent PR checks and issue closure.
