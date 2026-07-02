@@ -34,6 +34,43 @@ For local development, install the editable checkout with:
 
 The extra currently pins ``freshforge==0.1.0a5``.
 
+Finding Available Workflows
+---------------------------
+
+FEMIC can list FreshForge workflow documents that are present in the current
+checkout. This is a discovery helper only; it does not validate, plan, or run
+the workflows:
+
+.. code-block:: bash
+
+   python -m femic freshforge workflows list
+   python -m femic freshforge workflows list --json
+
+The helper scans public-safe example workflow documents under
+``examples/freshforge`` and checked-out instance workflow documents under
+``external/*/workflows/freshforge``. Overlay/config YAML files are not listed
+as workflows. The helper reports the workflow path, parsed workflow id/name,
+provider references, and a broad workflow kind such as ``materialization`` or
+``model-build``.
+
+To print copy-paste FreshForge commands for a workflow, use:
+
+.. code-block:: bash
+
+   python -m femic freshforge workflows commands external/femic-mkrf-instance/workflows/freshforge/mkrf_materialization_workflow.yaml
+
+The command helper prints the released FreshForge CLI shape:
+
+.. code-block:: bash
+
+   freshforge validate PATH
+   freshforge inspect PATH
+   freshforge plan PATH
+   freshforge run PATH --workdir runtime/freshforge --namespace NAME --json
+
+Use ``freshforge plan`` as the non-mutating preview. Use ``freshforge run``
+only when you are ready for the provider-owned workflow steps to run.
+
 Provider Discovery
 ------------------
 
@@ -81,9 +118,8 @@ The public-safe smoke workflow writes only a report and does not run
    freshforge plan examples/freshforge/materialization_smoke_workflow.yaml
    freshforge run examples/freshforge/materialization_smoke_workflow.yaml --workdir runtime/freshforge --namespace smoke --json
 
-Real MKRF, TFL6, K3Z, and TSA29 materialization overlays are later instance
-phases. They should use the same provider and overlay contract rather than
-adding instance names to FEMIC core.
+Real instance materialization overlays should use the same provider and
+overlay contract rather than adding instance names to FEMIC core.
 
 Generic Workflow Example
 ------------------------

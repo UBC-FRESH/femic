@@ -3162,9 +3162,42 @@ materialization through `arbutus-s3`.
   - [x] Re-run parent validation after the pointer update.
   - [x] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
 
+## Phase 104: FreshForge Workflow Discovery And User Entry Points (`#284`)
+
+Status: active
+
+Goal: add a small generic discovery layer so users can find existing
+FreshForge workflows without knowing repo internals.
+
+- [x] P104.1 Create lifecycle and planning surfaces.
+  - [x] Open parent issue `#284`.
+  - [x] Create branch `feature/p104-freshforge-workflow-discovery`.
+  - [x] Add `planning/phase104_freshforge_workflow_discovery.md`.
+- [x] P104.2 Add generic workflow discovery.
+  - [x] Scan `examples/freshforge/*workflow.yaml`.
+  - [x] Scan `external/*/workflows/freshforge/*workflow.yaml`.
+  - [x] Report workflow id/name, provider refs, kind, load status, and
+        diagnostics without hardcoding instance names.
+- [x] P104.3 Add user-facing CLI helpers.
+  - [x] Add `python -m femic freshforge workflows list`.
+  - [x] Add `python -m femic freshforge workflows list --json`.
+  - [x] Add `python -m femic freshforge workflows commands PATH`.
+  - [x] Keep the commands non-mutating and FreshForge imports lazy.
+- [x] P104.4 Update docs and validate.
+  - [x] Add a workflow discovery section to the FreshForge guide.
+  - [x] Run focused discovery tests and lint.
+  - [x] Run Sphinx docs with warnings as errors.
+  - [x] Confirm the boundary guard still rejects named-instance references in
+        `src/femic`.
+- [ ] P104.5 Close out.
+  - [ ] Update `CHANGE_LOG.md`.
+  - [ ] Post progress and closeout comments on issue `#284`.
+  - [ ] Open and merge the parent PR after checks pass.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase104_freshforge_workflow_discovery.md`
   - `planning/phase103_tsa29_materialization_overlay.md`
   - `planning/phase102_k3z_materialization_overlay.md`
   - `planning/phase98_materialization_execution_surface.md`
@@ -3178,6 +3211,13 @@ materialization through `arbutus-s3`.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P104` / `#284` is active: add a generic FreshForge workflow discovery
+    layer and user-facing CLI helpers so users can list checked-out workflow
+    documents and print copy-paste `freshforge validate`, `inspect`, `plan`,
+    and `run --workdir runtime/freshforge --namespace ... --json` command
+    blocks without knowing the repo path layout. The helper, CLI, docs, focused
+    tests, Ruff, targeted mypy, boundary guard, and Sphinx validation now pass;
+    remaining work is branch/PR closeout.
   - `P103` / `#282` is complete: the fourth real `femic.materialization`
     FreshForge workflow targets the TSA29 submodule from the parent FEMIC
     checkout. TSA29 is a DataLad/git-annex dataset, so the first overlay uses

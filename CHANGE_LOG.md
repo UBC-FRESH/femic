@@ -19496,3 +19496,32 @@
 - Re-ran focused materialization provider tests and the selected TSA29
   `arbutus-s3` payload audit after the pointer update.
 - Marked P103 complete in `ROADMAP.md`.
+
+## 2026-07-02 - Launched P104 FreshForge workflow discovery
+
+- Opened parent issue `#284` and created branch
+  `feature/p104-freshforge-workflow-discovery`.
+- Added `planning/phase104_freshforge_workflow_discovery.md` to record the
+  generic checkout-scanning design.
+- Added `femic.freshforge_workflows` discovery helpers for workflows under
+  `examples/freshforge/` and `external/*/workflows/freshforge/`.
+- Added non-mutating CLI helpers:
+  `python -m femic freshforge workflows list`,
+  `python -m femic freshforge workflows list --json`, and
+  `python -m femic freshforge workflows commands PATH`.
+- Updated the FreshForge provider guide with the workflow discovery path and
+  released FreshForge command shape.
+
+## 2026-07-02 - Validated P104 FreshForge workflow discovery
+
+- Tightened discovery to workflow documents matching `*workflow.yaml`, so
+  overlay/config YAML files in FreshForge directories are not presented as
+  runnable workflows.
+- Verified `python -m femic freshforge workflows list --json` reports current
+  example and instance workflow documents without listing overlays.
+- Verified `python -m femic freshforge workflows commands
+  examples/freshforge/materialization_smoke_workflow.yaml` prints released
+  `freshforge validate`, `inspect`, `plan`, and `run --workdir
+  runtime/freshforge --namespace ... --json` commands.
+- Validation passed for Ruff, targeted mypy, focused discovery/docs/boundary
+  tests, and Sphinx warning-clean docs build.
