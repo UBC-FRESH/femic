@@ -3000,7 +3000,7 @@ from prose documentation.
 
 ## Phase 99: FreshForge PyPI Dependency Cleanup (`#274`)
 
-Status: complete; PR closeout pending
+Status: complete
 
 Goal: switch FEMIC's optional FreshForge dependency and install guidance from
 the temporary GitHub tag workflow to the PyPI-published FreshForge alpha.
@@ -3020,6 +3020,39 @@ the temporary GitHub tag workflow to the PyPI-published FreshForge alpha.
         `freshforge==0.1.0a5`.
   - [x] Update `CHANGE_LOG.md` and issue `#274`.
 
+## Phase 100: First FreshForge Materialization Overlay For TFL6 (`#276`)
+
+Status: complete
+
+Goal: prove the first real model-instance materialization workflow using the
+generic `femic.materialization` FreshForge provider, with TFL6 as the parent
+checkout acceptance case.
+
+- [x] P100.1 Create lifecycle and planning surfaces.
+  - [x] Open parent issue `#276` and TFL6 issue `#160`.
+  - [x] Create parent branch `feature/p100-tfl6-materialization-overlay`.
+  - [x] Create TFL6 branch `feature/p18-freshforge-materialization-overlay`.
+  - [x] Add `planning/phase100_tfl6_materialization_overlay.md`.
+- [x] P100.2 Add TFL6-owned overlay and workflow.
+  - [x] Add TFL6 materialization overlay and workflow YAML under
+        `external/femic-tfl6-instance/workflows/freshforge/`.
+  - [x] Use only the generic `femic.materialization.*` provider namespace.
+  - [x] Keep runtime reports under ignored `runtime/freshforge/`.
+- [x] P100.3 Validate parent-checkout materialization surfaces.
+  - [x] Harden `femic.materialization.check_python_environment` so an existing
+        configured venv is validated instead of recreated.
+  - [x] Run provider discovery, validate, inspect, and plan from the parent
+        checkout.
+  - [x] Run the bounded FreshForge materialization workflow from the parent
+        checkout.
+  - [x] Verify required `models/**` payload availability and Arbutus remote
+        coverage.
+- [x] P100.4 Close out.
+  - [x] Merge the TFL6 Phase 18 PR first.
+  - [x] Update the parent TFL6 submodule pointer.
+  - [x] Re-run parent validation after the pointer update.
+  - [x] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -3034,10 +3067,14 @@ the temporary GitHub tag workflow to the PyPI-published FreshForge alpha.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P99` / `#274` is complete locally and awaiting PR closeout: FreshForge is
-    now published on PyPI as `freshforge==0.1.0a5`, and FEMIC's optional
-    dependency metadata plus docs now use the normal `femic[freshforge]`
-    install path.
+  - `P100` / `#276` is complete locally and ready for parent PR review: the
+    first real `femic.materialization` FreshForge workflow targets the TFL6
+    submodule materialization ritual from the parent FEMIC checkout. The TFL6
+    Phase 18 PR has merged, the parent submodule pointer has been updated, and
+    merged-pointer validation passed.
+  - `P99` / `#274` is complete and merged: FreshForge is now published on PyPI
+    as `freshforge==0.1.0a5`, and FEMIC's optional dependency metadata plus
+    docs use the normal `femic[freshforge]` install path.
   - `P98` / `#270` is complete: the reusable `femic.materialization`
     FreshForge provider supplies generic materialization nodes, overlay
     parsing/validation, mocked execution tests, and a public-safe report-only

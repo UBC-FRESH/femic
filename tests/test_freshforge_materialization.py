@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tomllib
@@ -220,6 +221,56 @@ def test_materialization_command_failure_returns_diagnostic(tmp_path: Path) -> N
     assert {diagnostic.code for diagnostic in result.diagnostics} == {
         "femic.materialization.command.failed"
     }
+
+
+def test_python_environment_node_validates_existing_venv(
+    tmp_path: Path,
+) -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus
+
+    overlay_path = tmp_path / "overlay.yaml"
+    venv_scripts = tmp_path / ".venv" / ("Scripts" if os.name == "nt" else "bin")
+    venv_scripts.mkdir(parents=True)
+    python_path = venv_scripts / ("python.exe" if os.name == "nt" else "python")
+    python_path.write_text("", encoding="utf-8")
+    overlay_path.write_text(
+        "\n".join(
+            [
+                "instance:",
+                "  root: .",
+                "environment:",
+                f"  venv_path: {tmp_path / '.venv'}",
+                "install:",
+                "  requirements: []",
+                "  editable_paths: []",
+                "  extras: []",
+                "  packages: []",
+                "annex:",
+                "  special_remote: arbutus-s3",
+                "materialization:",
+                "  required_paths: [models]",
+                "audit:",
+                "  required_paths: [models]",
+                "report:",
+                "  path: runtime/freshforge/report.json",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    commands: list[tuple[str, ...]] = []
+    provider = FemicMaterializationProvider(command_runner=_successful_runner(commands))
+    node = _workflow_node("check_python_environment", overlay=str(overlay_path))
+
+    result = provider.run_node(
+        node,
+        _node_type(provider, "check_python_environment"),
+        context=RunContext(workflow_id="wf", workdir=tmp_path),
+    )
+
+    assert result.status is RunStatus.SUCCESS
+    assert commands == [(str(python_path), "--version")]
 
 
 def test_annex_audit_stdout_is_failure_even_with_zero_returncode(
