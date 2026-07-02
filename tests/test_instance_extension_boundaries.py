@@ -31,12 +31,8 @@ ALLOWED_INSTANCE_REFERENCE_COUNTS = {
         "femic-k3z-instance": 2,
         "femic-tsa29-instance": 2,
     },
-    "src/femic/resources/patchworks/btc_indicator_bank_compile_recipes.yaml": {"k3z": 2},
-    "src/femic/resources/patchworks/variants.builtin.yaml": {
-        "mkrf": 19,
-        "k3z": 117,
-        "femic-mkrf-instance": 6,
-        "femic-k3z-instance": 45,
+    "src/femic/resources/patchworks/btc_indicator_bank_compile_recipes.yaml": {
+        "k3z": 2
     },
     "src/femic/resources/instance/config/patchworks.runtime.windows.yaml": {"k3z": 3},
     "src/femic/resources/instance/config/tipsy/template.case.yaml": {"k3z": 1},
@@ -72,7 +68,9 @@ def test_no_new_named_instance_references_enter_femic_core() -> None:
         for term, count in sorted(counts.items()):
             allowed = allowed_for_path.get(term, 0)
             if count > allowed:
-                violations.append(f"{path}: {term} count {count} exceeds allowed {allowed}")
+                violations.append(
+                    f"{path}: {term} count {count} exceeds allowed {allowed}"
+                )
 
     assert not violations, (
         "Named example-instance references in src/femic are migration debt. "

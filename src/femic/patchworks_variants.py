@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from importlib import resources
+from importlib import metadata, resources
 from pathlib import Path
 import shutil
 import subprocess
-from typing import Any
+from typing import Any, Protocol
 
 import yaml
 
@@ -19,12 +19,28 @@ from femic.user_config import DEFAULT_FEMIC_CONFIG_HOME
 
 PATCHWORKS_VARIANT_REGISTRY_PACKAGE = "femic.resources.patchworks"
 PATCHWORKS_BUILTIN_VARIANTS_RESOURCE = "variants.builtin.yaml"
+PATCHWORKS_VARIANT_REGISTRY_ENTRY_POINT_GROUP = "femic.patchworks_variant_registries"
 DEFAULT_PATCHWORKS_USER_REGISTRY_PATH = DEFAULT_FEMIC_CONFIG_HOME / "variants.yaml"
 DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES = 100 * 1024 * 1024
+
+_REGISTERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS: dict[
+    str, "PatchworksVariantRegistryProvider"
+] = {}
+_DISCOVERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS = False
 
 
 class PatchworksVariantRegistryError(RuntimeError):
     """Raised when Patchworks variant registry content is invalid."""
+
+
+class PatchworksVariantRegistryProvider(Protocol):
+    """Provider for an external Patchworks variant registry payload."""
+
+    provider_id: str
+    registry_base_dir: Path
+
+    def load_registry_payload(self) -> dict[str, Any]:
+        """Return a Patchworks variant registry payload mapping."""
 
 
 @dataclass(frozen=True)
@@ -231,6 +247,90 @@ def _normalize_variant_id(value: str) -> str:
     if not normalized:
         raise PatchworksVariantRegistryError("Patchworks variant id must not be blank.")
     return normalized
+
+
+def _normalize_provider_id(value: str) -> str:
+    normalized = str(value or "").strip()
+    if not normalized:
+        raise PatchworksVariantRegistryError(
+            "Patchworks variant registry provider id must not be blank."
+        )
+    return normalized
+
+
+def register_patchworks_variant_registry_provider(
+    provider: PatchworksVariantRegistryProvider,
+) -> None:
+    """Register one in-process Patchworks variant registry provider."""
+
+    provider_id = _normalize_provider_id(getattr(provider, "provider_id", ""))
+    if provider_id in _REGISTERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS:
+        raise PatchworksVariantRegistryError(
+            f"Duplicate Patchworks variant registry provider id: {provider_id}"
+        )
+    if not isinstance(getattr(provider, "registry_base_dir", None), Path):
+        raise PatchworksVariantRegistryError(
+            f"Patchworks variant registry provider {provider_id} "
+            "must define registry_base_dir as a pathlib.Path."
+        )
+    payload = provider.load_registry_payload()
+    if not isinstance(payload, dict):
+        raise PatchworksVariantRegistryError(
+            f"Patchworks variant registry provider {provider_id} "
+            "must return a mapping payload."
+        )
+    _REGISTERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS[provider_id] = provider
+
+
+def clear_patchworks_variant_registry_providers() -> None:
+    """Clear in-process Patchworks variant registry providers.
+
+    This is intended for tests and interactive diagnostics. Entry-point
+    discovery can be re-run after clearing.
+    """
+
+    global _DISCOVERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS
+    _REGISTERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS.clear()
+    _DISCOVERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS = False
+
+
+def _iter_patchworks_variant_registry_entry_points() -> tuple[metadata.EntryPoint, ...]:
+    entry_points: Any = metadata.entry_points()
+    if hasattr(entry_points, "select"):
+        selected = entry_points.select(
+            group=PATCHWORKS_VARIANT_REGISTRY_ENTRY_POINT_GROUP
+        )
+    else:  # pragma: no cover - compatibility for older importlib.metadata APIs
+        selected = entry_points.get(PATCHWORKS_VARIANT_REGISTRY_ENTRY_POINT_GROUP, ())
+    return tuple(selected)
+
+
+def discover_patchworks_variant_registry_providers() -> tuple[str, ...]:
+    """Discover installed Patchworks variant registry providers."""
+
+    global _DISCOVERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS
+    if _DISCOVERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS:
+        return tuple(sorted(_REGISTERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS))
+
+    for entry_point in _iter_patchworks_variant_registry_entry_points():
+        try:
+            loaded = entry_point.load()
+            provider = loaded()
+        except Exception as exc:  # pragma: no cover - exercised through tests
+            raise PatchworksVariantRegistryError(
+                "Could not load Patchworks variant registry provider "
+                f"{entry_point.name}: {exc}"
+            ) from exc
+        try:
+            register_patchworks_variant_registry_provider(provider)
+        except PatchworksVariantRegistryError as exc:
+            raise PatchworksVariantRegistryError(
+                "Invalid Patchworks variant registry provider "
+                f"{entry_point.name}: {exc}"
+            ) from exc
+
+    _DISCOVERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS = True
+    return tuple(sorted(_REGISTERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS))
 
 
 def _source_tree_root() -> Path:
@@ -454,6 +554,7 @@ def _load_variant_entries_from_payload(
     source_kind: str,
     registry_path: Path | None,
     user_config_path: Path | None,
+    builtin_aware_paths: bool = True,
 ) -> tuple[PatchworksVariantDefinition, ...]:
     instance_metadata = _parse_instance_metadata(payload, source_label=source_label)
 
@@ -483,27 +584,44 @@ def _load_variant_entries_from_payload(
         )
         family = str(item.get("variant_family") or "default").strip() or "default"
         kind = str(item.get("kind") or "patchworks").strip() or "patchworks"
-        instance_root = _resolve_builtin_aware_registry_path(
-            _normalize_relpath(
-                item.get("instance_root"), "instance_root", source_label=source_label
-            ),
-            base_dir=base_dir,
-            user_config_path=user_config_path,
+        instance_root_relpath = _normalize_relpath(
+            item.get("instance_root"), "instance_root", source_label=source_label
         )
-        analysis_pin = _resolve_builtin_aware_registry_path(
-            _normalize_relpath(
-                item.get("analysis_pin"), "analysis_pin", source_label=source_label
-            ),
-            base_dir=base_dir,
-            user_config_path=user_config_path,
+        analysis_pin_relpath = _normalize_relpath(
+            item.get("analysis_pin"), "analysis_pin", source_label=source_label
         )
-        runtime_config = _resolve_builtin_aware_registry_path(
-            _normalize_relpath(
-                item.get("runtime_config"), "runtime_config", source_label=source_label
-            ),
-            base_dir=base_dir,
-            user_config_path=user_config_path,
+        runtime_config_relpath = _normalize_relpath(
+            item.get("runtime_config"), "runtime_config", source_label=source_label
         )
+        if builtin_aware_paths:
+            instance_root = _resolve_builtin_aware_registry_path(
+                instance_root_relpath,
+                base_dir=base_dir,
+                user_config_path=user_config_path,
+            )
+            analysis_pin = _resolve_builtin_aware_registry_path(
+                analysis_pin_relpath,
+                base_dir=base_dir,
+                user_config_path=user_config_path,
+            )
+            runtime_config = _resolve_builtin_aware_registry_path(
+                runtime_config_relpath,
+                base_dir=base_dir,
+                user_config_path=user_config_path,
+            )
+        else:
+            instance_root = _resolve_registry_path(
+                instance_root_relpath,
+                base_dir=base_dir,
+            )
+            analysis_pin = _resolve_registry_path(
+                analysis_pin_relpath,
+                base_dir=base_dir,
+            )
+            runtime_config = _resolve_registry_path(
+                runtime_config_relpath,
+                base_dir=base_dir,
+            )
         notes_payload = item.get("notes", ())
         if notes_payload in (None, ""):
             notes: tuple[str, ...] = ()
@@ -587,23 +705,11 @@ def _build_instance_definitions(
 
 
 def _merge_instance_metadata(
-    builtin_payload: dict[str, Any],
-    *,
-    user_payload: dict[str, Any] | None,
+    payloads: tuple[tuple[dict[str, Any], str], ...],
 ) -> dict[str, dict[str, str]]:
-    merged = dict(
-        _parse_instance_metadata(
-            builtin_payload,
-            source_label=PATCHWORKS_BUILTIN_VARIANTS_RESOURCE,
-        )
-    )
-    if user_payload is not None:
-        merged.update(
-            _parse_instance_metadata(
-                user_payload,
-                source_label="user Patchworks registry",
-            )
-        )
+    merged: dict[str, dict[str, str]] = {}
+    for payload, source_label in payloads:
+        merged.update(_parse_instance_metadata(payload, source_label=source_label))
     return merged
 
 
@@ -736,21 +842,13 @@ def _parse_scenario_set_entries(
 
 
 def _merge_scenario_sets(
-    builtin_payload: dict[str, Any],
-    *,
-    user_payload: dict[str, Any] | None,
+    payloads: tuple[tuple[dict[str, Any], str], ...],
 ) -> tuple[PatchworksScenarioSetDefinition, ...]:
-    merged_by_id: dict[str, PatchworksScenarioSetDefinition] = {
-        item.scenario_set_id: item
+    merged_by_id: dict[str, PatchworksScenarioSetDefinition] = {}
+    for payload, source_label in payloads:
         for item in _parse_scenario_set_entries(
-            builtin_payload,
-            source_label=PATCHWORKS_BUILTIN_VARIANTS_RESOURCE,
-        )
-    }
-    if user_payload is not None:
-        for item in _parse_scenario_set_entries(
-            user_payload,
-            source_label="user Patchworks registry",
+            payload,
+            source_label=source_label,
         ):
             merged_by_id[item.scenario_set_id] = item
     return tuple(sorted(merged_by_id.values(), key=lambda item: item.scenario_set_id))
@@ -948,14 +1046,18 @@ def load_patchworks_variant_registry(
     user_registry_path: Path | None = None,
     source_root: Path | None = None,
     user_config_path: Path | None = None,
+    include_entry_points: bool = True,
 ) -> PatchworksVariantRegistry:
-    """Load the merged built-in and optional user Patchworks variant registry."""
+    """Load merged built-in, provider, and optional user Patchworks registries."""
 
     effective_source_root = (source_root or _source_tree_root()).expanduser().resolve()
     builtin_payload = _load_yaml_payload(
         _read_patchworks_resource_text(PATCHWORKS_BUILTIN_VARIANTS_RESOURCE),
         source_label=PATCHWORKS_BUILTIN_VARIANTS_RESOURCE,
     )
+    payload_sources: list[tuple[dict[str, Any], str]] = [
+        (builtin_payload, PATCHWORKS_BUILTIN_VARIANTS_RESOURCE)
+    ]
     merged_by_id: dict[str, PatchworksVariantDefinition] = {
         item.variant_id: item
         for item in _load_variant_entries_from_payload(
@@ -967,6 +1069,24 @@ def load_patchworks_variant_registry(
             user_config_path=user_config_path,
         )
     }
+    if include_entry_points:
+        discover_patchworks_variant_registry_providers()
+
+    for provider_id in sorted(_REGISTERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS):
+        provider = _REGISTERED_PATCHWORKS_VARIANT_REGISTRY_PROVIDERS[provider_id]
+        provider_payload = provider.load_registry_payload()
+        source_label = f"Patchworks variant registry provider {provider_id}"
+        payload_sources.append((provider_payload, source_label))
+        for item in _load_variant_entries_from_payload(
+            provider_payload,
+            base_dir=provider.registry_base_dir.expanduser().resolve(),
+            source_label=source_label,
+            source_kind=f"provider:{provider_id}",
+            registry_path=None,
+            user_config_path=user_config_path,
+            builtin_aware_paths=False,
+        ):
+            merged_by_id[item.variant_id] = item
 
     effective_user_registry = (
         user_registry_path.expanduser().resolve()
@@ -988,6 +1108,7 @@ def load_patchworks_variant_registry(
             user_config_path=user_config_path,
         ):
             merged_by_id[item.variant_id] = item
+        payload_sources.append((user_payload, "user Patchworks registry"))
         user_path_result: Path | None = effective_user_registry
     else:
         user_path_result = None
@@ -997,15 +1118,9 @@ def load_patchworks_variant_registry(
         variants=variants,
         instances=_build_instance_definitions(
             variants,
-            _merge_instance_metadata(
-                builtin_payload,
-                user_payload=user_payload,
-            ),
+            _merge_instance_metadata(tuple(payload_sources)),
         ),
-        scenario_sets=_merge_scenario_sets(
-            builtin_payload,
-            user_payload=user_payload,
-        ),
+        scenario_sets=_merge_scenario_sets(tuple(payload_sources)),
         builtin_registry_loaded=True,
         user_registry_path=user_path_result,
     )

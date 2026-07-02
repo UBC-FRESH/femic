@@ -19046,3 +19046,22 @@
   validation, merge, and CLI behavior; K3Z and MKRF own their
   instance-specific Patchworks variant definitions through instance-package
   providers.
+
+## 2026-07-01 - Implemented P92 Patchworks registry provider seam
+
+- Added generic FEMIC Patchworks variant registry provider registration and
+  entry-point discovery through `femic.patchworks_variant_registries`.
+- Moved K3Z Patchworks variant and scenario-set definitions into
+  `k3z_femic` on branch `feature/k3z-patchworks-variant-registry`.
+- Moved MKRF Patchworks variant definitions into `mkrf_femic` on branch
+  `feature/mkrf-patchworks-variant-registry`.
+- Reduced `src/femic/resources/patchworks/variants.builtin.yaml` to an empty
+  generic registry shell and removed its K3Z/MKRF allowlist from the named
+  instance boundary guard.
+- Updated Patchworks variant docs so K3Z/MKRF availability is described as
+  installed instance-package provider availability, not core built-in
+  availability.
+- Verified focused parent checks for ruff, mypy on
+  `src/femic/patchworks_variants.py`, provider/overlay tests, and the
+  instance-extension boundary guard. Verified focused K3Z and MKRF provider
+  tests after editable installs.

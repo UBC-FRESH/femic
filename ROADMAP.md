@@ -2719,6 +2719,8 @@ instance-owned overlays.
 ## Phase 92: Externalize Patchworks Variant Registries
 
 Parent issue: #252
+K3Z issue: UBC-FRESH/femic-k3z-instance#31
+MKRF issue: UBC-FRESH/femic-mkrf-instance#46
 
 Status: active
 
@@ -2726,17 +2728,17 @@ Goal: extend Patchworks variant loading so instance packages and explicit
 registry files can provide variants, then move K3Z and MKRF variant definitions
 out of FEMIC core packaged resources.
 
-- [ ] P92.1 Add a generic Patchworks variant registry-provider seam in FEMIC
+- [x] P92.1 Add a generic Patchworks variant registry-provider seam in FEMIC
       core, including explicit registration, entry-point discovery, duplicate
       detection, and clear provider load diagnostics.
-- [ ] P92.2 Move K3Z Patchworks variant/scenario-set registry definitions into
+- [x] P92.2 Move K3Z Patchworks variant/scenario-set registry definitions into
       the K3Z instance package and expose them through an installed provider.
-- [ ] P92.3 Move MKRF Patchworks variant registry definitions into the MKRF
+- [x] P92.3 Move MKRF Patchworks variant registry definitions into the MKRF
       instance package and expose them through an installed provider.
-- [ ] P92.4 Preserve explicit user registry overlays and CLI behavior while
+- [x] P92.4 Preserve explicit user registry overlays and CLI behavior while
       changing built-in K3Z/MKRF availability into installed-provider
       availability.
-- [ ] P92.5 Update docs, boundary guards, tests, and packaged resources so
+- [x] P92.5 Update docs, boundary guards, tests, and packaged resources so
       FEMIC core no longer ships K3Z/MKRF Patchworks variant definitions.
 - [ ] P92.6 Verify parent plus K3Z/MKRF instance checks, merge instance PRs
       first, update parent submodule pointers, and close P92.

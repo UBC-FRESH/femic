@@ -6,11 +6,10 @@ Patchworks variant resolution seam.
 
 Current responsibilities include:
 
-- loading the packaged built-in Patchworks variant registry;
+- loading the generic packaged Patchworks variant registry shell;
+- discovering installed instance-owned registry providers through
+  ``femic.patchworks_variant_registries`` entry points;
 - merging an optional user overlay registry from ``~/.femic/variants.yaml``;
-- resolving built-in instance roots through repo-local ``external/...`` paths
-  when present and otherwise through the packaged-install managed built-in
-  root recorded in ``~/.femic/user.yaml``;
 - writing user overlay entries for register/update/remove flows;
 - resolving named scenarios attached to variants;
 - resolving one default scenario per variant when the registry provides one or
@@ -46,24 +45,21 @@ In user-facing terms, this module is the registry seam behind:
 - ``run-scenario-set``
 - ``run-default-scenario-set``
 
-The current built-in proof surface is the shipped K3Z registry family. This
-module therefore owns more than plain `.pin` lookup: it also owns default
-scenario resolution, default scenario-set resolution, scenario-set metadata,
-and grouped materialization summaries for launch-time consent.
+K3Z and MKRF variant definitions are intentionally not shipped in FEMIC core.
+They are exposed by their instance packages when those packages are installed.
+The module owns more than plain `.pin` lookup: it also owns default scenario
+resolution, default scenario-set resolution, scenario-set metadata, and grouped
+materialization summaries for launch-time consent.
 
-It also now owns the user-facing built-in install hint seam. When a shipped
-built-in variant is requested but its instance repository is missing from both
-repo-local ``external/...`` and the configured managed built-in root, the
-registry layer returns a direct hint to install that built-in rather than
-letting later file-resolution failures leak out.
-
-For the operator-facing workflow, examples, and K3Z built-in usage pattern,
+For the operator-facing workflow and examples,
 see :doc:`../../guides/patchworks-variant-and-scenario-management`.
 
 Primary entry points
 --------------------
 
 - :func:`load_patchworks_variant_registry`
+- :func:`register_patchworks_variant_registry_provider`
+- :func:`discover_patchworks_variant_registry_providers`
 - :func:`load_patchworks_user_registry_overlay`
 - :func:`build_patchworks_variant_materialization_plan`
 - :func:`materialize_patchworks_variant`
