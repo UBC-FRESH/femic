@@ -70,15 +70,15 @@ Important boundary:
   commands, which remains
   ``--instance-root`` -> ``FEMIC_INSTANCE_ROOT`` -> current working directory.
 
-Bundled Example Instances
--------------------------
+Source-Checkout Example Instances
+---------------------------------
 
-The bundled published example instances in this checkout are:
+Some FEMIC source checkouts include published example instances under
+``external/`` as git submodules. These are optional deployments, not FEMIC core
+package dependencies.
 
-- ``external/femic-k3z-instance``
-- ``external/femic-tsa29-instance``
-
-Treat them as git submodules, not ordinary folders:
+When example instances are present, treat them as git submodules, not ordinary
+folders:
 
 - change FEMIC code/docs/tooling in the parent repo
 - change case-specific instance content in the submodule repo
@@ -95,7 +95,7 @@ VDYP runtime duplication rule:
 - do not duplicate those assets casually across every instance without saying
   which copy is authoritative for maintenance.
 
-Registered instance packaged-install resolution now prefers:
+Registered instance packaged-install resolution prefers:
 
 1. repo-local ``external/...`` when present in a source checkout;
 2. otherwise the configured managed external root from ``user.yaml``.
@@ -149,10 +149,11 @@ Common Mistakes
 
 - Treating ``external/femic-public-data`` pointer files as real payloads before
   ``datalad get``.
-- Editing the bundled instance as if it were ordinary parent-repo content.
+- Editing an example-instance submodule as if it were ordinary parent-repo
+  content.
 - Forgetting that a command launched from repo root without ``--instance-root``
   is not the same as a command explicitly pinned to
-  ``external/femic-k3z-instance``.
+  a deployment-instance root.
 - Assuming ``FEMIC_EXTERNAL_DATA_ROOT`` replaces the instance root; it only
   supplies canonical external data fallback.
 
@@ -172,16 +173,17 @@ Compatibility note:
 - those names remain valid compatibility contracts and are not being renamed in
   the current terminology sweep
 
-For new generic examples and future built-ins, prefer the naming pattern:
+For new generic examples and future registered instance identifiers, prefer the
+naming pattern:
 
 - ``fmu-<flavour>-<identifier>``
 
 Examples:
 
 - ``fmu-tsa-29``
-- ``fmu-cfa-k3z``
+- ``fmu-cfa-example``
 - ``fmu-tfl-26``
-- ``fmu-ubc-mkrf``
+- ``fmu-ubc-research-forest``
 
 This is guidance for future naming surfaces, not a migration of current
 shipped IDs.

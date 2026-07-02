@@ -439,9 +439,8 @@ def infer_patchworks_model_dir(config: PatchworksRuntimeConfig) -> Path:
         == config.forestmodel_xml_path.parent.parent.resolve()
     ):
         return config.matrix_output_dir.parent.resolve()
-    # K3Z validated layout: fragments and ForestModel XML live together under an
-    # `output/patchworks_k3z*_validated/` directory, while compiled tracks stay
-    # under `models/.../tracks*`.
+    # Validated output layout: fragments and ForestModel XML live together under
+    # an output directory, while compiled tracks stay under `models/.../tracks*`.
     if (
         config.fragments_path.parent.name.lower() == "fragments"
         and config.forestmodel_xml_path.parent.resolve()
@@ -1103,7 +1102,7 @@ def _run_windows_matrix_builder_with_auto_close(
     auto_close_window_on_success: bool,
     auto_close_settle_seconds: float,
     auto_close_timeout_seconds: float,
-) -> tuple[int, dict[str, Any]]:
+) -> tuple[int | None, dict[str, Any]]:
     baseline_ready, baseline_file_count, baseline_latest_mtime = _matrix_output_state(
         matrix_output_dir
     )
@@ -1805,6 +1804,7 @@ def run_patchworks_command(
     if preflight.host_mode == "windows":
         command_string = format_command_for_display(command)
 
+    raw_returncode: int | None
     windows_automation: dict[str, Any] | None = None
     if preflight.host_mode == "windows" and not interactive:
         raw_returncode, windows_automation = (
@@ -1882,7 +1882,7 @@ def run_patchworks_command(
         # Process.main(...) may dispatch background work and not return a stable process code.
         effective_returncode = 0
     else:
-        effective_returncode = raw_returncode
+        effective_returncode = raw_returncode if raw_returncode is not None else 1
 
     manifest_payload = {
         "run_id": effective_run_id,

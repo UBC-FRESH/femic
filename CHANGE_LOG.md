@@ -19128,3 +19128,44 @@
 - P93 closes with FEMIC core no longer shipping named K3Z/TSA29 installable
   instance metadata by default; installed instance packages or explicit user
   catalog YAML files now provide example instance catalog entries.
+
+## 2026-07-01 - Opened P94 final core decoupling
+
+- Created parent branch `feature/p94-final-core-decoupling`.
+- Expanded the P94 roadmap into subtasks covering the final source audit,
+  generic template/help cleanup, zero-count boundary guard, absence regression
+  tests, docs/changelog updates, and closeout verification.
+- Locked the P94 goal: FEMIC core must not depend on any named example
+  instance under `external/`; K3Z, TSA29, MKRF, TFL6, and future examples are
+  optional deployments provided through instance packages or explicit user
+  configuration.
+
+## 2026-07-01 - Implemented P94 final named-instance scrub
+
+- Removed the remaining named example-instance references from `src/femic`
+  code comments, CLI help/default text, packaged Patchworks runtime templates,
+  TIPSY configuration template comments, default TSR recipe prose, and default
+  Patchworks recipe comments.
+- Tightened `tests/test_instance_extension_boundaries.py` so any future named
+  `mkrf`, `k3z`, `tsa29`, `tfl6`, or `femic-*-instance` reference under
+  `src/femic` fails by default.
+- Added regression coverage showing the core instance catalog can load with no
+  installed example providers and that missing source-checkout submodules fall
+  back to the configured managed external root instead of becoming package
+  assumptions.
+- Updated deployment/root-contract docs to describe example instances as
+  optional source-checkout deployments or installed providers, not bundled
+  FEMIC core dependencies.
+
+## 2026-07-01 - Closed P94 core decoupling sequence
+
+- Opened parent PR `#261` for P94 and verified GitHub build/package checks
+  passed.
+- Marked P94 complete in `ROADMAP.md`, closing the P88-P94 arms-length
+  separation sequence.
+- Final P94 validation included zero named-instance matches under `src/femic`,
+  focused boundary/catalog/CLI tests, targeted mypy for touched modules,
+  Sphinx docs, package build, and twine artifact checks.
+- Full local `mypy src` and full `pytest` still expose existing non-P94
+  baseline issues in unrelated typing, local environment, and
+  example-submodule-payload checks; P94-specific validation and CI are green.

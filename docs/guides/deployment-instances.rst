@@ -171,22 +171,20 @@ in-process providers, and an optional user overlay at
 ``~/.femic/variants.yaml``. Core FEMIC no longer ships K3Z or MKRF Patchworks
 variant definitions by default.
 
-In a source checkout, install the example instance packages before using their
-registry entries:
+In a source checkout, install the relevant example instance package before
+using its registry entries:
 
 .. code-block:: bash
 
-   python -m pip install -e external/femic-k3z-instance
-   python -m pip install -e external/femic-mkrf-instance
+   python -m pip install -e external/<example-instance>
 
-Use the registry-backed surfaces when launching installed K3Z or MKRF
-Patchworks variants:
+Use the registry-backed surfaces when launching installed Patchworks variants:
 
 .. code-block:: bash
 
    python -m femic patchworks instances list
-   python -m femic patchworks variants list --instance-id k3z
-   python -m femic patchworks run-variant k3z.base --run-id k3z_registry_smoke
+   python -m femic patchworks variants list --instance-id <instance-id>
+   python -m femic patchworks run-variant <instance-id>.<variant-id> --run-id registry_smoke
 
 For the fuller operator-facing workflow, including scenarios, scenario sets,
 and materialization consent, see
