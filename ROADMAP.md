@@ -2711,8 +2711,9 @@ instance-owned overlays.
       generic defaults and clear missing-provider errors.
 - [x] Update parent and TSA29 tests for provider registration, TSA29 behavior
       preservation, and named-instance boundary counts.
-- [ ] Run focused parent and TSA29 verification.
-- [ ] Merge TSA29 first, update the parent submodule pointer, and close P91
+- [x] Run focused parent and TSA29 verification.
+- [x] Merge TSA29 first and update the parent submodule pointer.
+- [ ] Close P91
       after parent PR checks pass.
 
 ## Phase 92: Externalize Patchworks Variant Registries

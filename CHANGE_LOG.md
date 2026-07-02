@@ -19018,3 +19018,10 @@
   references.
 - Verified focused parent checks for ruff, mypy on touched TSR modules, provider
   discovery, P91 recipe tests, and the boundary guard.
+
+## 2026-07-01 - Reconciled P91 TSA29 submodule pointer
+
+- Merged TSA29 PR `UBC-FRESH/femic-tsa29-instance#18`.
+- Updated the parent FEMIC TSA29 submodule pointer to merged TSA29 main commit
+  `3ec599b`.
+- Confirmed the TSA29 instance-side docs build was green before merging.
