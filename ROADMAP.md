@@ -2860,6 +2860,50 @@ example-instance coupling from `src/femic`.
   - [x] Post required progress and closeout comments on issue `#262`.
   - [x] Close issue `#262` after publication and smoke checks pass.
 
+## Phase 96: FreshForge v0.1.0a4 Compatibility Refresh
+
+Parent issue: #266
+
+Branch: `feature/freshforge-v0.1.0a4-compatibility-refresh`
+
+Status: complete
+
+Goal: align FEMIC's optional FreshForge provider integration with the released
+FreshForge `v0.1.0a4` provider protocol while keeping FEMIC's package metadata
+PyPI-safe and preserving the explicit execution boundary.
+
+- [x] P96.1 Prepare compatibility lifecycle surfaces
+  - [x] Open parent GitHub issue `#266`.
+  - [x] Create branch `feature/freshforge-v0.1.0a4-compatibility-refresh`.
+  - [x] Record this roadmap plan before implementation.
+- [x] P96.2 Align the FEMIC FreshForge provider with the released API
+  - [x] Keep normal `import femic` FreshForge-free.
+  - [x] Keep `femic[freshforge]` empty/PyPI-safe until FreshForge has a PyPI
+        distribution.
+  - [x] Add the released `run_node(...)` execution hook while preserving the
+        existing execution implementation behind a compatibility seam.
+  - [x] Update execution-result construction to the released FreshForge
+        `v0.1.0a4` record type.
+  - [x] Refresh FEMIC provider metadata version away from the stale
+        `0.1.0a1` value.
+- [x] P96.3 Refresh docs and examples for the released FreshForge tag
+  - [x] Update README and FreshForge guide install commands from the old
+        execution-engine feature branch to `v0.1.0a4`.
+  - [x] Update run examples for the released FreshForge run CLI, including the
+        current explicit-run boundary.
+  - [x] Confirm the matrix command is documented as a later lane, not a P96
+        workflow surface.
+- [x] P96.4 Add compatibility tests and smoke checks
+  - [x] Update FreshForge integration tests for provider metadata,
+        `run_node(...)`, result records, and lazy imports.
+  - [x] Install FreshForge from tag `v0.1.0a4` and run provider discovery,
+        validation, inspection, planning, and safe run smoke checks.
+  - [x] Run focused lint, type, pytest, Sphinx, build, and twine checks.
+- [x] P96.5 Close out the compatibility refresh
+  - [x] Update `CHANGE_LOG.md`.
+  - [x] Post progress and closeout comments on issue `#266`.
+  - [x] Open and merge the P96 PR after checks pass.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2872,6 +2916,13 @@ example-instance coupling from `src/femic`.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P96` / `#266` is complete locally: FEMIC's optional FreshForge provider
+    integration now targets released FreshForge `v0.1.0a4`. The provider
+    exposes `run_node(...)`, returns `ProviderRunResult`, reports provider
+    version `0.2.0a1`, preserves the empty PyPI-safe `femic[freshforge]` extra,
+    and keeps validation/inspection/planning non-mutating. Local smoke checks
+    verified provider discovery, validate, inspect, plan, matrix help, and a
+    safe one-node `freshforge run --namespace smoke --json` path.
   - `P95` / `#262` is complete: FEMIC `0.2.0a1` is published as the core
     decoupling alpha release. GitHub prerelease `FEMIC 0.2.0a1`, tag
     `v0.2.0a1`, TestPyPI workflow `28562782006`, and PyPI workflow

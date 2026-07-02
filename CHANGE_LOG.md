@@ -19231,3 +19231,37 @@
   integration, instance-owned extension boundaries, externalized
   registries/catalogs, and no named example-instance coupling under
   `src/femic`.
+
+## 2026-07-01 - Refreshed FreshForge v0.1.0a4 compatibility
+
+- Opened P96 under issue `#266` on branch
+  `feature/freshforge-v0.1.0a4-compatibility-refresh`.
+- Installed FreshForge from tag `v0.1.0a4` in the local development
+  environment and aligned `femic.freshforge` with the released provider
+  execution API:
+  - added `run_node(...)` as the released execution hook;
+  - retained `execute_node(...)` as a compatibility shim;
+  - replaced the old branch-era `ProviderExecutionResult` dependency with
+    released `ProviderRunResult` / `RunStatus`; and
+  - refreshed FEMIC provider metadata from stale `0.1.0a1` to the package
+    version `0.2.0a1`.
+- Kept normal `import femic` FreshForge-free and kept the publishable
+  `femic[freshforge]` extra empty/PyPI-safe.
+- Updated README and FreshForge integration docs from the old FreshForge
+  execution-engine feature branch to tag `v0.1.0a4`, and updated run examples
+  to the released `--namespace` run CLI.
+- Focused validation passed:
+  `python -m pip install -e .[dev]`, `ruff format src tests`,
+  `ruff check src tests`, `mypy src/femic/freshforge.py`,
+  `pytest tests/test_freshforge_integration.py`, `sphinx-build -b html docs
+  _build/html -W`, `python -m build`, and `twine check dist/*`.
+- FreshForge CLI smoke checks passed for provider discovery, validation,
+  inspection, planning, `freshforge matrix --help`, and a safe one-node
+  `freshforge run --namespace smoke --json` geospatial-preflight workflow.
+
+## 2026-07-01 - Opened and verified P96 FreshForge compatibility PR
+
+- Opened PR `#267` for the P96 FreshForge `v0.1.0a4` compatibility refresh.
+- GitHub `package-release-checks` and docs `build` checks passed on the PR.
+- The PR is clean against `main`; P96 closeout is ready to merge after the
+  final issue comment.

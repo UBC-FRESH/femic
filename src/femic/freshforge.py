@@ -12,8 +12,10 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from femic import __version__
+
 FEMIC_PROVIDER_ID = "femic"
-FEMIC_PROVIDER_VERSION = "0.1.0a1"
+FEMIC_PROVIDER_VERSION = __version__
 
 CommandRunner = Callable[[tuple[str, ...]], subprocess.CompletedProcess[str]]
 
@@ -117,7 +119,16 @@ class FemicFreshForgeProvider:
         return _validate_contract_node(node, node_type, location=location)
 
     def execute_node(self, node: Any, node_type: Any, *, context: Any) -> Any:
-        """Execute one generic FEMIC node through the installed FEMIC CLI."""
+        """Execute one generic FEMIC node through the installed FEMIC CLI.
+
+        This method is retained as a compatibility shim for callers that used
+        FEMIC's pre-release FreshForge execution hook. FreshForge v0.1.0a4 calls
+        :meth:`run_node` instead.
+        """
+        return self.run_node(node, node_type, context=context)
+
+    def run_node(self, node: Any, node_type: Any, *, context: Any) -> Any:
+        """Execute one generic FEMIC node through the released FreshForge API."""
         builders = _generic_command_builders()
         return _execute_with_builder(
             node=node,
@@ -251,15 +262,18 @@ def _freshforge_diagnostic_types() -> tuple[Any, Any]:
     return Diagnostic, DiagnosticSeverity
 
 
-def _freshforge_execution_result_type() -> Any:
+def _freshforge_run_result_types() -> tuple[Any, Any]:
     try:
-        from freshforge.records import ProviderExecutionResult  # type: ignore[import-untyped]
+        from freshforge.records import (  # type: ignore[import-untyped]
+            ProviderRunResult,
+            RunStatus,
+        )
     except ModuleNotFoundError as exc:
         raise RuntimeError(
             "The FEMIC FreshForge integration requires the optional "
             "`femic[freshforge]` dependency."
         ) from exc
-    return ProviderExecutionResult
+    return ProviderRunResult, RunStatus
 
 
 def _execute_with_builder(
@@ -271,11 +285,12 @@ def _execute_with_builder(
     builders: dict[str, Callable[[Any, Any], tuple[str, ...]]],
     runner: CommandRunner,
 ) -> Any:
-    result_type = _freshforge_execution_result_type()
+    result_type, run_status = _freshforge_run_result_types()
     diagnostic, severity = _freshforge_diagnostic_types()
     builder = builders.get(str(node_type.id))
     if builder is None:
         return result_type(
+            status=run_status.FAILED,
             diagnostics=(
                 diagnostic(
                     severity=severity.ERROR,
@@ -286,12 +301,13 @@ def _execute_with_builder(
                     ),
                     location=f"nodes.{node.id}",
                 ),
-            )
+            ),
         )
     try:
         command = builder(node, context)
     except ValueError as exc:
         return result_type(
+            status=run_status.FAILED,
             diagnostics=(
                 diagnostic(
                     severity=severity.ERROR,
@@ -299,14 +315,17 @@ def _execute_with_builder(
                     message=str(exc),
                     location=f"nodes.{node.id}.parameters",
                 ),
-            )
+            ),
         )
     completed = runner(command)
-    metadata: dict[str, Any] = {"returncode": completed.returncode}
+    data: dict[str, Any] = {
+        "command": list(command),
+        "returncode": completed.returncode,
+    }
     if completed.stdout:
-        metadata["stdout"] = completed.stdout
+        data["stdout"] = completed.stdout
     if completed.stderr:
-        metadata["stderr"] = completed.stderr
+        data["stderr"] = completed.stderr
     diagnostics: tuple[Any, ...] = ()
     if completed.returncode != 0:
         diagnostics = (
@@ -321,11 +340,13 @@ def _execute_with_builder(
             ),
         )
     artifacts = node.artifacts if isinstance(node.artifacts, dict) else {}
+    outputs = node.outputs if isinstance(node.outputs, dict) else {}
     return result_type(
-        metadata=metadata,
-        command=command,
+        status=run_status.SUCCESS if completed.returncode == 0 else run_status.FAILED,
+        outputs=outputs,
         diagnostics=diagnostics,
         artifacts=artifacts,
+        data=data,
     )
 
 

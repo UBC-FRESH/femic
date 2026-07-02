@@ -51,7 +51,7 @@ it has a PyPI release. To use FreshForge orchestration with FEMIC, install
 FreshForge explicitly after the FEMIC dev install:
 
 ```bash
-python -m pip install "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@feature/p6-execution-engine"
+python -m pip install "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@v0.1.0a4"
 ```
 
 The `femic[freshforge]` extra is retained as a PyPI-safe compatibility marker,
@@ -88,14 +88,17 @@ workflow documents belong in the corresponding instance repositories.
 ```bash
 freshforge providers
 freshforge validate examples/freshforge/model_build_workflow.yaml
+freshforge inspect examples/freshforge/model_build_workflow.yaml
 freshforge plan examples/freshforge/model_build_workflow.yaml
-freshforge run examples/freshforge/model_build_workflow.yaml --run-id smoke --dry-run
+freshforge run examples/freshforge/model_build_workflow.yaml --namespace smoke
 ```
 
 FreshForge validation, inspection, and planning are non-mutating. `freshforge
 run` launches provider-owned FEMIC commands only when called explicitly. It does
 not materialize DataLad content, read declared artifacts, or replace
-`femic instance rebuild`.
+`femic instance rebuild`. The generic example workflow is public-safe for
+validation, inspection, and planning, but a real run requires a real instance
+root and matching configuration.
 
 If `git annex version` fails, install `git-annex` at the OS level and re-open
 the shell before retrying.

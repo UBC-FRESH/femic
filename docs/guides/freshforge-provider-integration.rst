@@ -26,7 +26,7 @@ then install FreshForge explicitly:
 .. code-block:: bash
 
    python -m pip install femic
-   python -m pip install "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@feature/p6-execution-engine"
+   python -m pip install "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@v0.1.0a4"
 
 The ``femic[freshforge]`` extra is retained as a PyPI-safe compatibility
 marker, but it does not install FreshForge while FreshForge has no PyPI
@@ -74,7 +74,13 @@ Validate and plan it with:
    freshforge validate examples/freshforge/model_build_workflow.yaml
    freshforge inspect examples/freshforge/model_build_workflow.yaml
    freshforge plan examples/freshforge/model_build_workflow.yaml
-   freshforge run examples/freshforge/model_build_workflow.yaml --run-id smoke --dry-run
+   freshforge run examples/freshforge/model_build_workflow.yaml --namespace smoke
+
+FreshForge `v0.1.0a4` also exposes workflow matrix commands through
+``freshforge matrix``. Matrix examples and namespace-aware FEMIC artifact
+conventions are planned as later compatibility phases; this guide keeps the
+first released-tag example focused on direct provider discovery, validation,
+inspection, planning, and explicit serial runs.
 
 The graph declares this order:
 
@@ -93,7 +99,9 @@ FreshForge validation, inspection, and planning are non-mutating. ``freshforge
 run`` launches provider-owned FEMIC commands in deterministic plan order only
 when called explicitly. Use ``config/rebuild.spec.yaml`` and
 ``femic instance rebuild --dry-run`` as the legacy execution dry-run comparison
-surface.
+surface. The generic example workflow is public-safe for validation,
+inspection, and planning, but an actual run requires a real instance root and
+matching configuration.
 
 Named pipelines remain a narrower TSR/THLB recipe and runbook lane. The
 FreshForge integration is the cross-package workflow graph surface intended to
