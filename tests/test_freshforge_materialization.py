@@ -133,10 +133,86 @@ def test_overlay_parser_accepts_public_safe_fixture() -> None:
 
     assert diagnostics == ()
     assert overlay is not None
+    assert overlay.annex_enabled is True
     assert overlay.instance_root == Path("examples/freshforge/fixture-instance")
     assert overlay.special_remote == "arbutus-s3"
     assert overlay.materialization_paths == (Path("data"), Path("models"))
     assert overlay.audit_paths == (Path("data"), Path("models"))
+
+
+def test_overlay_parser_accepts_plain_git_overlay_without_special_remote(
+    tmp_path: Path,
+) -> None:
+    overlay_path = tmp_path / "plain_git_overlay.yaml"
+    overlay_path.write_text(
+        "\n".join(
+            [
+                "instance:",
+                "  root: instance",
+                "environment:",
+                "  venv_path: .venv",
+                "install:",
+                "  requirements: []",
+                "  editable_paths: []",
+                "  extras: []",
+                "  packages: []",
+                "annex:",
+                "  enabled: false",
+                "materialization:",
+                "  required_paths: [models, config]",
+                "audit:",
+                "  required_paths: [models, config]",
+                "report:",
+                "  path: runtime/freshforge/report.json",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    overlay, diagnostics = load_materialization_overlay(overlay_path)
+
+    assert diagnostics == ()
+    assert overlay is not None
+    assert overlay.annex_enabled is False
+    assert overlay.special_remote == ""
+    assert overlay.materialization_paths == (Path("models"), Path("config"))
+
+
+def test_overlay_parser_requires_special_remote_when_annex_enabled(
+    tmp_path: Path,
+) -> None:
+    overlay_path = tmp_path / "annex_overlay.yaml"
+    overlay_path.write_text(
+        "\n".join(
+            [
+                "instance:",
+                "  root: instance",
+                "environment:",
+                "  venv_path: .venv",
+                "install:",
+                "  requirements: []",
+                "  editable_paths: []",
+                "  extras: []",
+                "  packages: []",
+                "annex:",
+                "  enabled: true",
+                "materialization:",
+                "  required_paths: [models]",
+                "audit:",
+                "  required_paths: [models]",
+                "report:",
+                "  path: runtime/freshforge/report.json",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    overlay, diagnostics = load_materialization_overlay(overlay_path)
+
+    assert overlay is None
+    assert any("annex.special_remote" in message for message in diagnostics)
 
 
 def test_overlay_parser_reports_missing_required_fields(tmp_path: Path) -> None:
@@ -292,6 +368,156 @@ def test_annex_audit_stdout_is_failure_even_with_zero_returncode(
     assert {diagnostic.code for diagnostic in result.diagnostics} == {
         "femic.materialization.audit.missing_remote_content"
     }
+
+
+@pytest.mark.parametrize(
+    "node_type_id",
+    ("init_annex", "enable_special_remote", "audit_annex_availability"),
+)
+def test_annex_disabled_nodes_are_noop_success(
+    node_type_id: str,
+    tmp_path: Path,
+) -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus
+
+    overlay_path = tmp_path / "plain_git_overlay.yaml"
+    overlay_path.write_text(
+        "\n".join(
+            [
+                "instance:",
+                "  root: instance",
+                "environment:",
+                "  venv_path: .venv",
+                "install:",
+                "  requirements: []",
+                "  editable_paths: []",
+                "  extras: []",
+                "  packages: []",
+                "annex:",
+                "  enabled: false",
+                "materialization:",
+                "  required_paths: [models]",
+                "audit:",
+                "  required_paths: [models]",
+                "report:",
+                "  path: runtime/freshforge/report.json",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    commands: list[tuple[str, ...]] = []
+    provider = FemicMaterializationProvider(command_runner=_successful_runner(commands))
+    node = _workflow_node(node_type_id, overlay=str(overlay_path))
+
+    result = provider.run_node(
+        node,
+        _node_type(provider, node_type_id),
+        context=RunContext(workflow_id="wf", workdir=tmp_path),
+    )
+
+    assert result.status is RunStatus.SUCCESS
+    assert commands == []
+    assert result.data["annex_enabled"] is False
+    assert result.data["commands"] == []
+
+
+def test_plain_git_materialize_paths_checks_working_tree_paths(
+    tmp_path: Path,
+) -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus
+
+    instance_root = tmp_path / "instance"
+    (instance_root / "models").mkdir(parents=True)
+    overlay_path = tmp_path / "plain_git_overlay.yaml"
+    overlay_path.write_text(
+        "\n".join(
+            [
+                "instance:",
+                f"  root: {instance_root}",
+                "environment:",
+                "  venv_path: .venv",
+                "install:",
+                "  requirements: []",
+                "  editable_paths: []",
+                "  extras: []",
+                "  packages: []",
+                "annex:",
+                "  enabled: false",
+                "materialization:",
+                "  required_paths: [models]",
+                "audit:",
+                "  required_paths: [models]",
+                "report:",
+                "  path: runtime/freshforge/report.json",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    commands: list[tuple[str, ...]] = []
+    provider = FemicMaterializationProvider(command_runner=_successful_runner(commands))
+    node = _workflow_node("materialize_paths", overlay=str(overlay_path))
+
+    result = provider.run_node(
+        node,
+        _node_type(provider, "materialize_paths"),
+        context=RunContext(workflow_id="wf", workdir=tmp_path),
+    )
+
+    assert result.status is RunStatus.SUCCESS
+    assert len(commands) == 1
+    assert commands[0][0:3] == (sys.executable, "-c", commands[0][2])
+    assert commands[0][-1] == str(instance_root / "models")
+
+
+def test_plain_git_toolchain_check_skips_datalad_and_git_annex(
+    tmp_path: Path,
+) -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus
+
+    overlay_path = tmp_path / "plain_git_overlay.yaml"
+    overlay_path.write_text(
+        "\n".join(
+            [
+                "instance:",
+                "  root: instance",
+                "environment:",
+                "  venv_path: .venv",
+                "install:",
+                "  requirements: []",
+                "  editable_paths: []",
+                "  extras: []",
+                "  packages: []",
+                "annex:",
+                "  enabled: false",
+                "materialization:",
+                "  required_paths: [models]",
+                "audit:",
+                "  required_paths: [models]",
+                "report:",
+                "  path: runtime/freshforge/report.json",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    commands: list[tuple[str, ...]] = []
+    provider = FemicMaterializationProvider(command_runner=_successful_runner(commands))
+    node = _workflow_node("check_toolchain", overlay=str(overlay_path))
+
+    result = provider.run_node(
+        node,
+        _node_type(provider, "check_toolchain"),
+        context=RunContext(workflow_id="wf", workdir=tmp_path),
+    )
+
+    assert result.status is RunStatus.SUCCESS
+    assert ("datalad", "--version") not in commands
+    assert ("git", "annex", "version") not in commands
 
 
 def test_write_report_node_resolves_namespace_artifact(tmp_path: Path) -> None:

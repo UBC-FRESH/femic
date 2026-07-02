@@ -3088,9 +3088,50 @@ checkout acceptance case after TFL6.
   - [x] Re-run parent validation after the pointer update.
   - [x] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
 
+## Phase 102: FreshForge Materialization Overlay For K3Z (`#280`)
+
+Status: in progress
+
+Goal: add K3Z as the third model-instance materialization workflow using the
+generic `femic.materialization` provider, while handling K3Z's current
+plain-git storage mode without requiring DataLad/git-annex.
+
+- [x] P102.1 Create lifecycle and planning surfaces.
+  - [x] Open parent issue `#280` and K3Z issue
+        `UBC-FRESH/femic-k3z-instance#35`.
+  - [x] Create parent branch `feature/p102-k3z-materialization-overlay`.
+  - [x] Create K3Z branch `feature/freshforge-materialization-overlay`.
+  - [x] Add `planning/phase102_k3z_materialization_overlay.md`.
+- [x] P102.2 Extend generic materialization for plain-git instances.
+  - [x] Add optional overlay field `annex.enabled`, defaulting to `true`.
+  - [x] Treat annex initialization, special-remote enablement, and annex audit
+        nodes as no-op success nodes when annex is disabled.
+  - [x] Make `materialize_paths` verify working-tree paths instead of running
+        `datalad get` when annex is disabled.
+- [x] P102.3 Add K3Z-owned overlay and workflow.
+  - [x] Add K3Z materialization overlay and workflow YAML under
+        `external/femic-k3z-instance/workflows/freshforge/`.
+  - [x] Use only the generic `femic.materialization.*` provider namespace.
+  - [x] Install the K3Z editable package during materialization so K3Z-owned
+        FEMIC extension entry points are available after bootstrap.
+- [x] P102.4 Update docs and validate surfaces.
+  - [x] Document parent-checkout materialization commands in K3Z README and
+        operator runbook.
+  - [x] Run provider discovery, validate, inspect, and plan from the parent
+        checkout.
+  - [x] Run the bounded FreshForge materialization workflow from the parent
+        checkout.
+  - [x] Verify the workflow writes only ignored `runtime/freshforge/` output.
+- [ ] P102.5 Close out.
+  - [ ] Merge the K3Z materialization PR first.
+  - [ ] Update the parent K3Z submodule pointer.
+  - [ ] Re-run parent validation after the pointer update.
+  - [ ] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase102_k3z_materialization_overlay.md`
   - `planning/phase98_materialization_execution_surface.md`
   - `planning/phase98_freshforge_materialization_template.md`
   - `planning/phase87_parent_instance_reference_audit.md`
@@ -3102,9 +3143,15 @@ checkout acceptance case after TFL6.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P101` / `#278` is complete locally and ready for parent PR review: the
-    second real `femic.materialization` FreshForge workflow targets the MKRF
-    submodule materialization ritual from the parent FEMIC checkout. The MKRF
+  - `P102` / `#280` is active: the third real `femic.materialization`
+    FreshForge workflow targets the K3Z submodule from the parent FEMIC
+    checkout. K3Z is a plain-git snapshot, generic `annex.enabled: false`
+    support is implemented, and provider discovery plus K3Z validate/inspect/
+    plan/run checks pass from the parent checkout. Next step is K3Z PR merge,
+    parent submodule pointer update, and final closeout.
+  - `P101` / `#278` is complete and merged: the second real
+    `femic.materialization` FreshForge workflow targets the MKRF submodule
+    materialization ritual from the parent FEMIC checkout. The MKRF
     materialization PR has merged, the parent submodule pointer has been
     updated, and merged-pointer validation passed.
   - `P100` / `#276` is complete and merged: the first real

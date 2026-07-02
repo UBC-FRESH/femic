@@ -19432,3 +19432,23 @@
   model or source payload gaps were reported.
 - Marked P101 complete in `ROADMAP.md`; follow-on instance materialization
   overlays for K3Z and TSA29 remain separate phases.
+
+## 2026-07-02 - Launched P102 K3Z FreshForge materialization overlay
+
+- Opened parent issue `#280` and K3Z issue
+  `UBC-FRESH/femic-k3z-instance#35` for the third real FreshForge
+  model-instance materialization workflow.
+- Added `planning/phase102_k3z_materialization_overlay.md` to record that K3Z
+  is currently a plain-git snapshot, not a DataLad/git-annex dataset.
+- Extended the generic `femic.materialization` overlay contract with
+  `annex.enabled`, defaulting to `true` for existing TFL6/MKRF behavior and
+  allowing plain-git instances to skip annex-specific nodes.
+- Added K3Z-owned FreshForge materialization overlay/workflow files that verify
+  tracked K3Z paths, install the editable K3Z package, and write ignored
+  runtime reports without enabling `arbutus-s3` or running `datalad get`.
+- Validated provider discovery, `freshforge validate`, `freshforge inspect`,
+  `freshforge plan`, and a bounded `freshforge run` against the K3Z
+  materialization workflow from the parent checkout using `freshforge`
+  `0.1.0a5` in the repo `.venv`.
+- Verified the run wrote the K3Z materialization report only under ignored
+  parent `runtime/freshforge/` output.
