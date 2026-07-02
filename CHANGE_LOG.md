@@ -19025,3 +19025,12 @@
 - Updated the parent FEMIC TSA29 submodule pointer to merged TSA29 main commit
   `3ec599b`.
 - Confirmed the TSA29 instance-side docs build was green before merging.
+
+## 2026-07-01 - Closed P91 TSA29 TSR adjudication overlay extraction
+
+- Parent PR `#258` passed GitHub docs and package-release checks after the
+  TSA29 submodule pointer update.
+- Marked P91 complete in `ROADMAP.md` and advanced the current edge to P92.
+- P91 closes with FEMIC core owning generic TSR adjudication overlay dispatch
+  while TSA29 owns its row classification, checkpoint policy,
+  reconstruction-gap interpretation, and active report-note decisions.

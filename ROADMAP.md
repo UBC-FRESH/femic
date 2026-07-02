@@ -2691,7 +2691,7 @@ Parent issue: #251
 
 TSA29 issue: UBC-FRESH/femic-tsa29-instance#17
 
-Status: active
+Status: complete
 
 Goal: keep generic TSR discovery, extraction, recipe execution, schemas, and
 report primitives in FEMIC core while moving TSA29 interpretation text, no-op
@@ -2713,7 +2713,7 @@ instance-owned overlays.
       preservation, and named-instance boundary counts.
 - [x] Run focused parent and TSA29 verification.
 - [x] Merge TSA29 first and update the parent submodule pointer.
-- [ ] Close P91
+- [x] Close P91
       after parent PR checks pass.
 
 ## Phase 92: Externalize Patchworks Variant Registries
@@ -2759,11 +2759,14 @@ example submodules present.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P91` / `#251` is active with TSA29 issue
-    `UBC-FRESH/femic-tsa29-instance#17`: add a generic TSR adjudication
-    overlay seam in FEMIC core, then move TSA29 row classifications, checkpoint
-    policy, reconstruction-gap interpretation overrides, and active
-    adjudication report notes into the TSA29-owned `tsa29_femic` package.
+  - `P92` / `#252` is next: externalize Patchworks variant registries so
+    instance packages and explicit registry files can provide K3Z/MKRF variants
+    without FEMIC core shipping named example-instance definitions.
+  - `P91` / `#251` is complete: generic TSR adjudication overlay dispatch now
+    lives in FEMIC core, and TSA29 row classifications, checkpoint policy,
+    reconstruction-gap interpretation overrides, and active adjudication report
+    notes live in the TSA29-owned `tsa29_femic` package under issue
+    `UBC-FRESH/femic-tsa29-instance#17`.
   - `P90` / `#250` is complete: generic named-pipeline contract-handler
     dispatch now lives in FEMIC core, and the TSA29 strict locked-chain
     contract implementation lives in the TSA29 instance package under issue
