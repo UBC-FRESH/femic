@@ -3,6 +3,7 @@ from __future__ import annotations
 import subprocess
 import sys
 import tomllib
+import json
 from pathlib import Path
 
 import pytest
@@ -295,6 +296,146 @@ def test_generic_provider_execution_constructs_femic_command() -> None:
             "config/run_profile.mkrf.yaml",
         )
     ]
+
+
+def test_provider_run_resolves_relative_artifacts_under_workdir(tmp_path: Path) -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import WorkflowNode
+
+    commands: list[tuple[str, ...]] = []
+    provider = FemicFreshForgeProvider(command_runner=_successful_runner(commands))
+    node_type = next(
+        item for item in provider.metadata().node_types if item.id == "validate_case"
+    )
+    node = WorkflowNode(
+        id="validate_case",
+        provider="femic.validate_case",
+        parameters={
+            "instance_root": ".",
+            "run_config": "config/run_profile.example.yaml",
+        },
+        artifacts={"run_manifest": "runtime/logs/a.json"},
+    )
+
+    result = provider.run_node(
+        node,
+        node_type,
+        context=RunContext(workflow_id="wf", workdir=tmp_path),
+    )
+
+    assert result.artifacts == {
+        "run_manifest": str(tmp_path / "runtime" / "logs" / "a.json")
+    }
+    assert commands == [
+        (
+            sys.executable,
+            "-m",
+            "femic",
+            "prep",
+            "validate-case",
+            "--instance-root",
+            ".",
+            "--run-config",
+            "config/run_profile.example.yaml",
+        )
+    ]
+
+
+def test_provider_run_resolves_relative_artifacts_under_namespace(
+    tmp_path: Path,
+) -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import WorkflowNode
+
+    provider = FemicFreshForgeProvider(command_runner=_successful_runner([]))
+    node_type = next(
+        item for item in provider.metadata().node_types if item.id == "validate_case"
+    )
+    node = WorkflowNode(
+        id="validate_case",
+        provider="femic.validate_case",
+        parameters={
+            "instance_root": ".",
+            "run_config": "config/run_profile.example.yaml",
+        },
+        artifacts={"run_manifest": "runtime/logs/a.json"},
+    )
+
+    result = provider.run_node(
+        node,
+        node_type,
+        context=RunContext(workflow_id="wf", workdir=tmp_path, run_namespace="smoke"),
+    )
+
+    assert result.artifacts == {
+        "run_manifest": str(tmp_path / "smoke" / "runtime" / "logs" / "a.json")
+    }
+
+
+def test_provider_run_preserves_absolute_artifact_paths(tmp_path: Path) -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import WorkflowNode
+
+    absolute_artifact = tmp_path / "absolute" / "a.json"
+    provider = FemicFreshForgeProvider(command_runner=_successful_runner([]))
+    node_type = next(
+        item for item in provider.metadata().node_types if item.id == "validate_case"
+    )
+    node = WorkflowNode(
+        id="validate_case",
+        provider="femic.validate_case",
+        parameters={
+            "instance_root": ".",
+            "run_config": "config/run_profile.example.yaml",
+        },
+        artifacts={"run_manifest": absolute_artifact},
+    )
+
+    result = provider.run_node(
+        node,
+        node_type,
+        context=RunContext(workflow_id="wf", workdir=tmp_path, run_namespace="smoke"),
+    )
+
+    assert result.artifacts == {"run_manifest": str(absolute_artifact)}
+
+
+def test_provider_run_preserves_json_safe_non_string_artifact_metadata(
+    tmp_path: Path,
+) -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import WorkflowNode
+
+    provider = FemicFreshForgeProvider(command_runner=_successful_runner([]))
+    node_type = next(
+        item for item in provider.metadata().node_types if item.id == "validate_case"
+    )
+    node = WorkflowNode(
+        id="validate_case",
+        provider="femic.validate_case",
+        parameters={
+            "instance_root": ".",
+            "run_config": "config/run_profile.example.yaml",
+        },
+        artifacts={
+            "run_manifest": "runtime/logs/a.json",
+            "count": 3,
+            "metadata": {"kind": "declared"},
+        },
+    )
+
+    result = provider.run_node(
+        node,
+        node_type,
+        context=RunContext(workflow_id="wf", workdir=tmp_path, run_namespace="smoke"),
+    )
+
+    assert result.artifacts["run_manifest"] == str(
+        tmp_path / "smoke" / "runtime" / "logs" / "a.json"
+    )
+    assert result.artifacts["count"] == 3
+    assert result.artifacts["metadata"] == {"kind": "declared"}
+    json.dumps(result.to_dict())
 
 
 def test_legacy_execute_node_shim_delegates_to_run_node() -> None:

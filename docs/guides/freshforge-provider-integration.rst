@@ -74,13 +74,29 @@ Validate and plan it with:
    freshforge validate examples/freshforge/model_build_workflow.yaml
    freshforge inspect examples/freshforge/model_build_workflow.yaml
    freshforge plan examples/freshforge/model_build_workflow.yaml
-   freshforge run examples/freshforge/model_build_workflow.yaml --namespace smoke
+   freshforge run examples/freshforge/model_build_workflow.yaml --workdir runtime/freshforge --namespace smoke
 
 FreshForge `v0.1.0a4` also exposes workflow matrix commands through
-``freshforge matrix``. Matrix examples and namespace-aware FEMIC artifact
-conventions are planned as later compatibility phases; this guide keeps the
-first released-tag example focused on direct provider discovery, validation,
-inspection, planning, and explicit serial runs.
+``freshforge matrix``. Matrix examples and command-output namespace routing
+are planned as later compatibility phases; this guide keeps the first
+released-tag example focused on direct provider discovery, validation,
+inspection, planning, explicit serial runs, and report-only artifact metadata.
+
+Namespace-Aware Artifacts
+-------------------------
+
+When ``freshforge run`` is called with ``--workdir`` and ``--namespace``,
+FEMIC resolves workflow-declared artifact paths in the returned FreshForge run
+record. For example, a declared artifact such as
+``runtime/logs/run_manifest.json`` is reported under
+``runtime/freshforge/smoke/runtime/logs/run_manifest.json`` when the command
+uses ``--workdir runtime/freshforge --namespace smoke``.
+
+This is currently report-only metadata. FEMIC does not automatically pass the
+resolved paths into command options such as ``--log-dir`` or ``--output-dir``,
+does not move existing runtime outputs, and does not claim that resolved
+artifact paths exist unless the provider-owned command actually creates them.
+Collision-safe command-output routing is a later phase.
 
 The graph declares this order:
 

@@ -2904,6 +2904,48 @@ PyPI-safe and preserving the explicit execution boundary.
   - [x] Post progress and closeout comments on issue `#266`.
   - [x] Open and merge the P96 PR after checks pass.
 
+## Phase 97: Namespace-Aware FEMIC FreshForge Artifacts
+
+Parent issue: #268
+
+Branch: `feature/p97-freshforge-namespace-artifacts`
+
+Status: complete
+
+Goal: add report-only namespace-aware artifact metadata to FEMIC's generic
+FreshForge provider by resolving workflow-declared artifact paths through the
+FreshForge run context without changing FEMIC command outputs.
+
+- [x] P97.1 Prepare lifecycle surfaces
+  - [x] Open parent GitHub issue `#268`.
+  - [x] Create branch `feature/p97-freshforge-namespace-artifacts`.
+  - [x] Record this roadmap plan before implementation.
+- [x] P97.2 Resolve declared artifact metadata through FreshForge run context
+  - [x] Add a lazy helper that uses `context.resolve_path(...)` when available.
+  - [x] Return resolved artifact paths as strings in `ProviderRunResult.artifacts`.
+  - [x] Preserve non-string JSON-safe artifact metadata without path resolution.
+  - [x] Keep FEMIC command construction, stdout/stderr data, and return-code
+        behavior unchanged.
+- [x] P97.3 Preserve the report-only boundary
+  - [x] Do not automatically pass namespaced paths into FEMIC CLI options.
+  - [x] Do not move existing FEMIC runtime outputs.
+  - [x] Do not claim resolved artifact paths exist unless commands create them.
+  - [x] Keep `validate`, `inspect`, and `plan` non-mutating.
+- [x] P97.4 Update docs and tests
+  - [x] Document namespace-aware artifact metadata and the report-only boundary.
+  - [x] Document `freshforge run ... --namespace smoke --workdir
+        runtime/freshforge` as the recommended smoke pattern.
+  - [x] Add focused tests for no-namespace, namespace, absolute-path, and
+        non-string artifact behavior.
+  - [x] Verify returned artifacts remain JSON-serializable.
+- [x] P97.5 Validate and close out
+  - [x] Install editable dev dependencies and FreshForge `v0.1.0a4`.
+  - [x] Run Ruff, targeted mypy, focused pytest, Sphinx, build, twine, and
+        FreshForge CLI smoke checks.
+  - [x] Update `CHANGE_LOG.md`.
+  - [x] Post progress and closeout comments on issue `#268`.
+  - [x] Open and merge the P97 PR after checks pass.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
@@ -2916,6 +2958,11 @@ PyPI-safe and preserving the explicit execution boundary.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P97` / `#268` is complete: report-only namespace-aware FreshForge
+    artifact metadata resolves workflow-declared artifact paths through
+    FreshForge `RunContext.resolve_path(...)` for provider run records. FEMIC
+    command construction remains unchanged, validation/inspection/planning
+    remain non-mutating, and command-output routing remains deferred.
   - `P96` / `#266` is complete locally: FEMIC's optional FreshForge provider
     integration now targets released FreshForge `v0.1.0a4`. The provider
     exposes `run_node(...)`, returns `ProviderRunResult`, reports provider

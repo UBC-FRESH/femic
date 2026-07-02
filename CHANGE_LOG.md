@@ -19265,3 +19265,43 @@
 - GitHub `package-release-checks` and docs `build` checks passed on the PR.
 - The PR is clean against `main`; P96 closeout is ready to merge after the
   final issue comment.
+
+## 2026-07-01 - Implemented P97 FreshForge namespace-aware artifact metadata
+
+- Opened P97 under issue `#268` on branch
+  `feature/p97-freshforge-namespace-artifacts`.
+- Added report-only artifact resolution to `femic.freshforge`: workflow-declared
+  string and path-like artifact values are resolved through FreshForge
+  `RunContext.resolve_path(...)` and returned as strings in
+  `ProviderRunResult.artifacts`.
+- Preserved the explicit scope boundary:
+  - FEMIC command construction is unchanged;
+  - namespace-resolved paths are not automatically passed into `--log-dir`,
+    `--output-dir`, Patchworks package paths, or other FEMIC CLI options;
+  - no runtime outputs are moved; and
+  - validation, inspection, and planning remain non-mutating.
+- Updated README and FreshForge integration docs to show
+  `freshforge run ... --workdir runtime/freshforge --namespace smoke` and to
+  explain that namespace-aware artifacts are metadata only in this phase.
+- Added tests covering no-namespace, namespace, absolute-path, and JSON-safe
+  non-string artifact behavior.
+- Focused validation passed:
+  `python -m pip install -e .[dev]`,
+  `python -m pip install "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@v0.1.0a4"`,
+  `ruff format src tests`, `ruff check src tests`,
+  `mypy src/femic/freshforge.py`, `pytest tests/test_freshforge_integration.py`,
+  `sphinx-build -b html docs _build/html -W`, `python -m build`,
+  `twine check dist/*`, and `pre-commit run --all-files`.
+- FreshForge CLI smoke passed with a one-node geospatial-preflight workflow:
+  `freshforge run <temp workflow> --workdir runtime/freshforge --namespace
+  smoke --json` returned a namespace-resolved artifact path under
+  `runtime/freshforge/smoke/...` while leaving the command as
+  `python -m femic prep geospatial-preflight`.
+
+## 2026-07-01 - Opened and verified P97 FreshForge artifact PR
+
+- Opened PR `#269` for the P97 namespace-aware FreshForge artifact metadata
+  refresh.
+- GitHub `package-release-checks` and docs `build` checks passed on the PR.
+- The PR is clean against `main`; P97 closeout is ready to merge after the
+  final issue comment.
