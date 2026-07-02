@@ -19169,3 +19169,33 @@
 - Full local `mypy src` and full `pytest` still expose existing non-P94
   baseline issues in unrelated typing, local environment, and
   example-submodule-payload checks; P94-specific validation and CI are green.
+
+## 2026-07-01 - Opened P95 FEMIC 0.2.0a1 release prep
+
+- Created parent branch `feature/p95-femic-0.2.0a1-release` and GitHub issue
+  `#262` for the FEMIC `0.2.0a1` core decoupling alpha release.
+- Added the P95 release checklist to `ROADMAP.md` before release edits.
+- Synchronized `pyproject.toml` and `src/femic/__init__.py` at `0.2.0a1`.
+- Added `tests/test_version_metadata.py` so package metadata and
+  `femic.__version__` cannot drift silently.
+- Added `RELEASE_NOTES.md` summarizing the P80-P94 milestone, alpha scope,
+  known non-P95 baseline caveats, and optional example-instance deployment
+  boundary.
+
+## 2026-07-01 - Validated P95 local release artifacts
+
+- Fixed the root CLI `--version` option so both `python -m femic --version`
+  and the installed `femic --version` console script report `0.2.0a1`.
+- Added `RELEASE_NOTES.md` to the source distribution through `MANIFEST.in`.
+- Focused release validation passed: `ruff format src tests`, `ruff check src
+  tests`, targeted `mypy` for touched version/CLI modules, focused
+  version/boundary/catalog/variant tests, Sphinx warning-clean docs build,
+  `python -m build`, `twine check dist/*`, CLI help/version smoke, and direct
+  artifact metadata inspection.
+- Built artifacts report `Version: 0.2.0a1`; the wheel retains the `femic`
+  console script and `freshforge.providers` entry point, and the sdist includes
+  `RELEASE_NOTES.md`.
+- Full release-audit `mypy src` still reports the known non-P95
+  pandas/SciPy/VDYP typing debt. Full release-audit `pytest` reports 19 known
+  non-P95 environment/runtime/baseline failures; focused P95 release
+  validation is green.

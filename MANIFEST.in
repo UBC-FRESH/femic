@@ -1,1 +1,2 @@
+include RELEASE_NOTES.md
 recursive-include examples *.yaml

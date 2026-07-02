@@ -287,6 +287,7 @@ from femic.workflows.legacy import (
 app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
+    invoke_without_command=True,
     help="Forest Estate Modelling Integration Core (FEMIC).",
 )
 prep_app = typer.Typer(
@@ -1037,6 +1038,7 @@ VERBOSE_OPTION = typer.Option(
 VERSION_OPTION = typer.Option(
     False,
     "--version",
+    is_eager=True,
     help="Show version and exit.",
 )
 DEBUG_OPTION = typer.Option(
