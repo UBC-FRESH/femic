@@ -40,7 +40,7 @@ Packaged Install User Roots
 
 Packaged installs now carry a separate user-config contract for:
 
-- managed built-in instance installs; and
+- managed registered instance installs; and
 - the visible user workspace root used by ``femic instance init --instance-name``.
 
 That config lives at:
@@ -56,15 +56,15 @@ Recorded keys:
 Default values:
 
 - Linux/macOS:
-  - managed built-ins: ``~/.femic/external``
+  - managed registered instances: ``~/.femic/external``
   - visible user instances: ``~/femic/instances``
 - Windows:
-  - managed built-ins: ``%USERPROFILE%\.femic\external``
+  - managed registered instances: ``%USERPROFILE%\.femic\external``
   - visible user instances: ``%USERPROFILE%\femic\instances``
 
 Important boundary:
 
-- these roots support packaged-install bootstrap and built-in instance
+- these roots support packaged-install bootstrap and registered instance
   discovery;
 - they do **not** change the normal runtime precedence for operational
   commands, which remains
@@ -90,15 +90,15 @@ VDYP runtime duplication rule:
 - the FEMIC source tree can act as the canonical shared source for
   ``vdyp_io/VDYP.INI`` and ``vdyp_io/VDYP_CFG/**`` during normal source-checkout
   development;
-- instance-local copies are still valid when a built-in or published instance
+- instance-local copies are still valid when a registered or published instance
   is intentionally being made more self-contained;
 - do not duplicate those assets casually across every instance without saying
   which copy is authoritative for maintenance.
 
-Built-in packaged-install resolution now prefers:
+Registered instance packaged-install resolution now prefers:
 
 1. repo-local ``external/...`` when present in a source checkout;
-2. otherwise the configured managed built-in root from ``user.yaml``.
+2. otherwise the configured managed external root from ``user.yaml``.
 
 External Data Root
 ------------------

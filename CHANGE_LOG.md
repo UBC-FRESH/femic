@@ -19083,3 +19083,48 @@
   parsing, provider discovery, merge, user-overlay, and CLI behavior while K3Z
   and MKRF own their Patchworks variant definitions through installed
   instance-package providers.
+
+## 2026-07-01 - Opened P93 instance catalog externalization
+
+- Created parent branch `feature/p93-externalize-instance-catalog`.
+- Created K3Z branch `feature/k3z-instance-catalog-provider`.
+- Created TSA29 branch `feature/tsa29-instance-catalog-provider`.
+- Linked parent issue `#253` with K3Z issue
+  `UBC-FRESH/femic-k3z-instance#33` and TSA29 issue
+  `UBC-FRESH/femic-tsa29-instance#19`.
+- Recorded the P93 task breakdown in `ROADMAP.md`.
+- Locked the boundary: FEMIC core keeps generic instance catalog parsing,
+  discovery, install, and CLI plumbing; K3Z and TSA29 own their installable
+  example instance catalog metadata through instance-package providers.
+
+## 2026-07-01 - Implemented P93 instance catalog provider seam
+
+- Added generic FEMIC instance catalog provider registration and entry-point
+  discovery through `femic.instance_catalogs`.
+- Added explicit YAML catalog loading for callers that want to supply a
+  catalog file directly.
+- Moved the K3Z installable instance catalog entry into `k3z_femic` on branch
+  `feature/k3z-instance-catalog-provider`.
+- Moved the TSA29 installable instance catalog entry into `tsa29_femic` on
+  branch `feature/tsa29-instance-catalog-provider`.
+- Reduced `src/femic/resources/builtins/instances.builtin.yaml` to an empty
+  generic catalog shell and removed its K3Z/TSA29 allowlist from the named
+  instance boundary guard.
+- Added the generic `femic instance catalog list/install` CLI surface while
+  keeping `femic instance builtins ...` as a compatibility alias for this
+  phase.
+- Verified focused parent checks for ruff, mypy on touched catalog/CLI modules,
+  instance-catalog tests, and the boundary guard. Verified focused K3Z and
+  TSA29 provider tests after editable installs, and confirmed live discovery
+  returns `k3z` and `tsa29`.
+
+## 2026-07-01 - Closed P93 instance catalog externalization
+
+- Merged K3Z PR `UBC-FRESH/femic-k3z-instance#34` and updated the parent K3Z
+  submodule pointer to merged commit `cb5c272`.
+- Merged TSA29 PR `UBC-FRESH/femic-tsa29-instance#20` and updated the parent
+  TSA29 submodule pointer to merged commit `c50b53b`.
+- Marked P93 complete in `ROADMAP.md` and advanced the current edge to P94.
+- P93 closes with FEMIC core no longer shipping named K3Z/TSA29 installable
+  instance metadata by default; installed instance packages or explicit user
+  catalog YAML files now provide example instance catalog entries.

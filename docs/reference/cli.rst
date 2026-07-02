@@ -1491,8 +1491,10 @@ Subcommands
   ``python -m femic instance config set-managed-external-root <path>``
 - ``config set-user-instance-root``:
   ``python -m femic instance config set-user-instance-root <path>``
-- ``builtins list``: ``python -m femic instance builtins list``
-- ``builtins install``: ``python -m femic instance builtins install <builtin-id|all>``
+- ``catalog list``: ``python -m femic instance catalog list``
+- ``catalog install``: ``python -m femic instance catalog install <instance-id|all>``
+- ``builtins list``: compatibility alias for ``catalog list``
+- ``builtins install``: compatibility alias for ``catalog install``
 - ``rebuild``: ``python -m femic instance rebuild [OPTIONS]``
 - ``validate-spec``: ``python -m femic instance validate-spec [OPTIONS]``
 - ``promote-evidence``: ``python -m femic instance promote-evidence [OPTIONS]``
@@ -1513,21 +1515,21 @@ Subcommands
 
 - current config path
 - whether ``user.yaml`` exists yet
-- resolved managed built-in root
+- resolved managed registered-instance root
 - resolved visible user-instance root
 - the default values FEMIC would use if the config file is absent
 
-``instance builtins list`` output
+``instance catalog list`` output
 
-- builtin id and label
+- registered instance id and label
 - install status
 - resolved install path
 - standalone repo URL
 - declared support-repo dependencies/notes
 
-``instance builtins install`` behavior
+``instance catalog install`` behavior
 
-- clones missing built-in repos into the configured managed built-in root
+- clones missing registered instance repos into the configured managed external root
 - clones declared support repos if missing
 - skips already-installed git worktrees
 - does **not** run ``datalad get`` automatically
@@ -1537,7 +1539,7 @@ Operational notes:
 
 - packaged-install config now lives at ``~/.femic/user.yaml`` (or the Windows
   equivalent);
-- FEMIC uses that config for managed built-ins and the visible user workspace
+- FEMIC uses that config for managed registered instances and the visible user workspace
   root;
 - normal operational runtime precedence is still
   ``--instance-root`` -> ``FEMIC_INSTANCE_ROOT`` -> current working directory.

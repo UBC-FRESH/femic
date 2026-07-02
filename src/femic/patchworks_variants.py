@@ -1272,7 +1272,7 @@ def builtins_install_hint_for_variant(
     source_root: Path | None = None,
     user_config_path: Path | None = None,
 ) -> str | None:
-    """Return an install hint when a shipped built-in instance is missing locally."""
+    """Return an install hint when a catalog-backed instance is missing locally."""
 
     if getattr(variant, "source", None) != "builtin":
         return None
@@ -1285,6 +1285,6 @@ def builtins_install_hint_for_variant(
     if status.status != "missing":
         return None
     return (
-        f"Built-in instance {variant.instance_id} is not available locally. "
-        f"Install it with `femic instance builtins install {variant.instance_id}`."
+        f"Registered instance {variant.instance_id} is not available locally. "
+        f"Install it with `femic instance catalog install {variant.instance_id}`."
     )

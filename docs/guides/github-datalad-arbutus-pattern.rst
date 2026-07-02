@@ -31,13 +31,15 @@ Instead it splits responsibilities cleanly:
 What FEMIC Wraps Today
 ----------------------
 
-Built-in repo install / clone
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Registered repo install / clone
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-FEMIC has a packaged catalog of known support repos and example instance repos:
+FEMIC has a generic catalog loader for known support repos and example instance
+repos. Catalog entries come from installed instance packages or explicit
+catalog YAML, not from hardcoded example metadata in FEMIC core:
 
-- ``src/femic/resources/builtins/instances.builtin.yaml``
 - ``src/femic/builtin_instances.py``
+- installed providers exposed through ``femic.instance_catalogs``
 
 This layer wraps practical repo-install behavior:
 
@@ -174,7 +176,7 @@ The useful FEMIC pattern is:
 In plain language, the agent is useful for:
 
 - reading the contracts before doing work;
-- invoking things like ``femic instance builtins install``,
+- invoking things like ``femic instance catalog install``,
   ``femic prep validate-case``, and ``femic prep geospatial-preflight``;
 - checking whether the public-data repo is installed and materialized; and
 - steering the human back to the documented runbook when the task crosses into
@@ -226,7 +228,7 @@ path is fragile and platform-sensitive.
 
 The stable seams worth wrapping are:
 
-- built-in repo catalog;
+- registered repo catalog;
 - install/clone helpers;
 - user-configured managed roots;
 - instance-root resolution;

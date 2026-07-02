@@ -38,17 +38,17 @@ For packaged installs, FEMIC now also carries a small user-config contract at:
 That config records two path families:
 
 - ``paths.managed_external_root``
-  machine-managed built-in instance installs and support repositories
+  machine-managed registered instance installs and support repositories
 - ``paths.user_instance_root``
   the visible user workspace root for new working instances
 
 Default packaged-install roots are:
 
 - Linux/macOS:
-  - managed built-ins: ``~/.femic/external``
+  - managed registered instances: ``~/.femic/external``
   - visible user instances: ``~/femic/instances``
 - Windows:
-  - managed built-ins: ``%USERPROFILE%\.femic\external``
+  - managed registered instances: ``%USERPROFILE%\.femic\external``
   - visible user instances: ``%USERPROFILE%\femic\instances``
 
 Inspect or adjust those roots with:

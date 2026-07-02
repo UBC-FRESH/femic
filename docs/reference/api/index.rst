@@ -50,7 +50,7 @@ that matches the job you are trying to do:
 - ``femic.fansier_workflow``: higher-level FAN$IER workflows that chain tracked
   extraction and parsing seams into one FEMIC-owned operation.
 - ``femic.patchworks_variants``: registry-backed Patchworks variant resolution
-  for built-ins, user overlays, and named launch surfaces.
+  for installed providers, user overlays, and named launch surfaces.
 - ``femic.pipeline.siteprod``: SiteProd artifact resolution, band mapping, and
   raster assignment helpers.
 - ``femic.fmg.patchworks``: Patchworks export synthesis, fragments wiring, and
