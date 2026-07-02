@@ -19316,3 +19316,12 @@
   concrete instance values stay outside FEMIC core.
 - Added P98 roadmap tasks while keeping implementation separate from the first
   TFL6 FreshForge model-build workflow.
+
+## 2026-07-01 - Linked TFL6 Phase 17 FreshForge workflow scaffold
+
+- Advanced `external/femic-tfl6-instance` to commit `bf9d110`, which adds the
+  TFL6-owned FreshForge model-build workflow, Phase 17 planning note, docs, and
+  runbook guidance.
+- Recorded that FreshForge `v0.1.0a4` supports validation, inspection, and
+  planning for the TFL6 graph, but does not expose `freshforge run --dry-run`;
+  full execution acceptance remains later scope.

@@ -2955,19 +2955,19 @@ model-instance materialization so MKRF, TFL6, TSA29, and future instances do
 not require users to manually execute a long Git/DataLad/git-annex setup ritual
 from prose documentation.
 
-- [ ] P98.1 Capture materialization workflow requirements.
-  - [ ] Record the shared failure pattern from recent user deployment tests.
-  - [ ] Define the generic workflow node families: toolchain check, submodule
+- [x] P98.1 Capture materialization workflow requirements.
+  - [x] Record the shared failure pattern from recent user deployment tests.
+  - [x] Define the generic workflow node families: toolchain check, submodule
         setup, virtual-environment validation, package install check, DataLad
         and git-annex checks, `arbutus-s3` enablement, required payload
         materialization, annex audit, and report generation.
-  - [ ] Keep the first planning note at
+  - [x] Keep the first planning note at
         `planning/phase98_freshforge_materialization_template.md`.
-- [ ] P98.2 Define the instance overlay contract.
-  - [ ] Support instance path, special remote name, required materialization
+- [x] P98.2 Define the instance overlay contract.
+  - [x] Support instance path, special remote name, required materialization
         paths, optional public-data mirror paths, install extras or instance
         packages, and report output path.
-  - [ ] Keep instance-specific values outside FEMIC core.
+  - [x] Keep instance-specific values outside FEMIC core.
 - [ ] P98.3 Plan the execution surface.
   - [ ] Decide whether this belongs in a generic FreshForge provider, FEMIC
         provider extension, or a dedicated materialization provider package.
@@ -2997,6 +2997,9 @@ from prose documentation.
     for new users. The first tracked planning note is
     `planning/phase98_freshforge_materialization_template.md`; implementation
     is deferred until after the TFL6 Phase 17 FreshForge model-build scaffold.
+    TFL6 branch `feature/p17-freshforge-model-build-workflow` now contains the
+    first instance-owned FreshForge model-build workflow and the parent
+    submodule pointer is advanced to `bf9d110`.
   - `P97` / `#268` is complete: report-only namespace-aware FreshForge
     artifact metadata resolves workflow-declared artifact paths through
     FreshForge `RunContext.resolve_path(...)` for provider run records. FEMIC
