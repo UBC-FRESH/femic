@@ -19073,3 +19073,13 @@
 - Updated the parent FEMIC submodule pointers to merged K3Z main commit
   `1cbbeb4` and merged MKRF main commit `4839ddd`.
 - Left parent P92 closeout pending final parent PR checks and issue closure.
+
+## 2026-07-01 - Closed P92 Patchworks variant registry externalization
+
+- Parent PR `#259` passed GitHub docs and package-release checks after the
+  merged K3Z/MKRF submodule pointer update.
+- Marked P92 complete in `ROADMAP.md` and advanced the current edge to P93.
+- P92 closes with FEMIC core owning generic Patchworks variant registry
+  parsing, provider discovery, merge, user-overlay, and CLI behavior while K3Z
+  and MKRF own their Patchworks variant definitions through installed
+  instance-package providers.

@@ -2722,7 +2722,7 @@ Parent issue: #252
 K3Z issue: UBC-FRESH/femic-k3z-instance#31
 MKRF issue: UBC-FRESH/femic-mkrf-instance#46
 
-Status: active
+Status: complete
 
 Goal: extend Patchworks variant loading so instance packages and explicit
 registry files can provide variants, then move K3Z and MKRF variant definitions
@@ -2740,7 +2740,7 @@ out of FEMIC core packaged resources.
       availability.
 - [x] P92.5 Update docs, boundary guards, tests, and packaged resources so
       FEMIC core no longer ships K3Z/MKRF Patchworks variant definitions.
-- [ ] P92.6 Verify parent plus K3Z/MKRF instance checks, merge instance PRs
+- [x] P92.6 Verify parent plus K3Z/MKRF instance checks, merge instance PRs
       first, update parent submodule pointers, and close P92.
 
 ## Phase 93: Remove Built-In Example Instance Catalog From FEMIC Core
@@ -2776,9 +2776,14 @@ example submodules present.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P92` / `#252` is active: externalize Patchworks variant registries so
-    instance packages and explicit registry files can provide K3Z/MKRF variants
-    without FEMIC core shipping named example-instance definitions.
+  - `P93` / `#253` is next: replace the packaged K3Z/TSA29 built-in instance
+    catalog with external catalog discovery or explicit user catalog files so
+    FEMIC core no longer ships named example instance metadata by default.
+  - `P92` / `#252` is complete: Patchworks variant registry discovery now
+    supports installed instance providers and user overlays, while K3Z/MKRF
+    Patchworks variant definitions live in their instance packages under
+    `UBC-FRESH/femic-k3z-instance#31` and
+    `UBC-FRESH/femic-mkrf-instance#46`.
   - `P91` / `#251` is complete: generic TSR adjudication overlay dispatch now
     lives in FEMIC core, and TSA29 row classifications, checkpoint policy,
     reconstruction-gap interpretation overrides, and active adjudication report
