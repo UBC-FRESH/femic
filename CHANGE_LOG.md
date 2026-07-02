@@ -18991,3 +18991,15 @@
 - marked P90 complete in `ROADMAP.md`; and
 - P90 closes with FEMIC core owning generic named-pipeline contract dispatch
   while TSA29 owns the `tsa29_locked_chain_strict` implementation.
+
+## 2026-07-01 - Opened P91 TSA29 TSR adjudication overlay extraction
+
+- Created parent branch `feature/p91-tsr-adjudication-overlays`.
+- Created TSA29 branch `feature/tsa29-tsr-adjudication-overlays`.
+- Linked parent issue `#251` with TSA29 instance issue
+  `UBC-FRESH/femic-tsa29-instance#17`.
+- Recorded the P91 task breakdown in `ROADMAP.md`.
+- Locked the boundary: P91 moves TSA29 row classifications, checkpoint policy,
+  reconstruction-gap interpretation overrides, and active adjudication report
+  notes into the TSA29 instance package while FEMIC core keeps generic TSR
+  recipe, comparison, and report machinery.
