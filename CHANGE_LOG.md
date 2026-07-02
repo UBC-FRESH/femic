@@ -19325,3 +19325,17 @@
 - Recorded that FreshForge `v0.1.0a4` supports validation, inspection, and
   planning for the TFL6 graph, but does not expose `freshforge run --dry-run`;
   full execution acceptance remains later scope.
+
+## 2026-07-01 - Locked P98.3 materialization execution-surface plan
+
+- Reopened issue `#270` because P98.1/P98.2 were merged but P98.3/P98.4 were
+  still open in the roadmap.
+- Added `planning/phase98_materialization_execution_surface.md` to lock the
+  P98.4 direction: a FEMIC-owned optional FreshForge materialization provider
+  namespace with generic, config-driven nodes and instance-owned overlay YAML
+  files.
+- Expanded `ROADMAP.md` P98.3 with provider ownership, node vocabulary,
+  overlay contract, bootstrap boundary, and P98.4 handoff subtasks while
+  keeping runtime implementation deferred to P98.4.
+- Narrowed the incoming DataLad wrapper idea so the larger lifecycle/provenance
+  concept no longer duplicates the P98 bootstrap/materialization workflow.

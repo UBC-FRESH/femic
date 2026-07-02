@@ -2968,18 +2968,38 @@ from prose documentation.
         paths, optional public-data mirror paths, install extras or instance
         packages, and report output path.
   - [x] Keep instance-specific values outside FEMIC core.
-- [ ] P98.3 Plan the execution surface.
-  - [ ] Decide whether this belongs in a generic FreshForge provider, FEMIC
-        provider extension, or a dedicated materialization provider package.
-  - [ ] Keep a tiny bootstrap helper as future scope only, because FreshForge
+- [x] P98.3 Plan the execution surface.
+  - [x] Decide that P98.4 should add a FEMIC-owned optional FreshForge provider
+        namespace for model-instance materialization, using provider id
+        `femic.materialization` and entry point
+        `femic.materialization = femic.freshforge_materialization:provider_factory`.
+  - [x] Keep the provider generic and config-driven so code does not name MKRF,
+        TFL6, TSA29, K3Z, or any `external/femic-*-instance` path.
+  - [x] Lock the planned node vocabulary: toolchain check, Python environment
+        check, package install check, submodule initialization, git-annex
+        initialization, special-remote enablement, required path
+        materialization, annex availability audit, and report generation.
+  - [x] Lock the overlay contract around instance root/path, optional submodule
+        path, virtual-environment path, install requirements/extras, special
+        remote name, required materialization paths, audit paths, and report
+        path.
+  - [x] Keep a tiny bootstrap helper as future scope only, because FreshForge
         must exist before it can run the workflow.
+  - [x] Record the P98.4 implementation handoff in
+        `planning/phase98_materialization_execution_surface.md`.
 - [ ] P98.4 Implement and test the reusable template in a later phase.
   - [ ] Do not implement materialization execution as part of the TFL6 Phase 17
         model-build workflow scaffold.
+  - [ ] Add the FEMIC-owned materialization FreshForge provider namespace and
+        entry point.
+  - [ ] Add overlay parsing, validation, mocked execution tests, and a fixture
+        FreshForge workflow.
+  - [ ] Prove the first real instance overlay in a later TFL6 phase.
 
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase98_materialization_execution_surface.md`
   - `planning/phase98_freshforge_materialization_template.md`
   - `planning/phase87_parent_instance_reference_audit.md`
   - `planning/phase78_figrecover_integration_notes.md`
@@ -2990,16 +3010,15 @@ from prose documentation.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P98` / `#270` is planned: FEMIC needs a reusable FreshForge
-    model-instance materialization workflow template because recent MKRF, TFL6,
-    and TSA29 user deployment tests showed that manual submodule, virtualenv,
-    DataLad, git-annex, `arbutus-s3`, and `datalad get` setup fails too often
-    for new users. The first tracked planning note is
-    `planning/phase98_freshforge_materialization_template.md`; implementation
-    is deferred until after the TFL6 Phase 17 FreshForge model-build scaffold.
-    TFL6 branch `feature/p17-freshforge-model-build-workflow` now contains the
-    first instance-owned FreshForge model-build workflow and the parent
-    submodule pointer is advanced to merged TFL6 main commit `3bbb307`.
+  - `P98` / `#270` is active: P98.1-P98.3 are complete and P98.4 remains the
+    implementation edge. The materialization execution surface is locked as a
+    FEMIC-owned, optional FreshForge provider namespace that stays generic and
+    config-driven. Instance repos will supply small overlay YAML files with
+    instance paths, install requirements, special remote names, required
+    materialization paths, audit paths, and report paths. The next bounded move
+    is P98.4: implement the provider, overlay parser, mocked execution tests,
+    and a fixture workflow before proving a real instance overlay in a later
+    TFL6 phase.
   - `P97` / `#268` is complete: report-only namespace-aware FreshForge
     artifact metadata resolves workflow-declared artifact paths through
     FreshForge `RunContext.resolve_path(...)` for provider run records. FEMIC

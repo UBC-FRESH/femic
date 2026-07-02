@@ -14,6 +14,12 @@ that can be specialized by small instance-owned overlay configuration. The
 goal is to make the ritual executable and inspectable instead of asking users
 to manually reproduce it from prose.
 
+The execution-surface decision is recorded in
+`planning/phase98_materialization_execution_surface.md`: P98.4 should start as
+a FEMIC-owned optional FreshForge provider namespace with generic,
+config-driven nodes, while instance repositories supply only small overlay
+YAML files.
+
 ## Planned Workflow Family
 
 The first generic materialization workflow should cover these node families:
