@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+import femic
 from femic.freshforge import (
     FEMIC_PROVIDER_ID,
     FemicFreshForgeProvider,
@@ -59,7 +60,7 @@ def test_provider_metadata_serializes_deterministically() -> None:
 
     assert metadata.to_dict() == {
         "id": "femic",
-        "version": "0.1.0a1",
+        "version": femic.__version__,
         "node_types": [
             {
                 "id": "validate_case",
@@ -254,7 +255,8 @@ def test_default_freshforge_registry_discovers_installed_femic_provider() -> Non
 
 
 def test_generic_provider_execution_constructs_femic_command() -> None:
-    from freshforge.records import ExecutionContext, WorkflowNode
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus, WorkflowNode
 
     commands: list[tuple[str, ...]] = []
     provider = FemicFreshForgeProvider(command_runner=_successful_runner(commands))
@@ -270,13 +272,16 @@ def test_generic_provider_execution_constructs_femic_command() -> None:
         },
     )
 
-    result = provider.execute_node(
+    result = provider.run_node(
         node,
         node_type,
-        context=ExecutionContext(workflow_id="wf", run_id="run"),
+        context=RunContext(workflow_id="wf", workdir=Path(".")),
     )
 
+    assert result.status is RunStatus.SUCCESS
     assert result.diagnostics == ()
+    assert result.data["returncode"] == 0
+    assert result.outputs == {}
     assert commands == [
         (
             sys.executable,
@@ -292,8 +297,36 @@ def test_generic_provider_execution_constructs_femic_command() -> None:
     ]
 
 
+def test_legacy_execute_node_shim_delegates_to_run_node() -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus, WorkflowNode
+
+    commands: list[tuple[str, ...]] = []
+    provider = FemicFreshForgeProvider(command_runner=_successful_runner(commands))
+    node_type = next(
+        item
+        for item in provider.metadata().node_types
+        if item.id == "geospatial_preflight"
+    )
+    node = WorkflowNode(
+        id="geospatial_preflight",
+        provider="femic.geospatial_preflight",
+        parameters={"instance_root": "."},
+    )
+
+    result = provider.execute_node(
+        node,
+        node_type,
+        context=RunContext(workflow_id="wf", workdir=Path(".")),
+    )
+
+    assert result.status is RunStatus.SUCCESS
+    assert commands == [(sys.executable, "-m", "femic", "prep", "geospatial-preflight")]
+
+
 def test_provider_execution_failure_returns_freshforge_diagnostic() -> None:
-    from freshforge.records import ExecutionContext, WorkflowNode
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus, WorkflowNode
 
     def _failing_runner(command: tuple[str, ...]) -> subprocess.CompletedProcess[str]:
         return subprocess.CompletedProcess(
@@ -317,13 +350,14 @@ def test_provider_execution_failure_returns_freshforge_diagnostic() -> None:
         },
     )
 
-    result = provider.execute_node(
+    result = provider.run_node(
         node,
         node_type,
-        context=ExecutionContext(workflow_id="wf", run_id="run"),
+        context=RunContext(workflow_id="wf", workdir=Path(".")),
     )
 
-    assert result.metadata["returncode"] == 9
+    assert result.status is RunStatus.FAILED
+    assert result.data["returncode"] == 9
     assert {diagnostic.code for diagnostic in result.diagnostics} == {
         "femic.execution.command.failed"
     }
