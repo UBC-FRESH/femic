@@ -2806,7 +2806,7 @@ Parent issue: #262
 
 Branch: `feature/p95-femic-0.2.0a1-release`
 
-Status: active
+Status: complete
 
 Goal: prepare and publish an alpha FEMIC release that marks the P80-P94
 architecture milestone: FreshForge integration, instance-owned extension
@@ -2840,25 +2840,25 @@ example-instance coupling from `src/femic`.
         Full `mypy src` still reports the known pandas/SciPy/VDYP typing debt.
         Full `pytest` reports 19 known environment/runtime/baseline failures;
         focused P95 release validation is green.
-- [ ] P95.5 Open and merge the release PR
-  - [ ] Push the release branch and open the PR.
-  - [ ] Require GitHub build and `package-release-checks` to pass.
-  - [ ] Merge to `main` after release-prep checks pass.
-- [ ] P95.6 Publish staged and public release artifacts
+- [x] P95.5 Open and merge the release PR
+  - [x] Push the release branch and open the PR.
+  - [x] Require GitHub build and `package-release-checks` to pass.
+  - [x] Merge to `main` after release-prep checks pass.
+- [x] P95.6 Publish staged and public release artifacts
   - [x] Tag `v0.2.0a1` from merged `main`.
-  - [ ] Run `publish-testpypi` and confirm TestPyPI smoke install.
+  - [x] Run `publish-testpypi` and confirm TestPyPI smoke install.
         First TestPyPI attempt failed because publishable optional dependency
         metadata contained direct Git URL dependencies for FreshForge and
         figrecover. P95 now removes those direct URL dependencies from
         publishable package metadata and documents explicit source installs
         until those optional packages have PyPI releases.
-  - [ ] Create GitHub pre-release `FEMIC 0.2.0a1`.
-  - [ ] Run `publish-pypi` and confirm PyPI smoke install for
+  - [x] Create GitHub pre-release `FEMIC 0.2.0a1`.
+  - [x] Run `publish-pypi` and confirm PyPI smoke install for
         `femic==0.2.0a1`.
-- [ ] P95.7 Close out P95
-  - [ ] Update `CHANGE_LOG.md` with release-prep and publication results.
-  - [ ] Post required progress and closeout comments on issue `#262`.
-  - [ ] Close issue `#262` after publication and smoke checks pass.
+- [x] P95.7 Close out P95
+  - [x] Update `CHANGE_LOG.md` with release-prep and publication results.
+  - [x] Post required progress and closeout comments on issue `#262`.
+  - [x] Close issue `#262` after publication and smoke checks pass.
 
 ### Detailed Next Steps Notes
 
@@ -2872,17 +2872,13 @@ example-instance coupling from `src/femic`.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P95` / `#262` is active: publish FEMIC `0.2.0a1` as the core
-    decoupling alpha release. Version surfaces are synchronized,
-    `RELEASE_NOTES.md` is in place, `--version` works through both
-    `python -m femic` and the console script, and focused release validation
-    plus artifact inspection passed. PR `#263` merged and tag `v0.2.0a1` was
-    pushed, but the first TestPyPI publish failed because PyPI rejects direct
-    Git URL dependencies in optional-dependency metadata. The current edge is
-    a P95 metadata-fix PR that removes those direct URLs, reruns release
-    checks, moves the tag to the corrected commit, and retries TestPyPI. The
-    unrelated `external/femic-public-data` submodule state remains out of
-    scope for this release branch.
+  - `P95` / `#262` is complete: FEMIC `0.2.0a1` is published as the core
+    decoupling alpha release. GitHub prerelease `FEMIC 0.2.0a1`, tag
+    `v0.2.0a1`, TestPyPI workflow `28562782006`, and PyPI workflow
+    `28562848866` all completed successfully after the optional-dependency
+    metadata fix. PyPI JSON metadata confirms `0.2.0a1` with both wheel and
+    sdist. The unrelated `external/femic-public-data` submodule state remains
+    out of scope for this release lane.
   - `P94` / `#254` is complete: remaining named-instance references were
     scrubbed from `src/femic`, packaged resources, generic templates, and
     generic CLI help. The boundary guard now rejects any new named
