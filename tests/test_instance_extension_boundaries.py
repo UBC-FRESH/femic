@@ -24,11 +24,7 @@ ALLOWED_INSTANCE_REFERENCE_COUNTS = {
     "src/femic/patchworks_runtime.py": {"k3z": 2},
     "src/femic/cli/main.py": {"k3z": 3, "tsa29": 2},
     "src/femic/pipeline/vdyp_overrides.py": {"tsa29": 1},
-    "src/femic/tsr_catalog/recipes.py": {
-        "tsa29": 61,
-        "tsa_29": 1,
-        "femic-tsa29-instance": 4,
-    },
+    "src/femic/tsr_catalog/recipes.py": {"tsa29": 38},
     "src/femic/resources/builtins/instances.builtin.yaml": {
         "k3z": 4,
         "tsa29": 5,

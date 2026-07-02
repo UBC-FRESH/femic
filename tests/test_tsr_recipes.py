@@ -20,8 +20,82 @@ from shapely.geometry import (
 from femic import bcdc_dwds
 from femic import tsr_catalog
 from femic.fmg.patchworks import build_fragments_geodataframe
+from femic.tsr_catalog import TsrLandBaseSummaryRowClassification
+from femic.tsr_catalog import adjudication as tsr_adjudication
 from femic.tsr_catalog import recipes as tsr_recipes
 from femic.tsr_catalog import step13_attributes as tsr_step13_attributes
+
+
+class _FixtureAdjudicationProvider:
+    provider_id = "fixture"
+
+    def classify_land_base_summary_row(
+        self, *, label: str
+    ) -> TsrLandBaseSummaryRowClassification | None:
+        classifications = {
+            "future roads": TsrLandBaseSummaryRowClassification(
+                land_base_stage="lhlb_to_thlb",
+                execution_class="projected_harvest_exclusion",
+                benchmark_role="deduction",
+            ),
+            "proven aboriginal rights areas": TsrLandBaseSummaryRowClassification(
+                land_base_stage="aflb_to_lhlb",
+                execution_class="legal_harvest_exclusion",
+                benchmark_role="deduction",
+            ),
+            "buffered trails": TsrLandBaseSummaryRowClassification(
+                land_base_stage="lhlb_to_thlb",
+                execution_class="projected_harvest_exclusion",
+                benchmark_role="deduction",
+            ),
+            "total tsa area": TsrLandBaseSummaryRowClassification(
+                land_base_stage="reference_target",
+                execution_class="reference_only",
+                benchmark_role="reference_total",
+            ),
+            "analysis forest land base": TsrLandBaseSummaryRowClassification(
+                land_base_stage="glb_to_aflb",
+                execution_class="reference_only",
+                benchmark_role="reference_cumulative",
+            ),
+        }
+        return classifications.get(label.casefold())
+
+    def validate_checkpoint_path(
+        self, *, instance_root: Path, checkpoint_path: Path
+    ) -> None:
+        _ = instance_root
+        if checkpoint_path.name.startswith("ria_vri_vclr1p_checkpoint"):
+            raise tsr_adjudication.TsrAdjudicationOverlayError(
+                "Fixture legacy checkpoint fallback is disabled."
+            )
+
+    def is_strict_seam_checkpoint_path(
+        self, *, instance_root: Path, checkpoint_path: Path
+    ) -> bool:
+        try:
+            checkpoint_path.resolve().relative_to(
+                (instance_root / "data" / "tsr").resolve()
+            )
+        except ValueError:
+            return False
+        return checkpoint_path.suffix == ".feather"
+
+
+def _register_fixture_adjudication_provider(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        tsr_adjudication,
+        "_TSR_ADJUDICATION_OVERLAY_PROVIDERS",
+        {},
+    )
+    monkeypatch.setattr(
+        tsr_adjudication,
+        "_DISCOVERED_TSR_ADJUDICATION_OVERLAYS",
+        True,
+    )
+    tsr_adjudication.register_tsr_adjudication_overlay_provider(
+        _FixtureAdjudicationProvider()
+    )
 
 
 def test_load_checkpoint_geodataframe_reads_explicit_feather(tmp_path: Path) -> None:
@@ -2370,7 +2444,7 @@ In total, 22 754 hectares will be excluded from the forested land base at the ti
     assert "2.28% future RTL factor" in subrules[0]["candidate_values"]
 
 
-def test_infer_parent_row_stage_places_future_roads_in_lhlb_to_thlb_for_tsa29() -> None:
+def test_infer_parent_row_stage_uses_adjudication_provider_classification() -> None:
     stage, execution_class = tsr_recipes._infer_parent_row_stage(
         label="Future roads",
         linked_subsection={
@@ -2380,7 +2454,7 @@ def test_infer_parent_row_stage_places_future_roads_in_lhlb_to_thlb_for_tsa29() 
         },
         seen_aflb_row=True,
         seen_thlb_row=False,
-        tsa_code="29",
+        adjudication_provider=_FixtureAdjudicationProvider(),
     )
 
     assert stage == "lhlb_to_thlb"
@@ -2399,7 +2473,7 @@ def test_infer_parent_row_stage_places_proven_aboriginal_rights_in_aflb_to_lhlb(
         },
         seen_aflb_row=True,
         seen_thlb_row=False,
-        tsa_code="29",
+        adjudication_provider=_FixtureAdjudicationProvider(),
     )
 
     assert stage == "aflb_to_lhlb"
@@ -2416,7 +2490,7 @@ def test_infer_parent_row_stage_places_buffered_trails_in_lhlb_to_thlb() -> None
         },
         seen_aflb_row=True,
         seen_thlb_row=False,
-        tsa_code="29",
+        adjudication_provider=_FixtureAdjudicationProvider(),
     )
 
     assert stage == "lhlb_to_thlb"
@@ -2452,7 +2526,7 @@ Exclude non-forest areas from the AFLB.
     )
 
 
-def test_build_parent_steps_from_land_base_summary_prefers_tsa29_table_stage_over_subsection_stage() -> (
+def test_build_parent_steps_from_land_base_summary_prefers_provider_stage_over_subsection_stage() -> (
     None
 ):
     summary_rows = (
@@ -2487,7 +2561,7 @@ def test_build_parent_steps_from_land_base_summary_prefers_tsa29_table_stage_ove
             summary_rows=summary_rows,
             subsections=subsections,
             source_index=(),
-            tsa_code="29",
+            adjudication_provider=_FixtureAdjudicationProvider(),
         )
     )
 
@@ -8091,10 +8165,16 @@ def test_default_workbench_checkpoint_path_prefers_step13_attribute_checkpoint(
     assert selected == enriched_path.resolve()
 
 
-def test_find_tsr_checkpoint_path_rejects_tsa29_legacy_fallback(tmp_path: Path) -> None:
-    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+def test_find_tsr_checkpoint_path_rejects_configured_legacy_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _register_fixture_adjudication_provider(monkeypatch)
+    instance_root = tmp_path / "instance"
     data_root = instance_root / "data"
     data_root.mkdir(parents=True)
+    config_path = instance_root / "config" / "tsr" / "adjudication_overlay.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("provider_id: fixture\n", encoding="utf-8")
     (data_root / "ria_vri_vclr1p_checkpoint1.feather").write_text(
         "legacy", encoding="utf-8"
     )
@@ -8104,18 +8184,19 @@ def test_find_tsr_checkpoint_path_rejects_tsa29_legacy_fallback(tmp_path: Path) 
             instance_root=instance_root, mode="earliest"
         )
 
-    assert (
-        "Legacy `data/ria_vri_vclr1p_checkpoint*.feather` fallback discovery is disabled for TSA29"
-        in str(excinfo.value)
-    )
+    assert "Fixture legacy checkpoint fallback is disabled." in str(excinfo.value)
 
 
-def test_find_curve_ready_thlb_checkpoint_path_rejects_tsa29_legacy_fallback(
-    tmp_path: Path,
+def test_find_curve_ready_thlb_checkpoint_path_rejects_configured_legacy_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    instance_root = tmp_path / "external" / "femic-tsa29-instance"
+    _register_fixture_adjudication_provider(monkeypatch)
+    instance_root = tmp_path / "instance"
     data_root = instance_root / "data"
     data_root.mkdir(parents=True)
+    config_path = instance_root / "config" / "tsr" / "adjudication_overlay.yaml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("provider_id: fixture\n", encoding="utf-8")
     (data_root / "ria_vri_vclr1p_checkpoint7.feather").write_text(
         "legacy", encoding="utf-8"
     )
@@ -8123,9 +8204,7 @@ def test_find_curve_ready_thlb_checkpoint_path_rejects_tsa29_legacy_fallback(
     with pytest.raises(tsr_recipes.TsrRecipeError) as excinfo:
         tsr_recipes._find_curve_ready_thlb_checkpoint_path(instance_root=instance_root)
 
-    assert "Legacy curve-ready checkpoint fallback is disabled for TSA29" in str(
-        excinfo.value
-    )
+    assert "Fixture legacy checkpoint fallback is disabled." in str(excinfo.value)
 
 
 def test_specialized_compiled_logic_for_riparian_uses_classed_buffers() -> None:
