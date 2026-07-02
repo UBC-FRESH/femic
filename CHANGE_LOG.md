@@ -19096,3 +19096,24 @@
 - Locked the boundary: FEMIC core keeps generic instance catalog parsing,
   discovery, install, and CLI plumbing; K3Z and TSA29 own their installable
   example instance catalog metadata through instance-package providers.
+
+## 2026-07-01 - Implemented P93 instance catalog provider seam
+
+- Added generic FEMIC instance catalog provider registration and entry-point
+  discovery through `femic.instance_catalogs`.
+- Added explicit YAML catalog loading for callers that want to supply a
+  catalog file directly.
+- Moved the K3Z installable instance catalog entry into `k3z_femic` on branch
+  `feature/k3z-instance-catalog-provider`.
+- Moved the TSA29 installable instance catalog entry into `tsa29_femic` on
+  branch `feature/tsa29-instance-catalog-provider`.
+- Reduced `src/femic/resources/builtins/instances.builtin.yaml` to an empty
+  generic catalog shell and removed its K3Z/TSA29 allowlist from the named
+  instance boundary guard.
+- Added the generic `femic instance catalog list/install` CLI surface while
+  keeping `femic instance builtins ...` as a compatibility alias for this
+  phase.
+- Verified focused parent checks for ruff, mypy on touched catalog/CLI modules,
+  instance-catalog tests, and the boundary guard. Verified focused K3Z and
+  TSA29 provider tests after editable installs, and confirmed live discovery
+  returns `k3z` and `tsa29`.

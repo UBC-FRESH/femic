@@ -2755,16 +2755,16 @@ Goal: replace the packaged K3Z/TSA29 built-in instance catalog with external
 catalog discovery or explicit user catalog files. FEMIC core should not ship
 named example instance metadata by default.
 
-- [ ] P93.1 Add a generic instance catalog provider seam in FEMIC core,
+- [x] P93.1 Add a generic instance catalog provider seam in FEMIC core,
       including explicit registration, entry-point discovery, duplicate
       detection, and optional explicit user catalog YAML loading.
-- [ ] P93.2 Move the K3Z installable instance catalog entry into the K3Z
+- [x] P93.2 Move the K3Z installable instance catalog entry into the K3Z
       instance package and expose it through an installed provider.
-- [ ] P93.3 Move the TSA29 installable instance catalog entry into the TSA29
+- [x] P93.3 Move the TSA29 installable instance catalog entry into the TSA29
       instance package and expose it through an installed provider.
-- [ ] P93.4 Replace core tests/docs/CLI wording that treats K3Z/TSA29 as
+- [x] P93.4 Replace core tests/docs/CLI wording that treats K3Z/TSA29 as
       built-in FEMIC metadata with generic instance-catalog behavior.
-- [ ] P93.5 Reduce `src/femic/resources/builtins/instances.builtin.yaml` to an
+- [x] P93.5 Reduce `src/femic/resources/builtins/instances.builtin.yaml` to an
       empty generic catalog shell and lower the P88 boundary allowlist.
 - [ ] P93.6 Verify parent plus K3Z/TSA29 instance checks, merge instance PRs
       first, update parent submodule pointers, and close P93.

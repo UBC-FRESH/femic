@@ -3597,7 +3597,7 @@ def test_patchworks_run_variant_surfaces_builtin_install_hint(
     monkeypatch.setattr(
         cli_main,
         "builtins_install_hint_for_variant",
-        lambda _variant: "Built-in instance k3z is not available locally.",
+        lambda _variant: "Registered instance k3z is not available locally.",
     )
 
     with pytest.raises(typer.Exit) as exc_info:
@@ -3618,7 +3618,7 @@ def test_patchworks_run_variant_surfaces_builtin_install_hint(
 
     assert exc_info.value.exit_code == 1
     assert any(
-        "Built-in instance k3z is not available locally." in msg for msg in messages
+        "Registered instance k3z is not available locally." in msg for msg in messages
     )
 
 

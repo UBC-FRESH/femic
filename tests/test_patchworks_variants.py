@@ -394,8 +394,8 @@ def test_builtins_install_hint_for_variant_returns_helpful_message(
     )
 
     assert hint == (
-        "Built-in instance k3z is not available locally. "
-        "Install it with `femic instance builtins install k3z`."
+        "Registered instance k3z is not available locally. "
+        "Install it with `femic instance catalog install k3z`."
     )
 
 

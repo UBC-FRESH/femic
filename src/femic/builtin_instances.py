@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from importlib import resources
+from importlib import metadata, resources
 from pathlib import Path
 import subprocess
-from typing import Any, Callable
+from typing import Any, Callable, Protocol
 
 import yaml
 
@@ -15,15 +15,28 @@ from femic.user_config import load_femic_user_config
 
 BUILTIN_INSTANCE_PACKAGE = "femic.resources.builtins"
 BUILTIN_INSTANCE_RESOURCE = "instances.builtin.yaml"
+INSTANCE_CATALOG_ENTRY_POINT_GROUP = "femic.instance_catalogs"
+
+_REGISTERED_INSTANCE_CATALOG_PROVIDERS: dict[str, "InstanceCatalogProvider"] = {}
+_DISCOVERED_INSTANCE_CATALOG_PROVIDERS = False
 
 
 class BuiltinInstanceCatalogError(RuntimeError):
-    """Raised when the built-in instance catalog or install state is invalid."""
+    """Raised when the instance catalog or install state is invalid."""
+
+
+class InstanceCatalogProvider(Protocol):
+    """Provider for installable FEMIC instance catalog metadata."""
+
+    provider_id: str
+
+    def load_catalog_payload(self) -> dict[str, Any]:
+        """Return a FEMIC instance catalog payload mapping."""
 
 
 @dataclass(frozen=True)
 class BuiltinSupportRepoDefinition:
-    """Auxiliary repo a built-in instance may rely on."""
+    """Auxiliary repo a registered instance may rely on."""
 
     repo_id: str
     label: str
@@ -34,7 +47,7 @@ class BuiltinSupportRepoDefinition:
 
 @dataclass(frozen=True)
 class BuiltinInstanceDefinition:
-    """Standalone FEMIC-built instance that can be installed for package users."""
+    """Standalone FEMIC instance that can be installed for package users."""
 
     builtin_id: str
     label: str
@@ -46,7 +59,7 @@ class BuiltinInstanceDefinition:
 
 @dataclass(frozen=True)
 class BuiltinInstanceCatalog:
-    """Shipped catalog of installable FEMIC built-ins."""
+    """Catalog of installable FEMIC instances."""
 
     support_repos: tuple[BuiltinSupportRepoDefinition, ...]
     instances: tuple[BuiltinInstanceDefinition, ...]
@@ -57,7 +70,7 @@ class BuiltinInstanceCatalog:
             if item.builtin_id == normalized:
                 return item
         raise BuiltinInstanceCatalogError(
-            f"Unknown FEMIC built-in instance: {builtin_id}"
+            f"Unknown FEMIC registered instance: {builtin_id}"
         )
 
     def get_support_repo(self, repo_id: str) -> BuiltinSupportRepoDefinition:
@@ -75,7 +88,7 @@ class BuiltinInstanceCatalog:
 
 @dataclass(frozen=True)
 class BuiltinRepoStatus:
-    """Install status for one built-in or support repo."""
+    """Install status for one registered instance or support repo."""
 
     status: str
     path: Path
@@ -83,11 +96,79 @@ class BuiltinRepoStatus:
 
 @dataclass(frozen=True)
 class BuiltinInstallResult:
-    """Summary of one built-in install operation."""
+    """Summary of one instance catalog install operation."""
 
     managed_external_root: Path
     installed_paths: tuple[Path, ...]
     skipped_paths: tuple[Path, ...]
+
+
+def _normalize_provider_id(value: str) -> str:
+    normalized = str(value or "").strip()
+    if not normalized:
+        raise BuiltinInstanceCatalogError(
+            "Instance catalog provider id must not be blank."
+        )
+    return normalized
+
+
+def register_instance_catalog_provider(provider: InstanceCatalogProvider) -> None:
+    """Register one in-process instance catalog provider."""
+
+    provider_id = _normalize_provider_id(getattr(provider, "provider_id", ""))
+    if provider_id in _REGISTERED_INSTANCE_CATALOG_PROVIDERS:
+        raise BuiltinInstanceCatalogError(
+            f"Duplicate instance catalog provider id: {provider_id}"
+        )
+    payload = provider.load_catalog_payload()
+    if not isinstance(payload, dict):
+        raise BuiltinInstanceCatalogError(
+            f"Instance catalog provider {provider_id} must return a mapping payload."
+        )
+    _REGISTERED_INSTANCE_CATALOG_PROVIDERS[provider_id] = provider
+
+
+def clear_instance_catalog_providers() -> None:
+    """Clear in-process instance catalog providers for tests and diagnostics."""
+
+    global _DISCOVERED_INSTANCE_CATALOG_PROVIDERS
+    _REGISTERED_INSTANCE_CATALOG_PROVIDERS.clear()
+    _DISCOVERED_INSTANCE_CATALOG_PROVIDERS = False
+
+
+def _iter_instance_catalog_entry_points() -> tuple[metadata.EntryPoint, ...]:
+    entry_points: Any = metadata.entry_points()
+    if hasattr(entry_points, "select"):
+        selected = entry_points.select(group=INSTANCE_CATALOG_ENTRY_POINT_GROUP)
+    else:  # pragma: no cover - compatibility for older importlib.metadata APIs
+        selected = entry_points.get(INSTANCE_CATALOG_ENTRY_POINT_GROUP, ())
+    return tuple(selected)
+
+
+def discover_instance_catalog_providers() -> tuple[str, ...]:
+    """Discover installed FEMIC instance catalog providers."""
+
+    global _DISCOVERED_INSTANCE_CATALOG_PROVIDERS
+    if _DISCOVERED_INSTANCE_CATALOG_PROVIDERS:
+        return tuple(sorted(_REGISTERED_INSTANCE_CATALOG_PROVIDERS))
+
+    for entry_point in _iter_instance_catalog_entry_points():
+        try:
+            loaded = entry_point.load()
+            provider = loaded()
+        except Exception as exc:  # pragma: no cover - exercised through tests
+            raise BuiltinInstanceCatalogError(
+                f"Could not load instance catalog provider {entry_point.name}: {exc}"
+            ) from exc
+        try:
+            register_instance_catalog_provider(provider)
+        except BuiltinInstanceCatalogError as exc:
+            raise BuiltinInstanceCatalogError(
+                f"Invalid instance catalog provider {entry_point.name}: {exc}"
+            ) from exc
+
+    _DISCOVERED_INSTANCE_CATALOG_PROVIDERS = True
+    return tuple(sorted(_REGISTERED_INSTANCE_CATALOG_PROVIDERS))
 
 
 def _read_builtin_resource_text() -> str:
@@ -97,19 +178,33 @@ def _read_builtin_resource_text() -> str:
     return resource.read_text(encoding="utf-8")
 
 
-def _load_catalog_payload() -> dict[str, Any]:
+def _load_packaged_catalog_payload() -> dict[str, Any]:
     try:
         payload = yaml.safe_load(_read_builtin_resource_text())
     except yaml.YAMLError as exc:
         raise BuiltinInstanceCatalogError(
-            f"Invalid built-in instance catalog {BUILTIN_INSTANCE_RESOURCE}: {exc}"
+            f"Invalid packaged instance catalog {BUILTIN_INSTANCE_RESOURCE}: {exc}"
         ) from exc
     if payload is None:
         return {}
     if not isinstance(payload, dict):
         raise BuiltinInstanceCatalogError(
-            f"Built-in instance catalog {BUILTIN_INSTANCE_RESOURCE} must be a mapping."
+            f"Packaged instance catalog {BUILTIN_INSTANCE_RESOURCE} must be a mapping."
         )
+    return payload
+
+
+def _load_yaml_catalog_path(path: Path) -> dict[str, Any]:
+    try:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        raise BuiltinInstanceCatalogError(
+            f"Invalid instance catalog {path}: {exc}"
+        ) from exc
+    if payload is None:
+        return {}
+    if not isinstance(payload, dict):
+        raise BuiltinInstanceCatalogError(f"Instance catalog {path} must be a mapping.")
     return payload
 
 
@@ -117,14 +212,11 @@ def _parse_notes(payload: Any) -> tuple[str, ...]:
     if payload in (None, ""):
         return ()
     if not isinstance(payload, (list, tuple)):
-        raise BuiltinInstanceCatalogError("Built-in catalog notes must be a list.")
+        raise BuiltinInstanceCatalogError("Instance catalog notes must be a list.")
     return tuple(str(item).strip() for item in payload if str(item).strip())
 
 
-def load_builtin_instance_catalog() -> BuiltinInstanceCatalog:
-    """Load the packaged built-in instance catalog."""
-
-    payload = _load_catalog_payload()
+def _parse_catalog_payload(payload: dict[str, Any]) -> BuiltinInstanceCatalog:
     support_payload = payload.get("support_repos", ())
     instance_payload = payload.get("instances", ())
     if not isinstance(support_payload, (list, tuple)):
@@ -162,6 +254,52 @@ def load_builtin_instance_catalog() -> BuiltinInstanceCatalog:
     return BuiltinInstanceCatalog(support_repos=support_repos, instances=instances)
 
 
+def _merge_catalogs(
+    catalogs: tuple[BuiltinInstanceCatalog, ...],
+) -> BuiltinInstanceCatalog:
+    support_by_id: dict[str, BuiltinSupportRepoDefinition] = {}
+    instance_by_id: dict[str, BuiltinInstanceDefinition] = {}
+    for catalog in catalogs:
+        for support_repo in catalog.support_repos:
+            support_by_id[support_repo.repo_id] = support_repo
+        for instance in catalog.instances:
+            instance_by_id[instance.builtin_id] = instance
+    return BuiltinInstanceCatalog(
+        support_repos=tuple(support_by_id[key] for key in sorted(support_by_id)),
+        instances=tuple(instance_by_id[key] for key in sorted(instance_by_id)),
+    )
+
+
+def load_instance_catalog(
+    *,
+    catalog_path: Path | None = None,
+    include_entry_points: bool = True,
+) -> BuiltinInstanceCatalog:
+    """Load packaged, provider, and optional explicit FEMIC instance catalogs."""
+
+    catalogs = [_parse_catalog_payload(_load_packaged_catalog_payload())]
+    if include_entry_points:
+        discover_instance_catalog_providers()
+    for provider_id in sorted(_REGISTERED_INSTANCE_CATALOG_PROVIDERS):
+        payload = _REGISTERED_INSTANCE_CATALOG_PROVIDERS[
+            provider_id
+        ].load_catalog_payload()
+        if not isinstance(payload, dict):
+            raise BuiltinInstanceCatalogError(
+                f"Instance catalog provider {provider_id} must return a mapping payload."
+            )
+        catalogs.append(_parse_catalog_payload(payload))
+    if catalog_path is not None:
+        catalogs.append(_parse_catalog_payload(_load_yaml_catalog_path(catalog_path)))
+    return _merge_catalogs(tuple(catalogs))
+
+
+def load_builtin_instance_catalog() -> BuiltinInstanceCatalog:
+    """Load the merged installable FEMIC instance catalog."""
+
+    return load_instance_catalog()
+
+
 def _looks_like_git_worktree(path: Path) -> bool:
     return (path / ".git").exists()
 
@@ -176,7 +314,7 @@ def resolve_builtin_repo_status(
     source_root: Path | None = None,
     user_config_path: Path | None = None,
 ) -> BuiltinRepoStatus:
-    """Return whether a known built-in/support repo is available locally."""
+    """Return whether a known registered/support repo is available locally."""
 
     effective_source_root = (source_root or _source_tree_root()).expanduser().resolve()
     source_candidate = (effective_source_root / "external" / target_dirname).resolve()
@@ -196,7 +334,7 @@ def resolve_builtin_external_path(
     source_root: Path | None = None,
     user_config_path: Path | None = None,
 ) -> Path:
-    """Resolve a repo-local built-in external path for source or package installs."""
+    """Resolve a repo-local external path for source or package installs."""
 
     candidate = relpath.expanduser()
     if candidate.is_absolute():
@@ -288,7 +426,7 @@ def install_builtin_instances(
     git_executable: str = "git",
     run_fn: Callable[..., Any] = subprocess.run,
 ) -> BuiltinInstallResult:
-    """Install one built-in instance or all built-ins into the managed root."""
+    """Install one registered instance or all registered instances into the managed root."""
 
     catalog = load_builtin_instance_catalog()
     managed_external_root = load_femic_user_config(

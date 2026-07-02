@@ -53,7 +53,7 @@ from femic.bcdc_dwds import (
 from femic.builtin_instances import (
     BuiltinInstanceCatalogError,
     install_builtin_instances,
-    load_builtin_instance_catalog,
+    load_instance_catalog,
     resolve_builtin_repo_status,
 )
 from femic.fansier_runtime import (
@@ -345,10 +345,15 @@ instance_config_app = typer.Typer(
     no_args_is_help=True,
     help="Inspect and configure user-scoped FEMIC instance paths.",
 )
+instance_catalog_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Inspect and install registered FEMIC example instances.",
+)
 instance_builtins_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
-    help="Inspect and install FEMIC built-in example instances.",
+    help="Compatibility alias for registered FEMIC example instances.",
 )
 fansier_app = typer.Typer(
     add_completion=False,
@@ -5321,9 +5326,9 @@ def pipelines_run(
 
 @instance_config_app.command("set-managed-external-root")
 def instance_config_set_managed_external_root(
-    path: Path = typer.Argument(..., help="Managed built-in instance root."),
+    path: Path = typer.Argument(..., help="Managed registered-instance root."),
 ) -> None:
-    """Persist the managed built-in instance root in the FEMIC user config."""
+    """Persist the managed registered-instance root in the FEMIC user config."""
 
     config = _load_or_exit_user_config()
     updated = with_managed_external_root(config, path)
@@ -5347,17 +5352,18 @@ def instance_config_set_user_instance_root(
     console.print(f"user_instance_root: {updated.paths.user_instance_root}")
 
 
+@instance_catalog_app.command("list")
 @instance_builtins_app.command("list")
-def instance_builtins_list() -> None:
-    """List FEMIC-owned built-in instances available for source or package installs."""
+def instance_catalog_list() -> None:
+    """List registered FEMIC instances available for source or package installs."""
 
     try:
-        catalog = load_builtin_instance_catalog()
+        catalog = load_instance_catalog()
     except BuiltinInstanceCatalogError as exc:
-        console.print(f"[red]FEMIC built-in catalog error:[/red] {exc}")
+        console.print(f"[red]FEMIC instance catalog error:[/red] {exc}")
         raise typer.Exit(code=1) from exc
 
-    console.print("[green]FEMIC built-in instances[/green]")
+    console.print("[green]FEMIC registered instances[/green]")
     for item in catalog.instances:
         status = resolve_builtin_repo_status(target_dirname=item.target_dirname)
         support_notes = list(item.support_repo_ids) or ["none"]
@@ -5371,19 +5377,23 @@ def instance_builtins_list() -> None:
             console.print(f"  note: {note}")
 
 
+@instance_catalog_app.command("install")
 @instance_builtins_app.command("install")
-def instance_builtins_install(
-    builtin_id: str = typer.Argument(..., help="Built-in id to install, or `all`."),
+def instance_catalog_install(
+    instance_id: str = typer.Argument(
+        ...,
+        help="Registered instance id to install, or `all`.",
+    ),
 ) -> None:
-    """Install one or all FEMIC built-in instances into the managed user root."""
+    """Install one or all registered FEMIC instances into the managed user root."""
 
     try:
-        result = install_builtin_instances(builtin_id)
+        result = install_builtin_instances(instance_id)
     except BuiltinInstanceCatalogError as exc:
-        console.print(f"[red]FEMIC built-in install failed:[/red] {exc}")
+        console.print(f"[red]FEMIC instance install failed:[/red] {exc}")
         raise typer.Exit(code=1) from exc
 
-    console.print("[green]FEMIC built-in install complete[/green]")
+    console.print("[green]FEMIC instance install complete[/green]")
     console.print(f"managed_external_root: {result.managed_external_root}")
     console.print(
         f"installed={len(result.installed_paths)} skipped={len(result.skipped_paths)}"
@@ -10213,5 +10223,6 @@ patchworks_app.add_typer(patchworks_scenario_sets_app, name="scenario-sets")
 patchworks_app.add_typer(patchworks_variants_app, name="variants")
 app.add_typer(patchworks_app, name="patchworks")
 instance_app.add_typer(instance_config_app, name="config")
+instance_app.add_typer(instance_catalog_app, name="catalog")
 instance_app.add_typer(instance_builtins_app, name="builtins")
 app.add_typer(instance_app, name="instance")
