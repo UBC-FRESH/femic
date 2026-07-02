@@ -2746,12 +2746,28 @@ out of FEMIC core packaged resources.
 ## Phase 93: Remove Built-In Example Instance Catalog From FEMIC Core
 
 Parent issue: #253
+K3Z issue: UBC-FRESH/femic-k3z-instance#33
+TSA29 issue: UBC-FRESH/femic-tsa29-instance#19
 
-Status: planned
+Status: active
 
 Goal: replace the packaged K3Z/TSA29 built-in instance catalog with external
 catalog discovery or explicit user catalog files. FEMIC core should not ship
 named example instance metadata by default.
+
+- [ ] P93.1 Add a generic instance catalog provider seam in FEMIC core,
+      including explicit registration, entry-point discovery, duplicate
+      detection, and optional explicit user catalog YAML loading.
+- [ ] P93.2 Move the K3Z installable instance catalog entry into the K3Z
+      instance package and expose it through an installed provider.
+- [ ] P93.3 Move the TSA29 installable instance catalog entry into the TSA29
+      instance package and expose it through an installed provider.
+- [ ] P93.4 Replace core tests/docs/CLI wording that treats K3Z/TSA29 as
+      built-in FEMIC metadata with generic instance-catalog behavior.
+- [ ] P93.5 Reduce `src/femic/resources/builtins/instances.builtin.yaml` to an
+      empty generic catalog shell and lower the P88 boundary allowlist.
+- [ ] P93.6 Verify parent plus K3Z/TSA29 instance checks, merge instance PRs
+      first, update parent submodule pointers, and close P93.
 
 ## Phase 94: Complete Core Decoupling From Example Instances
 
@@ -2776,7 +2792,7 @@ example submodules present.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P93` / `#253` is next: replace the packaged K3Z/TSA29 built-in instance
+  - `P93` / `#253` is active: replace the packaged K3Z/TSA29 built-in instance
     catalog with external catalog discovery or explicit user catalog files so
     FEMIC core no longer ships named example instance metadata by default.
   - `P92` / `#252` is complete: Patchworks variant registry discovery now

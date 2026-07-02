@@ -19083,3 +19083,16 @@
   parsing, provider discovery, merge, user-overlay, and CLI behavior while K3Z
   and MKRF own their Patchworks variant definitions through installed
   instance-package providers.
+
+## 2026-07-01 - Opened P93 instance catalog externalization
+
+- Created parent branch `feature/p93-externalize-instance-catalog`.
+- Created K3Z branch `feature/k3z-instance-catalog-provider`.
+- Created TSA29 branch `feature/tsa29-instance-catalog-provider`.
+- Linked parent issue `#253` with K3Z issue
+  `UBC-FRESH/femic-k3z-instance#33` and TSA29 issue
+  `UBC-FRESH/femic-tsa29-instance#19`.
+- Recorded the P93 task breakdown in `ROADMAP.md`.
+- Locked the boundary: FEMIC core keeps generic instance catalog parsing,
+  discovery, install, and CLI plumbing; K3Z and TSA29 own their installable
+  example instance catalog metadata through instance-package providers.
