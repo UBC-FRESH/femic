@@ -48,6 +48,7 @@ Current curated pages in this section include ``femic.instance_context``,
 ``femic.bcdc_dwds``,
 ``femic.document_figures``,
 ``femic.freshforge``,
+``femic.freshforge_materialization``,
 ``femic.tsr_catalog``,
 ``femic.geospatial_preflight``,
 ``femic.pipeline.bundle``, ``femic.pipeline.legacy_runtime``, and
@@ -63,6 +64,7 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-bcdc-dwds
    femic-document-figures
    femic-freshforge
+   femic-freshforge-materialization
    femic-tsr-catalog
    femic-geospatial-preflight
    femic-pipeline-bundle

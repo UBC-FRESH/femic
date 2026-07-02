@@ -1,0 +1,13 @@
+workflow:
+  id: femic_materialization_smoke
+  name: FEMIC materialization provider smoke workflow
+  description: Public-safe FreshForge run that writes only a materialization report.
+nodes:
+  - id: write_materialization_report
+    provider: femic.materialization.write_materialization_report
+    outputs:
+      materialization_report: materialization_report
+    parameters:
+      overlay: examples/freshforge/materialization_overlay.yaml
+    artifacts:
+      report: runtime/freshforge/materialization_report.json
