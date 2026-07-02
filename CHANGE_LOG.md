@@ -19003,3 +19003,18 @@
   reconstruction-gap interpretation overrides, and active adjudication report
   notes into the TSA29 instance package while FEMIC core keeps generic TSR
   recipe, comparison, and report machinery.
+
+## 2026-07-01 - Implemented P91 TSR adjudication overlay seam
+
+- Added generic FEMIC TSR adjudication overlay registration, entry-point
+  discovery, and instance config selection through
+  `config/tsr/adjudication_overlay.yaml`.
+- Replaced hardcoded parent TSA29 row classification, checkpoint policy,
+  reconstruction-gap interpretation overrides, and active report notes with
+  provider-backed generic hooks.
+- Added parent tests for provider registration/discovery/config selection and
+  updated the named-instance boundary guard so the `recipes.py` TSA29 allowlist
+  dropped from 61 plus folder-name references to 38 remaining execution-rule
+  references.
+- Verified focused parent checks for ruff, mypy on touched TSR modules, provider
+  discovery, P91 recipe tests, and the boundary guard.

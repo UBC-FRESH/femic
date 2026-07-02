@@ -2703,13 +2703,13 @@ instance-owned overlays.
 - [x] Create parent branch `feature/p91-tsr-adjudication-overlays`.
 - [x] Create TSA29 branch `feature/tsa29-tsr-adjudication-overlays`.
 - [x] Open TSA29 issue `UBC-FRESH/femic-tsa29-instance#17`.
-- [ ] Add generic TSR adjudication overlay provider registration and discovery
+- [x] Add generic TSR adjudication overlay provider registration and discovery
       in FEMIC core.
-- [ ] Move TSA29 row classifications, checkpoint policy, interpretation
+- [x] Move TSA29 row classifications, checkpoint policy, interpretation
       overrides, and active adjudication report notes into `tsa29_femic`.
-- [ ] Replace parent hardcoded TSA29 adjudication branches with provider-backed
+- [x] Replace parent hardcoded TSA29 adjudication branches with provider-backed
       generic defaults and clear missing-provider errors.
-- [ ] Update parent and TSA29 tests for provider registration, TSA29 behavior
+- [x] Update parent and TSA29 tests for provider registration, TSA29 behavior
       preservation, and named-instance boundary counts.
 - [ ] Run focused parent and TSA29 verification.
 - [ ] Merge TSA29 first, update the parent submodule pointer, and close P91
