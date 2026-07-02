@@ -19297,3 +19297,11 @@
   smoke --json` returned a namespace-resolved artifact path under
   `runtime/freshforge/smoke/...` while leaving the command as
   `python -m femic prep geospatial-preflight`.
+
+## 2026-07-01 - Opened and verified P97 FreshForge artifact PR
+
+- Opened PR `#269` for the P97 namespace-aware FreshForge artifact metadata
+  refresh.
+- GitHub `package-release-checks` and docs `build` checks passed on the PR.
+- The PR is clean against `main`; P97 closeout is ready to merge after the
+  final issue comment.
