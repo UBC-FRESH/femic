@@ -3164,7 +3164,7 @@ materialization through `arbutus-s3`.
 
 ## Phase 104: FreshForge Workflow Discovery And User Entry Points (`#284`)
 
-Status: active
+Status: complete
 
 Goal: add a small generic discovery layer so users can find existing
 FreshForge workflows without knowing repo internals.
@@ -3189,10 +3189,10 @@ FreshForge workflows without knowing repo internals.
   - [x] Run Sphinx docs with warnings as errors.
   - [x] Confirm the boundary guard still rejects named-instance references in
         `src/femic`.
-- [ ] P104.5 Close out.
-  - [ ] Update `CHANGE_LOG.md`.
-  - [ ] Post progress and closeout comments on issue `#284`.
-  - [ ] Open and merge the parent PR after checks pass.
+- [x] P104.5 Close out.
+  - [x] Update `CHANGE_LOG.md`.
+  - [x] Post progress and closeout comments on issue `#284`.
+  - [x] Open and merge the parent PR after checks pass.
 
 ### Detailed Next Steps Notes
 
@@ -3211,13 +3211,12 @@ FreshForge workflows without knowing repo internals.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P104` / `#284` is active: add a generic FreshForge workflow discovery
-    layer and user-facing CLI helpers so users can list checked-out workflow
-    documents and print copy-paste `freshforge validate`, `inspect`, `plan`,
-    and `run --workdir runtime/freshforge --namespace ... --json` command
-    blocks without knowing the repo path layout. The helper, CLI, docs, focused
-    tests, Ruff, targeted mypy, boundary guard, and Sphinx validation now pass;
-    remaining work is branch/PR closeout.
+  - `P104` / `#284` is complete: FEMIC now has generic FreshForge workflow
+    discovery and user-facing CLI helpers so users can list checked-out
+    workflow documents and print copy-paste `freshforge validate`, `inspect`,
+    `plan`, and `run --workdir runtime/freshforge --namespace ... --json`
+    command blocks without knowing the repo path layout. PR `#285` merged with
+    green build and package-release checks.
   - `P103` / `#282` is complete: the fourth real `femic.materialization`
     FreshForge workflow targets the TSA29 submodule from the parent FEMIC
     checkout. TSA29 is a DataLad/git-annex dataset, so the first overlay uses

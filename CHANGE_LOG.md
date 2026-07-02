@@ -19525,3 +19525,10 @@
   runtime/freshforge --namespace ... --json` commands.
 - Validation passed for Ruff, targeted mypy, focused discovery/docs/boundary
   tests, and Sphinx warning-clean docs build.
+
+## 2026-07-02 - Closed P104 FreshForge workflow discovery
+
+- Merged PR `#285` to `main` after GitHub `build` and
+  `package-release-checks` passed.
+- Marked P104 complete in `ROADMAP.md`.
+- Posted final closeout details on issue `#284`; the issue is closed.
