@@ -42,6 +42,7 @@ class MaterializationOverlay:
     audit_paths: tuple[Path, ...]
     report_path: Path
     submodule_path: Path | None = None
+    annex_enabled: bool = True
     install_requirements: tuple[Path, ...] = ()
     install_editable_paths: tuple[Path, ...] = ()
     install_extras: tuple[str, ...] = ()
@@ -51,6 +52,7 @@ class MaterializationOverlay:
         data: dict[str, Any] = {
             "instance_root": str(self.instance_root),
             "venv_path": str(self.venv_path),
+            "annex_enabled": self.annex_enabled,
             "special_remote": self.special_remote,
             "materialization_paths": [str(path) for path in self.materialization_paths],
             "audit_paths": [str(path) for path in self.audit_paths],
@@ -71,7 +73,7 @@ _NODE_CONTRACTS: tuple[_NodeContract, ...] = (
     _NodeContract(
         id="check_toolchain",
         name="Check toolchain",
-        description="Check Git, Python, FEMIC, FreshForge, DataLad, and git-annex.",
+        description="Check Git, Python, FEMIC, FreshForge, and optional annex tools.",
         outputs=("toolchain",),
     ),
     _NodeContract(
@@ -279,6 +281,20 @@ class FemicMaterializationProvider:
                     ),
                 ),
             )
+        if _is_annex_disabled_noop(str(node_type.id), overlay):
+            return result_type(
+                status=run_status.SUCCESS,
+                outputs=node.outputs if isinstance(node.outputs, dict) else {},
+                artifacts=_resolved_artifacts(node, context),
+                data={
+                    "annex_enabled": False,
+                    "commands": [],
+                    "skipped": (
+                        "Annex operation skipped because annex.enabled is false "
+                        "in the materialization overlay."
+                    ),
+                },
+            )
         completed = [self._command_runner(command) for command in commands]
         diagnostics = _command_diagnostics(
             completed=completed,
@@ -337,8 +353,13 @@ def load_materialization_overlay(
     venv_path = _required_path(
         environment, "venv_path", "environment.venv_path", errors
     )
-    special_remote = _required_str(
-        annex, "special_remote", "annex.special_remote", errors
+    annex_enabled = _optional_bool(
+        annex, "enabled", "annex.enabled", errors, default=True
+    )
+    special_remote = (
+        _required_str(annex, "special_remote", "annex.special_remote", errors)
+        if annex_enabled
+        else _optional_str(annex.get("special_remote"))
     )
     report_path = _required_path(report, "path", "report.path", errors)
     materialization_paths = _path_list(
@@ -364,6 +385,7 @@ def load_materialization_overlay(
             instance_root=instance_root,
             submodule_path=_optional_path(instance.get("submodule_path")),
             venv_path=venv_path,
+            annex_enabled=annex_enabled,
             special_remote=special_remote,
             materialization_paths=tuple(materialization_paths),
             audit_paths=tuple(audit_paths),
@@ -398,16 +420,22 @@ def _commands_for_node(
 
 
 def _check_toolchain_commands(
-    _overlay: MaterializationOverlay,
+    overlay: MaterializationOverlay,
 ) -> tuple[tuple[str, ...], ...]:
-    return (
+    commands = [
         ("git", "--version"),
         (sys.executable, "--version"),
         (sys.executable, "-m", "femic", "--help"),
         (sys.executable, "-m", "freshforge", "--version"),
-        ("datalad", "--version"),
-        ("git", "annex", "version"),
-    )
+    ]
+    if overlay.annex_enabled:
+        commands.extend(
+            [
+                ("datalad", "--version"),
+                ("git", "annex", "version"),
+            ]
+        )
+    return tuple(commands)
 
 
 def _python_environment_commands(
@@ -456,12 +484,16 @@ def _init_submodule_commands(
 def _init_annex_commands(
     overlay: MaterializationOverlay,
 ) -> tuple[tuple[str, ...], ...]:
+    if not overlay.annex_enabled:
+        return ()
     return (("git", "-C", str(overlay.instance_root), "annex", "init"),)
 
 
 def _enable_remote_commands(
     overlay: MaterializationOverlay,
 ) -> tuple[tuple[str, ...], ...]:
+    if not overlay.annex_enabled:
+        return ()
     return (
         (
             "git",
@@ -477,6 +509,11 @@ def _enable_remote_commands(
 def _materialize_path_commands(
     overlay: MaterializationOverlay,
 ) -> tuple[tuple[str, ...], ...]:
+    if not overlay.annex_enabled:
+        return tuple(
+            _path_exists_command(_instance_path(overlay, path))
+            for path in overlay.materialization_paths
+        )
     return tuple(
         ("datalad", "get", "-r", str(_instance_path(overlay, path)))
         for path in overlay.materialization_paths
@@ -486,6 +523,8 @@ def _materialize_path_commands(
 def _audit_annex_commands(
     overlay: MaterializationOverlay,
 ) -> tuple[tuple[str, ...], ...]:
+    if not overlay.annex_enabled:
+        return ()
     return tuple(
         (
             "git",
@@ -501,6 +540,26 @@ def _audit_annex_commands(
         )
         for path in overlay.audit_paths
     )
+
+
+def _path_exists_command(path: Path) -> tuple[str, ...]:
+    return (
+        sys.executable,
+        "-c",
+        "from pathlib import Path; import sys; sys.exit(0 if Path(sys.argv[1]).exists() else 1)",
+        str(path),
+    )
+
+
+def _is_annex_disabled_noop(
+    node_type_id: str,
+    overlay: MaterializationOverlay,
+) -> bool:
+    return not overlay.annex_enabled and node_type_id in {
+        "init_annex",
+        "enable_special_remote",
+        "audit_annex_availability",
+    }
 
 
 def _write_report_result(
@@ -609,6 +668,27 @@ def _optional_path(value: object) -> Path | None:
     if isinstance(value, str) and value.strip():
         return Path(value)
     return None
+
+
+def _optional_str(value: object) -> str:
+    if isinstance(value, str) and value.strip():
+        return value
+    return ""
+
+
+def _optional_bool(
+    payload: Mapping[str, object],
+    key: str,
+    label: str,
+    errors: list[str],
+    *,
+    default: bool,
+) -> bool:
+    value = payload.get(key, default)
+    if isinstance(value, bool):
+        return value
+    errors.append(f"Materialization overlay field '{label}' must be a boolean.")
+    return default
 
 
 def _path_list(
