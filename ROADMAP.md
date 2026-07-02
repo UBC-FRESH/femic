@@ -3090,7 +3090,7 @@ checkout acceptance case after TFL6.
 
 ## Phase 102: FreshForge Materialization Overlay For K3Z (`#280`)
 
-Status: in progress
+Status: complete
 
 Goal: add K3Z as the third model-instance materialization workflow using the
 generic `femic.materialization` provider, while handling K3Z's current
@@ -3122,11 +3122,11 @@ plain-git storage mode without requiring DataLad/git-annex.
   - [x] Run the bounded FreshForge materialization workflow from the parent
         checkout.
   - [x] Verify the workflow writes only ignored `runtime/freshforge/` output.
-- [ ] P102.5 Close out.
-  - [ ] Merge the K3Z materialization PR first.
-  - [ ] Update the parent K3Z submodule pointer.
-  - [ ] Re-run parent validation after the pointer update.
-  - [ ] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
+- [x] P102.5 Close out.
+  - [x] Merge the K3Z materialization PR first.
+  - [x] Update the parent K3Z submodule pointer.
+  - [x] Re-run parent validation after the pointer update.
+  - [x] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
 
 ### Detailed Next Steps Notes
 
@@ -3143,12 +3143,11 @@ plain-git storage mode without requiring DataLad/git-annex.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P102` / `#280` is active: the third real `femic.materialization`
+  - `P102` / `#280` is complete: the third real `femic.materialization`
     FreshForge workflow targets the K3Z submodule from the parent FEMIC
     checkout. K3Z is a plain-git snapshot, generic `annex.enabled: false`
-    support is implemented, and provider discovery plus K3Z validate/inspect/
-    plan/run checks pass from the parent checkout. Next step is K3Z PR merge,
-    parent submodule pointer update, and final closeout.
+    support is implemented, the K3Z PR has merged, the parent submodule pointer
+    has been updated, and merged-pointer validation passed.
   - `P101` / `#278` is complete and merged: the second real
     `femic.materialization` FreshForge workflow targets the MKRF submodule
     materialization ritual from the parent FEMIC checkout. The MKRF
