@@ -2946,9 +2946,41 @@ FreshForge run context without changing FEMIC command outputs.
   - [x] Post progress and closeout comments on issue `#268`.
   - [x] Open and merge the P97 PR after checks pass.
 
+## Phase 98: FreshForge Template Workflow For Model-Instance Materialization (`#270`)
+
+Status: planned
+
+Goal: design a reusable FreshForge workflow family for deterministic
+model-instance materialization so MKRF, TFL6, TSA29, and future instances do
+not require users to manually execute a long Git/DataLad/git-annex setup ritual
+from prose documentation.
+
+- [x] P98.1 Capture materialization workflow requirements.
+  - [x] Record the shared failure pattern from recent user deployment tests.
+  - [x] Define the generic workflow node families: toolchain check, submodule
+        setup, virtual-environment validation, package install check, DataLad
+        and git-annex checks, `arbutus-s3` enablement, required payload
+        materialization, annex audit, and report generation.
+  - [x] Keep the first planning note at
+        `planning/phase98_freshforge_materialization_template.md`.
+- [x] P98.2 Define the instance overlay contract.
+  - [x] Support instance path, special remote name, required materialization
+        paths, optional public-data mirror paths, install extras or instance
+        packages, and report output path.
+  - [x] Keep instance-specific values outside FEMIC core.
+- [ ] P98.3 Plan the execution surface.
+  - [ ] Decide whether this belongs in a generic FreshForge provider, FEMIC
+        provider extension, or a dedicated materialization provider package.
+  - [ ] Keep a tiny bootstrap helper as future scope only, because FreshForge
+        must exist before it can run the workflow.
+- [ ] P98.4 Implement and test the reusable template in a later phase.
+  - [ ] Do not implement materialization execution as part of the TFL6 Phase 17
+        model-build workflow scaffold.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase98_freshforge_materialization_template.md`
   - `planning/phase87_parent_instance_reference_audit.md`
   - `planning/phase78_figrecover_integration_notes.md`
   - `planning/phase75_bcdata_resolver_evaluation_notes.md`
@@ -2958,6 +2990,16 @@ FreshForge run context without changing FEMIC command outputs.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P98` / `#270` is planned: FEMIC needs a reusable FreshForge
+    model-instance materialization workflow template because recent MKRF, TFL6,
+    and TSA29 user deployment tests showed that manual submodule, virtualenv,
+    DataLad, git-annex, `arbutus-s3`, and `datalad get` setup fails too often
+    for new users. The first tracked planning note is
+    `planning/phase98_freshforge_materialization_template.md`; implementation
+    is deferred until after the TFL6 Phase 17 FreshForge model-build scaffold.
+    TFL6 branch `feature/p17-freshforge-model-build-workflow` now contains the
+    first instance-owned FreshForge model-build workflow and the parent
+    submodule pointer is advanced to merged TFL6 main commit `3bbb307`.
   - `P97` / `#268` is complete: report-only namespace-aware FreshForge
     artifact metadata resolves workflow-declared artifact paths through
     FreshForge `RunContext.resolve_path(...)` for provider run records. FEMIC
