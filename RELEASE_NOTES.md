@@ -28,9 +28,12 @@ This release is intended for FRESH development and early integration testing.
 The extension APIs are usable, but still provisional while the example instance
 packages continue to settle around the new boundaries.
 
-FreshForge remains optional. Example-instance providers, catalogs, registries,
-and overlays are discovered only when the relevant instance package is
-installed or an explicit user registry/config file is supplied.
+FreshForge remains optional. Because FreshForge and figrecover do not yet have
+PyPI releases, FEMIC's PyPI metadata does not include direct Git URL
+dependencies for them. Install those optional tools explicitly from their
+source repositories when needed. Example-instance providers, catalogs,
+registries, and overlays are discovered only when the relevant instance package
+is installed or an explicit user registry/config file is supplied.
 
 ## Known Caveats
 

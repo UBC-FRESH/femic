@@ -19,19 +19,25 @@ runtime configuration, and artifact names are owned.
 Install
 -------
 
-For development, ``requirements-dev.txt`` installs the FreshForge integration
-through FEMIC's ``dev`` extra. For a smaller runtime install, use:
+FreshForge is optional and currently installed from its source repository until
+it has a PyPI release. For development or runtime use, install FEMIC first and
+then install FreshForge explicitly:
 
 .. code-block:: bash
 
-   python -m pip install "femic[freshforge]"
+   python -m pip install femic
+   python -m pip install "freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@feature/p6-execution-engine"
+
+The ``femic[freshforge]`` extra is retained as a PyPI-safe compatibility
+marker, but it does not install FreshForge while FreshForge has no PyPI
+distribution.
 
 Provider Discovery
 ------------------
 
 FEMIC registers provider entry points in the ``freshforge.providers`` group.
-When FEMIC is installed with the optional FreshForge dependency, FreshForge can
-discover provider ID ``femic``:
+When FreshForge is installed alongside FEMIC, FreshForge can discover provider
+ID ``femic``:
 
 .. code-block:: bash
 

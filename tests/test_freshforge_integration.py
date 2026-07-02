@@ -149,8 +149,8 @@ def test_pyproject_declares_freshforge_extra_and_entry_point() -> None:
     pyproject = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
 
     optional = pyproject["project"]["optional-dependencies"]
-    assert any("freshforge" in item for item in optional["freshforge"])
-    assert any("freshforge" in item for item in optional["dev"])
+    assert "freshforge" in optional
+    assert all("git+" not in item for deps in optional.values() for item in deps)
     entry_points = pyproject["project"]["entry-points"]["freshforge.providers"]
     assert entry_points["femic"] == "femic.freshforge:provider_factory"
     assert "femic_mkrf" not in entry_points
