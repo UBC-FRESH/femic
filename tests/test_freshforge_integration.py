@@ -155,6 +155,10 @@ def test_pyproject_declares_freshforge_extra_and_entry_point() -> None:
     assert all("git+" not in item for deps in optional.values() for item in deps)
     entry_points = pyproject["project"]["entry-points"]["freshforge.providers"]
     assert entry_points["femic"] == "femic.freshforge:provider_factory"
+    assert (
+        entry_points["femic.materialization"]
+        == "femic.freshforge_materialization:provider_factory"
+    )
     assert "femic_mkrf" not in entry_points
 
 
@@ -252,6 +256,7 @@ def test_default_freshforge_registry_discovers_installed_femic_provider() -> Non
 
     assert not diagnostics
     assert registry.get("femic") is not None
+    assert registry.get("femic.materialization") is not None
     assert registry.get("femic.mkrf") is None
 
 

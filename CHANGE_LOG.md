@@ -19339,3 +19339,23 @@
   keeping runtime implementation deferred to P98.4.
 - Narrowed the incoming DataLad wrapper idea so the larger lifecycle/provenance
   concept no longer duplicates the P98 bootstrap/materialization workflow.
+
+## 2026-07-01 - Implemented P98.4 FreshForge materialization provider template
+
+- Added the optional FreshForge provider entry point
+  `femic.materialization = femic.freshforge_materialization:provider_factory`.
+- Added `femic.freshforge_materialization` with generic, config-driven
+  materialization nodes for toolchain checks, Python environment setup, package
+  installation, submodule setup, git-annex initialization, special-remote
+  enablement, path materialization, annex availability audit, and deterministic
+  report writing.
+- Added public-safe fixture overlay and workflow examples under
+  `examples/freshforge/`; the smoke workflow writes only a materialization
+  report and does not run DataLad, git-annex, package installation, or
+  submodule mutation commands.
+- Updated FreshForge docs/API references and tests so provider discovery,
+  overlay parsing, validation, mocked execution, namespace-resolved report
+  artifacts, and CLI validate/inspect/plan/run behavior are covered.
+- Verified that `freshforge` is not yet resolvable from PyPI as `freshforge` in
+  this environment, so FEMIC's FreshForge install guidance remains on the
+  released GitHub tag until the PyPI package name or propagation is confirmed.

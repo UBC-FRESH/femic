@@ -1,0 +1,25 @@
+instance:
+  root: examples/freshforge/fixture-instance
+  submodule_path: external/femic-example-instance
+environment:
+  venv_path: .venv
+install:
+  requirements: []
+  editable_paths: []
+  extras:
+    - dev
+    - freshforge
+  packages:
+    - freshforge @ git+https://github.com/UBC-FRESH/freshforge.git@v0.1.0a4
+annex:
+  special_remote: arbutus-s3
+materialization:
+  required_paths:
+    - data
+    - models
+audit:
+  required_paths:
+    - data
+    - models
+report:
+  path: runtime/freshforge/materialization_report.json

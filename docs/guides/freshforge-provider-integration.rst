@@ -37,7 +37,7 @@ Provider Discovery
 
 FEMIC registers provider entry points in the ``freshforge.providers`` group.
 When FreshForge is installed alongside FEMIC, FreshForge can discover provider
-ID ``femic``:
+IDs ``femic`` and ``femic.materialization``:
 
 .. code-block:: bash
 
@@ -57,6 +57,31 @@ Instance-specific provider references are not shipped by FEMIC core. For
 example, the MKRF instance owns its executable adapter package and exposes
 provider references such as ``mkrf.build_au_inputs`` only when that instance
 adapter is installed.
+
+Materialization Provider
+------------------------
+
+The ``femic.materialization`` provider is the generic FreshForge surface for
+model-instance bootstrap and DataLad/git-annex materialization workflows. It is
+config-driven: model instances supply small overlay YAML files, while FEMIC
+owns reusable node implementations for toolchain checks, Python environment
+setup, package installation, submodule setup, git-annex initialization,
+special-remote enablement, required path materialization, annex availability
+audits, and report generation.
+
+The public-safe smoke workflow writes only a report and does not run
+``datalad get``, package installs, submodule updates, or git-annex commands:
+
+.. code-block:: bash
+
+   freshforge validate examples/freshforge/materialization_smoke_workflow.yaml
+   freshforge inspect examples/freshforge/materialization_smoke_workflow.yaml
+   freshforge plan examples/freshforge/materialization_smoke_workflow.yaml
+   freshforge run examples/freshforge/materialization_smoke_workflow.yaml --workdir runtime/freshforge --namespace smoke --json
+
+Real MKRF, TFL6, K3Z, and TSA29 materialization overlays are later instance
+phases. They should use the same provider and overlay contract rather than
+adding instance names to FEMIC core.
 
 Generic Workflow Example
 ------------------------
