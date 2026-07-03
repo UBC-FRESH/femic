@@ -3344,11 +3344,15 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P106` / `#288` is complete pending final parent PR merge/issue closure:
-    MKRF is the second parent-checkout executable FreshForge model-build
-    acceptance lane after TFL6. The MKRF PR merged, the parent submodule
-    pointer was reconciled to merged MKRF `main`, and post-merge parent
-    validation passed.
+  - `P106` / `#288` is complete and merged: parent PR `#289`, parent issue
+    `#288`, MKRF PR `UBC-FRESH/femic-mkrf-instance#51`, and MKRF issue
+    `UBC-FRESH/femic-mkrf-instance#50` are closed. MKRF is the second
+    parent-checkout executable FreshForge model-build acceptance lane after
+    TFL6. The parent submodule pointer was reconciled to merged MKRF `main`
+    commit `dfcebec`, and post-merge parent validation passed.
+  - Next FreshForge workflow work can start from the completed P104-P106 user
+    entry, materialization, and executable model-build surfaces rather than
+    reopening P106.
   - `P105` / `#286` is complete: TFL6 Phase 19 promoted the TFL6-owned
     model-build graph into the first parent-checkout executable FreshForge
     acceptance lane through Matrix Builder. The workflow remains instance-owned

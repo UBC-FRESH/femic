@@ -19684,3 +19684,13 @@
   warnings as errors, and the MKRF `arbutus-s3` audit all passed.
 - Marked P106 complete in the roadmap and prepared parent PR `#289` for final
   merge after GitHub checks.
+
+## 2026-07-02 - Reconciled P106 post-merge planning state
+
+- Confirmed parent PR `#289` merged to `main` and parent issue `#288` is
+  closed after the MKRF executable FreshForge acceptance lane.
+- Recorded that the live MKRF docs root and parent MKRF sample-model docs page
+  returned HTTP 200 after merge.
+- Preserved the already-posted GitHub caveat that the MKRF Pages deploy job hit
+  a platform-side failure even though the MKRF docs build succeeded; this does
+  not block P106 closure.
