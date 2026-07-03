@@ -3194,9 +3194,54 @@ FreshForge workflows without knowing repo internals.
   - [x] Post progress and closeout comments on issue `#284`.
   - [x] Open and merge the parent PR after checks pass.
 
+## Phase 105: TFL6 Executable FreshForge Model-Build Acceptance (`#286`)
+
+Status: active
+
+Goal: promote the existing TFL6 model-build workflow from validation/planning
+into a parent-checkout `freshforge run` acceptance path through Patchworks
+Matrix Builder, using P104 workflow discovery as the user entry point and the
+generic `femic.*` provider stages as the execution surface.
+
+- [x] P105.1 Create lifecycle and planning surfaces.
+  - [x] Open parent issue `#286`.
+  - [x] Open TFL6 issue `UBC-FRESH/femic-tfl6-instance#162`.
+  - [x] Create parent branch `feature/p105-tfl6-executable-model-build`.
+  - [x] Create TFL6 branch `feature/p19-freshforge-executable-model-build`.
+  - [x] Add `planning/phase105_tfl6_executable_model_build.md`.
+- [ ] P105.2 Update the TFL6 model-build workflow for parent-checkout
+      execution.
+  - [ ] Change TFL6 workflow `instance_root` parameters from `.` to
+        `external/femic-tfl6-instance`.
+  - [ ] Keep run config, Patchworks config, bundle, checkpoint, output, log,
+        and artifact paths instance-relative.
+  - [ ] Remove `rebuild_spec` from the `validate_case` node so generic case
+        preflight remains the first workflow stage.
+- [ ] P105.3 Update operator docs and discovery path.
+  - [ ] Document `python -m femic freshforge workflows list`.
+  - [ ] Document `python -m femic freshforge workflows commands
+        external/femic-tfl6-instance/workflows/freshforge/tfl6_model_build_workflow.yaml`.
+  - [ ] Document separate rebuild-spec validation before execution.
+  - [ ] State that materialization should run first when the TFL6 submodule is
+        thin or incomplete.
+- [ ] P105.4 Validate and run TFL6 executable acceptance.
+  - [ ] Run discovery, rendered commands, validate, inspect, and plan from the
+        parent checkout.
+  - [ ] Run the FreshForge model-build workflow with `--workdir
+        runtime/freshforge --namespace tfl6/model-build --json`.
+  - [ ] Inspect FreshForge run records, FEMIC runtime manifests, exported
+        Patchworks package, Matrix Builder manifest, compiled tracks, and TFL6
+        Git status.
+- [ ] P105.5 Close out.
+  - [ ] Merge the TFL6 PR first if workflow/docs changed.
+  - [ ] Update the parent TFL6 submodule pointer.
+  - [ ] Re-run parent validation after the pointer update.
+  - [ ] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase105_tfl6_executable_model_build.md`
   - `planning/phase104_freshforge_workflow_discovery.md`
   - `planning/phase103_tsa29_materialization_overlay.md`
   - `planning/phase102_k3z_materialization_overlay.md`
@@ -3211,6 +3256,11 @@ FreshForge workflows without knowing repo internals.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P105` / `#286` is active: TFL6 Phase 19 promotes the existing
+    TFL6-owned model-build graph into the first parent-checkout executable
+    FreshForge acceptance lane through Matrix Builder. The workflow remains
+    instance-owned under `external/femic-tfl6-instance`; FEMIC core keeps only
+    generic `femic.*` provider stages and P104 workflow discovery helpers.
   - `P104` / `#284` is complete: FEMIC now has generic FreshForge workflow
     discovery and user-facing CLI helpers so users can list checked-out
     workflow documents and print copy-paste `freshforge validate`, `inspect`,

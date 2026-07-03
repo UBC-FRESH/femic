@@ -19532,3 +19532,14 @@
   `package-release-checks` passed.
 - Marked P104 complete in `ROADMAP.md`.
 - Posted final closeout details on issue `#284`; the issue is closed.
+
+## 2026-07-02 - Launched P105 TFL6 executable FreshForge model-build acceptance
+
+- Opened parent issue `#286` and TFL6 issue
+  `UBC-FRESH/femic-tfl6-instance#162`.
+- Created parent branch `feature/p105-tfl6-executable-model-build` and TFL6
+  branch `feature/p19-freshforge-executable-model-build`.
+- Added `planning/phase105_tfl6_executable_model_build.md`.
+- Added P105 roadmap subtasks for parent-checkout workflow updates, discovery
+  path documentation, executable FreshForge run acceptance, direct output
+  inspection, and closeout.
