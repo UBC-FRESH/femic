@@ -19622,3 +19622,65 @@
 - Recorded final closeout status for parent issue `#286`, parent PR `#287`,
   TFL6 issue `UBC-FRESH/femic-tfl6-instance#162`, and TFL6 PR
   `UBC-FRESH/femic-tfl6-instance#163`.
+
+## 2026-07-02 - Launched P106 MKRF executable FreshForge model-build acceptance
+
+- Opened parent issue `#288` and MKRF issue
+  `UBC-FRESH/femic-mkrf-instance#50`.
+- Created parent branch `feature/p106-mkrf-executable-model-build` and MKRF
+  branch `feature/freshforge-executable-model-build`.
+- Added P106 roadmap subtasks and planning notes for refreshing the MKRF
+  FreshForge adapter to released execution APIs, converting the MKRF workflow
+  to parent-checkout execution, validating discovery/planning, and running the
+  MKRF model-build workflow through Matrix Builder.
+
+## 2026-07-02 - Refreshed MKRF FreshForge adapter for released execution APIs
+
+- Updated the instance-owned MKRF FreshForge adapter from the old
+  `execute_node(...)` / `ProviderExecutionResult` execution surface to the
+  released `run_node(...)` / `ProviderRunResult` contract.
+- Kept `execute_node(...)` as a compatibility shim while returning
+  deterministic command metadata, status, outputs, artifacts, and diagnostics
+  through the released provider run result shape.
+- Updated MKRF FreshForge tests to use `freshforge.execution.run_workflow` with
+  mocked command runners; the focused MKRF FreshForge test file passes.
+
+## 2026-07-02 - Updated MKRF FreshForge workflow for parent-checkout execution
+
+- Updated the MKRF model-build workflow so all provider nodes use
+  `instance_root: external/femic-mkrf-instance` when run from the parent FEMIC
+  checkout.
+- Removed embedded rebuild-spec validation from the `femic.validate_case` node;
+  rebuild-spec validation is now documented as a separate pre-run FEMIC check.
+- Updated MKRF README, operator docs, and rebuild runbook to use P104 workflow
+  discovery and the released `freshforge run --workdir runtime/freshforge
+  --namespace mkrf/model-build --json` command shape.
+
+## 2026-07-02 - Completed P106 MKRF FreshForge executable acceptance run
+
+- Revalidated the MKRF model-build workflow from the parent checkout with
+  FreshForge discovery, rendered commands, validation, inspection, and planning.
+- Ran the executable MKRF FreshForge workflow through seven nodes:
+  `mkrf.build_au_inputs`, `mkrf.select_aus`, `mkrf.build_managed_au_inputs`,
+  `mkrf.build_managed_au_curves`, `mkrf.init_runtime_package`,
+  `femic.patchworks_preflight`, and `femic.matrix_build`.
+- Verified Matrix Builder returned `0` for `mkrf_freshforge_exec`, stderr ended
+  with `Done Matrix Builder.`, the expected ForestModel XML, fragments, and
+  tracks existed, and the compiled track row counts matched the accepted MKRF
+  surface.
+- Fixed the MKRF adapter execution boundary so instance-owned commands run with
+  `cwd` set to `external/femic-mkrf-instance` and receive `--instance-root .`;
+  this keeps tracked generated output metadata instance-relative even when the
+  workflow is launched from the parent checkout.
+- Confirmed the required MKRF `models` and `data/source` paths have no
+  `arbutus-s3` availability gaps.
+
+## 2026-07-02 - Closed out P106 MKRF executable FreshForge acceptance
+
+- Merged MKRF PR `UBC-FRESH/femic-mkrf-instance#51` and reconciled the parent
+  MKRF submodule pointer to merged MKRF `main` commit `dfcebec`.
+- Re-ran parent validation after pointer reconciliation: FreshForge
+  validate/inspect/plan, focused FreshForge workflow tests, Ruff, Sphinx with
+  warnings as errors, and the MKRF `arbutus-s3` audit all passed.
+- Marked P106 complete in the roadmap and prepared parent PR `#289` for final
+  merge after GitHub checks.
