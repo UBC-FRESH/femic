@@ -3196,7 +3196,7 @@ FreshForge workflows without knowing repo internals.
 
 ## Phase 105: TFL6 Executable FreshForge Model-Build Acceptance (`#286`)
 
-Status: active
+Status: complete
 
 Goal: promote the existing TFL6 model-build workflow from validation/planning
 into a parent-checkout `freshforge run` acceptance path through Patchworks
@@ -3246,9 +3246,62 @@ generic `femic.*` provider stages as the execution surface.
   - [x] Re-run parent validation after the pointer update.
   - [x] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
 
+## Phase 106: MKRF Executable FreshForge Model-Build Acceptance (`#288`)
+
+Status: active
+
+Goal: promote the existing MKRF model-build workflow into the second
+parent-checkout executable FreshForge acceptance lane, proving that generic
+FEMIC provider stages work with the instance-owned `mkrf.*` provider namespace
+and released FreshForge execution APIs.
+
+- [x] P106.1 Create lifecycle and planning surfaces.
+  - [x] Open parent issue `#288`.
+  - [x] Open MKRF issue `UBC-FRESH/femic-mkrf-instance#50`.
+  - [x] Create parent branch `feature/p106-mkrf-executable-model-build`.
+  - [x] Create MKRF branch `feature/freshforge-executable-model-build`.
+  - [x] Add parent and MKRF planning notes.
+- [ ] P106.2 Refresh the MKRF FreshForge adapter for released FreshForge.
+  - [ ] Replace old `execute_node(...)` / `ProviderExecutionResult` usage with
+        `run_node(...)` / `ProviderRunResult`.
+  - [ ] Return deterministic command, return-code, stdout/stderr,
+        diagnostics, outputs, and JSON-safe artifact metadata.
+  - [ ] Update MKRF tests from old execution symbols to
+        `freshforge.execution.run_workflow`.
+- [ ] P106.3 Update the MKRF model-build workflow for parent-checkout
+      execution.
+  - [ ] Change workflow `instance_root` parameters from `.` to
+        `external/femic-mkrf-instance`.
+  - [ ] Keep run config, Patchworks config, source data, model package, bundle,
+        runtime, and artifact paths instance-relative.
+  - [ ] Remove `rebuild_spec` from the `validate_case` node and document
+        rebuild-spec validation as a separate pre-run check.
+- [ ] P106.4 Update MKRF docs/runbooks and discovery path.
+  - [ ] Route operators through `python -m femic freshforge workflows list`.
+  - [ ] Document `python -m femic freshforge workflows commands
+        external/femic-mkrf-instance/workflows/freshforge/mkrf_model_build_workflow.yaml`.
+  - [ ] Document released `freshforge run --workdir runtime/freshforge
+        --namespace mkrf/model-build --json` command shape.
+  - [ ] State that materialization should run first when the MKRF submodule is
+        thin or incomplete.
+- [ ] P106.5 Validate and run MKRF executable acceptance.
+  - [ ] Refresh local FreshForge to PyPI `freshforge==0.1.0a5`.
+  - [ ] Run discovery, rendered commands, validate, inspect, and plan from the
+        parent checkout.
+  - [ ] Run the MKRF FreshForge model-build workflow from the parent checkout.
+  - [ ] Inspect FreshForge records, MKRF runtime manifests, ForestModel XML,
+        fragments, tracks, Matrix Builder manifest, and MKRF Git status.
+  - [ ] Audit required MKRF model/source paths against `arbutus-s3`.
+- [ ] P106.6 Close out.
+  - [ ] Merge the MKRF PR first if workflow/docs/code changed.
+  - [ ] Update the parent MKRF submodule pointer.
+  - [ ] Re-run parent validation after pointer reconciliation.
+  - [ ] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
+
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase106_mkrf_executable_model_build.md`
   - `planning/phase105_tfl6_executable_model_build.md`
   - `planning/phase104_freshforge_workflow_discovery.md`
   - `planning/phase103_tsa29_materialization_overlay.md`
@@ -3264,29 +3317,17 @@ generic `femic.*` provider stages as the execution surface.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P105` executable acceptance has completed its parent-checkout run through
-    Matrix Builder and the TFL6 instance PR has been merged.
-    Parent FEMIC now points at the merged TFL6 `main` commit and is in final
-    PR/issue closeout.
-    The parent-checkout workflow discovery, command rendering, validate,
-    plan, rebuild-spec validation, focused FreshForge tests, Ruff, and Sphinx
-    checks pass. The first runtime blocker, missing SiteProd aliases for VRI
-    maple species codes, was fixed generically by mapping `M`, `MB`, and `MV`
-    to the available `AT` SiteProd band. The second blocker, legacy upstream
-    compile trying to regenerate production TIPSY parameters for AU `1000`, is
-    being resolved by switching the TFL6 executable workflow to a generic
-    accepted BTC handoff preflight before `femic.btc_post_tipsy`. This consumes
-    the reviewed TFL6 BTC input CSV, `04_output`, and treated-curve artifacts
-    instead of reopening production TIPSY rule reconstruction or spreadsheet
-    regeneration in P105. The successful run rebuilt the Patchworks export and
-    Matrix Builder tracks with `btc` sub-run id
-    `tfl6_freshforge_model_build_tfl6`; no invalid combined TSA/TFL
-    source/test/TFL6 matches remain after cleanup.
-  - `P105` / `#286` is active: TFL6 Phase 19 promotes the existing
-    TFL6-owned model-build graph into the first parent-checkout executable
-    FreshForge acceptance lane through Matrix Builder. The workflow remains
-    instance-owned under `external/femic-tfl6-instance`; FEMIC core keeps only
-    generic `femic.*` provider stages and P104 workflow discovery helpers.
+  - `P106` / `#288` is active: MKRF is the second parent-checkout executable
+    FreshForge model-build acceptance lane after TFL6. The first required
+    implementation move is refreshing the instance-owned `mkrf.*` provider
+    from the older branch-era `execute_node(...)` / `ProviderExecutionResult`
+    API to the released FreshForge `run_node(...)` / `ProviderRunResult`
+    contract before running the real MKRF model-build workflow.
+  - `P105` / `#286` is complete: TFL6 Phase 19 promoted the TFL6-owned
+    model-build graph into the first parent-checkout executable FreshForge
+    acceptance lane through Matrix Builder. The workflow remains instance-owned
+    under `external/femic-tfl6-instance`; FEMIC core keeps only generic
+    `femic.*` provider stages and P104 workflow discovery helpers.
   - `P104` / `#284` is complete: FEMIC now has generic FreshForge workflow
     discovery and user-facing CLI helpers so users can list checked-out
     workflow documents and print copy-paste `freshforge validate`, `inspect`,

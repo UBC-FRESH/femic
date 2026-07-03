@@ -19622,3 +19622,14 @@
 - Recorded final closeout status for parent issue `#286`, parent PR `#287`,
   TFL6 issue `UBC-FRESH/femic-tfl6-instance#162`, and TFL6 PR
   `UBC-FRESH/femic-tfl6-instance#163`.
+
+## 2026-07-02 - Launched P106 MKRF executable FreshForge model-build acceptance
+
+- Opened parent issue `#288` and MKRF issue
+  `UBC-FRESH/femic-mkrf-instance#50`.
+- Created parent branch `feature/p106-mkrf-executable-model-build` and MKRF
+  branch `feature/freshforge-executable-model-build`.
+- Added P106 roadmap subtasks and planning notes for refreshing the MKRF
+  FreshForge adapter to released execution APIs, converting the MKRF workflow
+  to parent-checkout execution, validating discovery/planning, and running the
+  MKRF model-build workflow through Matrix Builder.
