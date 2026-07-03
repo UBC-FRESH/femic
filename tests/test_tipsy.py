@@ -2377,18 +2377,16 @@ def test_prepare_btc_runtime_tsr_preset_applies_industrial_logs_indicator_bank(
 
 
 def test_validate_tipsy_output_is_fresh_raises_on_stale_output(tmp_path: Path) -> None:
-    tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
     input_csv = tmp_path / "03_input-tsa29.csv"
     tipsy_output = tmp_path / "04_output-tsa29.csv"
     tipsy_output.write_text("old\n", encoding="utf-8")
     input_csv.write_text("newer-csv\n", encoding="utf-8")
-    tipsy_input.write_text("new\n", encoding="utf-8")
-    older = min(tipsy_input.stat().st_mtime, input_csv.stat().st_mtime) - 10
+    older = input_csv.stat().st_mtime - 10
     os.utime(tipsy_output, (older, older))
 
     with pytest.raises(RuntimeError, match="Stale BatchTIPSY output detected"):
         validate_tipsy_output_is_fresh(
-            tipsy_input_excel_path=tipsy_input,
+            tipsy_input_excel_path=None,
             btc_input_csv_path=input_csv,
             tipsy_output_path=tipsy_output,
         )
@@ -2508,10 +2506,8 @@ def test_validate_tipsy_output_is_fresh_requires_csv_when_provided(
 def test_validate_tipsy_output_is_fresh_accepts_known_csv_fingerprint(
     tmp_path: Path,
 ) -> None:
-    tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
     input_csv = tmp_path / "03_input-tsa29.csv"
     tipsy_output = tmp_path / "04_output-tsa29.csv"
-    tipsy_input.write_text("human-readable\n", encoding="utf-8")
     input_csv.write_text("same-csv-content\n", encoding="utf-8")
     tipsy_output.write_text("old-output\n", encoding="utf-8")
     older = input_csv.stat().st_mtime - 10
@@ -2521,7 +2517,7 @@ def test_validate_tipsy_output_is_fresh_accepts_known_csv_fingerprint(
     fingerprint.write_text(f"{compute_file_sha256(input_csv)}\n", encoding="utf-8")
 
     validate_tipsy_output_is_fresh(
-        tipsy_input_excel_path=tipsy_input,
+        tipsy_input_excel_path=None,
         btc_input_csv_path=input_csv,
         tipsy_output_path=tipsy_output,
     )
@@ -2530,19 +2526,20 @@ def test_validate_tipsy_output_is_fresh_accepts_known_csv_fingerprint(
 def test_validate_tipsy_output_is_fresh_raises_on_csv_fingerprint_mismatch(
     tmp_path: Path,
 ) -> None:
-    tipsy_input = tmp_path / "tipsy_params_tsa29.xlsx"
     input_csv = tmp_path / "03_input-tsa29.csv"
     tipsy_output = tmp_path / "04_output-tsa29.csv"
-    tipsy_input.write_text("human-readable\n", encoding="utf-8")
     input_csv.write_text("new-csv-content\n", encoding="utf-8")
     tipsy_output.write_text("some-output\n", encoding="utf-8")
 
     fingerprint = tipsy_output_input_fingerprint_path(tipsy_output_path=tipsy_output)
     fingerprint.write_text("badfingerprint\n", encoding="utf-8")
 
-    with pytest.raises(RuntimeError, match="different 03_input-tsaXX.csv fingerprint"):
+    with pytest.raises(
+        RuntimeError,
+        match="different canonical BTC input CSV fingerprint",
+    ):
         validate_tipsy_output_is_fresh(
-            tipsy_input_excel_path=tipsy_input,
+            tipsy_input_excel_path=None,
             btc_input_csv_path=input_csv,
             tipsy_output_path=tipsy_output,
         )
@@ -2566,6 +2563,16 @@ def test_tipsy_stage_output_paths_uses_expected_naming(tmp_path: Path) -> None:
     curves_path, sppcomp_path = tipsy_stage_output_paths(tsa="08", output_root=tmp_path)
     assert curves_path == tmp_path / "tipsy_curves_tsa08.csv"
     assert sppcomp_path == tmp_path / "tipsy_sppcomp_tsa08.csv"
+
+
+def test_tipsy_stage_output_paths_preserves_non_numeric_case_code(
+    tmp_path: Path,
+) -> None:
+    curves_path, sppcomp_path = tipsy_stage_output_paths(
+        tsa="tfl6", output_root=tmp_path
+    )
+    assert curves_path == tmp_path / "tipsy_curves_tfl6.csv"
+    assert sppcomp_path == tmp_path / "tipsy_sppcomp_tfl6.csv"
 
 
 def test_tipsy_params_excel_path_uses_expected_naming(tmp_path: Path) -> None:

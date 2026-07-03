@@ -3306,6 +3306,13 @@ def btc_msyt_input_csv_path(
     return Path(input_root) / filename_template.format(tsa=tsa)
 
 
+def _legacy_case_artifact_code(value: str) -> str:
+    raw = str(value).strip().lower()
+    if raw.isdigit():
+        return f"tsa{raw.zfill(2)}"
+    return raw
+
+
 def tipsy_stage_output_paths(
     *,
     tsa: str,
@@ -3313,15 +3320,16 @@ def tipsy_stage_output_paths(
 ) -> tuple[Path, Path]:
     """Build legacy 01b per-TSA output CSV paths."""
     root = Path(output_root)
+    artifact_code = _legacy_case_artifact_code(tsa)
     return (
-        root / f"tipsy_curves_tsa{tsa}.csv",
-        root / f"tipsy_sppcomp_tsa{tsa}.csv",
+        root / f"tipsy_curves_{artifact_code}.csv",
+        root / f"tipsy_sppcomp_{artifact_code}.csv",
     )
 
 
 def validate_tipsy_output_is_fresh(
     *,
-    tipsy_input_excel_path: str | Path,
+    tipsy_input_excel_path: str | Path | None = None,
     btc_input_csv_path: str | Path | None = None,
     tipsy_output_path: str | Path,
     allow_stale: bool = False,
@@ -3330,7 +3338,7 @@ def validate_tipsy_output_is_fresh(
     """Fail fast when BatchTIPSY output is stale against canonical BTC CSV input."""
     if allow_stale:
         return
-    excel_path = Path(tipsy_input_excel_path)
+    excel_path = Path(tipsy_input_excel_path) if tipsy_input_excel_path else None
     input_csv_path = Path(btc_input_csv_path) if btc_input_csv_path else None
     output_path = Path(tipsy_output_path)
     if not output_path.is_file():
@@ -3338,7 +3346,7 @@ def validate_tipsy_output_is_fresh(
     if input_csv_path is not None and not input_csv_path.is_file():
         raise RuntimeError(
             "Missing canonical BatchTIPSY input CSV file: "
-            f"{input_csv_path}. Generate 03_input-tsaXX.csv in Stage 01a before "
+            f"{input_csv_path}. Provide the accepted BTC input CSV before "
             "running Stage 01b/post-TIPSY."
         )
 
@@ -3357,53 +3365,68 @@ def validate_tipsy_output_is_fresh(
                 raise RuntimeError(
                     "Stale BatchTIPSY output detected: "
                     f"{output_path} was recorded against a different "
-                    f"03_input-tsaXX.csv fingerprint ({known_sha} != {input_sha256}). "
-                    "Regenerate 04_output-tsaXX.csv from the current "
-                    "03_input-tsaXX.csv handoff, then rerun FEMIC stage "
+                    "canonical BTC input CSV fingerprint "
+                    f"({known_sha} != {input_sha256}). "
+                    "Regenerate the BatchTIPSY output from the current "
+                    "accepted BTC input CSV handoff, then rerun FEMIC stage "
                     "01b/post-TIPSY."
                 )
             return
         input_mtime = input_csv_path.stat().st_mtime
-    elif excel_path.is_file():
+    elif excel_path is not None and excel_path.is_file():
         input_mtime = excel_path.stat().st_mtime
     else:
         return
 
     output_mtime = output_path.stat().st_mtime
     if output_mtime < input_mtime:
-        coherence = assess_tipsy_input_output_coherence(
-            tipsy_input_excel_path=excel_path,
-            tipsy_output_path=output_path,
-        )
-        if coherence.coherent:
-            detail = (
-                "Timestamp mismatch detected but TIPSY input/output appear coherent: "
-                f"{coherence.summary}"
+        if input_csv_path is not None and excel_path is None:
+            raise RuntimeError(
+                "Stale BatchTIPSY output detected: "
+                f"{output_path} is older than {input_csv_path}. "
+                "Regenerate the BatchTIPSY output from the current accepted BTC "
+                "input CSV handoff, then rerun FEMIC stage 01b/post-TIPSY. "
+                "Future reruns can avoid repeated timestamp prompts when CSV "
+                "content is unchanged once a fingerprint is recorded."
             )
-            if strict_timestamp_mismatch:
-                raise RuntimeError(
-                    "Strict BatchTIPSY freshness is enabled and "
-                    f"{output_path} is older than {input_csv_path or excel_path}. "
-                    f"{detail} Regenerate 04_output-tsaXX.csv from current "
-                    "03_input-tsaXX.csv before rerunning."
+
+        if excel_path is not None:
+            coherence = assess_tipsy_input_output_coherence(
+                tipsy_input_excel_path=excel_path,
+                tipsy_output_path=output_path,
+            )
+            if coherence.coherent:
+                detail = (
+                    "Timestamp mismatch detected but TIPSY input/output appear coherent: "
+                    f"{coherence.summary}"
                 )
-            warnings.warn(
-                detail
-                + " Continuing with existing 04_output-tsaXX.csv (default behavior). "
-                "Set FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1 to escalate this to an error.",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-            return
+                if strict_timestamp_mismatch:
+                    raise RuntimeError(
+                        "Strict BatchTIPSY freshness is enabled and "
+                        f"{output_path} is older than {input_csv_path or excel_path}. "
+                        f"{detail} Regenerate the BatchTIPSY output from current "
+                        "accepted BTC inputs before rerunning."
+                    )
+                warnings.warn(
+                    detail
+                    + " Continuing with existing BatchTIPSY output (default behavior). "
+                    "Set FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1 to escalate "
+                    "this to an error.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+                return
+            coherence_summary = coherence.summary
+        else:
+            coherence_summary = "no workbook coherence check was requested"
         raise RuntimeError(
             "Stale BatchTIPSY output detected: "
             f"{output_path} is older than {input_csv_path or excel_path}. "
-            f"Coherence check did not pass ({coherence.summary}). "
-            "Regenerate 04_output-tsaXX.csv from the current "
-            "03_input-tsaXX.csv handoff (and matching workbook), then rerun "
-            "FEMIC stage 01b/post-TIPSY. Future reruns can avoid repeated "
-            "manual prompts when CSV content is unchanged once a fingerprint "
-            "is recorded."
+            f"Coherence check did not pass ({coherence_summary}). "
+            "Regenerate the BatchTIPSY output from the current accepted BTC "
+            "input CSV handoff, then rerun FEMIC stage 01b/post-TIPSY. Future "
+            "reruns can avoid repeated manual prompts when CSV content is "
+            "unchanged once a fingerprint is recorded."
         )
 
 

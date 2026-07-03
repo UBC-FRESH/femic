@@ -54,8 +54,6 @@ def run_tsa(
     from femic.pipeline.plots import tipsy_vdyp_ylim_for_tsa
     from femic.pipeline.tipsy import (
         parse_btc_tsr_transposed_output,
-        btc_msyt_input_csv_path,
-        tipsy_params_excel_path,
         tipsy_stage_output_paths,
         validate_tipsy_output_is_fresh,
         write_tipsy_output_input_fingerprint,
@@ -68,18 +66,24 @@ def run_tsa(
         )
 
     #############no need to change the code below
-    tipsy_excel = str(
-        tipsy_params_excel_path(
-            tsa=tsa,
-            tipsy_params_path_prefix=runtime_config.tipsy_params_path_prefix,
-        )
-    )
     tipsy_output_root = Path(runtime_config.tipsy_output_root)
+    artifact_code = (
+        f"tsa{str(tsa).zfill(2)}" if str(tsa).isdigit() else str(tsa).lower()
+    )
     tipsyout = str(
         tipsy_output_root
-        / runtime_config.tipsy_output_filename_template.format(tsa=tsa)
+        / runtime_config.tipsy_output_filename_template.format(
+            tsa=tsa,
+            artifact_code=artifact_code,
+        )
     )
-    tipsy_input_csv = str(btc_msyt_input_csv_path(tsa=tsa))
+    tipsy_input_csv = str(
+        tipsy_output_root
+        / runtime_config.tipsy_input_filename_template.format(
+            tsa=tsa,
+            artifact_code=artifact_code,
+        )
+    )
     outYield_path, outSPP_path = tipsy_stage_output_paths(
         tsa=tsa, output_root=runtime_config.tipsy_output_root
     )
@@ -91,7 +95,7 @@ def run_tsa(
         if not csv_path.is_file():
             raise FileNotFoundError(
                 "Missing canonical BatchTIPSY input CSV: "
-                f"{csv_path}. Regenerate 03_input-tsaXX.csv in Stage 01a before "
+                f"{csv_path}. Provide the accepted BTC input CSV before "
                 "running legacy 01b/post-TIPSY."
             )
 
@@ -152,7 +156,9 @@ def run_tsa(
                     record.get(f"planted_density{idx}"), errors="coerce"
                 )
                 row[f"SPP_{idx}"] = (
-                    str(spp).strip().upper() if pd.notna(spp) and str(spp).strip() else ""
+                    str(spp).strip().upper()
+                    if pd.notna(spp) and str(spp).strip()
+                    else ""
                 )
                 if planted_total > 0 and pd.notna(density) and float(density) > 0.0:
                     row[f"PCT_{idx}"] = (float(density) / planted_total) * 100.0
@@ -193,7 +199,7 @@ def run_tsa(
     requires_batch_tipsy = managed_curve_mode == "tipsy"
     if requires_batch_tipsy:
         validate_tipsy_output_is_fresh(
-            tipsy_input_excel_path=tipsy_excel,
+            tipsy_input_excel_path=None,
             btc_input_csv_path=tipsy_input_csv,
             tipsy_output_path=tipsyout,
             allow_stale=allow_stale_tipsy_output,

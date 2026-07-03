@@ -19532,3 +19532,93 @@
   `package-release-checks` passed.
 - Marked P104 complete in `ROADMAP.md`.
 - Posted final closeout details on issue `#284`; the issue is closed.
+
+## 2026-07-02 - Launched P105 TFL6 executable FreshForge model-build acceptance
+
+- Opened parent issue `#286` and TFL6 issue
+  `UBC-FRESH/femic-tfl6-instance#162`.
+- Created parent branch `feature/p105-tfl6-executable-model-build` and TFL6
+  branch `feature/p19-freshforge-executable-model-build`.
+- Added `planning/phase105_tfl6_executable_model_build.md`.
+- Added P105 roadmap subtasks for parent-checkout workflow updates, discovery
+  path documentation, executable FreshForge run acceptance, direct output
+  inspection, and closeout.
+
+## 2026-07-02 - Updated TFL6 model-build workflow for P105 execution
+
+- Updated the TFL6 model-build workflow to run from the parent FEMIC checkout by
+  using `instance_root: external/femic-tfl6-instance` for generic FEMIC
+  provider stages.
+- Kept workflow-owned run config, Patchworks config, bundle, checkpoint, output,
+  log, and artifact paths instance-relative.
+- Removed rebuild-spec validation from the first FreshForge node so
+  `femic.validate_case` runs the generic case preflight command; rebuild-spec
+  validation remains a separate documented FEMIC pre-run check.
+- Updated TFL6 docs and runbook text to route operators through P104 workflow
+  discovery and the released `freshforge run --workdir ... --namespace ...`
+  command shape.
+
+## 2026-07-02 - Fixed SiteProd maple alias exposed by P105 acceptance
+
+- The first P105 executable run reached TFL6 data prep and exposed a generic
+  SiteProd lookup gap for VRI maple species codes.
+- Added `M`, `MB`, and `MV` aliases to the existing SiteProd species lookup so
+  they resolve to the available `AT` SiteProd raster band.
+- Added focused test coverage and re-ran SiteProd plus FreshForge workflow
+  tests.
+
+## 2026-07-02 - Recorded P105 executable model-build blocker
+
+- Re-ran the TFL6 FreshForge model-build workflow from the parent checkout with
+  `FEMIC_EXTERNAL_DATA_ROOT` and Arbutus auth loaded.
+- The run completed the `validate_case` and `geospatial_preflight` FreshForge
+  nodes, then failed in `femic.compile_upstream` during legacy TIPSY parameter
+  generation.
+- The active blocker is a TFL6 runtime/config decision: no TIPSY config rule
+  matched AU `1000` (`leading_species=HW`, `BEC=CWH`, `forest_type=1`).
+- P105 remains active; FreshForge discovery, validation, inspection, planning,
+  docs, focused tests, and the generic SiteProd alias fix are validated.
+
+## 2026-07-02 - Added accepted BTC handoff preflight for P105
+
+- Added the generic `femic.accepted_btc_handoff` FreshForge node and matching
+  `femic prep accepted-btc-handoff` command.
+- Rewired the TFL6 executable model-build workflow to consume the accepted
+  `03_input`, `04_output`, and treated-curve artifacts before running
+  `femic.btc_post_tipsy`.
+- Updated P105 planning and TFL6 docs to state that Phase 19 uses the accepted
+  BTC handoff boundary; production TIPSY rule reconstruction is deferred.
+
+## 2026-07-02 - Removed the spreadsheet requirement from the P105 BTC handoff
+
+- Updated the post-TIPSY freshness guard so the accepted BTC handoff path can
+  validate against the canonical BTC input CSV without requiring the legacy
+  TIPSY parameter spreadsheet.
+- Removed the legacy 01b script's spreadsheet lookup from the FreshForge
+  model-build path; `femic.btc_post_tipsy` now uses the declared accepted BTC
+  input CSV and BatchTIPSY output.
+- Added focused tests for CSV-only freshness, matching BTC input fingerprints,
+  and generic fingerprint-mismatch diagnostics.
+
+## 2026-07-02 - Completed the P105 TFL6 FreshForge executable acceptance run
+
+- Fixed remaining non-numeric case artifact naming seams so `tfl6` remains
+  `tfl6`; numeric cases still use the `tsaNN` convention.
+- Re-ran the parent-checkout FreshForge model-build workflow through case
+  preflight, geospatial preflight, accepted BTC handoff, BTC/post-TIPSY,
+  Patchworks export, Patchworks preflight, and Matrix Builder.
+- Verified the clean run used BTC sub-run id
+  `tfl6_freshforge_model_build_tfl6`, rebuilt the Patchworks export and
+  compiled tracks, and left no invalid combined TSA/TFL matches in the
+  source/test/TFL6 workspace search.
+
+## 2026-07-02 - Closed P105 TFL6 executable FreshForge acceptance
+
+- Merged the TFL6 Phase 19 PR and updated the parent FEMIC TFL6 submodule
+  pointer to the merged TFL6 `main` commit.
+- Revalidated the parent-checkout TFL6 FreshForge model-build workflow after
+  pointer reconciliation with FreshForge validation/planning, focused tests,
+  Ruff, targeted mypy, Sphinx, and the TFL6 annex publication audit.
+- Recorded final closeout status for parent issue `#286`, parent PR `#287`,
+  TFL6 issue `UBC-FRESH/femic-tfl6-instance#162`, and TFL6 PR
+  `UBC-FRESH/femic-tfl6-instance#163`.

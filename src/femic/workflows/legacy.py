@@ -619,7 +619,8 @@ def _vdyp_species_proportions_from_vdyp_layer_fallback(
     tsa: str,
     bundle_au_table: pd.DataFrame,
 ) -> dict[tuple[str, str], dict[str, float]]:
-    layer_path = data_root / f"vdyp_lyr-tsa{tsa}.feather"
+    artifact_code = _legacy_case_artifact_code(tsa)
+    layer_path = data_root / f"vdyp_lyr-{artifact_code}.feather"
     if not layer_path.exists():
         return {}
 
@@ -661,6 +662,13 @@ def _vdyp_species_proportions_from_vdyp_layer_fallback(
     return out
 
 
+def _legacy_case_artifact_code(value: str) -> str:
+    raw = str(value).strip().lower()
+    if raw.isdigit():
+        return f"tsa{raw.zfill(2)}"
+    return raw
+
+
 def run_post_tipsy_bundle(
     *,
     tsa_list: list[str],
@@ -676,6 +684,7 @@ def run_post_tipsy_bundle(
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
     yield_assumptions_path: Path | None = None,
+    tipsy_input_filename_template: str = "03_input-{artifact_code}.csv",
     tipsy_output_filename_template: str = "04_output-tsa{tsa}.csv",
 ) -> PostTipsyBundleResult:
     """Run downstream 01b + bundle assembly from cached TSA artifacts only."""
@@ -727,8 +736,9 @@ def run_post_tipsy_bundle(
     )
     with _temporary_env(managed_env_overrides):
         for tsa in normalized_tsa_list:
-            prep_path = data_root / f"vdyp_prep-tsa{tsa}.pkl"
-            smooth_path = data_root / f"vdyp_curves_smooth-tsa{tsa}.feather"
+            artifact_code = _legacy_case_artifact_code(tsa)
+            prep_path = data_root / f"vdyp_prep-{artifact_code}.pkl"
+            smooth_path = data_root / f"vdyp_curves_smooth-{artifact_code}.feather"
             if not smooth_path.exists():
                 raise FileNotFoundError(f"Missing smoothed VDYP curves: {smooth_path}")
 
@@ -784,6 +794,7 @@ def run_post_tipsy_bundle(
             runtime_config = build_legacy_01b_runtime_config(
                 tipsy_params_path_prefix=data_root / "tipsy_params_tsa",
                 tipsy_output_root=data_root,
+                tipsy_input_filename_template=tipsy_input_filename_template,
                 tipsy_output_filename_template=tipsy_output_filename_template,
             )
             message_fn(f"running 01b for tsa {tsa}")
@@ -796,8 +807,8 @@ def run_post_tipsy_bundle(
                     vdyp_curves_smooth=vdyp_curves_smooth,
                     runtime_config=runtime_config,
                 )
-            tipsy_curves_paths.append(data_root / f"tipsy_curves_tsa{tsa}.csv")
-            tipsy_sppcomp_paths.append(data_root / f"tipsy_sppcomp_tsa{tsa}.csv")
+            tipsy_curves_paths.append(data_root / f"tipsy_curves_{artifact_code}.csv")
+            tipsy_sppcomp_paths.append(data_root / f"tipsy_sppcomp_{artifact_code}.csv")
             tipsy_spp_path = tipsy_sppcomp_paths[-1]
             if tipsy_spp_path.exists():
                 tipsy_sppcomp[tsa] = pd.read_csv(tipsy_spp_path)
@@ -955,6 +966,7 @@ def run_post_tipsy_bundle_with_manifest(
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
     yield_assumptions_path: Path | None = None,
+    tipsy_input_filename_template: str = "03_input-{artifact_code}.csv",
     tipsy_output_filename_template: str = "04_output-tsa{tsa}.csv",
 ) -> PostTipsyBundleRunResult:
     """Run post-TIPSY downstream assembly and emit run-manifest metadata."""
@@ -999,6 +1011,7 @@ def run_post_tipsy_bundle_with_manifest(
             managed_curve_truncate_at_culm=managed_curve_truncate_at_culm,
             managed_curve_max_age=managed_curve_max_age,
             yield_assumptions_path=yield_assumptions_path,
+            tipsy_input_filename_template=tipsy_input_filename_template,
             tipsy_output_filename_template=tipsy_output_filename_template,
         )
     except Exception as exc:
@@ -1042,6 +1055,37 @@ def run_post_tipsy_bundle_with_manifest(
     return PostTipsyBundleRunResult(manifest_path=manifest_path, result=bundle_result)
 
 
+def _resolve_btc_handoff_paths(
+    *,
+    data_root: Path,
+    tsa: str,
+) -> tuple[Path, Path, Path, str, str]:
+    artifact_code = _legacy_case_artifact_code(tsa)
+    legacy_input = data_root / f"03_input-{artifact_code}.csv"
+    if legacy_input.exists():
+        return (
+            legacy_input,
+            data_root / f"04_output-{artifact_code}.csv",
+            data_root / f"04_error-{artifact_code}.csv",
+            "03_input-{artifact_code}.csv",
+            "04_output-{artifact_code}.csv",
+        )
+
+    case_input = data_root / f"03_input-{tsa}.csv"
+    if case_input.exists():
+        return (
+            case_input,
+            data_root / f"04_output-{tsa}.csv",
+            data_root / f"04_error-{tsa}.csv",
+            "03_input-{tsa}.csv",
+            "04_output-{tsa}.csv",
+        )
+
+    raise FileNotFoundError(
+        f"Missing BTC Stage 01a input CSV: {legacy_input} or {case_input}"
+    )
+
+
 def run_btc_and_post_tipsy_bundle_with_manifest(
     *,
     tsa_list: list[str],
@@ -1073,13 +1117,23 @@ def run_btc_and_post_tipsy_bundle_with_manifest(
     resolved_log_dir = Path(log_dir)
     resolved_data_root = Path(data_root)
     btc_results: list[BTCRunResult] = []
+    tipsy_input_template = "03_input-{artifact_code}.csv"
+    tipsy_output_template = "04_output-{artifact_code}.csv"
     for tsa in normalized_tsa_list:
-        input_csv = resolved_data_root / f"03_input-tsa{tsa}.csv"
-        if not input_csv.exists():
-            raise FileNotFoundError(f"Missing BTC Stage 01a input CSV: {input_csv}")
-        output_csv = resolved_data_root / f"04_output-tsa{tsa}.csv"
-        error_csv = resolved_data_root / f"04_error-tsa{tsa}.csv"
-        tsa_run_id = f"{effective_run_id}_tsa{tsa}"
+        artifact_code = _legacy_case_artifact_code(tsa)
+        (
+            input_csv,
+            output_csv,
+            error_csv,
+            input_template,
+            output_template,
+        ) = _resolve_btc_handoff_paths(
+            data_root=resolved_data_root,
+            tsa=tsa,
+        )
+        tipsy_input_template = input_template
+        tipsy_output_template = output_template
+        tsa_run_id = f"{effective_run_id}_{artifact_code}"
         result = run_btc_cli(
             input_csv=input_csv,
             mode=btc_mode,
@@ -1091,7 +1145,7 @@ def run_btc_and_post_tipsy_bundle_with_manifest(
             indicator_bank_names=indicator_bank_names,
             copy_install=True,
             scratch_root=(
-                (scratch_root / f"tsa{tsa}") if scratch_root is not None else None
+                (scratch_root / artifact_code) if scratch_root is not None else None
             ),
             log_dir=resolved_log_dir,
             run_id=tsa_run_id,
@@ -1121,7 +1175,8 @@ def run_btc_and_post_tipsy_bundle_with_manifest(
         managed_curve_truncate_at_culm=managed_curve_truncate_at_culm,
         managed_curve_max_age=managed_curve_max_age,
         yield_assumptions_path=yield_assumptions_path,
-        tipsy_output_filename_template="04_output-tsa{tsa}.csv",
+        tipsy_input_filename_template=tipsy_input_template,
+        tipsy_output_filename_template=tipsy_output_template,
     )
     return BTCPostTipsyRunResult(
         btc_results=btc_results,
