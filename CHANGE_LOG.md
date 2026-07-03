@@ -19674,3 +19674,13 @@
   workflow is launched from the parent checkout.
 - Confirmed the required MKRF `models` and `data/source` paths have no
   `arbutus-s3` availability gaps.
+
+## 2026-07-02 - Closed out P106 MKRF executable FreshForge acceptance
+
+- Merged MKRF PR `UBC-FRESH/femic-mkrf-instance#51` and reconciled the parent
+  MKRF submodule pointer to merged MKRF `main` commit `dfcebec`.
+- Re-ran parent validation after pointer reconciliation: FreshForge
+  validate/inspect/plan, focused FreshForge workflow tests, Ruff, Sphinx with
+  warnings as errors, and the MKRF `arbutus-s3` audit all passed.
+- Marked P106 complete in the roadmap and prepared parent PR `#289` for final
+  merge after GitHub checks.

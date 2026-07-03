@@ -3248,7 +3248,7 @@ generic `femic.*` provider stages as the execution surface.
 
 ## Phase 106: MKRF Executable FreshForge Model-Build Acceptance (`#288`)
 
-Status: active
+Status: complete
 
 Goal: promote the existing MKRF model-build workflow into the second
 parent-checkout executable FreshForge acceptance lane, proving that generic
@@ -3296,11 +3296,11 @@ and released FreshForge execution APIs.
   - [x] Inspect FreshForge records, MKRF runtime manifests, ForestModel XML,
         fragments, tracks, Matrix Builder manifest, and MKRF Git status.
   - [x] Audit required MKRF model/source paths against `arbutus-s3`.
-- [ ] P106.6 Close out.
-  - [ ] Merge the MKRF PR first if workflow/docs/code changed.
-  - [ ] Update the parent MKRF submodule pointer.
-  - [ ] Re-run parent validation after pointer reconciliation.
-  - [ ] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
+- [x] P106.6 Close out.
+  - [x] Merge the MKRF PR first if workflow/docs/code changed.
+  - [x] Update the parent MKRF submodule pointer.
+  - [x] Re-run parent validation after pointer reconciliation.
+  - [x] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
 
 P106.5 executable acceptance passed from the parent FEMIC checkout. FreshForge
 discovery, rendered commands, validation, inspection, and planning all resolved
@@ -3317,6 +3317,13 @@ rows, 62 `accounts.csv` rows, 2,684,869 `curves.csv` rows, and 140,196
 MKRF tracked output metadata must remain instance-relative; the MKRF adapter now
 runs instance-owned commands with `cwd` set to the instance root and
 `--instance-root .`, keeping tracked generated outputs stable.
+
+P106.6 closeout reconciled the parent MKRF submodule pointer to merged MKRF
+`main` commit `dfcebec`. Parent post-merge validation passed with FreshForge
+validate/inspect/plan, focused FreshForge workflow tests, Ruff, Sphinx with
+warnings as errors, and the MKRF `arbutus-s3` model/source availability audit.
+Parent PR `#289` carried the merged-pointer update after MKRF PR
+`UBC-FRESH/femic-mkrf-instance#51` merged.
 
 ### Detailed Next Steps Notes
 
@@ -3337,12 +3344,11 @@ runs instance-owned commands with `cwd` set to the instance root and
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P106` / `#288` is active: MKRF is the second parent-checkout executable
-    FreshForge model-build acceptance lane after TFL6. P106.5 executable
-    acceptance has passed through Patchworks Matrix Builder; the remaining
-    tranche is P106.6 closeout: push/open the MKRF PR, update the parent
-    submodule pointer, rerun parent validation, and synchronize issue/PR
-    comments before merge.
+  - `P106` / `#288` is complete pending final parent PR merge/issue closure:
+    MKRF is the second parent-checkout executable FreshForge model-build
+    acceptance lane after TFL6. The MKRF PR merged, the parent submodule
+    pointer was reconciled to merged MKRF `main`, and post-merge parent
+    validation passed.
   - `P105` / `#286` is complete: TFL6 Phase 19 promoted the TFL6-owned
     model-build graph into the first parent-checkout executable FreshForge
     acceptance lane through Matrix Builder. The workflow remains instance-owned
