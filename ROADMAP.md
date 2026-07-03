@@ -3268,21 +3268,21 @@ and released FreshForge execution APIs.
         diagnostics, outputs, and JSON-safe artifact metadata.
   - [x] Update MKRF tests from old execution symbols to
         `freshforge.execution.run_workflow`.
-- [ ] P106.3 Update the MKRF model-build workflow for parent-checkout
+- [x] P106.3 Update the MKRF model-build workflow for parent-checkout
       execution.
-  - [ ] Change workflow `instance_root` parameters from `.` to
+  - [x] Change workflow `instance_root` parameters from `.` to
         `external/femic-mkrf-instance`.
-  - [ ] Keep run config, Patchworks config, source data, model package, bundle,
+  - [x] Keep run config, Patchworks config, source data, model package, bundle,
         runtime, and artifact paths instance-relative.
-  - [ ] Remove `rebuild_spec` from the `validate_case` node and document
+  - [x] Remove `rebuild_spec` from the `validate_case` node and document
         rebuild-spec validation as a separate pre-run check.
-- [ ] P106.4 Update MKRF docs/runbooks and discovery path.
-  - [ ] Route operators through `python -m femic freshforge workflows list`.
-  - [ ] Document `python -m femic freshforge workflows commands
+- [x] P106.4 Update MKRF docs/runbooks and discovery path.
+  - [x] Route operators through `python -m femic freshforge workflows list`.
+  - [x] Document `python -m femic freshforge workflows commands
         external/femic-mkrf-instance/workflows/freshforge/mkrf_model_build_workflow.yaml`.
-  - [ ] Document released `freshforge run --workdir runtime/freshforge
+  - [x] Document released `freshforge run --workdir runtime/freshforge
         --namespace mkrf/model-build --json` command shape.
-  - [ ] State that materialization should run first when the MKRF submodule is
+  - [x] State that materialization should run first when the MKRF submodule is
         thin or incomplete.
 - [ ] P106.5 Validate and run MKRF executable acceptance.
   - [ ] Refresh local FreshForge to PyPI `freshforge==0.1.0a5`.

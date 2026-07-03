@@ -19644,3 +19644,14 @@
   through the released provider run result shape.
 - Updated MKRF FreshForge tests to use `freshforge.execution.run_workflow` with
   mocked command runners; the focused MKRF FreshForge test file passes.
+
+## 2026-07-02 - Updated MKRF FreshForge workflow for parent-checkout execution
+
+- Updated the MKRF model-build workflow so all provider nodes use
+  `instance_root: external/femic-mkrf-instance` when run from the parent FEMIC
+  checkout.
+- Removed embedded rebuild-spec validation from the `femic.validate_case` node;
+  rebuild-spec validation is now documented as a separate pre-run FEMIC check.
+- Updated MKRF README, operator docs, and rebuild runbook to use P104 workflow
+  discovery and the released `freshforge run --workdir runtime/freshforge
+  --namespace mkrf/model-build --json` command shape.
