@@ -19543,3 +19543,17 @@
 - Added P105 roadmap subtasks for parent-checkout workflow updates, discovery
   path documentation, executable FreshForge run acceptance, direct output
   inspection, and closeout.
+
+## 2026-07-02 - Updated TFL6 model-build workflow for P105 execution
+
+- Updated the TFL6 model-build workflow to run from the parent FEMIC checkout by
+  using `instance_root: external/femic-tfl6-instance` for generic FEMIC
+  provider stages.
+- Kept workflow-owned run config, Patchworks config, bundle, checkpoint, output,
+  log, and artifact paths instance-relative.
+- Removed rebuild-spec validation from the first FreshForge node so
+  `femic.validate_case` runs the generic case preflight command; rebuild-spec
+  validation remains a separate documented FEMIC pre-run check.
+- Updated TFL6 docs and runbook text to route operators through P104 workflow
+  discovery and the released `freshforge run --workdir ... --namespace ...`
+  command shape.

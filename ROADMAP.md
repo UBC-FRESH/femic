@@ -3209,20 +3209,20 @@ generic `femic.*` provider stages as the execution surface.
   - [x] Create parent branch `feature/p105-tfl6-executable-model-build`.
   - [x] Create TFL6 branch `feature/p19-freshforge-executable-model-build`.
   - [x] Add `planning/phase105_tfl6_executable_model_build.md`.
-- [ ] P105.2 Update the TFL6 model-build workflow for parent-checkout
+- [x] P105.2 Update the TFL6 model-build workflow for parent-checkout
       execution.
-  - [ ] Change TFL6 workflow `instance_root` parameters from `.` to
+  - [x] Change TFL6 workflow `instance_root` parameters from `.` to
         `external/femic-tfl6-instance`.
-  - [ ] Keep run config, Patchworks config, bundle, checkpoint, output, log,
+  - [x] Keep run config, Patchworks config, bundle, checkpoint, output, log,
         and artifact paths instance-relative.
-  - [ ] Remove `rebuild_spec` from the `validate_case` node so generic case
+  - [x] Remove `rebuild_spec` from the `validate_case` node so generic case
         preflight remains the first workflow stage.
-- [ ] P105.3 Update operator docs and discovery path.
-  - [ ] Document `python -m femic freshforge workflows list`.
-  - [ ] Document `python -m femic freshforge workflows commands
+- [x] P105.3 Update operator docs and discovery path.
+  - [x] Document `python -m femic freshforge workflows list`.
+  - [x] Document `python -m femic freshforge workflows commands
         external/femic-tfl6-instance/workflows/freshforge/tfl6_model_build_workflow.yaml`.
-  - [ ] Document separate rebuild-spec validation before execution.
-  - [ ] State that materialization should run first when the TFL6 submodule is
+  - [x] Document separate rebuild-spec validation before execution.
+  - [x] State that materialization should run first when the TFL6 submodule is
         thin or incomplete.
 - [ ] P105.4 Validate and run TFL6 executable acceptance.
   - [ ] Run discovery, rendered commands, validate, inspect, and plan from the
