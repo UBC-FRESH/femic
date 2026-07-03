@@ -3240,11 +3240,11 @@ generic `femic.*` provider stages as the execution surface.
   - [x] Inspect FreshForge run records, FEMIC runtime manifests, exported
         Patchworks package, Matrix Builder manifest, compiled tracks, and TFL6
         Git status.
-- [ ] P105.5 Close out.
-  - [ ] Merge the TFL6 PR first if workflow/docs changed.
-  - [ ] Update the parent TFL6 submodule pointer.
-  - [ ] Re-run parent validation after the pointer update.
-  - [ ] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
+- [x] P105.5 Close out.
+  - [x] Merge the TFL6 PR first if workflow/docs changed.
+  - [x] Update the parent TFL6 submodule pointer.
+  - [x] Re-run parent validation after the pointer update.
+  - [x] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
 
 ### Detailed Next Steps Notes
 
@@ -3265,7 +3265,9 @@ generic `femic.*` provider stages as the execution surface.
   - `planning/roadmap_notes_archive.md`
 - Current edge:
   - `P105` executable acceptance has completed its parent-checkout run through
-    Matrix Builder and is now in closeout.
+    Matrix Builder and the TFL6 instance PR has been merged.
+    Parent FEMIC now points at the merged TFL6 `main` commit and is in final
+    PR/issue closeout.
     The parent-checkout workflow discovery, command rendering, validate,
     plan, rebuild-spec validation, focused FreshForge tests, Ruff, and Sphinx
     checks pass. The first runtime blocker, missing SiteProd aliases for VRI
@@ -3278,8 +3280,8 @@ generic `femic.*` provider stages as the execution surface.
     instead of reopening production TIPSY rule reconstruction or spreadsheet
     regeneration in P105. The successful run rebuilt the Patchworks export and
     Matrix Builder tracks with `btc` sub-run id
-    `tfl6_freshforge_model_build_tfl6`; no `tsatfl` source/test/TFL6 matches
-    remain after cleanup.
+    `tfl6_freshforge_model_build_tfl6`; no invalid combined TSA/TFL
+    source/test/TFL6 matches remain after cleanup.
   - `P105` / `#286` is active: TFL6 Phase 19 promotes the existing
     TFL6-owned model-build graph into the first parent-checkout executable
     FreshForge acceptance lane through Matrix Builder. The workflow remains

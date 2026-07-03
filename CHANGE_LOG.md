@@ -19609,5 +19609,16 @@
   Patchworks export, Patchworks preflight, and Matrix Builder.
 - Verified the clean run used BTC sub-run id
   `tfl6_freshforge_model_build_tfl6`, rebuilt the Patchworks export and
-  compiled tracks, and left no `tsatfl` matches in the source/test/TFL6
-  workspace search.
+  compiled tracks, and left no invalid combined TSA/TFL matches in the
+  source/test/TFL6 workspace search.
+
+## 2026-07-02 - Closed P105 TFL6 executable FreshForge acceptance
+
+- Merged the TFL6 Phase 19 PR and updated the parent FEMIC TFL6 submodule
+  pointer to the merged TFL6 `main` commit.
+- Revalidated the parent-checkout TFL6 FreshForge model-build workflow after
+  pointer reconciliation with FreshForge validation/planning, focused tests,
+  Ruff, targeted mypy, Sphinx, and the TFL6 annex publication audit.
+- Recorded final closeout status for parent issue `#286`, parent PR `#287`,
+  TFL6 issue `UBC-FRESH/femic-tfl6-instance#162`, and TFL6 PR
+  `UBC-FRESH/femic-tfl6-instance#163`.

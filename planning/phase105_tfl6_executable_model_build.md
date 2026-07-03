@@ -96,7 +96,8 @@ The parent-checkout acceptance run completed on 2026-07-02 with:
   `external/femic-tfl6-instance/output/patchworks_tfl6_mp11_harvest_system_candidate/`;
 - compiled tracks rebuilt under
   `external/femic-tfl6-instance/models/tfl6_patchworks_model_mp11_harvest_system_candidate/tracks`;
-- no `tsatfl` matches remaining in the source/test/TFL6 workspace search.
+- no invalid combined TSA/TFL matches remaining in the source/test/TFL6
+  workspace search.
 
 The run intentionally uses the accepted BTC input CSV and accepted BatchTIPSY
 output. It does not require or regenerate the legacy TIPSY parameter
