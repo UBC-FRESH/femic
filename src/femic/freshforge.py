@@ -58,6 +58,15 @@ _NODE_CONTRACTS: tuple[_NodeContract, ...] = (
         artifacts=("run_manifest",),
     ),
     _NodeContract(
+        id="accepted_btc_handoff",
+        name="Accepted BTC handoff",
+        description="Declare an accepted BTC input/output handoff preflight.",
+        inputs=("geospatial_runtime",),
+        outputs=("btc_handoff",),
+        parameters=("instance_root", "btc_input", "btc_output", "treated_curves"),
+        artifacts=("btc_input", "btc_output", "treated_curves"),
+    ),
+    _NodeContract(
         id="btc_post_tipsy",
         name="BTC and post-TIPSY bundle",
         description="Declare the unattended BTC and Stage 01b bundle seam.",
@@ -413,6 +422,7 @@ def _generic_command_builders() -> dict[str, Callable[[Any, Any], tuple[str, ...
         "validate_case": _build_validate_case_command,
         "geospatial_preflight": _build_geospatial_preflight_command,
         "compile_upstream": _build_compile_upstream_command,
+        "accepted_btc_handoff": _build_accepted_btc_handoff_command,
         "btc_post_tipsy": _build_btc_post_tipsy_command,
         "export_patchworks": _build_export_patchworks_command,
         "patchworks_preflight": _build_patchworks_preflight_command,
@@ -463,6 +473,32 @@ def _build_compile_upstream_command(node: Any, _context: Any) -> tuple[str, ...]
         )
     )
     _append_option(command, node, "log_dir", "--log-dir")
+    return tuple(command)
+
+
+def _build_accepted_btc_handoff_command(node: Any, _context: Any) -> tuple[str, ...]:
+    command = list(
+        _python_m_femic(
+            "prep",
+            "accepted-btc-handoff",
+            "--instance-root",
+            _parameter(node, "instance_root"),
+            "--btc-input",
+            _parameter(node, "btc_input"),
+            "--btc-output",
+            _parameter(node, "btc_output"),
+            "--treated-curves",
+            _parameter(node, "treated_curves"),
+        )
+    )
+    _append_option(command, node, "btc_error", "--btc-error")
+    _append_option(
+        command, node, "treated_curve_diagnostics", "--treated-curve-diagnostics"
+    )
+    _append_option(
+        command, node, "tipsy_parameter_crosswalk", "--tipsy-parameter-crosswalk"
+    )
+    _append_option(command, node, "curve_id_map", "--curve-id-map")
     return tuple(command)
 
 

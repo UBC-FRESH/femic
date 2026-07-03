@@ -3224,14 +3224,20 @@ generic `femic.*` provider stages as the execution surface.
   - [x] Document separate rebuild-spec validation before execution.
   - [x] State that materialization should run first when the TFL6 submodule is
         thin or incomplete.
-- [ ] P105.4 Validate and run TFL6 executable acceptance.
+- [x] P105.4 Validate and run TFL6 executable acceptance.
   - [x] Run discovery, rendered commands, validate, inspect, and plan from the
         parent checkout.
   - [x] Resolve the generic SiteProd species alias gap exposed by TFL6
         broadleaf code `MB`.
-  - [ ] Run the FreshForge model-build workflow with `--workdir
+  - [x] Replace the blocked upstream compile node with a generic accepted BTC
+        handoff preflight that consumes the reviewed TFL6 `03_input`,
+        `04_output`, and treated-curve artifacts.
+  - [x] Remove the spreadsheet freshness requirement from the accepted BTC
+        handoff path so post-TIPSY execution only requires the canonical BTC
+        input CSV and recorded BatchTIPSY output.
+  - [x] Run the FreshForge model-build workflow with `--workdir
         runtime/freshforge --namespace tfl6/model-build --json`.
-  - [ ] Inspect FreshForge run records, FEMIC runtime manifests, exported
+  - [x] Inspect FreshForge run records, FEMIC runtime manifests, exported
         Patchworks package, Matrix Builder manifest, compiled tracks, and TFL6
         Git status.
 - [ ] P105.5 Close out.
@@ -3258,18 +3264,22 @@ generic `femic.*` provider stages as the execution surface.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
-  - `P105` executable acceptance is partially validated but not closeable yet.
+  - `P105` executable acceptance has completed its parent-checkout run through
+    Matrix Builder and is now in closeout.
     The parent-checkout workflow discovery, command rendering, validate,
-    inspect, plan, rebuild-spec validation, focused FreshForge tests, Ruff, and
-    Sphinx checks pass. The explicit `freshforge run` reaches
-    `femic.compile_upstream` after successful case preflight and geospatial
-    preflight, but TFL6 legacy data prep then fails in TIPSY parameter
-    generation because no config rule matches AU `1000`
-    (`leading_species=HW`, `BEC=CWH`, `forest_type=1`). This is a TFL6
-    executable-model-build blocker, not a FreshForge discovery/planning
-    blocker. The first runtime blocker, missing SiteProd aliases for VRI maple
-    species codes, was fixed generically by mapping `M`, `MB`, and `MV` to the
-    available `AT` SiteProd band.
+    plan, rebuild-spec validation, focused FreshForge tests, Ruff, and Sphinx
+    checks pass. The first runtime blocker, missing SiteProd aliases for VRI
+    maple species codes, was fixed generically by mapping `M`, `MB`, and `MV`
+    to the available `AT` SiteProd band. The second blocker, legacy upstream
+    compile trying to regenerate production TIPSY parameters for AU `1000`, is
+    being resolved by switching the TFL6 executable workflow to a generic
+    accepted BTC handoff preflight before `femic.btc_post_tipsy`. This consumes
+    the reviewed TFL6 BTC input CSV, `04_output`, and treated-curve artifacts
+    instead of reopening production TIPSY rule reconstruction or spreadsheet
+    regeneration in P105. The successful run rebuilt the Patchworks export and
+    Matrix Builder tracks with `btc` sub-run id
+    `tfl6_freshforge_model_build_tfl6`; no `tsatfl` source/test/TFL6 matches
+    remain after cleanup.
   - `P105` / `#286` is active: TFL6 Phase 19 promotes the existing
     TFL6-owned model-build graph into the first parent-checkout executable
     FreshForge acceptance lane through Matrix Builder. The workflow remains

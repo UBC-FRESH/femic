@@ -19578,3 +19578,36 @@
   matched AU `1000` (`leading_species=HW`, `BEC=CWH`, `forest_type=1`).
 - P105 remains active; FreshForge discovery, validation, inspection, planning,
   docs, focused tests, and the generic SiteProd alias fix are validated.
+
+## 2026-07-02 - Added accepted BTC handoff preflight for P105
+
+- Added the generic `femic.accepted_btc_handoff` FreshForge node and matching
+  `femic prep accepted-btc-handoff` command.
+- Rewired the TFL6 executable model-build workflow to consume the accepted
+  `03_input`, `04_output`, and treated-curve artifacts before running
+  `femic.btc_post_tipsy`.
+- Updated P105 planning and TFL6 docs to state that Phase 19 uses the accepted
+  BTC handoff boundary; production TIPSY rule reconstruction is deferred.
+
+## 2026-07-02 - Removed the spreadsheet requirement from the P105 BTC handoff
+
+- Updated the post-TIPSY freshness guard so the accepted BTC handoff path can
+  validate against the canonical BTC input CSV without requiring the legacy
+  TIPSY parameter spreadsheet.
+- Removed the legacy 01b script's spreadsheet lookup from the FreshForge
+  model-build path; `femic.btc_post_tipsy` now uses the declared accepted BTC
+  input CSV and BatchTIPSY output.
+- Added focused tests for CSV-only freshness, matching BTC input fingerprints,
+  and generic fingerprint-mismatch diagnostics.
+
+## 2026-07-02 - Completed the P105 TFL6 FreshForge executable acceptance run
+
+- Fixed remaining non-numeric case artifact naming seams so `tfl6` remains
+  `tfl6`; numeric cases still use the `tsaNN` convention.
+- Re-ran the parent-checkout FreshForge model-build workflow through case
+  preflight, geospatial preflight, accepted BTC handoff, BTC/post-TIPSY,
+  Patchworks export, Patchworks preflight, and Matrix Builder.
+- Verified the clean run used BTC sub-run id
+  `tfl6_freshforge_model_build_tfl6`, rebuilt the Patchworks export and
+  compiled tracks, and left no `tsatfl` matches in the source/test/TFL6
+  workspace search.

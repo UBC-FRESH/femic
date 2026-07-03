@@ -1108,6 +1108,45 @@ CASE_STRICT_WARNINGS_OPTION = typer.Option(
     "--strict-warnings",
     help="Fail preflight when warnings are present.",
 )
+ACCEPTED_BTC_INPUT_OPTION = typer.Option(
+    ...,
+    "--btc-input",
+    help="Accepted BatchTIPSY input CSV path, resolved under the instance root.",
+)
+ACCEPTED_BTC_OUTPUT_OPTION = typer.Option(
+    ...,
+    "--btc-output",
+    help="Accepted BatchTIPSY output CSV path, resolved under the instance root.",
+)
+ACCEPTED_BTC_TREATED_CURVES_OPTION = typer.Option(
+    ...,
+    "--treated-curves",
+    help="Accepted treated-curve table path, resolved under the instance root.",
+)
+ACCEPTED_BTC_ERROR_OPTION = typer.Option(
+    None,
+    "--btc-error",
+    help="Optional accepted BatchTIPSY error CSV path, resolved under the instance root.",
+    show_default=False,
+)
+ACCEPTED_BTC_TREATED_CURVE_DIAGNOSTICS_OPTION = typer.Option(
+    None,
+    "--treated-curve-diagnostics",
+    help="Optional treated-curve diagnostics path, resolved under the instance root.",
+    show_default=False,
+)
+ACCEPTED_BTC_PARAMETER_CROSSWALK_OPTION = typer.Option(
+    None,
+    "--tipsy-parameter-crosswalk",
+    help="Optional TIPSY parameter crosswalk path, resolved under the instance root.",
+    show_default=False,
+)
+ACCEPTED_BTC_CURVE_ID_MAP_OPTION = typer.Option(
+    None,
+    "--curve-id-map",
+    help="Optional accepted BTC curve-id map path, resolved under the instance root.",
+    show_default=False,
+)
 ARCGIS_REVIEW_OUTPUT_DIR_OPTION = typer.Option(
     None,
     "--output-dir",
@@ -6783,6 +6822,95 @@ def prep_validate_case(
         f"[green]Case preflight passed[/green] run_config={resolved_run_config} "
         f"targets=[{targets}] tipsy_config_dir={resolved_tipsy_config_dir}"
     )
+
+
+def _validate_required_nonempty_file(
+    *,
+    label: str,
+    path: Path,
+    errors: list[str],
+) -> None:
+    if not path.exists():
+        errors.append(f"Missing {label}: {path}")
+        return
+    if not path.is_file():
+        errors.append(f"{label} is not a file: {path}")
+        return
+    if path.stat().st_size <= 0:
+        errors.append(f"{label} is empty: {path}")
+
+
+def _validate_optional_existing_file(
+    *,
+    label: str,
+    path: Path | None,
+    errors: list[str],
+) -> None:
+    if path is None:
+        return
+    if not path.exists():
+        errors.append(f"Missing optional {label}: {path}")
+        return
+    if not path.is_file():
+        errors.append(f"Optional {label} is not a file: {path}")
+
+
+@prep_app.command("accepted-btc-handoff")
+def prep_accepted_btc_handoff(
+    btc_input: Path = ACCEPTED_BTC_INPUT_OPTION,
+    btc_output: Path = ACCEPTED_BTC_OUTPUT_OPTION,
+    treated_curves: Path = ACCEPTED_BTC_TREATED_CURVES_OPTION,
+    btc_error: Path | None = ACCEPTED_BTC_ERROR_OPTION,
+    treated_curve_diagnostics: Path | None = (
+        ACCEPTED_BTC_TREATED_CURVE_DIAGNOSTICS_OPTION
+    ),
+    tipsy_parameter_crosswalk: Path | None = ACCEPTED_BTC_PARAMETER_CROSSWALK_OPTION,
+    curve_id_map: Path | None = ACCEPTED_BTC_CURVE_ID_MAP_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Validate accepted BTC handoff artifacts before post-TIPSY assembly."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    required_paths = {
+        "BTC input": instance_context.resolve_path(btc_input),
+        "BTC output": instance_context.resolve_path(btc_output),
+        "treated curves": instance_context.resolve_path(treated_curves),
+    }
+    optional_paths: dict[str, Path | None] = {
+        "BTC error": instance_context.resolve_path(btc_error)
+        if btc_error is not None
+        else None,
+        "treated-curve diagnostics": instance_context.resolve_path(
+            treated_curve_diagnostics
+        )
+        if treated_curve_diagnostics is not None
+        else None,
+        "TIPSY parameter crosswalk": instance_context.resolve_path(
+            tipsy_parameter_crosswalk
+        )
+        if tipsy_parameter_crosswalk is not None
+        else None,
+        "curve-id map": instance_context.resolve_path(curve_id_map)
+        if curve_id_map is not None
+        else None,
+    }
+
+    errors: list[str] = []
+    for label, path in required_paths.items():
+        _validate_required_nonempty_file(label=label, path=path, errors=errors)
+    for label, optional_path in optional_paths.items():
+        _validate_optional_existing_file(label=label, path=optional_path, errors=errors)
+
+    if errors:
+        for message in errors:
+            console.print(f"[red]Error:[/red] {message}")
+        raise typer.Exit(code=1)
+
+    console.print("[green]Accepted BTC handoff preflight passed[/green]")
+    for label, path in required_paths.items():
+        console.print(f"{label}: {path}")
+    for label, optional_path in optional_paths.items():
+        if optional_path is not None:
+            console.print(f"{label}: {optional_path}")
 
 
 @prep_app.command("geospatial-preflight")

@@ -280,4 +280,5 @@ def test_build_legacy_01b_runtime_config_builds_output_paths() -> None:
     )
     assert runtime_cfg.tipsy_params_path_prefix == "./data/tipsy_params_tsa"
     assert runtime_cfg.tipsy_output_root == "./data"
+    assert runtime_cfg.tipsy_input_filename_template == "03_input-tsa{tsa}.csv"
     assert runtime_cfg.tipsy_output_filename_template == "04_output-tsa{tsa}.csv"

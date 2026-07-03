@@ -95,6 +95,20 @@ def test_provider_metadata_serializes_deterministically() -> None:
                 ),
             },
             {
+                "id": "accepted_btc_handoff",
+                "inputs": ["geospatial_runtime"],
+                "outputs": ["btc_handoff"],
+                "parameters": [
+                    "instance_root",
+                    "btc_input",
+                    "btc_output",
+                    "treated_curves",
+                ],
+                "artifacts": ["btc_input", "btc_output", "treated_curves"],
+                "name": "Accepted BTC handoff",
+                "description": "Declare an accepted BTC input/output handoff preflight.",
+            },
+            {
                 "id": "btc_post_tipsy",
                 "inputs": ["btc_handoff"],
                 "outputs": ["model_input_bundle"],
@@ -469,6 +483,66 @@ def test_legacy_execute_node_shim_delegates_to_run_node() -> None:
 
     assert result.status is RunStatus.SUCCESS
     assert commands == [(sys.executable, "-m", "femic", "prep", "geospatial-preflight")]
+
+
+def test_accepted_btc_handoff_execution_constructs_preflight_command() -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus, WorkflowNode
+
+    commands: list[tuple[str, ...]] = []
+    provider = FemicFreshForgeProvider(command_runner=_successful_runner(commands))
+    node_type = next(
+        item
+        for item in provider.metadata().node_types
+        if item.id == "accepted_btc_handoff"
+    )
+    node = WorkflowNode(
+        id="accepted_btc_handoff",
+        provider="femic.accepted_btc_handoff",
+        parameters={
+            "instance_root": "external/femic-example-instance",
+            "btc_input": "data/03_input-example.csv",
+            "btc_output": "data/04_output-example.csv",
+            "treated_curves": "planning/example_treated_curves.csv",
+            "btc_error": "data/04_error-example.csv",
+            "treated_curve_diagnostics": "planning/example_curve_diagnostics.csv",
+            "tipsy_parameter_crosswalk": "planning/example_parameter_crosswalk.csv",
+            "curve_id_map": "planning/example_curve_id_map.csv",
+        },
+    )
+
+    result = provider.run_node(
+        node,
+        node_type,
+        context=RunContext(workflow_id="wf", workdir=Path(".")),
+    )
+
+    assert result.status is RunStatus.SUCCESS
+    assert commands == [
+        (
+            sys.executable,
+            "-m",
+            "femic",
+            "prep",
+            "accepted-btc-handoff",
+            "--instance-root",
+            "external/femic-example-instance",
+            "--btc-input",
+            "data/03_input-example.csv",
+            "--btc-output",
+            "data/04_output-example.csv",
+            "--treated-curves",
+            "planning/example_treated_curves.csv",
+            "--btc-error",
+            "data/04_error-example.csv",
+            "--treated-curve-diagnostics",
+            "planning/example_curve_diagnostics.csv",
+            "--tipsy-parameter-crosswalk",
+            "planning/example_parameter_crosswalk.csv",
+            "--curve-id-map",
+            "planning/example_curve_id_map.csv",
+        )
+    ]
 
 
 def test_provider_execution_failure_returns_freshforge_diagnostic() -> None:

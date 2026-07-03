@@ -673,6 +673,76 @@ def test_prep_glb_build_wires_stash_flags(
     assert captured["force_update_public_data_glb"] is True
 
 
+def test_prep_accepted_btc_handoff_passes_for_declared_files(tmp_path: Path) -> None:
+    instance_root = tmp_path / "instance"
+    for relative_path in (
+        "data/03_input-example.csv",
+        "data/04_output-example.csv",
+        "planning/example_treated_curves.csv",
+        "data/04_error-example.csv",
+        "planning/example_curve_diagnostics.csv",
+    ):
+        path = instance_root / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("ok\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "accepted-btc-handoff",
+            "--instance-root",
+            str(instance_root),
+            "--btc-input",
+            "data/03_input-example.csv",
+            "--btc-output",
+            "data/04_output-example.csv",
+            "--treated-curves",
+            "planning/example_treated_curves.csv",
+            "--btc-error",
+            "data/04_error-example.csv",
+            "--treated-curve-diagnostics",
+            "planning/example_curve_diagnostics.csv",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Accepted BTC handoff preflight passed" in result.stdout
+    assert "03_input-example.csv" in result.stdout
+
+
+def test_prep_accepted_btc_handoff_fails_for_missing_required_file(
+    tmp_path: Path,
+) -> None:
+    instance_root = tmp_path / "instance"
+    (instance_root / "data").mkdir(parents=True)
+    (instance_root / "data" / "04_output-example.csv").write_text(
+        "ok\n", encoding="utf-8"
+    )
+    treated_curves = instance_root / "planning" / "example_treated_curves.csv"
+    treated_curves.parent.mkdir(parents=True)
+    treated_curves.write_text("ok\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        cli_main.app,
+        [
+            "prep",
+            "accepted-btc-handoff",
+            "--instance-root",
+            str(instance_root),
+            "--btc-input",
+            "data/03_input-example.csv",
+            "--btc-output",
+            "data/04_output-example.csv",
+            "--treated-curves",
+            "planning/example_treated_curves.csv",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Missing BTC input" in result.stdout
+
+
 def test_preflight_checks_windows_requires_git_annex(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

@@ -41,6 +41,7 @@ class Legacy01BRuntimeConfig:
 
     tipsy_params_path_prefix: str | Path
     tipsy_output_root: str | Path
+    tipsy_input_filename_template: str = "03_input-tsa{tsa}.csv"
     tipsy_output_filename_template: str = "04_output-tsa{tsa}.csv"
 
 
@@ -103,11 +104,13 @@ def build_legacy_01b_runtime_config(
     *,
     tipsy_params_path_prefix: str | Path,
     tipsy_output_root: str | Path = "data",
+    tipsy_input_filename_template: str = "03_input-tsa{tsa}.csv",
     tipsy_output_filename_template: str = "04_output-tsa{tsa}.csv",
 ) -> Legacy01BRuntimeConfig:
     """Build typed runtime config payload for a single 01b TSA run."""
     return Legacy01BRuntimeConfig(
         tipsy_params_path_prefix=tipsy_params_path_prefix,
         tipsy_output_root=tipsy_output_root,
+        tipsy_input_filename_template=tipsy_input_filename_template,
         tipsy_output_filename_template=tipsy_output_filename_template,
     )

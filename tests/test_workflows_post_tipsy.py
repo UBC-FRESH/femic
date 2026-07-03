@@ -1134,14 +1134,19 @@ def test_run_btc_and_post_tipsy_bundle_with_manifest_orchestrates_paths(
     assert Path(btc_calls[0]["input_csv"]) == data_root / "03_input-tsa29.csv"
     assert Path(btc_calls[0]["output_csv"]) == data_root / "04_output-tsa29.csv"
     assert Path(btc_calls[0]["error_csv"]) == data_root / "04_error-tsa29.csv"
+    assert btc_calls[0]["run_id"] == "btc_post_tipsy_test_tsa29"
     assert btc_calls[0]["report_preset_name"] == "tsr-unattended-default"
     assert btc_calls[0]["indicator_bank_names"] == ()
     assert btc_calls[0]["copy_install"] is True
     assert Path(btc_calls[0]["scratch_root"]) == tmp_path / "scratch" / "tsa29"
     assert len(post_tipsy_calls) == 1
     assert (
+        post_tipsy_calls[0]["tipsy_input_filename_template"]
+        == "03_input-{artifact_code}.csv"
+    )
+    assert (
         post_tipsy_calls[0]["tipsy_output_filename_template"]
-        == "04_output-tsa{tsa}.csv"
+        == "04_output-{artifact_code}.csv"
     )
     fingerprint_path = tipsy_output_input_fingerprint_path(
         tipsy_output_path=data_root / "04_output-tsa29.csv"
@@ -1149,6 +1154,99 @@ def test_run_btc_and_post_tipsy_bundle_with_manifest_orchestrates_paths(
     assert fingerprint_path.is_file()
     assert fingerprint_path.read_text(encoding="utf-8").strip() == compute_file_sha256(
         data_root / "03_input-tsa29.csv"
+    )
+
+
+def test_run_btc_and_post_tipsy_bundle_with_manifest_accepts_case_code_paths(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    data_root = tmp_path / "data"
+    data_root.mkdir(parents=True, exist_ok=True)
+    (data_root / "03_input-tfl6.csv").write_text("feature_id\n1000\n", encoding="utf-8")
+
+    btc_calls: list[dict[str, object]] = []
+    post_tipsy_calls: list[dict[str, object]] = []
+
+    def _fake_run_btc_cli(**kwargs: object) -> BTCRunResult:
+        btc_calls.append(kwargs)
+        output_csv = Path(kwargs["output_csv"])
+        error_csv = Path(kwargs["error_csv"])
+        output_csv.write_text("feature_id,MVcon_0\n1000,0\n", encoding="utf-8")
+        error_csv.write_text("warnings,errors\n0,0\n", encoding="utf-8")
+        return BTCRunResult(
+            run_id=str(kwargs["run_id"]),
+            mode="TSR",
+            manifest_path=tmp_path / "logs" / "btc_manifest.json",
+            stdout_log_path=tmp_path / "logs" / "btc_stdout.log",
+            stderr_log_path=tmp_path / "logs" / "btc_stderr.log",
+            output_csv_path=output_csv,
+            error_csv_path=error_csv,
+            executable_path=tmp_path / "btc" / "TIPSYbtc.exe",
+            install_root=tmp_path / "btc",
+            working_dir=tmp_path / "scratch" / "work",
+            command=("btc.exe", "/TSR", "MSYT.csv"),
+            copied_install=True,
+            exit_code=0,
+            duration_sec=1.0,
+            report_template_path=tmp_path / "btc" / "TimberSupply.rpt",
+        )
+
+    def _fake_post_tipsy(**kwargs: object) -> PostTipsyBundleRunResult:
+        post_tipsy_calls.append(kwargs)
+        result = PostTipsyBundleResult(
+            tsa_list=["tfl6"],
+            au_rows=1,
+            curve_rows=2,
+            curve_points_rows=4,
+            tipsy_curves_paths=[data_root / "tipsy_curves_tfl6.csv"],
+            tipsy_sppcomp_paths=[data_root / "tipsy_sppcomp_tfl6.csv"],
+            au_table_path=data_root / "model_input_bundle" / "au_table.csv",
+            curve_table_path=data_root / "model_input_bundle" / "curve_table.csv",
+            curve_points_table_path=data_root
+            / "model_input_bundle"
+            / "curve_points_table.csv",
+        )
+        return PostTipsyBundleRunResult(
+            manifest_path=tmp_path / "logs" / "run_manifest.json",
+            result=result,
+        )
+
+    monkeypatch.setattr("femic.workflows.legacy.run_btc_cli", _fake_run_btc_cli)
+    monkeypatch.setattr(
+        "femic.workflows.legacy.run_post_tipsy_bundle_with_manifest",
+        _fake_post_tipsy,
+    )
+
+    run_btc_and_post_tipsy_bundle_with_manifest(
+        tsa_list=["tfl6"],
+        run_id="btc_post_tipsy_test",
+        log_dir=tmp_path / "logs",
+        repo_root=tmp_path,
+        data_root=data_root,
+        scratch_root=tmp_path / "scratch",
+        message_fn=lambda _msg: None,
+    )
+
+    assert Path(btc_calls[0]["input_csv"]) == data_root / "03_input-tfl6.csv"
+    assert Path(btc_calls[0]["output_csv"]) == data_root / "04_output-tfl6.csv"
+    assert Path(btc_calls[0]["error_csv"]) == data_root / "04_error-tfl6.csv"
+    assert btc_calls[0]["run_id"] == "btc_post_tipsy_test_tfl6"
+    assert Path(btc_calls[0]["scratch_root"]) == tmp_path / "scratch" / "tfl6"
+    assert (
+        post_tipsy_calls[0]["tipsy_input_filename_template"]
+        == "03_input-{artifact_code}.csv"
+    )
+    assert (
+        post_tipsy_calls[0]["tipsy_output_filename_template"]
+        == "04_output-{artifact_code}.csv"
+    )
+    fingerprint_path = tipsy_output_input_fingerprint_path(
+        tipsy_output_path=data_root / "04_output-tfl6.csv"
+    )
+    assert fingerprint_path.is_file()
+    assert fingerprint_path.read_text(encoding="utf-8").strip() == compute_file_sha256(
+        data_root / "03_input-tfl6.csv"
     )
 
 

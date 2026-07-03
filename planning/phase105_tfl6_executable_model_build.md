@@ -28,7 +28,7 @@ The workflow nodes continue to use generic provider references:
 
 - `femic.validate_case`
 - `femic.geospatial_preflight`
-- `femic.compile_upstream`
+- `femic.accepted_btc_handoff`
 - `femic.btc_post_tipsy`
 - `femic.export_patchworks`
 - `femic.patchworks_preflight`
@@ -38,6 +38,12 @@ The TFL6 workflow must use `instance_root: external/femic-tfl6-instance` so the
 same document works from the parent checkout. Run config, Patchworks config,
 bundle, checkpoint, output, log, and artifact paths stay instance-relative
 because the FEMIC CLI resolves them against `instance_root`.
+
+P105 uses the accepted TFL6 BTC handoff artifacts recorded in the instance
+run profile and planning surfaces. It does not regenerate production TIPSY
+parameter rules from raw upstream inputs. The accepted-handoff node checks the
+declared BTC input/output and treated-curve artifacts before the workflow
+continues to `femic.btc_post_tipsy`.
 
 ## Pre-Run Checks
 
@@ -75,3 +81,23 @@ surface is inspected directly:
 
 Tracked model-output changes are reviewable rebuild output. They should be
 committed only when expected and validated.
+
+## Acceptance Result
+
+The parent-checkout acceptance run completed on 2026-07-02 with:
+
+- `freshforge run ... --workdir runtime/freshforge --namespace tfl6/model-build --json`
+  returning `ok: true`;
+- all seven workflow nodes succeeding;
+- BTC sub-run id `tfl6_freshforge_model_build_tfl6`;
+- Matrix Builder manifest `returncode: 0`;
+- `accounts_sync.status: synced`;
+- Patchworks export rebuilt under
+  `external/femic-tfl6-instance/output/patchworks_tfl6_mp11_harvest_system_candidate/`;
+- compiled tracks rebuilt under
+  `external/femic-tfl6-instance/models/tfl6_patchworks_model_mp11_harvest_system_candidate/tracks`;
+- no `tsatfl` matches remaining in the source/test/TFL6 workspace search.
+
+The run intentionally uses the accepted BTC input CSV and accepted BatchTIPSY
+output. It does not require or regenerate the legacy TIPSY parameter
+spreadsheet.
