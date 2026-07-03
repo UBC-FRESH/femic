@@ -19655,3 +19655,22 @@
 - Updated MKRF README, operator docs, and rebuild runbook to use P104 workflow
   discovery and the released `freshforge run --workdir runtime/freshforge
   --namespace mkrf/model-build --json` command shape.
+
+## 2026-07-02 - Completed P106 MKRF FreshForge executable acceptance run
+
+- Revalidated the MKRF model-build workflow from the parent checkout with
+  FreshForge discovery, rendered commands, validation, inspection, and planning.
+- Ran the executable MKRF FreshForge workflow through seven nodes:
+  `mkrf.build_au_inputs`, `mkrf.select_aus`, `mkrf.build_managed_au_inputs`,
+  `mkrf.build_managed_au_curves`, `mkrf.init_runtime_package`,
+  `femic.patchworks_preflight`, and `femic.matrix_build`.
+- Verified Matrix Builder returned `0` for `mkrf_freshforge_exec`, stderr ended
+  with `Done Matrix Builder.`, the expected ForestModel XML, fragments, and
+  tracks existed, and the compiled track row counts matched the accepted MKRF
+  surface.
+- Fixed the MKRF adapter execution boundary so instance-owned commands run with
+  `cwd` set to `external/femic-mkrf-instance` and receive `--instance-root .`;
+  this keeps tracked generated output metadata instance-relative even when the
+  workflow is launched from the parent checkout.
+- Confirmed the required MKRF `models` and `data/source` paths have no
+  `arbutus-s3` availability gaps.

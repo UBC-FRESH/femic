@@ -3274,8 +3274,12 @@ and released FreshForge execution APIs.
         `external/femic-mkrf-instance`.
   - [x] Keep run config, Patchworks config, source data, model package, bundle,
         runtime, and artifact paths instance-relative.
-  - [x] Remove `rebuild_spec` from the `validate_case` node and document
+  - [x] Remove embedded rebuild-spec validation from the workflow and document
         rebuild-spec validation as a separate pre-run check.
+  - [x] Start the executable graph at the MKRF-owned `mkrf.*` regeneration
+        nodes because older TSA-style case/geospatial preflight surfaces still
+        require legacy checkpoint files outside the accepted MKRF source
+        contract.
 - [x] P106.4 Update MKRF docs/runbooks and discovery path.
   - [x] Route operators through `python -m femic freshforge workflows list`.
   - [x] Document `python -m femic freshforge workflows commands
@@ -3284,19 +3288,35 @@ and released FreshForge execution APIs.
         --namespace mkrf/model-build --json` command shape.
   - [x] State that materialization should run first when the MKRF submodule is
         thin or incomplete.
-- [ ] P106.5 Validate and run MKRF executable acceptance.
-  - [ ] Refresh local FreshForge to PyPI `freshforge==0.1.0a5`.
-  - [ ] Run discovery, rendered commands, validate, inspect, and plan from the
+- [x] P106.5 Validate and run MKRF executable acceptance.
+  - [x] Refresh local FreshForge to PyPI `freshforge==0.1.0a5`.
+  - [x] Run discovery, rendered commands, validate, inspect, and plan from the
         parent checkout.
-  - [ ] Run the MKRF FreshForge model-build workflow from the parent checkout.
-  - [ ] Inspect FreshForge records, MKRF runtime manifests, ForestModel XML,
+  - [x] Run the MKRF FreshForge model-build workflow from the parent checkout.
+  - [x] Inspect FreshForge records, MKRF runtime manifests, ForestModel XML,
         fragments, tracks, Matrix Builder manifest, and MKRF Git status.
-  - [ ] Audit required MKRF model/source paths against `arbutus-s3`.
+  - [x] Audit required MKRF model/source paths against `arbutus-s3`.
 - [ ] P106.6 Close out.
   - [ ] Merge the MKRF PR first if workflow/docs/code changed.
   - [ ] Update the parent MKRF submodule pointer.
   - [ ] Re-run parent validation after pointer reconciliation.
   - [ ] Update `CHANGE_LOG.md`, issue comments, and PR closeout records.
+
+P106.5 executable acceptance passed from the parent FEMIC checkout. FreshForge
+discovery, rendered commands, validation, inspection, and planning all resolved
+the MKRF workflow. The executable run completed seven nodes in order:
+`mkrf.build_au_inputs`, `mkrf.select_aus`, `mkrf.build_managed_au_inputs`,
+`mkrf.build_managed_au_curves`, `mkrf.init_runtime_package`,
+`femic.patchworks_preflight`, and `femic.matrix_build`. The Matrix Builder
+manifest for `mkrf_freshforge_exec` reported `returncode=0`, stderr ended with
+`Done Matrix Builder.`, `forestmodel.xml` and `fragments.dbf` were present, and
+compiled tracks contained 98,413 `features.csv` rows, 62 `protoaccounts.csv`
+rows, 62 `accounts.csv` rows, 2,684,869 `curves.csv` rows, and 140,196
+`products.csv` rows. The `arbutus-s3` audit over required `models` and
+`data/source` paths returned no gaps. A first parent-checkout run exposed that
+MKRF tracked output metadata must remain instance-relative; the MKRF adapter now
+runs instance-owned commands with `cwd` set to the instance root and
+`--instance-root .`, keeping tracked generated outputs stable.
 
 ### Detailed Next Steps Notes
 
@@ -3318,11 +3338,11 @@ and released FreshForge execution APIs.
   - `planning/roadmap_notes_archive.md`
 - Current edge:
   - `P106` / `#288` is active: MKRF is the second parent-checkout executable
-    FreshForge model-build acceptance lane after TFL6. The first required
-    implementation move is refreshing the instance-owned `mkrf.*` provider
-    from the older branch-era `execute_node(...)` / `ProviderExecutionResult`
-    API to the released FreshForge `run_node(...)` / `ProviderRunResult`
-    contract before running the real MKRF model-build workflow.
+    FreshForge model-build acceptance lane after TFL6. P106.5 executable
+    acceptance has passed through Patchworks Matrix Builder; the remaining
+    tranche is P106.6 closeout: push/open the MKRF PR, update the parent
+    submodule pointer, rerun parent validation, and synchronize issue/PR
+    comments before merge.
   - `P105` / `#286` is complete: TFL6 Phase 19 promoted the TFL6-owned
     model-build graph into the first parent-checkout executable FreshForge
     acceptance lane through Matrix Builder. The workflow remains instance-owned
