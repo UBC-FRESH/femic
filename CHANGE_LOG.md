@@ -19557,3 +19557,12 @@
 - Updated TFL6 docs and runbook text to route operators through P104 workflow
   discovery and the released `freshforge run --workdir ... --namespace ...`
   command shape.
+
+## 2026-07-02 - Fixed SiteProd maple alias exposed by P105 acceptance
+
+- The first P105 executable run reached TFL6 data prep and exposed a generic
+  SiteProd lookup gap for VRI maple species codes.
+- Added `M`, `MB`, and `MV` aliases to the existing SiteProd species lookup so
+  they resolve to the available `AT` SiteProd raster band.
+- Added focused test coverage and re-ran SiteProd plus FreshForge workflow
+  tests.

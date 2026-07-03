@@ -3225,8 +3225,10 @@ generic `femic.*` provider stages as the execution surface.
   - [x] State that materialization should run first when the TFL6 submodule is
         thin or incomplete.
 - [ ] P105.4 Validate and run TFL6 executable acceptance.
-  - [ ] Run discovery, rendered commands, validate, inspect, and plan from the
+  - [x] Run discovery, rendered commands, validate, inspect, and plan from the
         parent checkout.
+  - [x] Resolve the generic SiteProd species alias gap exposed by TFL6
+        broadleaf code `MB`.
   - [ ] Run the FreshForge model-build workflow with `--workdir
         runtime/freshforge --namespace tfl6/model-build --json`.
   - [ ] Inspect FreshForge run records, FEMIC runtime manifests, exported

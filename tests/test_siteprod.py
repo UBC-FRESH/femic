@@ -33,6 +33,8 @@ def test_parse_arc_raster_rescue_layer_mappings() -> None:
 def test_siteprod_species_lookup_prefers_full_code_then_initial() -> None:
     assert siteprod_species_lookup("FDI") == "FD"
     assert siteprod_species_lookup("FAKE") == "FD"
+    assert siteprod_species_lookup("MB") == "AT"
+    assert siteprod_species_lookup("MV") == "AT"
     assert DEFAULT_SITEPROD_SPECIES_LOOKUP["FDI"] == "FD"
 
 

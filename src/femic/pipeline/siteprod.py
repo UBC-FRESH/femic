@@ -74,6 +74,9 @@ def _export_siteprod_layers_arcgis_batch(
 
 DEFAULT_SITEPROD_SPECIES_LOOKUP: dict[str, str] = {
     "AC": "AT",
+    "M": "AT",
+    "MB": "AT",
+    "MV": "AT",
     "PLI": "PL",
     "FDI": "FD",
     "S": "SW",
