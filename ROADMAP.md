@@ -3261,12 +3261,12 @@ and released FreshForge execution APIs.
   - [x] Create parent branch `feature/p106-mkrf-executable-model-build`.
   - [x] Create MKRF branch `feature/freshforge-executable-model-build`.
   - [x] Add parent and MKRF planning notes.
-- [ ] P106.2 Refresh the MKRF FreshForge adapter for released FreshForge.
-  - [ ] Replace old `execute_node(...)` / `ProviderExecutionResult` usage with
+- [x] P106.2 Refresh the MKRF FreshForge adapter for released FreshForge.
+  - [x] Replace old `execute_node(...)` / `ProviderExecutionResult` usage with
         `run_node(...)` / `ProviderRunResult`.
-  - [ ] Return deterministic command, return-code, stdout/stderr,
+  - [x] Return deterministic command, return-code, stdout/stderr,
         diagnostics, outputs, and JSON-safe artifact metadata.
-  - [ ] Update MKRF tests from old execution symbols to
+  - [x] Update MKRF tests from old execution symbols to
         `freshforge.execution.run_workflow`.
 - [ ] P106.3 Update the MKRF model-build workflow for parent-checkout
       execution.

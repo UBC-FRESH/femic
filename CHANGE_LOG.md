@@ -19633,3 +19633,14 @@
   FreshForge adapter to released execution APIs, converting the MKRF workflow
   to parent-checkout execution, validating discovery/planning, and running the
   MKRF model-build workflow through Matrix Builder.
+
+## 2026-07-02 - Refreshed MKRF FreshForge adapter for released execution APIs
+
+- Updated the instance-owned MKRF FreshForge adapter from the old
+  `execute_node(...)` / `ProviderExecutionResult` execution surface to the
+  released `run_node(...)` / `ProviderRunResult` contract.
+- Kept `execute_node(...)` as a compatibility shim while returning
+  deterministic command metadata, status, outputs, artifacts, and diagnostics
+  through the released provider run result shape.
+- Updated MKRF FreshForge tests to use `freshforge.execution.run_workflow` with
+  mocked command runners; the focused MKRF FreshForge test file passes.
