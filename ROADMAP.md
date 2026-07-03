@@ -3258,6 +3258,18 @@ generic `femic.*` provider stages as the execution surface.
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P105` executable acceptance is partially validated but not closeable yet.
+    The parent-checkout workflow discovery, command rendering, validate,
+    inspect, plan, rebuild-spec validation, focused FreshForge tests, Ruff, and
+    Sphinx checks pass. The explicit `freshforge run` reaches
+    `femic.compile_upstream` after successful case preflight and geospatial
+    preflight, but TFL6 legacy data prep then fails in TIPSY parameter
+    generation because no config rule matches AU `1000`
+    (`leading_species=HW`, `BEC=CWH`, `forest_type=1`). This is a TFL6
+    executable-model-build blocker, not a FreshForge discovery/planning
+    blocker. The first runtime blocker, missing SiteProd aliases for VRI maple
+    species codes, was fixed generically by mapping `M`, `MB`, and `MV` to the
+    available `AT` SiteProd band.
   - `P105` / `#286` is active: TFL6 Phase 19 promotes the existing
     TFL6-owned model-build graph into the first parent-checkout executable
     FreshForge acceptance lane through Matrix Builder. The workflow remains

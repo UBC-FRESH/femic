@@ -19566,3 +19566,15 @@
   they resolve to the available `AT` SiteProd raster band.
 - Added focused test coverage and re-ran SiteProd plus FreshForge workflow
   tests.
+
+## 2026-07-02 - Recorded P105 executable model-build blocker
+
+- Re-ran the TFL6 FreshForge model-build workflow from the parent checkout with
+  `FEMIC_EXTERNAL_DATA_ROOT` and Arbutus auth loaded.
+- The run completed the `validate_case` and `geospatial_preflight` FreshForge
+  nodes, then failed in `femic.compile_upstream` during legacy TIPSY parameter
+  generation.
+- The active blocker is a TFL6 runtime/config decision: no TIPSY config rule
+  matched AU `1000` (`leading_species=HW`, `BEC=CWH`, `forest_type=1`).
+- P105 remains active; FreshForge discovery, validation, inspection, planning,
+  docs, focused tests, and the generic SiteProd alias fix are validated.
