@@ -196,11 +196,26 @@ When contributing to this repository as the coding agent:
      available in the active shell and authenticated as the intended active GitHub user;
    - if `gh` is unavailable or unauthenticated, treat that as a workflow blocker for issue hygiene:
      stop, report the blocker clearly, and do not pretend the GitHub side of the workflow is current;
+   - if `gh auth status` succeeds, do not claim that you lack GitHub access merely because you are
+     an automated agent: use `gh` as the repository-approved interface for issue comments, issue
+     edits, issue closure, PR creation, PR status checks, and other GitHub workflow steps;
+   - only say that GitHub access is unavailable after running a concrete `gh` command and capturing
+     the failure; include the failed command, exit status, and short error text in the report;
+   - do not replace required GitHub comments, issue edits, issue closure, PR creation, or PR
+     checks with local documentation "preparation" unless `gh` is genuinely unavailable or the
+     developer explicitly asks for a local-only dry run;
    - start with a non-mutating audit before editing issue state:
      - `gh issue list --state open`
      - `gh issue list --state closed`
      - `gh issue view <n> --json ...`
      so you understand the current title/body/label/state before mutating anything;
+   - when a GitHub action is required, perform it with `gh` after the audit instead of drafting an
+     unexecuted plan. Prefer file-backed Markdown bodies for comments and PR descriptions:
+     - write the body to an ignored or temporary local file;
+     - run the relevant `gh issue comment`, `gh issue edit`, `gh issue close`, `gh pr create`,
+       `gh pr view`, or `gh pr checks` command; and
+     - verify the command result with a read-only `gh issue view` or `gh pr view` before reporting
+       that the GitHub side is complete;
    - use GitHub built-in issue `Type` as the canonical work-kind field for FEMIC issues:
      `Bug`, `Feature`, or `Task`;
    - do not mirror issue `Type` into duplicate work-kind labels such as `bug`, `enhancement`,
@@ -386,3 +401,17 @@ Important boundary:
 - cached PDFs live under `~/.femic/tsr/` by default
 - reviewed/adopted instance-local facts live under `config/tsr/overlay.yaml`
 - do not auto-promote unresolved candidate facts into live instance contracts
+
+## Roadmap Maintenance Guidelines
+
+For roadmap-related maintenance and contributions, please consult:
+- `planning/roadmap_refinement.md` - Overview of roadmap structure improvements
+- `planning/extension_guidelines.md` - Guidelines for extending the roadmap
+- `planning/version_control_policy.md` - Version control strategy for roadmap changes
+- `planning/contribution_practices.md` - Contribution practices and procedures
+
+The FEMIC roadmap follows a structured approach that emphasizes:
+- Consistent phase numbering and documentation patterns
+- Clear completion markers for each phase
+- Community engagement in roadmap development
+- Version-controlled evolution of roadmap elements

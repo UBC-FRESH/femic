@@ -19694,3 +19694,14 @@
 - Preserved the already-posted GitHub caveat that the MKRF Pages deploy job hit
   a platform-side failure even though the MKRF docs build succeeded; this does
   not block P106 closure.
+
+## 2026-07-03 - Clarified agent GitHub workflow contract
+
+- Updated `AGENTS.md` to state that an authenticated `gh` CLI session is the
+  approved GitHub access path for automated agents.
+- Clarified that agents should not substitute local documentation preparation
+  for required GitHub issue comments, issue edits, issue closure, PR creation,
+  or PR checks unless a concrete `gh` command fails or the developer requests a
+  local-only dry run.
+- Added the expected audit, file-backed body, `gh` mutation, and read-only
+  verification sequence for issue and PR workflow steps.

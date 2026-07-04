@@ -3565,3 +3565,60 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
   - `P76.1` complete under `#203`: explicit GeoPackage/vector THLB checkpoint
     inputs are supported for TFL 6 while TSA29 Feather restart seams and
     legacy-checkpoint rejection remain intact.
+
+## Phase 107: Roadmap Refinement and Maintenance Framework (`#291`)
+
+Status: complete
+
+Goal: Implement comprehensive roadmap refinement to address scanning issues and establish proper maintenance frameworks for long-term sustainability.
+
+- [x] P107.1 Create standardized roadmap structure templates
+  - [x] Review current roadmap structure 
+  - [x] Design standardized phase template
+  - [x] Implement template in planning directory
+  - [x] Document template usage
+- [x] P107.2 Develop comprehensive extension guidelines  
+  - [x] Research existing roadmap patterns
+  - [x] Create extension guideline documentation
+  - [x] Define integration requirements
+  - [x] Document community collaboration practices
+- [x] P107.3 Implement version control strategy for roadmap elements
+  - [x] Define roadmap versioning approach
+  - [x] Create version control policy documentation  
+  - [x] Establish change management processes
+  - [x] Implement tracking mechanisms
+- [x] P107.4 Document community contribution practices
+  - [x] Research contribution patterns
+  - [x] Create contribution practice documentation  
+  - [x] Define process for proposing extensions
+  - [x] Document recognition and credit systems
+- [x] P107.5 Update documentation with roadmap maintenance references
+  - [x] Modify AGENTS.md to include roadmap maintenance references
+  - [x] Add roadmap refinement status documentation
+  - [x] Create summary of improvements made
+
+### Detailed Next Steps Notes
+
+- Active detailed planning now lives in:
+  - `planning/roadmap_refinement.md`
+  - `planning/extension_guidelines.md` 
+  - `planning/version_control_policy.md`
+  - `planning/contribution_practices.md`
+  - `planning/roadmap_refinement.md` (this file)
+
+## Roadmap Refinement Status
+
+As of the completion of Phase 106, the FEMIC roadmap has been refined to address scanning and maintainability issues. The following improvements have been implemented:
+
+- Added standardized phase continuation patterns for future phases beyond P106
+- Created comprehensive extension guidelines in `planning/extension_guidelines.md`  
+- Established version control policy in `planning/version_control_policy.md`
+- Documented contribution practices in `planning/contribution_practices.md`
+- Updated AGENTS.md with roadmap maintenance references
+
+The roadmap now follows a more consistent structure that should be easier for automated tools to parse while maintaining all the detailed implementation information that developers need. Future phases will follow these established patterns for better consistency and maintainability.
+
+## Phase 107 Closeout Status
+
+### Tasks Completed for Phase 107
+1. Created standardized roadmap structure templates in planning directory
