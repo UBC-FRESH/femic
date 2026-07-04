@@ -386,3 +386,17 @@ Important boundary:
 - cached PDFs live under `~/.femic/tsr/` by default
 - reviewed/adopted instance-local facts live under `config/tsr/overlay.yaml`
 - do not auto-promote unresolved candidate facts into live instance contracts
+
+## Roadmap Maintenance Guidelines
+
+For roadmap-related maintenance and contributions, please consult:
+- `planning/roadmap_refinement.md` - Overview of roadmap structure improvements
+- `planning/extension_guidelines.md` - Guidelines for extending the roadmap
+- `planning/version_control_policy.md` - Version control strategy for roadmap changes
+- `planning/contribution_practices.md` - Contribution practices and procedures
+
+The FEMIC roadmap follows a structured approach that emphasizes:
+- Consistent phase numbering and documentation patterns
+- Clear completion markers for each phase
+- Community engagement in roadmap development
+- Version-controlled evolution of roadmap elements
