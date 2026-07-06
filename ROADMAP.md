@@ -3682,7 +3682,7 @@ structural reference.
   - [x] Run public-safety scan — all instance repo content reviewed, no machine-specific paths published.
   - [x] Write ignored delegated result report — `runtime/agent_jobs/p108_tsa23_instance_bootstrap_supervisor_result.md` (ignored).
   - [x] Update GitHub issue checklists/comments — issues #297-#301 marked complete with evidence comments.
-  - [x] Open P108 PR — https://github.com/UBC-FRESH/femic/pull/XXX (branch `feature/p108-tsa23-instance-bootstrap-delegation`).
+  - [x] Open P108 PR — https://github.com/UBC-FRESH/femic/pull/303 (branch `feature/p108-tsa23-instance-bootstrap-delegation`).
   - [x] Stop before PR merge and parent issue closure — #302 NOT closed, per stop conditions.
 
 Delegation boundary: Codex is the coordinator for P108 launch. The delegated
