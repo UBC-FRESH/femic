@@ -1,5 +1,15 @@
 # Change Log
 
+## 2026-07-05 (P108: TSA23 Instance Bootstrap)
+- P108: Launched controlled delegation pilot for TSA23 standalone FEMIC instance.
+  - Created `UBC-FRESH/femic-tsa23-instance` public repository at
+    https://github.com/UBC-FRESH/femic-tsa23-instance (SHA d332ba8) with 24 files:
+    governance docs, package scaffold, Sphinx docs (7 pages), runbooks, FreshForge
+    workflow definitions, rebuild spec.
+  - Linked as submodule under `external/femic-tsa23-instance` in parent FEMIC.
+  - Instance uses TSA29 structure pattern and TFL6 process rigor.
+  - P108 child issues #297–#301 created; #297 closed after launch packet commit/push.
+
 ## 2026-03-22
 - Made pre-stacked SiteProd the default Stage 00 runtime path when canonical `siteprod.tif` + `siteprod.bandmap.json` are present, falling back to ArcRasterRescue/ArcPy only when those artifacts are missing.
 - Added canonical SiteProd artifact resolution helpers and band-map loading so per-stand SiteProd assignment works without runtime layer discovery.
