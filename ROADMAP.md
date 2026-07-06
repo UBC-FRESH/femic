@@ -3636,16 +3636,22 @@ most recent `femic-tfl6-instance` workflow discipline as the process reference
 and the `femic-tsa29-instance` package/config structure as the closest
 structural reference.
 
-- [ ] P108.1 Coordinator launch and delegation packet (`#297`)
+- [x] P108.1 Coordinator launch and delegation packet (`#297`)
   - [x] Create/link the P108 parent and child issue tree.
   - [x] Create the P108 feature branch from current `main`.
-  - [ ] Update FEMIC `ROADMAP.md` and `CHANGE_LOG.md`.
-  - [ ] Add a tracked P108 planning note and public-safe coordinator budget
+  - [x] Update FEMIC `ROADMAP.md` and `CHANGE_LOG.md`.
+  - [x] Add a tracked P108 planning note and public-safe coordinator budget
         declaration.
-  - [ ] Add the ignored delegated-supervisor ticket and expected result path.
-  - [ ] Capture coordinator token/cash accounting for the launch/delegation
+  - [x] Add the ignored delegated-supervisor ticket and expected result path.
+  - [x] Capture coordinator token/cash accounting for the launch/delegation
         span under ignored `runtime/supervisor_tokens/`.
   - [ ] Post progress comments and close the child issue after commit/push.
+  - Result: P108.1 created parent issue `#302`, child issues `#297`-`#301`,
+    branch `feature/p108-tsa23-instance-bootstrap-delegation`, planning note,
+    budget declaration, and ignored delegation ticket. The measured
+    post-checkpoint coordinator launch span used `15738` fresh input tokens,
+    `1863552` cached input tokens, `9256` output tokens, and `1385` reasoning
+    output tokens for an estimated `USD 0.502637` cash cost.
 - [ ] P108.2 Create TSA23 instance repo/submodule scaffold (`#298`)
   - [ ] Audit whether `UBC-FRESH/femic-tsa23-instance` exists.
   - [ ] Create the public repository if absent and authenticated `gh` access

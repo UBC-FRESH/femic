@@ -50,6 +50,21 @@ creation. From the checkpoint onward, the coordinator launch/delegation setup
 must be measured with Agent Workbench supervisor-token commands and summarized
 before P108.1 closes.
 
+P108.1 measured coordinator launch span:
+
+- span record: `runtime/supervisor_tokens/p108_coordinator_launch/p108_coordinator_launch.tokens.json`
+- fresh input tokens: `15738`
+- cached input tokens: `1863552`
+- output tokens: `9256`
+- reasoning output tokens: `1385`
+- total Codex token delta: `1888546`
+- estimated cash cost at the recorded Codex price matrix: `USD 0.502637`
+
+This cost is a lower-bound launch-span measurement because the checkpoint began
+after the first audit and issue-recovery commands. It is still useful as a
+real datapoint for paid coordinator cost of preparing a full-phase delegation
+packet.
+
 The delegated supervisor must continue this discipline for any additional paid
 coordinator spans. Local Ollama/Copilot worker tokens may be treated as zero
 cash cost only when the run evidence shows they used the configured local model

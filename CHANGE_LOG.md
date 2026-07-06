@@ -19726,3 +19726,7 @@
   `runtime/supervisor_tokens/p108_coordinator_launch/`. The checkpoint begins
   after initial audit and issue-recovery work, so the tracked planning note
   records that it is not a full pre-audit cost baseline.
+- Synthesized the P108.1 coordinator launch span:
+  `15738` fresh input tokens, `1863552` cached input tokens, `9256` output
+  tokens, `1385` reasoning output tokens, `1888546` total Codex token delta,
+  and estimated `USD 0.502637` cash cost at the recorded Codex price matrix.
