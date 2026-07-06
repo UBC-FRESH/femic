@@ -19705,3 +19705,24 @@
   local-only dry run.
 - Added the expected audit, file-backed body, `gh` mutation, and read-only
   verification sequence for issue and PR workflow steps.
+
+## 2026-07-05 - Opened P108 TSA23 instance bootstrap delegation pilot
+
+- Created P108 parent issue #302 and child issues #297-#301 for the TSA23
+  instance bootstrap delegation pilot.
+- Created branch `feature/p108-tsa23-instance-bootstrap-delegation` from
+  current `main`.
+- Added `planning/phase108_tsa23_instance_bootstrap_delegation.md` to record
+  the coordinator/delegated-supervisor boundary, TFL6/TSA29 reference roles,
+  TSA23 instance intent, and stop conditions.
+- Added `planning/phase108_coordinator_budget.json` so coordinator token/cash
+  cost is an explicit part of the delegation experiment.
+- Added ignored delegation ticket
+  `runtime/agent_jobs/p108_tsa23_instance_bootstrap_supervisor_ticket.md` for
+  the local/free supervisor agent. The ticket requires issue/roadmap/changelog
+  synchronization, branch discipline, public-safety checks, token accounting,
+  PR handoff, and a hard stop before merge or parent issue closure.
+- Started an ignored coordinator token checkpoint under
+  `runtime/supervisor_tokens/p108_coordinator_launch/`. The checkpoint begins
+  after initial audit and issue-recovery work, so the tracked planning note
+  records that it is not a full pre-audit cost baseline.

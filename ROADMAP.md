@@ -3622,3 +3622,62 @@ The roadmap now follows a more consistent structure that should be easier for au
 
 ### Tasks Completed for Phase 107
 1. Created standardized roadmap structure templates in planning directory
+
+## Phase 108: TSA23 Instance Bootstrap Delegation Pilot (`#302`)
+
+Status: active
+
+Branch: `feature/p108-tsa23-instance-bootstrap-delegation`
+
+Goal: launch a controlled Agent Workbench delegation pilot that bootstraps a new
+`external/femic-tsa23-instance` standalone FEMIC instance for a TSA 23 graduate
+student Patchworks modelling project. The delegated supervisor should use the
+most recent `femic-tfl6-instance` workflow discipline as the process reference
+and the `femic-tsa29-instance` package/config structure as the closest
+structural reference.
+
+- [ ] P108.1 Coordinator launch and delegation packet (`#297`)
+  - [x] Create/link the P108 parent and child issue tree.
+  - [x] Create the P108 feature branch from current `main`.
+  - [ ] Update FEMIC `ROADMAP.md` and `CHANGE_LOG.md`.
+  - [ ] Add a tracked P108 planning note and public-safe coordinator budget
+        declaration.
+  - [ ] Add the ignored delegated-supervisor ticket and expected result path.
+  - [ ] Capture coordinator token/cash accounting for the launch/delegation
+        span under ignored `runtime/supervisor_tokens/`.
+  - [ ] Post progress comments and close the child issue after commit/push.
+- [ ] P108.2 Create TSA23 instance repo/submodule scaffold (`#298`)
+  - [ ] Audit whether `UBC-FRESH/femic-tsa23-instance` exists.
+  - [ ] Create the public repository if absent and authenticated `gh` access
+        permits, or record the exact blocker.
+  - [ ] Initialize repository with public-safe bootstrap files.
+  - [ ] Add parent submodule under `external/femic-tsa23-instance`.
+  - [ ] Verify `git submodule status --recursive
+        external/femic-tsa23-instance`.
+- [ ] P108.3 Bootstrap instance governance and structure (`#299`)
+  - [ ] Inventory reference surfaces from TFL 6 and TSA29.
+  - [ ] Add instance `AGENTS.md`, `README.md`, `ROADMAP.md`, `CHANGE_LOG.md`,
+        and `planning/`.
+  - [ ] Add initial package/config/docs/runbook/workflow structure where
+        justified by the TSA29-style instance shape.
+  - [ ] Add `.gitignore` and runtime/data boundaries.
+  - [ ] Record copied, adapted, rejected, and deferred assumptions in a
+        planning note.
+- [ ] P108.4 Plan TSA23 source workflow and first build phases (`#300`)
+  - [ ] Audit available TSA23 TSR references and public-data paths.
+  - [ ] Draft source/corpus planning note.
+  - [ ] Draft instance roadmap phases and dependency order.
+  - [ ] Add an initial FreshForge workflow graph scaffold or planning note.
+  - [ ] Record blockers and follow-on tasks explicitly.
+- [ ] P108.5 Delegated phase report and PR handoff (`#301`)
+  - [ ] Run validation checks.
+  - [ ] Run public-safety scan.
+  - [ ] Write ignored delegated result report.
+  - [ ] Update GitHub issue checklists/comments.
+  - [ ] Open P108 PR and report URL.
+  - [ ] Stop before PR merge and parent issue closure.
+
+Delegation boundary: Codex is the coordinator for P108 launch. The delegated
+local supervisor may execute the phase on the P108 branch and open a PR, but
+must not merge the PR, close parent issue `#302`, publish releases, or claim
+final phase completion.

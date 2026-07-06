@@ -1,0 +1,46 @@
+{
+  "budget_id": "p108-coordinator-launch-and-delegation",
+  "project": "femic",
+  "phase": "P108",
+  "experiment_question": "What paid Codex coordinator token and cash cost is required to plan and delegate a full TSA23 instance-bootstrap phase to a local/free supervisor-agent workflow?",
+  "max_paid_cost_usd": 25.0,
+  "max_attempts": 1,
+  "checkpoint_spans": [
+    {
+      "span_id": "coordinator_launch_and_ticket",
+      "owner": "paid_coordinator",
+      "description": "Codex coordinator planning, issue recovery, roadmap setup, budget declaration, and delegated-supervisor ticket creation.",
+      "required": true
+    },
+    {
+      "span_id": "delegated_phase_review",
+      "owner": "paid_coordinator",
+      "description": "Codex review of delegated supervisor result, PR state, and merge-readiness decision after the local/free supervisor stops.",
+      "required": true
+    }
+  ],
+  "stop_condition": {
+    "description": "Stop after one delegated phase attempt and require maintainer/Codex review before retry, scope expansion, or PR merge.",
+    "stop_after_attempts": 1,
+    "stop_on_budget_exceeded": true,
+    "stop_on_repeated_failure": true
+  },
+  "maintainer_checkpoint": {
+    "required": true,
+    "trigger": "before P108 PR merge, any second delegated-supervisor attempt, or any expansion beyond bootstrap planning/scaffold",
+    "decision_surface": "ignored delegated result report plus tracked public-safe roadmap/changelog/planning updates"
+  },
+  "summary_status": {
+    "budget_declared": true,
+    "budget_exceeded": false,
+    "attempt_count": 0,
+    "stop_rule_triggered": false,
+    "maintainer_checkpoint_required": true
+  },
+  "public_safety": {
+    "tracked_artifact": true,
+    "contains_private_paths": false,
+    "contains_provider_details": false,
+    "contains_raw_prompts": false
+  }
+}
