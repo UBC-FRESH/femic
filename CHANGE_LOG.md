@@ -10,6 +10,31 @@
   - Instance uses TSA29 structure pattern and TFL6 process rigor.
   - P108 child issues #297–#301 created; #297 closed after launch packet commit/push.
 
+## 2026-07-05 - Opened P108 TSA23 instance bootstrap delegation pilot
+
+- Created P108 parent issue #302 and child issues #297-#301 for the TSA23
+  instance bootstrap delegation pilot.
+- Created branch `feature/p108-tsa23-instance-bootstrap-delegation` from
+  current `main`.
+- Added `planning/phase108_tsa23_instance_bootstrap_delegation.md` to record
+  the coordinator/delegated-supervisor boundary, TFL6/TSA29 reference roles,
+  TSA23 instance intent, and stop conditions.
+- Added `planning/phase108_coordinator_budget.json` so coordinator token/cash
+  cost is an explicit part of the delegation experiment.
+- Added ignored delegation ticket
+  `runtime/agent_jobs/p108_tsa23_instance_bootstrap_supervisor_ticket.md` for
+  the local/free supervisor agent. The ticket requires issue/roadmap/changelog
+  synchronization, branch discipline, public-safety checks, token accounting,
+  PR handoff, and a hard stop before merge or parent issue closure.
+- Started an ignored coordinator token checkpoint under
+  `runtime/supervisor_tokens/p108_coordinator_launch/`. The checkpoint begins
+  after initial audit and issue-recovery work, so the tracked planning note
+  records that it is not a full pre-audit cost baseline.
+- Synthesized the P108.1 coordinator launch span:
+  `15738` fresh input tokens, `1863552` cached input tokens, `9256` output
+  tokens, `1385` reasoning output tokens, `1888546` total Codex token delta,
+  and estimated `USD 0.502637` cash cost at the recorded Codex price matrix.
+
 ## 2026-03-22
 - Made pre-stacked SiteProd the default Stage 00 runtime path when canonical `siteprod.tif` + `siteprod.bandmap.json` are present, falling back to ArcRasterRescue/ArcPy only when those artifacts are missing.
 - Added canonical SiteProd artifact resolution helpers and band-map loading so per-stand SiteProd assignment works without runtime layer discovery.
@@ -19715,28 +19740,3 @@
   local-only dry run.
 - Added the expected audit, file-backed body, `gh` mutation, and read-only
   verification sequence for issue and PR workflow steps.
-
-## 2026-07-05 - Opened P108 TSA23 instance bootstrap delegation pilot
-
-- Created P108 parent issue #302 and child issues #297-#301 for the TSA23
-  instance bootstrap delegation pilot.
-- Created branch `feature/p108-tsa23-instance-bootstrap-delegation` from
-  current `main`.
-- Added `planning/phase108_tsa23_instance_bootstrap_delegation.md` to record
-  the coordinator/delegated-supervisor boundary, TFL6/TSA29 reference roles,
-  TSA23 instance intent, and stop conditions.
-- Added `planning/phase108_coordinator_budget.json` so coordinator token/cash
-  cost is an explicit part of the delegation experiment.
-- Added ignored delegation ticket
-  `runtime/agent_jobs/p108_tsa23_instance_bootstrap_supervisor_ticket.md` for
-  the local/free supervisor agent. The ticket requires issue/roadmap/changelog
-  synchronization, branch discipline, public-safety checks, token accounting,
-  PR handoff, and a hard stop before merge or parent issue closure.
-- Started an ignored coordinator token checkpoint under
-  `runtime/supervisor_tokens/p108_coordinator_launch/`. The checkpoint begins
-  after initial audit and issue-recovery work, so the tracked planning note
-  records that it is not a full pre-audit cost baseline.
-- Synthesized the P108.1 coordinator launch span:
-  `15738` fresh input tokens, `1863552` cached input tokens, `9256` output
-  tokens, `1385` reasoning output tokens, `1888546` total Codex token delta,
-  and estimated `USD 0.502637` cash cost at the recorded Codex price matrix.
