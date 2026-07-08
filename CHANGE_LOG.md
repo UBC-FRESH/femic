@@ -35,6 +35,14 @@
   tokens, `1385` reasoning output tokens, `1888546` total Codex token delta,
   and estimated `USD 0.502637` cash cost at the recorded Codex price matrix.
 
+## 2026-07-08 - Reconciled TSA23 instance bootstrap roadmap status
+
+- Updated the `external/femic-tsa23-instance` submodule pointer to instance
+  commit `282da67`, which marks P108.4 and P108.5 complete in the instance
+  roadmap after parent FEMIC issues #300 and #301 were verified closed.
+- Recorded the instance-side changelog note for the P108 bootstrap roadmap
+  reconciliation.
+
 ## 2026-03-22
 - Made pre-stacked SiteProd the default Stage 00 runtime path when canonical `siteprod.tif` + `siteprod.bandmap.json` are present, falling back to ArcRasterRescue/ArcPy only when those artifacts are missing.
 - Added canonical SiteProd artifact resolution helpers and band-map loading so per-stand SiteProd assignment works without runtime layer discovery.
