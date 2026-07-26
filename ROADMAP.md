@@ -3622,3 +3622,70 @@ The roadmap now follows a more consistent structure that should be easier for au
 
 ### Tasks Completed for Phase 107
 1. Created standardized roadmap structure templates in planning directory
+
+## Phase 108: TSA23 Instance Bootstrap Delegation Pilot (`#302`)
+
+Status: active
+
+Branch: `feature/p108-tsa23-instance-bootstrap-delegation`
+
+Goal: launch a controlled Agent Workbench delegation pilot that bootstraps a new
+`external/femic-tsa23-instance` standalone FEMIC instance for a TSA 23 graduate
+student Patchworks modelling project. The delegated supervisor should use the
+most recent `femic-tfl6-instance` workflow discipline as the process reference
+and the `femic-tsa29-instance` package/config structure as the closest
+structural reference.
+
+- [x] P108.1 Coordinator launch and delegation packet (`#297`)
+  - [x] Create/link the P108 parent and child issue tree.
+  - [x] Create the P108 feature branch from current `main`.
+  - [x] Update FEMIC `ROADMAP.md` and `CHANGE_LOG.md`.
+  - [x] Add a tracked P108 planning note and public-safe coordinator budget
+        declaration.
+  - [x] Add the ignored delegated-supervisor ticket and expected result path.
+  - [x] Capture coordinator token/cash accounting for the launch/delegation
+        span under ignored `runtime/supervisor_tokens/`.
+  - [ ] Post progress comments and close the child issue after commit/push.
+  - Result: P108.1 created parent issue `#302`, child issues `#297`-`#301`,
+    branch `feature/p108-tsa23-instance-bootstrap-delegation`, planning note,
+    budget declaration, and ignored delegation ticket. The measured
+    post-checkpoint coordinator launch span used `15738` fresh input tokens,
+    `1863552` cached input tokens, `9256` output tokens, and `1385` reasoning
+    output tokens for an estimated `USD 0.502637` cash cost.
+- [x] P108.2 Create TSA23 instance repo/submodule scaffold (`#298`)
+  - [x] Audit whether `UBC-FRESH/femic-tsa23-instance` exists — confirmed absent.
+  - [x] Create the public repository if absent and authenticated `gh` access
+        permits — created at https://github.com/UBC-FRESH/femic-tsa23-instance.
+  - [x] Initialize repository with public-safe bootstrap files (23 files across
+        governance, package structure, Sphinx docs, runbooks, workflows).
+  - [x] Add parent submodule under `external/femic-tsa23-instance` (manual
+        git-update-index workaround due to broken git-submodule bash scripts).
+  - [x] Verify `git submodule status --recursive external/femic-tsa23-instance`
+        — ✅ 2385e5c.
+- [x] P108.3 Bootstrap instance governance and structure (`#299`)
+  - [x] Inventory reference surfaces from TFL6 and TSA29 (recorded in planning note).
+  - [x] Add instance `AGENTS.md`, `README.md`, `ROADMAP.md`, `CHANGE_LOG.md`,
+        and `planning/`.
+  - [x] Add initial package/config/docs/runbook/workflow structure justified by
+        TSA29-style instance shape.
+  - [x] Add `.gitignore` and runtime/data boundaries.
+  - [x] Record copied, adapted, rejected, and deferred assumptions in a
+        planning note — `planning/reference_assumptions.md`.
+- [x] P108.4 Plan TSA23 source workflow and first build phases (`#300`)
+  - [x] Audit available TSA23 TSR references and public-data paths (FEMIC TSR indexer).
+  - [x] Draft source/corpus planning note — `planning/source_corpus_plan.md` in instance repo (SHA d332ba8).
+  - [x] Draft instance roadmap phases and dependency order.
+  - [x] Add an initial FreshForge workflow graph scaffold — `workflows/freshforge/README.md` with mermaid diagrams.
+  - [x] Record blockers and follow-on tasks explicitly.
+- [x] P108.5 Delegated phase report and PR handoff (`#301`)
+  - [x] Run validation checks — submodule gitlink verified at mode 160000 SHA d332ba8.
+  - [x] Run public-safety scan — all instance repo content reviewed, no machine-specific paths published.
+  - [x] Write ignored delegated result report — `runtime/agent_jobs/p108_tsa23_instance_bootstrap_supervisor_result.md` (ignored).
+  - [x] Update GitHub issue checklists/comments — issues #297-#301 marked complete with evidence comments.
+  - [x] Open P108 PR — https://github.com/UBC-FRESH/femic/pull/303 (branch `feature/p108-tsa23-instance-bootstrap-delegation`).
+  - [x] Stop before PR merge and parent issue closure — #302 NOT closed, per stop conditions.
+
+Delegation boundary: Codex is the coordinator for P108 launch. The delegated
+local supervisor may execute the phase on the P108 branch and open a PR, but
+must not merge the PR, close parent issue `#302`, publish releases, or claim
+final phase completion.

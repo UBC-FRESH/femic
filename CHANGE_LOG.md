@@ -1,5 +1,48 @@
 # Change Log
 
+## 2026-07-05 (P108: TSA23 Instance Bootstrap)
+- P108: Launched controlled delegation pilot for TSA23 standalone FEMIC instance.
+  - Created `UBC-FRESH/femic-tsa23-instance` public repository at
+    https://github.com/UBC-FRESH/femic-tsa23-instance (SHA d332ba8) with 24 files:
+    governance docs, package scaffold, Sphinx docs (7 pages), runbooks, FreshForge
+    workflow definitions, rebuild spec.
+  - Linked as submodule under `external/femic-tsa23-instance` in parent FEMIC.
+  - Instance uses TSA29 structure pattern and TFL6 process rigor.
+  - P108 child issues #297–#301 created; #297 closed after launch packet commit/push.
+
+## 2026-07-05 - Opened P108 TSA23 instance bootstrap delegation pilot
+
+- Created P108 parent issue #302 and child issues #297-#301 for the TSA23
+  instance bootstrap delegation pilot.
+- Created branch `feature/p108-tsa23-instance-bootstrap-delegation` from
+  current `main`.
+- Added `planning/phase108_tsa23_instance_bootstrap_delegation.md` to record
+  the coordinator/delegated-supervisor boundary, TFL6/TSA29 reference roles,
+  TSA23 instance intent, and stop conditions.
+- Added `planning/phase108_coordinator_budget.json` so coordinator token/cash
+  cost is an explicit part of the delegation experiment.
+- Added ignored delegation ticket
+  `runtime/agent_jobs/p108_tsa23_instance_bootstrap_supervisor_ticket.md` for
+  the local/free supervisor agent. The ticket requires issue/roadmap/changelog
+  synchronization, branch discipline, public-safety checks, token accounting,
+  PR handoff, and a hard stop before merge or parent issue closure.
+- Started an ignored coordinator token checkpoint under
+  `runtime/supervisor_tokens/p108_coordinator_launch/`. The checkpoint begins
+  after initial audit and issue-recovery work, so the tracked planning note
+  records that it is not a full pre-audit cost baseline.
+- Synthesized the P108.1 coordinator launch span:
+  `15738` fresh input tokens, `1863552` cached input tokens, `9256` output
+  tokens, `1385` reasoning output tokens, `1888546` total Codex token delta,
+  and estimated `USD 0.502637` cash cost at the recorded Codex price matrix.
+
+## 2026-07-08 - Reconciled TSA23 instance bootstrap roadmap status
+
+- Updated the `external/femic-tsa23-instance` submodule pointer to instance
+  commit `282da67`, which marks P108.4 and P108.5 complete in the instance
+  roadmap after parent FEMIC issues #300 and #301 were verified closed.
+- Recorded the instance-side changelog note for the P108 bootstrap roadmap
+  reconciliation.
+
 ## 2026-03-22
 - Made pre-stacked SiteProd the default Stage 00 runtime path when canonical `siteprod.tif` + `siteprod.bandmap.json` are present, falling back to ArcRasterRescue/ArcPy only when those artifacts are missing.
 - Added canonical SiteProd artifact resolution helpers and band-map loading so per-stand SiteProd assignment works without runtime layer discovery.
