@@ -19705,3 +19705,32 @@
   local-only dry run.
 - Added the expected audit, file-backed body, `gh` mutation, and read-only
   verification sequence for issue and PR workflow steps.
+
+## 2026-07-30 - Corrected P109 MKRF log-grade integration plan
+
+- Retracted the initial P109 recommendation to refactor core
+  `femic.fmg.patchworks` so its log-grade grade-split/price-join logic would
+  become "builder-agnostic". That recommendation was made without first
+  checking the shipped history and was wrong.
+- Grounded the plan in the authoritative record instead:
+  - `#48` (2026-03-29) shipped the optional `log-grades` BTC indicator bank in
+    `src/femic/pipeline/tipsy.py`, covering
+    `Logs_Grade_{D,F,H,I,J,U,X,Y,All}` plus transposed-output parsing of the
+    `Logs_Grade_*` fields;
+  - the `#65` closeout rolled that bank into K3Z purely by configuration, with
+    the two ctfert silviculture configs requesting the existing bank; and
+  - the `#65` semantics correction and scope expansion shipped the
+    compile-recipe seam, the per-grade ratio weights, the species x grade price
+    surface, and the derived value accounts, all user-overridable through
+    `~/.femic/recipe-overlays`.
+- Confirmed the core log-grade product builders are already generically
+  parameterized, taking only a `product_attrs` list, a `curves` dict of
+  `CurvePoint` tuples, a string `au_token`, a `curve_ref_prefix`, and a
+  `compile_recipe` dict, so MKRF string AU ids need no core change.
+- Restated the remaining MKRF work as a BTC re-run requesting the existing
+  `log-grades` bank plus instance-side product wiring in
+  `src/mkrf_femic/legacy_xml.py`, which already imports core helpers.
+- Updated `ROADMAP.md` Phase 109 and the body of issue `#304` to match, and
+  normalized `<SPP>` placeholders to `{SPP}` so GitHub does not strip them as
+  HTML tags.
+

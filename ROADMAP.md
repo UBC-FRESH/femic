@@ -3636,17 +3636,27 @@ costs and net revenue, which do not exist anywhere in FEMIC today.
 
 Scoping findings that shape the work:
 
-- MKRF builds its ForestModel through the instance-owned legacy builder
-  (`src/mkrf_femic/legacy_xml.py` plus `config/legacy_xml_builder/*`), which
-  imports only formatting/validation helpers from `femic.fmg.patchworks`. The
-  K3Z CT/QMD/log-grade behaviour lives in the core `femic export patchworks`
-  pipeline and is not reachable from the MKRF build path. This is therefore a
-  code-integration phase, not a config port.
+- Log grades are exported via BTC using capability that already shipped. `#48`
+  added the optional `log-grades` BTC indicator bank in
+  `src/femic/pipeline/tipsy.py` (`Logs_Grade_{D,F,H,I,J,U,X,Y,All}`), and the
+  K3Z rollout under `#65` was config-driven: the ctfert silviculture configs
+  simply requested the existing bank. `#65` also shipped the compile-recipe
+  seam, per-grade ratio weights, the species x grade price surface, and the
+  derived value accounts. **No core refactor is required for this phase.**
+- The core log-grade product builders are already generic, taking only a
+  `product_attrs` list, a `curves` dict of `CurvePoint` tuples, a string
+  `au_token`, a `curve_ref_prefix`, and a `compile_recipe` dict. MKRF string AU
+  ids work as-is.
+- The one genuine MKRF difference is product wiring: MKRF builds its ForestModel
+  through `src/mkrf_femic/legacy_xml.py` plus `config/legacy_xml_builder/*`
+  rather than the standard exporter that consumes `silviculture.*.yaml`. That
+  builder already imports private helpers from `femic.fmg.patchworks`, so it can
+  call the shipped log-grade builders directly.
 - `config/silviculture.mkrf.yaml` is currently inert; no MKRF code reads it.
 - `commercial_thinning.qmd_response_fraction` exists in core with default
   `0.10`, but has no per-AU override path (unlike the fertilization equivalent).
 - Costs and net revenue are absent from both K3Z and core FEMIC. Only gross
-  revenue exists, via `product.Logs_Grade_Value_Total.managed.<SPP>.CC`.
+  revenue exists, via `product.Logs_Grade_Value_Total.managed.{SPP}.CC`.
 - MKRF already emits species-resolved
   `product.yield.managed.indsp.{Ba,Cw,Dec,Dr,Fd,Hw,Oth,Yc}`, which is a usable
   foundation for grade splitting.
@@ -3658,10 +3668,13 @@ Scoping findings that shape the work:
   - [ ] Create the MKRF working branch (currently prototyping on a sandbox
         branch).
 - [ ] P109.2 (B1) Log-grade volume and gross-revenue accounts for MKRF.
-  - [ ] Make the core grade-split/price-join logic builder-agnostic rather than
-        creating a third divergent copy.
-  - [ ] Split `product.yield.managed.indsp.<SPP>` into explicit
-        `Logs_Grade_{D,F,H,I,J,U,X,Y}` products.
+  - [ ] Re-run BTC for MKRF requesting the existing `log-grades` indicator bank
+        (`femic tsa btc-post-tipsy --indicator-bank log-grades`).
+  - [ ] Call the shipped core log-grade builders from
+        `src/mkrf_femic/legacy_xml.py` without modifying core.
+  - [ ] Supply species curves from the existing
+        `product.yield.managed.indsp.{SPP}` family, where `{SPP}` is one of
+        `Ba, Cw, Dec, Dr, Fd, Hw, Oth, Yc`.
   - [ ] Preserve the K3Z invariant that explicit grades sum to harvested-volume
         totals, with `Logs_Grade_All` excluded from the additive family.
   - [ ] Join prices from
@@ -3685,8 +3698,9 @@ Scoping findings that shape the work:
 
 Open decisions carried on `#304`:
 
-1. Refactor core versus copy into the legacy builder (refactor recommended).
-2. Species to price-matrix mapping, including a rule for unpriced `Dr`, `Dec`,
+1. Species to price-matrix mapping, including a rule for unpriced `Dr`, `Dec`,
    and `Oth`.
-3. Cost basis for net revenue.
+2. Cost basis for net revenue.
+3. Whether P109.4 justifies adding a per-AU/per-intensity override path for the
+   CT diameter term, which is currently global-only.
 
