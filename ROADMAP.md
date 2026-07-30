@@ -3622,3 +3622,71 @@ The roadmap now follows a more consistent structure that should be easier for au
 
 ### Tasks Completed for Phase 107
 1. Created standardized roadmap structure templates in planning directory
+
+## Phase 109: MKRF CT Diameter Response + Log-Grade Value/Cost Accounts (`#304`)
+
+Status: planned
+
+Note: `P108` is reserved for the in-flight TSA23 instance bootstrap delegation
+branch, so this phase takes the next free number.
+
+Goal: bring the K3Z-proven CT diameter growth response and log-grade
+volume/value surfaces into the MKRF instance, then extend the value surface with
+costs and net revenue, which do not exist anywhere in FEMIC today.
+
+Scoping findings that shape the work:
+
+- MKRF builds its ForestModel through the instance-owned legacy builder
+  (`src/mkrf_femic/legacy_xml.py` plus `config/legacy_xml_builder/*`), which
+  imports only formatting/validation helpers from `femic.fmg.patchworks`. The
+  K3Z CT/QMD/log-grade behaviour lives in the core `femic export patchworks`
+  pipeline and is not reachable from the MKRF build path. This is therefore a
+  code-integration phase, not a config port.
+- `config/silviculture.mkrf.yaml` is currently inert; no MKRF code reads it.
+- `commercial_thinning.qmd_response_fraction` exists in core with default
+  `0.10`, but has no per-AU override path (unlike the fertilization equivalent).
+- Costs and net revenue are absent from both K3Z and core FEMIC. Only gross
+  revenue exists, via `product.Logs_Grade_Value_Total.managed.<SPP>.CC`.
+- MKRF already emits species-resolved
+  `product.yield.managed.indsp.{Ba,Cw,Dec,Dr,Fd,Hw,Oth,Yc}`, which is a usable
+  foundation for grade splitting.
+
+- [ ] P109.1 Create lifecycle and planning surfaces.
+  - [x] Open parent issue `#304`.
+  - [x] Open MKRF issue `UBC-FRESH/femic-mkrf-instance#52`.
+  - [x] Record the phase plan in `ROADMAP.md`.
+  - [ ] Create the MKRF working branch (currently prototyping on a sandbox
+        branch).
+- [ ] P109.2 (B1) Log-grade volume and gross-revenue accounts for MKRF.
+  - [ ] Make the core grade-split/price-join logic builder-agnostic rather than
+        creating a third divergent copy.
+  - [ ] Split `product.yield.managed.indsp.<SPP>` into explicit
+        `Logs_Grade_{D,F,H,I,J,U,X,Y}` products.
+  - [ ] Preserve the K3Z invariant that explicit grades sum to harvested-volume
+        totals, with `Logs_Grade_All` excluded from the additive family.
+  - [ ] Join prices from
+        `src/femic/resources/patchworks/log_grade_price_matrices.yaml`.
+  - [ ] Gate the teaching surface behind `enableLogGradeAccounts` in the MKRF
+        pin.
+- [ ] P109.3 (A1) Establish a real MKRF QMD/`DBHg000` signal.
+  - [ ] Replace the provisional/synthetic QMD surface with a BTC-derived signal
+        built from accepted yield/height/TPH support inputs.
+  - [ ] Emit QMD product numerators and treated-area companions from the legacy
+        builder.
+- [ ] P109.4 (A2) CT diameter response modulator on the MKRF CT structure.
+  - [ ] Key the modulator on `(bucket, intensity)` rather than the flat K3Z CT
+        shape.
+  - [ ] Resolve the double-counting risk against bucket-anchored `thn*` residual
+        curves.
+- [ ] P109.5 (B2) Costs and net revenue.
+  - [ ] Specify the cost basis (per-m3, per-ha, or per-treatment; stumpage/haul
+        handling).
+  - [ ] Emit cost accounts and derive `Net = Gross - Cost` accounts/targets.
+
+Open decisions carried on `#304`:
+
+1. Refactor core versus copy into the legacy builder (refactor recommended).
+2. Species to price-matrix mapping, including a rule for unpriced `Dr`, `Dec`,
+   and `Oth`.
+3. Cost basis for net revenue.
+
