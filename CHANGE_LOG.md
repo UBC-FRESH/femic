@@ -19734,3 +19734,38 @@
   normalized `<SPP>` placeholders to `{SPP}` so GitHub does not strip them as
   HTML tags.
 
+
+## 2026-07-30 - Priced MKRF log grades from the Vancouver Log Market
+
+- Added an instance-local log price matrix at
+  `external/femic-mkrf-instance/config/log_grade_prices.mkrf.yaml` sourced
+  from the BC Coast Selling Price System `Average Log Prices - Second Growth`
+  report for the three month period ending January 2026 (`3m2gc_jan_26.pdf`).
+  MKRF sits at Maple Ridge in the Lower Mainland, so the Vancouver Log Market
+  coast series is the governing published price surface rather than any
+  Interior series, and the second-growth report matches the planted/treated
+  origin of the managed lane.
+- Resolved the published table positionally against species header column
+  centres instead of by flat text extraction. The source PDF leaves unpriced
+  cells blank, so flat extraction shifts values into the wrong species column;
+  the positional read was additionally cross-checked against the previously
+  shipped December 2025 matrix. Verified that only Cedar, Fir, Hembal, Spruce
+  and Pine carry second-growth prices in this period, which is why the
+  deciduous buckets stay unpriced and yellow cedar proxies to Cedar.
+- Emitted `product.Logs_Grade_{G}.managed.value` for all eight BTC grades plus
+  a `product.LogValue.managed.total` rollup into the MKRF ForestModel XML,
+  with per-AU prices blended over the treated-lane regeneration prescription
+  and `priced_share_pct` recorded so unpriced `Oth` dilution is auditable.
+- Wrote `runtime_log_grade_price_audit.csv` and
+  `runtime_log_grade_price_provenance.json` beside the existing grade-share
+  audit so the applied prices and their source are inspectable.
+- Validated the rebuild rather than trusting the matrix-builder exit code:
+  recomputed both blended price profiles independently and matched the audit
+  exactly; confirmed `value / total` equals an expected AU price across
+  1,167,510 curve points with zero off-grid values; confirmed grades D and F
+  carry zero volume, consistent with TIPSY modelling no pruning; and confirmed
+  the rollup equals the sum of its eight components across 95,235 points once
+  curves are linearly interpolated, which is required because Patchworks
+  compresses collinear breakpoints so sibling curves do not share an X domain.
+- Confirmed a report-only headless load returns zero with all nine value target
+  reports generated.
