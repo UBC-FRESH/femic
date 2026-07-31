@@ -2134,9 +2134,17 @@ def _resolve_ct_configs_for_au(
 
     configs: list[dict[str, Any]] = []
     for payload in payloads:
+        bucket_label = str(payload.get("label", "CT")).strip().upper() or "CT"
+        resolved_qmd_fraction = max(0.0, qmd_response_fraction)
+        by_bucket = ct_payload.get("qmd_response_fraction_by_bucket")
+        if isinstance(by_bucket, dict) and bucket_label in by_bucket:
+            try:
+                resolved_qmd_fraction = max(0.0, float(by_bucket[bucket_label]))
+            except (TypeError, ValueError):
+                pass
         configs.append(
             {
-                "label": str(payload.get("label", "CT")).strip().upper() or "CT",
+                "label": bucket_label,
                 "from_state": str(payload.get("from_state", "cc_pl")).strip().lower(),
                 "to_state": str(payload.get("to_state", "cc_pl_ct")).strip().lower(),
                 "min_origin": str(payload.get("min_origin", "planted")).strip().lower(),
@@ -2144,7 +2152,7 @@ def _resolve_ct_configs_for_au(
                 "basal_area_fraction": basal_area_fraction,
                 "ba_to_volume_ratio": ba_to_volume_ratio,
                 "removal_fraction": removal_fraction,
-                "qmd_response_fraction": max(0.0, qmd_response_fraction),
+                "qmd_response_fraction": resolved_qmd_fraction,
                 "final_felling_gap_factor": final_felling_gap_factor,
             }
         )
