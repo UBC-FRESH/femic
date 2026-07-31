@@ -19769,3 +19769,64 @@
   compresses collinear breakpoints so sibling curves do not share an X domain.
 - Confirmed a report-only headless load returns zero with all nine value target
   reports generated.
+
+## P109.5 - MKRF harvest costs and net revenue
+
+- Established the cost basis for MKRF net revenue against the Coast Appraisal
+  Manual (CAM), effective January 1 2026. The CAM is the natural companion to
+  the Vancouver Log Market price series already carried by the instance: same
+  ministry, same region, same effective period, and the coast appraisal system
+  is built on top of those same log market prices.
+- Checked the k3z instance first, because the request was to reuse the k3z cost
+  sources, and established on evidence that the premise does not hold. k3z has
+  no cost, stumpage or net-revenue surface in its `src/`, `config/`, `docs/`, or
+  in any `accounts.csv`, `protoaccounts.csv` or `forestmodel*.xml` across any of
+  its track variants. Its docs describe its economics as gross-revenue teaching
+  accounts. The only economics k3z shares is the price side, which MKRF already
+  uses a newer vintage of. No k3z cost provenance is claimed anywhere in the new
+  config.
+- Added `config/harvest_costs.mkrf.yaml` carrying the published CAM rates:
+  forest planning and administration `$21.56/m3` (CAM 5.2), road management
+  `$4.73/m3` (CAM 5.4), market logger `$8.58/m3` derived from the CAM 5.9
+  formula with the MKRF-appropriate arguments, and basic silviculture per
+  hectare by BEC unit from Table 5-6 (`CWHdm 2963`, `CWHvm1 2027`,
+  `CWHvm2 1698`). The BEC keys map directly onto the MKRF analysis unit
+  identifiers, and the dm units resolve to `CWHdm` under the CAM 5.7 rule that
+  an unlisted unit falls back to the next higher classification.
+- Recorded the one real gap rather than concealing it: the CAM publishes no base
+  tree-to-truck or hauling rate, because those costs are absorbed into the
+  Estimated Winning Bid regression (CAM 4.3.1) and are not decomposable into a
+  rate. The only operating-cost figures the CAM states outright are area-specific
+  increments that do not apply to MKRF (Clayoquot `$13.02/m3`, EBM `$9.39/m3`,
+  inland water `$12.10/m3`). Harvesting and hauling are therefore config
+  assumptions, flagged `basis: assumption`, listed under `assumed_rate_items` in
+  the emitted provenance JSON, and called out in the config header so no
+  downstream consumer mistakes them for citable rates.
+- Emitted five new managed product attributes from the MKRF exporter:
+  `product.Cost_Harvesting.managed.total`,
+  `product.Cost_TenureObligation.managed.total`,
+  `product.Cost_Silviculture.managed.total`, `product.Cost_Total.managed.total`
+  and `product.NetRevenue.managed.total`, alongside
+  `runtime_harvest_cost_audit.csv` and `runtime_harvest_cost_provenance.json`.
+  Harvesting is kept separate from the tenure obligation costs precisely because
+  only the latter are published.
+- Caught and fixed a real modelling error during validation rather than shipping
+  it. Basic silviculture was initially charged on every harvest entry, including
+  the CT35/CT40/CT45 commercial thinnings. That double-counts a stand
+  re-establishment obligation, and because it is a fixed per-hectare charge
+  against a light partial-cut volume it drove net revenue negative on 15 curves.
+  Gating the charge to the clearcut treatment removed every spurious negative:
+  all 10,014 net revenue curves are now non-negative, and silviculture is
+  charged on 5,898 clearcut curves and on none of the 4,116 thinning curves.
+- Validated the rebuild rather than trusting the matrix-builder exit code, and
+  corrected the validation method when it disagreed with the model. Comparing
+  interpolated values across a union grid produced apparent deviations up to
+  `1.0e+00`, which turned out to be an artifact of Patchworks compressing curves
+  by dropping points within tolerance, so interpolation between sparse
+  breakpoints does not reproduce a convex curve. Re-checked at exact shared
+  breakpoints across 15,846 comparisons: `Cost_Harvesting / volume` matches the
+  configured `$55.00/m3` to `5.4e-04`, `Cost_TenureObligation / volume` matches
+  `$34.87/m3` to `3.4e-04`, `Cost_Total` matches the sum of its components to
+  `2.1e-07`, and `NetRevenue` matches `LogValue - Cost_Total` to `7.0e-16`.
+- Confirmed a report-only headless load returns zero with all five new cost and
+  net revenue accounts producing full Patchworks report sets.

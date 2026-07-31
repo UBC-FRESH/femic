@@ -3691,16 +3691,49 @@ Scoping findings that shape the work:
         shape.
   - [ ] Resolve the double-counting risk against bucket-anchored `thn*` residual
         curves.
-- [ ] P109.5 (B2) Costs and net revenue.
-  - [ ] Specify the cost basis (per-m3, per-ha, or per-treatment; stumpage/haul
+- [x] P109.5 (B2) Costs and net revenue.
+  - [x] Specify the cost basis (per-m3, per-ha, or per-treatment; stumpage/haul
         handling).
-  - [ ] Emit cost accounts and derive `Net = Gross - Cost` accounts/targets.
+  - [x] Emit cost accounts and derive `Net = Gross - Cost` accounts/targets.
+  - Cost basis resolved to the Coast Appraisal Manual (CAM), effective
+    January 1 2026, which pairs with the Vancouver Log Market price series
+    already in use: same ministry, same region, same effective period.
+  - The k3z instance was evaluated first as a possible cost source and rejected
+    on evidence. It carries no cost, stumpage or net-revenue surface anywhere in
+    its `src/`, `config/`, `docs/`, or any `accounts.csv`, `protoaccounts.csv`
+    or `forestmodel*.xml` across its track variants; its own docs describe its
+    economics as gross-revenue teaching accounts. There was no k3z cost basis to
+    mirror, so none is claimed.
+  - Published CAM rates carried: forest planning and administration
+    `$21.56/m3` (5.2), road management `$4.73/m3` (5.4), market logger
+    `$8.58/m3` derived from the 5.9 formula, and basic silviculture per hectare
+    by BEC unit from Table 5-6 (`CWHdm 2963`, `CWHvm1 2027`, `CWHvm2 1698`),
+    which key directly onto the MKRF analysis unit identifiers.
+  - Known gap, deliberately surfaced rather than papered over: the CAM does not
+    publish a base tree-to-truck or hauling rate. Those costs sit inside the
+    Estimated Winning Bid regression (4.3.1) and are not decomposable. The
+    harvesting and hauling entries are therefore config assumptions flagged
+    `basis: assumption` and echoed in the runtime provenance JSON, not citable
+    rates. Net revenue is only as good as those two numbers.
+  - Basic silviculture is gated to the clearcut treatment. Charging it on the
+    CT35/CT40/CT45 entries double-counted the regeneration obligation and drove
+    net revenue negative on light partial-cut volumes; gating removed all 15
+    spurious negative curves.
+  - Stumpage is present but disabled with a null rate, because MKRF is a UBC
+    research and teaching forest rather than a conventional Crown tenure.
+    Enabling it requires supplying a defended rate.
+  - Follow-on option for a stand-specific harvesting cost: TIPSY/FAN$IER exposes
+    Tree-to-Truck Cost and Haul Costs, but FEMIC's BTC indicator bank registry
+    (`_BTC_INDICATOR_BANK_SPECS`) has no economics bank and FAN$IER cost
+    functions are GUI-configured with undocumented default vintage, so wiring
+    that up is separate work rather than an assumption made here.
 
 Open decisions carried on `#304`:
 
 1. Species to price-matrix mapping, including a rule for unpriced `Dr`, `Dec`,
    and `Oth`.
-2. Cost basis for net revenue.
+2. Whether to replace the assumed harvesting and hauling rates with a
+   FAN$IER-derived stand-specific cost or an MKRF staff figure.
 3. Whether P109.4 justifies adding a per-AU/per-intensity override path for the
    CT diameter term, which is currently global-only.
 
