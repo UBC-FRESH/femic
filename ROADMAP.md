@@ -3681,11 +3681,20 @@ Scoping findings that shape the work:
         `src/femic/resources/patchworks/log_grade_price_matrices.yaml`.
   - [ ] Gate the teaching surface behind `enableLogGradeAccounts` in the MKRF
         pin.
-- [ ] P109.3 (A1) Establish a real MKRF QMD/`DBHg000` signal.
-  - [ ] Replace the provisional/synthetic QMD surface with a BTC-derived signal
+- [x] P109.3 (A1) Establish a real MKRF QMD/`DBHg000` signal.
+  - [x] Replace the provisional/synthetic QMD surface with a BTC-derived signal
         built from accepted yield/height/TPH support inputs.
-  - [ ] Emit QMD product numerators and treated-area companions from the legacy
+  - [x] Emit QMD product numerators and treated-area companions from the legacy
         builder.
+  - [x] Add per-bucket `qmd_response_fraction_by_bucket` override in core CT path.
+  - [x] Enable QMD config in `silviculture.mkrf.yaml` with placeholder values.
+  - [x] Build QMD curves in MKRF ForestModel builder before AU loop.
+  - [x] Add `feature.QMD.managed.<au_token>` attribute in managed yield features.
+  - [x] Add `product.QMDNumerator.managed.<au_token>.<bucket>` and
+        `product.Treated.managed.<au_token>.<bucket>` in products section.
+  - [x] Create `qmdRatioAccounts.bsh` script to compute ratio accounts.
+  - [x] Update `base.pin` to include QMD ratio accounts script.
+  - [x] Validate matrix build and headless load produce QMD surfaces in tracks.
 - [ ] P109.4 (A2) CT diameter response modulator on the MKRF CT structure.
   - [ ] Key the modulator on `(bucket, intensity)` rather than the flat K3Z CT
         shape.
