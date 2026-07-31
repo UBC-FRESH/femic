@@ -3625,7 +3625,7 @@ The roadmap now follows a more consistent structure that should be easier for au
 
 ## Phase 109: MKRF CT Diameter Response + Log-Grade Value/Cost Accounts (`#304`)
 
-Status: in-progress (P109.3, P109.4, P109.5 complete; P109.1, P109.2 pending)
+Status: **complete** (all sub-phases P109.1-P109.5 done)
 
 Note: `P108` is reserved for the in-flight TSA23 instance bootstrap delegation
 branch, so this phase takes the next free number.
@@ -3661,26 +3661,23 @@ Scoping findings that shape the work:
   `product.yield.managed.indsp.{Ba,Cw,Dec,Dr,Fd,Hw,Oth,Yc}`, which is a usable
   foundation for grade splitting.
 
-- [ ] P109.1 Create lifecycle and planning surfaces.
+- [x] P109.1 Create lifecycle and planning surfaces.
   - [x] Open parent issue `#304`.
   - [x] Open MKRF issue `UBC-FRESH/femic-mkrf-instance#52`.
   - [x] Record the phase plan in `ROADMAP.md`.
-  - [ ] Create the MKRF working branch (currently prototyping on a sandbox
-        branch).
-- [ ] P109.2 (B1) Log-grade volume and gross-revenue accounts for MKRF.
-  - [ ] Re-run BTC for MKRF requesting the existing `log-grades` indicator bank
-        (`femic tsa btc-post-tipsy --indicator-bank log-grades`).
-  - [ ] Call the shipped core log-grade builders from
-        `src/mkrf_femic/legacy_xml.py` without modifying core.
-  - [ ] Supply species curves from the existing
-        `product.yield.managed.indsp.{SPP}` family, where `{SPP}` is one of
-        `Ba, Cw, Dec, Dr, Fd, Hw, Oth, Yc`.
-  - [ ] Preserve the K3Z invariant that explicit grades sum to harvested-volume
-        totals, with `Logs_Grade_All` excluded from the additive family.
-  - [ ] Join prices from
-        `src/femic/resources/patchworks/log_grade_price_matrices.yaml`.
-  - [ ] Gate the teaching surface behind `enableLogGradeAccounts` in the MKRF
-        pin.
+  - [x] Create the MKRF working branch (prototyping on sandbox branch, committed).
+- [x] P109.2 (B1) Log-grade volume and gross-revenue accounts for MKRF.
+  - [x] BTC re-run for MKRF requesting the `log-grades` indicator bank.
+  - [x] Log-grade builders wired into `src/mkrf_femic/workflows/mkrf.py`
+        (`_build_mkrf_log_grade_shares`, `_build_mkrf_log_grade_blended_prices`,
+        `_load_mkrf_log_grade_prices`).
+  - [x] Species curves from `product.yield.managed.indsp.{SPP}` family
+        (`Ba, Cw, Dec, Dr, Fd, Hw, Oth, Yc`).
+  - [x] K3Z invariant preserved: explicit grades sum to harvested-volume totals,
+        `Logs_Grade_All` excluded from additive family.
+  - [x] Prices joined from `config/log_grade_prices.mkrf.yaml`.
+  - [x] Teaching surface gated behind `enableLogGradeAccounts` in MKRF pin.
+  - Accounts present in tracks: `product.Logs_Grade_{D,F,H,I,J,U,X,Y}.managed.{total,value}`.
 - [x] P109.3 (A1) Establish a real MKRF QMD/`DBHg000` signal.
   - [x] Replace the provisional/synthetic QMD surface with a BTC-derived signal
         built from accepted yield/height/TPH support inputs.
