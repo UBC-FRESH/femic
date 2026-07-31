@@ -3625,7 +3625,7 @@ The roadmap now follows a more consistent structure that should be easier for au
 
 ## Phase 109: MKRF CT Diameter Response + Log-Grade Value/Cost Accounts (`#304`)
 
-Status: planned
+Status: in-progress (P109.3, P109.4, P109.5 complete; P109.1, P109.2 pending)
 
 Note: `P108` is reserved for the in-flight TSA23 instance bootstrap delegation
 branch, so this phase takes the next free number.
@@ -3695,11 +3695,14 @@ Scoping findings that shape the work:
   - [x] Create `qmdRatioAccounts.bsh` script to compute ratio accounts.
   - [x] Update `base.pin` to include QMD ratio accounts script.
   - [x] Validate matrix build and headless load produce QMD surfaces in tracks.
-- [ ] P109.4 (A2) CT diameter response modulator on the MKRF CT structure.
-  - [ ] Key the modulator on `(bucket, intensity)` rather than the flat K3Z CT
+- [x] P109.4 (A2) CT diameter response modulator on the MKRF CT structure.
+  - [x] Key the modulator on `(bucket, intensity)` rather than the flat K3Z CT
         shape.
-  - [ ] Resolve the double-counting risk against bucket-anchored `thn*` residual
+  - [x] Resolve the double-counting risk against bucket-anchored `thn*` residual
         curves.
+  - [x] Added `qmd_response_fraction_by_bucket_intensity` config with per-(bucket, intensity) values.
+  - [x] Updated MKRF builder to resolve QMD response fraction with intensity-aware fallback.
+  - [x] Validated matrix build and headless load produce QMD surfaces in tracks.
 - [x] P109.5 (B2) Costs and net revenue.
   - [x] Specify the cost basis (per-m3, per-ha, or per-treatment; stumpage/haul
         handling).
