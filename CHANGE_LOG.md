@@ -1,5 +1,18 @@
 # Change Log
 
+## 2026-07-31
+- Completed Phase 109.3: Bridge K3Z QMD growth increment response to MKRF instance.
+  - Added per-bucket `qmd_response_fraction_by_bucket` override in core CT path (`src/femic/fmg/patchworks.py`).
+  - Enabled QMD config in `silviculture.mkrf.yaml` with placeholder values (CT35: 0.10, CT40: 0.12, CT45: 0.15).
+  - Built QMD curves in MKRF ForestModel builder (`src/mkrf_femic/workflows/mkrf.py`) before AU loop.
+  - Added `feature.QMD.managed.<au_token>` attribute in managed yield features.
+  - Added `product.QMDNumerator.managed.<au_token>.<bucket>` and `product.Treated.managed.<au_token>.<bucket>` in products section.
+  - Created `qmdRatioAccounts.bsh` script to compute ratio accounts (numerator/denominator).
+  - Updated `base.pin` to include QMD ratio accounts script in `Patchworks_TargetInit()`.
+  - Validated matrix build and headless load produce QMD surfaces in tracks.
+  - Fixed XML schema issues: removed nested `<features>` wrapper, fixed duplicate curve IDs, wrapped QMD curve ref in `curveId()` function.
+  - All QMD surfaces correctly configured: standing-stock (`feature.QMD.managed.*`), harvested numerator (`product.QMDNumerator.managed.*`), treated area (`product.Treated.managed.*`), and ratio (`product.QMD.managed.*`).
+
 ## 2026-03-22
 - Made pre-stacked SiteProd the default Stage 00 runtime path when canonical `siteprod.tif` + `siteprod.bandmap.json` are present, falling back to ArcRasterRescue/ArcPy only when those artifacts are missing.
 - Added canonical SiteProd artifact resolution helpers and band-map loading so per-stand SiteProd assignment works without runtime layer discovery.
