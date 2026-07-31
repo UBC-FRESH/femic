@@ -12,6 +12,13 @@
   - Validated matrix build and headless load produce QMD surfaces in tracks.
   - Fixed XML schema issues: removed nested `<features>` wrapper, fixed duplicate curve IDs, wrapped QMD curve ref in `curveId()` function.
   - All QMD surfaces correctly configured: standing-stock (`feature.QMD.managed.*`), harvested numerator (`product.QMDNumerator.managed.*`), treated area (`product.Treated.managed.*`), and ratio (`product.QMD.managed.*`).
+- Completed Phase 109.4: CT diameter response modulator on MKRF CT structure.
+  - Added `qmd_response_fraction_by_bucket_intensity` config with per-(bucket, intensity) values (e.g., CT35_medium: 0.10, CT40_high: 0.14).
+  - Updated MKRF builder to resolve QMD response fraction with intensity-aware fallback logic.
+  - Resolution order: per-(bucket, intensity) -> per-bucket -> flat default (0.10).
+  - Default intensity read from `commercial_thinning.default_intensity` (currently "medium").
+  - Validated matrix build and headless load produce QMD surfaces in tracks.
+  - No double-counting: QMD response only applied to standing-stock curve, not extraction curve.
 
 ## 2026-03-22
 - Made pre-stacked SiteProd the default Stage 00 runtime path when canonical `siteprod.tif` + `siteprod.bandmap.json` are present, falling back to ArcRasterRescue/ArcPy only when those artifacts are missing.
