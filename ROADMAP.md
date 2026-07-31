@@ -3727,6 +3727,26 @@ Scoping findings that shape the work:
     (`_BTC_INDICATOR_BANK_SPECS`) has no economics bank and FAN$IER cost
     functions are GUI-configured with undocumented default vintage, so wiring
     that up is separate work rather than an assumption made here.
+  - Demonstrated end to end under a scheduled harvest, not only a report-only
+    load. A `max-even-flow-smoke` run returns 0 and schedules an even
+    ~35,300 m3 per decade, with all five cost and net revenue accounts
+    populated (per decade roughly $7.1-7.8M log value, $3.2-3.3M cost,
+    $3.9-4.6M net revenue).
+  - Root cause found for the previously deferred scheduled-run failure, which
+    was **not** related to costs. The headless default scenario target is
+    `product.Yield.managed.Total`, but MKRF account names are lowercase
+    (`product.yield.managed.total`), so the run aborted with
+    `Missing headless scenario target`. The default is correct for k3z, which
+    genuinely uses capitalised `feature.Yield.managed.*`, so the core default
+    must not be changed; MKRF scheduled runs need
+    `--scenario-target product.yield.managed.total`.
+  - Scheduled aggregates reconcile only to about 0.1-1 percent, not to machine
+    precision, because Patchworks compresses each account curve independently
+    and interpolates between stored breakpoints. This is demonstrable rather
+    than inferred: `Cost_Harvesting` is defined as volume times a constant
+    55.0, yet the scheduled ratio lands at 54.79-54.97. The same artefact
+    applies to the pre-existing yield and value accounts and is a Patchworks
+    property, not something the cost layer introduced.
 
 Open decisions carried on `#304`:
 

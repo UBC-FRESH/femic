@@ -19830,3 +19830,22 @@
   `2.1e-07`, and `NetRevenue` matches `LogValue - Cost_Total` to `7.0e-16`.
 - Confirmed a report-only headless load returns zero with all five new cost and
   net revenue accounts producing full Patchworks report sets.
+- Demonstrated the cost and net revenue accounts under a scheduled harvest
+  rather than only a report-only load. A `max-even-flow-smoke` run returns 0
+  and schedules an even harvest of roughly 35,300 m3 per decade with all five
+  new accounts populated: about $7.1-7.8M log value, $3.2-3.3M total cost and
+  $3.9-4.6M net revenue per decade.
+- Root caused the previously deferred scheduled-run failure, which turned out
+  to be unrelated to costs. The headless default scenario target is
+  `product.Yield.managed.Total`, while MKRF account names are lowercase, so
+  the run aborted with `Missing headless scenario target` before reaching the
+  optimiser. The capitalised default is correct for the k3z instance, which
+  really does use `feature.Yield.managed.*`, so the core default is left alone
+  and MKRF scheduled runs pass
+  `--scenario-target product.yield.managed.total` instead.
+- Recorded that scheduled aggregates reconcile to about 0.1-1 percent rather
+  than to machine precision, because Patchworks compresses each account curve
+  independently and interpolates between stored breakpoints. This is shown
+  rather than assumed: `Cost_Harvesting` is defined as volume times a constant
+  55.0, yet the scheduled ratio lands at 54.79-54.97. The artefact applies
+  equally to the pre-existing yield and value accounts.
