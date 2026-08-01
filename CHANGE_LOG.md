@@ -73,6 +73,12 @@
 - Scoped the first proving ground to a validated build of a new ws3-backed model
   instance from declared source data, with explicit propose/dry-run/apply/run
   permissions and reproducible manifests.
+- Added the first deterministic P110 artifact layer in `src/femic/model_build.py`:
+  versioned `ModelBuildSpec` and `WorkspaceManifest` records with validation,
+  canonical request hashing, sorted evidence serialization, and explicit
+  permission/status/verification-tier boundaries.
+- Added focused contract tests covering request round-trips, hash stability,
+  invalid input rejection, and manifest serialization.
 - Made pre-VDYP checkpoint serialization robust by removing non-picklable fit-function closures.
 - Added missing validation scaffolding (`tests/`, `docs/`, `.pre-commit-config.yaml`) so required
   repo checks run successfully.

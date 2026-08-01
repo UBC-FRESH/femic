@@ -3792,8 +3792,10 @@ Architecture boundary:
 
 Initial tasks:
 
-- [ ] Define a versioned FEMIC `ModelBuildSpec`, workspace manifest, permission
-      boundary, and Coordinator-facing API.
+- [x] Define versioned FEMIC `ModelBuildSpec` and workspace manifest records,
+  including the initial permission boundary (`propose`, `dry_run`, `apply`,
+  `run`).
+- [ ] Add the Coordinator-facing API around the model-build records.
 - [ ] Compile a model-build request into an inspectable FreshForge workflow and
       compact evidence result.
 - [ ] Implement the first deterministic build workflow: inventory, preflight,
