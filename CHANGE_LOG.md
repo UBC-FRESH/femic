@@ -62,6 +62,17 @@
 - Documented VDYP diagnostic log locations in the README and roadmap notes.
 - Switched curve anchoring to quasi-origin `(1, 1e-6)` to preserve positive-value filtering.
 - Added pre-VDYP TSA prep checkpoints (`data/vdyp_prep-tsa{tsa}.pkl`) for warm-start debugging.
+
+## 2026-08-01
+- Opened FEMIC Phase 110, `#305`, for Coordinator-driven model construction
+  through FreshForge.
+- Established the package boundary: FEMIC owns the Coordinator-facing control
+  plane, FreshForge owns workflow graphs and execution evidence, ws3 owns
+  forest-estate contracts and validation oracles, and instance repositories own
+  concrete workflows and policies.
+- Scoped the first proving ground to a validated build of a new ws3-backed model
+  instance from declared source data, with explicit propose/dry-run/apply/run
+  permissions and reproducible manifests.
 - Made pre-VDYP checkpoint serialization robust by removing non-picklable fit-function closures.
 - Added missing validation scaffolding (`tests/`, `docs/`, `.pre-commit-config.yaml`) so required
   repo checks run successfully.
