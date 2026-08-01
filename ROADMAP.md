@@ -3799,9 +3799,9 @@ Initial tasks:
 - [ ] Implement the first deterministic build workflow: inventory, preflight,
       compile/emit, lint, import, structural verification, and package.
 - [ ] Add the minimum FreshForge workflow/artifact/evidence contract required by
-      FEMIC.
+  FEMIC (FreshForge #113).
 - [ ] Add the ws3 typed model contract and deterministic validation oracles
-      required by FEMIC.
+  required by FEMIC (ws3 #121).
 - [ ] Add one concrete instance workflow only after the generic path is proven.
 - [ ] Update FEMIC, FreshForge, and ws3 agent-facing documentation.
 
