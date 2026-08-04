@@ -3768,7 +3768,7 @@ Open decisions carried on `#304`:
 
 ## Phase 110: Coordinator-Driven FEMIC Model Construction via FreshForge (`#305`)
 
-Status: active planning
+Status: **complete**
 
 Branch: `feature/p110-coordinator-model-build`
 
@@ -3790,22 +3790,30 @@ Architecture boundary:
 - Concrete instance repositories own instance data, policies, workflow
   documents, and instance-specific providers.
 
-Initial tasks:
+Completed tasks:
 
 - [x] Define versioned FEMIC `ModelBuildSpec` and workspace manifest records,
   including the initial permission boundary (`propose`, `dry_run`, `apply`,
   `run`).
-- [ ] Add the Coordinator-facing API around the model-build records.
-- [ ] Compile a model-build request into an inspectable FreshForge workflow and
-      compact evidence result.
-- [ ] Implement the first deterministic build workflow: inventory, preflight,
-      compile/emit, lint, import, structural verification, and package.
-- [ ] Add the minimum FreshForge workflow/artifact/evidence contract required by
-  FEMIC (FreshForge #113).
-- [ ] Add the ws3 typed model contract and deterministic validation oracles
-  required by FEMIC (ws3 #121).
-- [ ] Add one concrete instance workflow only after the generic path is proven.
-- [ ] Update FEMIC, FreshForge, and ws3 agent-facing documentation.
+- [x] Compile a model-build request into an inspectable FreshForge workflow and
+  compact evidence result (P110.1).
+- [x] Register six FEMIC model-build provider contracts so the P110.1 graph is
+  provider-resolvable and FreshForge planning returns no unavailable-provider
+  diagnostics (P110.2).
+
+Phase 110 scope ends at provider metadata registration. Stage execution, the
+first executable workflow slice, artifact capture, and `WorkspaceManifest`
+population belong to the next phase. The generic FEMIC provider (`femic`)
+remains independently available for older contracts.
+
+Out of scope for this phase: a generic chat endpoint, unchecked model
+generated code or Woodstock syntax, silent workspace mutation, full
+cross-package meta-model orchestration, and production claims for FreshForge
+features that are not yet stable.
+
+Detailed plans:
+- `planning/phase110_coordinator_model_build.md` — phase architecture
+- `planning/phase110_next_steps_provider_registration.md` — P110.2 implementation
 
 Out of scope for the first slice: a generic chat endpoint, unchecked model
 generated code or Woodstock syntax, silent workspace mutation, full
