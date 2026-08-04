@@ -18,3 +18,6 @@
 	path = external/femic-tfl6-instance
 	url = https://github.com/UBC-FRESH/femic-tfl6-instance.git
 	branch = main
+[submodule "external/femic-tsa29mini-instance"]
+	path = external/femic-tsa29mini-instance
+	url = https://github.com/UBC-FRESH/femic-tsa29mini-instance.git
