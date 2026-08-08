@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 import os
 from pathlib import Path
@@ -13,6 +14,7 @@ import femic.pipeline.tipsy as tipsy_module
 from femic.pipeline.tipsy import (
     DEFAULT_BATCHTIPSY_EXE_ENV,
     DEFAULT_BTC_MSYT_COLUMNS,
+    DEFAULT_WINE_EXE_ENV,
     BTCRunResult,
     BTCCustomReportColumn,
     apply_btc_indicator_banks,
@@ -1330,6 +1332,69 @@ def test_build_btc_cli_command_renders_expected_sequence(tmp_path: Path) -> None
     ]
 
 
+def test_wrap_btc_command_for_host_wraps_windows_executable_with_discovered_wine(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        tipsy_module,
+        "find_wine_executable",
+        lambda: "/usr/bin/wine64",
+    )
+
+    command = tipsy_module._wrap_btc_command_for_host(
+        ("/opt/TIPSY/TIPSYbtc.exe", "/TSR"),
+        env={},
+    )
+
+    assert command == ["/usr/bin/wine64", "/opt/TIPSY/TIPSYbtc.exe", "/TSR"]
+
+
+def test_wrap_btc_command_for_host_preserves_native_commands_and_windows_behavior(
+    monkeypatch,
+) -> None:
+    native_command = [sys.executable, "fake_btc.py", "/TSR"]
+    monkeypatch.setattr(
+        tipsy_module,
+        "find_wine_executable",
+        lambda: (_ for _ in ()).throw(AssertionError("Wine lookup was unexpected")),
+    )
+
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    assert tipsy_module._wrap_btc_command_for_host(native_command, env={}) == (
+        native_command
+    )
+
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: True)
+    assert tipsy_module._wrap_btc_command_for_host(
+        ["/opt/TIPSY/TIPSYbtc.exe", "/TSR"],
+        env={},
+    ) == ["/opt/TIPSY/TIPSYbtc.exe", "/TSR"]
+
+
+def test_wrap_btc_command_for_host_honors_wine_override_and_reports_missing_wine(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        tipsy_module,
+        "find_wine_executable",
+        lambda: (_ for _ in ()).throw(AssertionError("Discovery should be skipped")),
+    )
+
+    assert tipsy_module._wrap_btc_command_for_host(
+        ["/opt/TIPSY/TIPSYbtc.exe"],
+        env={DEFAULT_WINE_EXE_ENV: "  /custom/wine  "},
+    ) == ["/custom/wine", "/opt/TIPSY/TIPSYbtc.exe"]
+
+    monkeypatch.setattr(tipsy_module, "find_wine_executable", lambda: None)
+    with pytest.raises(RuntimeError, match=f"{DEFAULT_WINE_EXE_ENV}"):
+        tipsy_module._wrap_btc_command_for_host(
+            ["/opt/TIPSY/TIPSYbtc.exe"],
+            env={},
+        )
+
+
 def test_run_btc_cli_supervised_writes_outputs_and_manifest(tmp_path: Path) -> None:
     input_csv = tmp_path / "MSYT.csv"
     input_csv.write_text("feature_id\n1\n", encoding="utf-8")
@@ -1363,6 +1428,41 @@ def test_run_btc_cli_supervised_writes_outputs_and_manifest(tmp_path: Path) -> N
     assert "feature_id,MVcon_0,gVol_0,CC_0" in result.output_csv_path.read_text(
         encoding="utf-8"
     )
+
+
+def test_run_btc_cli_wraps_windows_executable_and_records_wine_command(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    fake_btc = tmp_path / "fake_btc.exe"
+    fake_btc.write_text(
+        "from pathlib import Path\n"
+        "import os\n"
+        "import sys\n"
+        "mode, input_name, output_name, error_name = sys.argv[1:5]\n"
+        "Path(output_name).write_text(os.environ['WINEPREFIX'], encoding='utf-8')\n"
+        "Path(error_name).write_text('warnings,errors\\n0,0\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(tipsy_module, "find_wine_executable", lambda: sys.executable)
+    wine_prefix = tmp_path / "wine-prefix"
+
+    result = run_btc_cli(
+        input_csv=input_csv,
+        mode="TSR",
+        executable_path=fake_btc,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id="btc_wine_command",
+        env={"WINEPREFIX": str(wine_prefix)},
+    )
+
+    assert result.command[:2] == (sys.executable, str(fake_btc.resolve()))
+    assert result.output_csv_path.read_text(encoding="utf-8") == str(wine_prefix)
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["command"] == list(result.command)
 
 
 def test_run_btc_cli_defaults_to_tipsy_runtime_roots(

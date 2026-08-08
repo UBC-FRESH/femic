@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 
 from femic.pipeline.diagnostics import build_timestamped_event
+from femic.patchworks_runtime import find_wine_executable
 
 
 _BTC_REPORT_COLUMNS_COMMENT = (
@@ -48,6 +49,7 @@ _BTC_PROBE_VARIANT_STRATEGIES = (
 )
 DEFAULT_BTC_LOG_DIR = Path("tipsy_io/logs")
 DEFAULT_BTC_SCRATCH_ROOT = Path("tipsy_io/scratch")
+DEFAULT_WINE_EXE_ENV = "FEMIC_WINE_EXE"
 _BTC_TOP_DIAMETER_CUTOFF_SUFFIXES = ("000", "125", "175")
 _BTC_MORTALITY_SIZE_CLASS_SUFFIXES = ("5", "15", "25", "35", "45", "55", "65")
 _BTC_DIAMETER_CLASS_SUFFIXES = (
@@ -532,6 +534,32 @@ class BTCProbeColumnVariant:
 
 def _tipsy_is_windows_host() -> bool:
     return os.name == "nt"
+
+
+def _wrap_btc_command_for_host(
+    command: Sequence[str],
+    *,
+    env: Mapping[str, str],
+) -> list[str]:
+    """Use Wine for Windows BTC executables when running on a non-Windows host."""
+    command_list = list(command)
+    if (
+        _tipsy_is_windows_host()
+        or not command_list
+        or Path(command_list[0]).suffix.lower() != ".exe"
+    ):
+        return command_list
+
+    wine_executable = env.get(DEFAULT_WINE_EXE_ENV, "").strip()
+    if not wine_executable:
+        wine_executable = find_wine_executable() or ""
+    if not wine_executable:
+        raise RuntimeError(
+            "BatchTIPSY requires Wine to run Windows executable "
+            f"{command_list[0]!r} on this host. Install wine64/wine or set "
+            f"{DEFAULT_WINE_EXE_ENV}."
+        )
+    return [wine_executable, *command_list]
 
 
 @dataclass(frozen=True)
@@ -1886,13 +1914,18 @@ def run_btc_cli(
     else:
         staged_error = prep.working_dir / f"{input_path.stem}_error.csv"
         requested_error = staged_error
-    command = build_btc_cli_command(
-        executable_path=prep.executable_path,
-        mode=normalized_mode,
-        input_csv=prep.staged_input_csv.name,
-        output_csv=staged_output.name,
-        error_csv=staged_error.name,
-        extra_executable_args=extra_executable_args,
+    merged_env = dict(os.environ)
+    merged_env.update(env or {})
+    command = _wrap_btc_command_for_host(
+        build_btc_cli_command(
+            executable_path=prep.executable_path,
+            mode=normalized_mode,
+            input_csv=prep.staged_input_csv.name,
+            output_csv=staged_output.name,
+            error_csv=staged_error.name,
+            extra_executable_args=extra_executable_args,
+        ),
+        env=merged_env,
     )
     stdout_log_path = resolved_log_dir / f"btc_stdout-{effective_run_id}.log"
     stderr_log_path = resolved_log_dir / f"btc_stderr-{effective_run_id}.log"
@@ -1923,8 +1956,6 @@ def run_btc_cli(
     }
     _write_btc_manifest(manifest_path, manifest_started)
     started_monotonic = time.monotonic()
-    merged_env = dict(os.environ)
-    merged_env.update(env or {})
     windows_dialog_cleanup: dict[str, Any] | None = None
     original_overlay_text: str | None = None
     original_overlay_exists = False
