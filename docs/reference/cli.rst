@@ -375,6 +375,10 @@ Subcommands
 - ``--btc-exe PATH`` (optional explicit ``TIPSYbtc.exe`` override)
 - ``--scratch-dir PATH`` (optional scratch root for copied BTC installs and staged run files)
 - ``--report-preset TEXT`` (default: ``tsr-unattended-default``)
+- ``--wine-prefix PATH`` (optional Wine prefix hosting the Windows TIPSY install; resolved under the instance root when relative)
+- ``--wine-exe TEXT`` (optional Wine executable override, or ``powershell.exe``/``cmd.exe`` for ``wsl-interop`` mode)
+- ``--use-xvfb`` / ``--no-xvfb`` (wrap headless Wine BTC runs in ``xvfb-run``)
+- ``--host-mode [auto|windows|wine|wsl-interop]`` (BTC host mode; defaults to host discovery)
 - ``--instance-root PATH``
 
 TIPSY
@@ -492,6 +496,8 @@ Subcommands
 - ``validate``: ``python -m femic tipsy validate [OPTIONS]``
 - ``write-btc-report-template``: ``python -m femic tipsy write-btc-report-template [OPTIONS]``
 - ``run-btc``: ``python -m femic tipsy run-btc [OPTIONS]``
+- ``preflight-btc``: ``python -m femic tipsy preflight-btc [OPTIONS]``
+- ``probe-btc-columns``: ``python -m femic tipsy probe-btc-columns [OPTIONS] INPUT_CSV``
 
 ``tipsy validate`` options
 
@@ -520,6 +526,10 @@ Subcommands
 - ``--scratch-dir PATH`` (optional writable scratch directory; defaults under ``tipsy_io/scratch``)
 - ``--log-dir PATH`` (default: ``tipsy_io/logs``)
 - ``--run-id TEXT``
+- ``--wine-prefix PATH`` (optional Wine prefix hosting the Windows TIPSY install; resolved under the instance root when relative)
+- ``--wine-exe TEXT`` (optional Wine executable override, or ``powershell.exe``/``cmd.exe`` for ``wsl-interop`` mode)
+- ``--use-xvfb`` / ``--no-xvfb`` (wrap headless Wine BTC runs in ``xvfb-run``)
+- ``--host-mode [auto|windows|wine|wsl-interop]`` (BTC host mode; defaults to host discovery)
 - ``--instance-root PATH``
 
 Operational note:
@@ -527,6 +537,44 @@ Operational note:
 - runtime artifacts now default under ``tipsy_io/logs`` and
   ``tipsy_io/scratch`` so BTC supervision is visually separate from the VDYP
   runtime namespace.
+- host mode ``auto`` discovers the best mode for this host (native
+  ``windows``, ``wine``, or ``wsl-interop``); per-field overrides take
+  precedence over ``config/tipsy.btc.runtime.yaml`` and the environment.
+
+``tipsy preflight-btc`` options
+
+- ``--btc-exe PATH`` (optional explicit ``TIPSYbtc.exe`` override)
+- ``--probe`` / ``--no-probe`` (default: ``--no-probe``; run a real minimal BTC ``/TSR`` smoke through the resolved runtime)
+- ``--instance-root PATH``
+
+``tipsy preflight-btc`` reports the resolved host mode, Wine executable and
+prefix, BatchTIPSY executable, ``xvfb-run``, WSL-interop carriers, and the
+resolved runtime YAML path without launching BTC. Exit codes:
+
+- ``0``: runtime OK
+- ``1``: invalid config (unparseable ``tipsy.btc.runtime.yaml``, impossible
+  host mode, or a BatchTIPSY executable that cannot be resolved)
+- ``2``: optional tool missing (Wine in ``wine`` mode, ``xvfb-run`` when
+  ``--use-xvfb`` is requested on a headless host, or a missing/invalid
+  WSL-interop carrier)
+
+``tipsy probe-btc-columns`` options
+
+- ``INPUT_CSV`` argument (required)
+- ``--column TEXT`` (repeatable candidate BTC report token to probe)
+- ``--indicator-bank TEXT`` (repeatable named BTC indicator bank to probe)
+- ``--source-rpt PATH`` (optional existing ``.rpt`` template to ratchet forward from)
+- ``--preset TEXT`` (optional built-in report preset to ratchet forward from)
+- ``--btc-exe PATH`` (optional explicit ``TIPSYbtc.exe`` override)
+- ``--scratch-dir PATH`` (optional scratch root for staged probe installs)
+- ``--log-dir PATH`` (default: ``tipsy_io/logs``)
+- ``--run-id-prefix TEXT`` (default: ``btc_probe``)
+- ``--summary-json PATH`` (optional JSON summary path for the probe ledger)
+- ``--variant-strategy [default|stock-matrix]`` (default: ``default``)
+- ``--runtime-layout [auto|live-overlay|copied-install]`` (default: ``auto``)
+- ``--alias-override TEXT`` (repeatable ``CANDIDATE=PROBE_TOKEN`` override)
+- ``--attempt-timeout-seconds FLOAT`` (default: ``6.0``)
+- ``--instance-root PATH``
 
 FAN$IER
 -------

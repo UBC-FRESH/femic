@@ -38,7 +38,8 @@ export modules.
    patchworks-wine-runtime
    ubc-vpn-license-connectivity
    geospatial-runtime-bootstrap
-   cross-platform-runtime-smoke
-   pypi-release-runbook
+    cross-platform-runtime-smoke
+    tipsy-btc-wine-runtime
+    pypi-release-runbook
    legacy-traceability
    sphinx-template-baseline

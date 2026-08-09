@@ -28,8 +28,18 @@ FEMIC's supported unattended BTC seam is:
 
 One rule matters more than any other:
 
-- the live user-overlay ``TimberSupply.rpt`` path is the **only known-valid**
-  unattended FEMIC `/TSR` seam.
+- on Windows-native hosts, the live user-overlay ``TimberSupply.rpt`` path is
+  the **only known-valid** unattended FEMIC `/TSR` seam.
+
+On Linux+Wine and WSL-interop hosts, the launcher integration is now the
+first-class supported path: ``femic tipsy run-btc`` and
+``femic tsa btc-post-tipsy`` accept the BTC runtime config
+(`config/tipsy.btc.runtime.yaml` or environment variables), provide a
+built-in headless wrap (``--use-xvfb``), and are verified with
+``femic tipsy preflight-btc``. See `docs/guides/tipsy-btc-wine-runtime.rst`
+for the full cross-platform guide. A real WSL-interop run and Windows-native
+CI remain the environments where those legs are executed; copied-install
+staging remains the validated unattended `/TSR` seam for the Wine path.
 
 That means:
 

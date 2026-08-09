@@ -132,6 +132,14 @@ not native on Linux.
 - `external/femic-k3z-instance/data/04_output-tsak3z.csv`
 - `external/femic-k3z-instance/data/04_error-tsak3z.csv`
 
+   Runtime note: FEMIC now has first-class BTC runtime support on Linux and
+   WSL hosts — configure it via environment variables
+   (``FEMIC_BTC_WINEPREFIX``, ``FEMIC_BTC_USE_XVFB``,
+   ``FEMIC_BTC_HOST_MODE``) or `config/tipsy.btc.runtime.yaml`, wrap headless
+   Wine launches with the built-in ``--use-xvfb`` option, and verify the
+   resolved runtime with ``femic tipsy preflight-btc``. See
+   `docs/guides/tipsy-btc-wine-runtime.rst`.
+
 5. Resume downstream work on Linux:
 
    .. code-block:: bash

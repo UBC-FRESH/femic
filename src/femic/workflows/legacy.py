@@ -1108,8 +1108,41 @@ def run_btc_and_post_tipsy_bundle_with_manifest(
     managed_curve_truncate_at_culm: bool | None = None,
     managed_curve_max_age: int | None = None,
     yield_assumptions_path: Path | None = None,
+    wine_prefix: str | Path | None = None,
+    wine_executable: str | None = None,
+    use_xvfb: bool | None = None,
+    host_mode: str | None = None,
+    instance_root: str | Path | None = None,
 ) -> BTCPostTipsyRunResult:
-    """Run unattended BTC for selected TSAs, then resume downstream post-TIPSY bundling."""
+    """Run unattended BTC for selected TSAs, then resume downstream post-TIPSY bundling.
+
+    Args:
+        tsa_list: Selected FMU/code values (zero-padded to two digits).
+        run_id: Run identifier used for log/manifest naming.
+        log_dir: Directory for BTC stdout/stderr logs and run manifests.
+        repo_root: Repository/instance root used by the post-TIPSY bundle.
+        data_root: Directory holding Stage 01a/01b handoff CSVs.
+        model_input_bundle_dir: Optional explicit model-input bundle directory.
+        btc_mode: BTC CLI mode, ``TSR`` or ``FLP``.
+        btc_executable_path: Explicit BatchTIPSY executable path.
+        report_preset_name: Built-in BTC report preset for unattended runs.
+        report_template: Optional report template staged into copied installs.
+        indicator_bank_names: Optional BTC indicator banks to activate.
+        scratch_root: Scratch root for copied BTC installs and staged run files.
+        canfi_species_fn: CANFIRE species-code mapping used by the bundle.
+        message_fn: Callable receiving progress messages.
+        managed_curve_mode: Managed-curve mode passed to the bundle.
+        managed_curve_x_scale: Managed-curve X scale passed to the bundle.
+        managed_curve_y_scale: Managed-curve Y scale passed to the bundle.
+        managed_curve_truncate_at_culm: Managed-curve truncation flag.
+        managed_curve_max_age: Managed-curve maximum age.
+        yield_assumptions_path: Optional instance-local yield assumptions YAML.
+        wine_prefix: Wine prefix hosting the Windows TIPSY install.
+        wine_executable: Wine (or wsl-interop carrier) executable override.
+        use_xvfb: Wrap headless Wine BTC runs in ``xvfb-run``.
+        host_mode: BTC host mode (``auto``/``windows``/``wine``/``wsl-interop``).
+        instance_root: Instance root whose ``config/`` may hold the runtime YAML.
+    """
     normalized_tsa_list = [str(tsa).zfill(2) for tsa in tsa_list]
     effective_run_id = run_id or datetime.now(timezone.utc).strftime(
         "btc_post_tipsy_%Y%m%dT%H%M%SZ"
@@ -1149,6 +1182,11 @@ def run_btc_and_post_tipsy_bundle_with_manifest(
             ),
             log_dir=resolved_log_dir,
             run_id=tsa_run_id,
+            wine_prefix=wine_prefix,
+            wine_executable=wine_executable,
+            use_xvfb=use_xvfb,
+            host_mode=host_mode,
+            instance_root=instance_root,
         )
         btc_results.append(result)
         write_tipsy_output_input_fingerprint(

@@ -5,12 +5,19 @@ import math
 import os
 from pathlib import Path
 import re
+import shutil
 import sys
+import types
 
 import pandas as pd
 import pytest
 import femic.pipeline.tipsy as tipsy_module
 
+from femic.pipeline.btc_runtime import (
+    FEMIC_BTC_WINEPREFIX,
+    BTCRuntimeConfig,
+    BTCRuntimeConfigError,
+)
 from femic.pipeline.tipsy import (
     DEFAULT_BATCHTIPSY_EXE_ENV,
     DEFAULT_BTC_MSYT_COLUMNS,
@@ -47,6 +54,13 @@ from femic.pipeline.tipsy import (
     write_btc_custom_report_template,
     write_tipsy_output_input_fingerprint,
     write_tipsy_input_exports,
+)
+
+# Optional guard for any real-runtime Wine tests. The BTC launcher suite is
+# fully monkeypatched (no real Wine/TIPSY/xvfb processes are launched), so no
+# test currently needs this marker; it exists for future opt-in real runs.
+needs_real_wine = pytest.mark.skipif(
+    not shutil.which("wine"), reason="wine not available"
 )
 
 
@@ -1395,6 +1409,453 @@ def test_wrap_btc_command_for_host_honors_wine_override_and_reports_missing_wine
         )
 
 
+def test_wrap_btc_command_for_host_prefers_runtime_wine_executable(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        tipsy_module,
+        "find_wine_executable",
+        lambda: (_ for _ in ()).throw(AssertionError("Discovery should be skipped")),
+    )
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="/opt/custom-wine",
+        wine_prefix=None,
+        host_mode="wine",
+    )
+
+    command = tipsy_module._wrap_btc_command_for_host(
+        ["/opt/TIPSY/TIPSYbtc.exe", "/TSR"],
+        env={DEFAULT_WINE_EXE_ENV: "/env/wine"},
+        runtime=runtime_config,
+    )
+
+    assert command == ["/opt/custom-wine", "/opt/TIPSY/TIPSYbtc.exe", "/TSR"]
+
+
+def test_wrap_btc_command_for_host_wsl_interop_builds_powershell_carrier(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="powershell.exe",
+        wine_prefix=None,
+        host_mode="wsl-interop",
+    )
+
+    command = tipsy_module._wrap_btc_command_for_host(
+        [
+            "/mnt/c/Program Files/TIPSY 4.7/BTC/TIPSYbtc.exe",
+            "/TSR",
+            "MSYT.csv",
+            "MSYT_output.csv",
+            "MSYT_error.csv",
+        ],
+        env={},
+        runtime=runtime_config,
+    )
+
+    assert command == [
+        "powershell.exe",
+        "-NoProfile",
+        "-Command",
+        "& 'C:\\Program Files\\TIPSY 4.7\\BTC\\TIPSYbtc.exe' "
+        "'/TSR' 'MSYT.csv' 'MSYT_output.csv' 'MSYT_error.csv'",
+    ]
+
+
+def test_wrap_btc_command_for_host_wsl_interop_explicit_cmd_carrier_uses_cmd_argv(
+    monkeypatch,
+) -> None:
+    """Explicit ``cmd.exe`` carrier yields cmd-style argv, not PowerShell."""
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="cmd.exe",
+        wine_prefix=None,
+        host_mode="wsl-interop",
+    )
+
+    command = tipsy_module._wrap_btc_command_for_host(
+        ["/mnt/c/Program Files/TIPSY 4.7/BTC/TIPSYbtc.exe", "/TSR"],
+        env={},
+        runtime=runtime_config,
+    )
+
+    assert command == [
+        "cmd.exe",
+        "/c",
+        '"C:\\Program Files\\TIPSY 4.7\\BTC\\TIPSYbtc.exe" /TSR',
+    ]
+
+
+def test_wrap_btc_command_for_host_wsl_interop_falls_back_to_powershell_carrier(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        tipsy_module.shutil,
+        "which",
+        lambda name: "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+        if name == "powershell.exe"
+        else None,
+    )
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=None,
+        wine_prefix=None,
+        host_mode="wsl-interop",
+    )
+
+    command = tipsy_module._wrap_btc_command_for_host(
+        ["/mnt/c/Program Files/TIPSY 4.7/BTC/TIPSYbtc.exe", "/TSR"],
+        env={},
+        runtime=runtime_config,
+    )
+
+    assert command == [
+        "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe",
+        "-NoProfile",
+        "-Command",
+        "& 'C:\\Program Files\\TIPSY 4.7\\BTC\\TIPSYbtc.exe' '/TSR'",
+    ]
+
+
+def test_wrap_btc_command_for_host_wsl_interop_explicit_uppercase_cmd_carrier_uses_cmd_argv(
+    monkeypatch,
+) -> None:
+    """Explicit ``CMD.EXE`` (uppercase) also yields cmd-style argv."""
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="CMD.EXE",
+        wine_prefix=None,
+        host_mode="wsl-interop",
+    )
+
+    command = tipsy_module._wrap_btc_command_for_host(
+        ["/mnt/c/Program Files/TIPSY 4.7/BTC/TIPSYbtc.exe", "/TSR"],
+        env={},
+        runtime=runtime_config,
+    )
+
+    assert command == [
+        "CMD.EXE",
+        "/c",
+        '"C:\\Program Files\\TIPSY 4.7\\BTC\\TIPSYbtc.exe" /TSR',
+    ]
+    assert "-NoProfile" not in command
+    assert "-Command" not in command
+
+
+def test_wrap_btc_command_for_host_wsl_interop_explicit_absolute_cmd_carrier_uses_cmd_argv(
+    monkeypatch,
+) -> None:
+    """Absolute-path ``cmd.exe`` carrier branches on basename to cmd-style."""
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="/mnt/c/Windows/System32/cmd.exe",
+        wine_prefix=None,
+        host_mode="wsl-interop",
+    )
+
+    command = tipsy_module._wrap_btc_command_for_host(
+        ["/mnt/c/Program Files/TIPSY 4.7/BTC/TIPSYbtc.exe", "/TSR"],
+        env={},
+        runtime=runtime_config,
+    )
+
+    assert command == [
+        "/mnt/c/Windows/System32/cmd.exe",
+        "/c",
+        '"C:\\Program Files\\TIPSY 4.7\\BTC\\TIPSYbtc.exe" /TSR',
+    ]
+    assert "-NoProfile" not in command
+    assert "-Command" not in command
+
+
+def test_wrap_btc_command_for_host_wsl_interop_translates_absolute_mnt_args(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="powershell.exe",
+        wine_prefix=None,
+        host_mode="wsl-interop",
+    )
+
+    command = tipsy_module._wrap_btc_command_for_host(
+        [
+            "/mnt/c/Program Files/TIPSY 4.7/BTC/TIPSYbtc.exe",
+            "/TSR",
+            "/mnt/c/femic/scratch/MSYT.csv",
+            "MSYT_output.csv",
+        ],
+        env={},
+        runtime=runtime_config,
+    )
+
+    assert command == [
+        "powershell.exe",
+        "-NoProfile",
+        "-Command",
+        "& 'C:\\Program Files\\TIPSY 4.7\\BTC\\TIPSYbtc.exe' "
+        "'/TSR' 'C:\\femic\\scratch\\MSYT.csv' 'MSYT_output.csv'",
+    ]
+
+
+def test_wrap_btc_command_for_host_wsl_interop_falls_back_to_cmd_carrier(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        tipsy_module.shutil,
+        "which",
+        lambda name: "/mnt/c/Windows/System32/cmd.exe"
+        if name == "cmd.exe"
+        else None,
+    )
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=None,
+        wine_prefix=None,
+        host_mode="wsl-interop",
+    )
+
+    command = tipsy_module._wrap_btc_command_for_host(
+        ["/mnt/c/Program Files/TIPSY 4.7/BTC/TIPSYbtc.exe", "/TSR"],
+        env={},
+        runtime=runtime_config,
+    )
+
+    assert command == [
+        "/mnt/c/Windows/System32/cmd.exe",
+        "/c",
+        '"C:\\Program Files\\TIPSY 4.7\\BTC\\TIPSYbtc.exe" /TSR',
+    ]
+
+
+def test_wrap_btc_command_for_host_wsl_interop_requires_carrier(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(tipsy_module.shutil, "which", lambda _name: None)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=None,
+        wine_prefix=None,
+        host_mode="wsl-interop",
+    )
+
+    with pytest.raises(RuntimeError, match="powershell.exe"):
+        tipsy_module._wrap_btc_command_for_host(
+            ["/mnt/c/Program Files/TIPSY 4.7/BTC/TIPSYbtc.exe", "/TSR"],
+            env={},
+            runtime=runtime_config,
+        )
+
+
+@pytest.mark.parametrize(
+    "non_carrier",
+    ["/usr/bin/wine", "bash.exe", "wine64"],
+)
+def test_validate_btc_run_prerequisites_wsl_interop_rejects_non_carrier(
+    non_carrier: str,
+) -> None:
+    """m2: interop validation rejects a wine_executable that is not a carrier."""
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=non_carrier,
+        wine_prefix=None,
+        host_mode="wsl-interop",
+    )
+    discovery = tipsy_module.BTCRuntimeDiscovery(
+        executable_path=Path("/mnt/c/femic/TIPSYbtc.exe"),
+        source="wineprefix:/mnt/c/femic",
+    )
+    with pytest.raises(RuntimeError, match="wsl-interop mode carrier must be"):
+        tipsy_module._validate_btc_run_prerequisites(
+            runtime=runtime_config,
+            discovery=discovery,
+            scratch_root=Path("/mnt/c/femic/scratch"),
+        )
+
+
+@pytest.mark.parametrize(
+    "carrier",
+    [
+        "powershell.exe",
+        "cmd.exe",
+        "PowerShell.exe",
+        "CMD.EXE",
+        "/mnt/c/Windows/System32/powershell.exe",
+    ],
+)
+def test_validate_btc_run_prerequisites_wsl_interop_accepts_carrier(
+    carrier: str,
+) -> None:
+    """m2: interop validation accepts powershell.exe/cmd.exe case-insensitively."""
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=carrier,
+        wine_prefix=None,
+        host_mode="wsl-interop",
+    )
+    discovery = tipsy_module.BTCRuntimeDiscovery(
+        executable_path=Path("/mnt/c/femic/TIPSYbtc.exe"),
+        source="wineprefix:/mnt/c/femic",
+    )
+    tipsy_module._validate_btc_run_prerequisites(
+        runtime=runtime_config,
+        discovery=discovery,
+        scratch_root=Path("/mnt/c/femic/scratch"),
+    )
+
+
+def test_require_windows_visible_working_dir_accepts_interop_paths() -> None:
+    tipsy_module._require_windows_visible_working_dir(
+        Path("/mnt/c/femic/scratch/work")
+    )
+    tipsy_module._require_windows_visible_working_dir(Path(r"C:\femic\scratch\work"))
+    with pytest.raises(RuntimeError, match="scratch-dir"):
+        tipsy_module._require_windows_visible_working_dir(
+            Path("/home/gep/scratch/work")
+        )
+
+
+def test_apply_xvfb_wrap_wraps_headless_wine_command(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "is_headless", lambda env: True)
+    monkeypatch.setattr(tipsy_module, "find_xvfb_run", lambda: "/opt/xvfb-run")
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="wine",
+        wine_prefix=None,
+        host_mode="wine",
+        use_xvfb=True,
+    )
+
+    command = tipsy_module._apply_xvfb_wrap(
+        ["wine", "/opt/TIPSY/TIPSYbtc.exe", "/TSR"],
+        runtime=runtime_config,
+        env={},
+    )
+
+    assert command == ["/opt/xvfb-run", "-a", "wine", "/opt/TIPSY/TIPSYbtc.exe", "/TSR"]
+
+
+def test_apply_xvfb_wrap_uses_runtime_xvfb_executable(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "is_headless", lambda env: True)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="wine",
+        wine_prefix=None,
+        host_mode="wine",
+        use_xvfb=True,
+        xvfb_executable="/custom/xvfb-run",
+    )
+
+    command = tipsy_module._apply_xvfb_wrap(
+        ["wine", "/opt/TIPSY/TIPSYbtc.exe", "/TSR"],
+        runtime=runtime_config,
+        env={},
+    )
+
+    assert command[0] == "/custom/xvfb-run"
+
+
+def test_apply_xvfb_wrap_skips_non_wine_modes(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "is_headless", lambda env: True)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=None,
+        wine_prefix=None,
+        host_mode="windows",
+        use_xvfb=True,
+    )
+
+    command = tipsy_module._apply_xvfb_wrap(
+        ["C:\\Program Files\\TIPSY 4.7\\BTC\\TIPSYbtc.exe", "/TSR"],
+        runtime=runtime_config,
+        env={},
+    )
+
+    assert command == ["C:\\Program Files\\TIPSY 4.7\\BTC\\TIPSYbtc.exe", "/TSR"]
+
+
+def test_apply_xvfb_wrap_skips_non_headless_wine_runs(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "is_headless", lambda env: False)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="wine",
+        wine_prefix=None,
+        host_mode="wine",
+        use_xvfb=True,
+    )
+
+    command = tipsy_module._apply_xvfb_wrap(
+        ["wine", "/opt/TIPSY/TIPSYbtc.exe", "/TSR"],
+        runtime=runtime_config,
+        env={},
+    )
+
+    assert command == ["wine", "/opt/TIPSY/TIPSYbtc.exe", "/TSR"]
+
+
+def test_apply_xvfb_wrap_raises_when_xvfb_missing(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "is_headless", lambda env: True)
+    monkeypatch.setattr(tipsy_module, "find_xvfb_run", lambda: None)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="wine",
+        wine_prefix=None,
+        host_mode="wine",
+        use_xvfb=True,
+        xvfb_executable=None,
+    )
+
+    with pytest.raises(RuntimeError, match="xvfb-run"):
+        tipsy_module._apply_xvfb_wrap(
+            ["wine", "/opt/TIPSY/TIPSYbtc.exe", "/TSR"],
+            runtime=runtime_config,
+            env={},
+        )
+
+
+def test_apply_xvfb_wrap_leaves_disabled_runs_untouched(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(tipsy_module, "is_headless", lambda env: True)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="wine",
+        wine_prefix=None,
+        host_mode="wine",
+        use_xvfb=False,
+    )
+
+    command = tipsy_module._apply_xvfb_wrap(
+        ["wine", "/opt/TIPSY/TIPSYbtc.exe", "/TSR"],
+        runtime=runtime_config,
+        env={},
+    )
+
+    assert command == ["wine", "/opt/TIPSY/TIPSYbtc.exe", "/TSR"]
+
+
 def test_run_btc_cli_supervised_writes_outputs_and_manifest(tmp_path: Path) -> None:
     input_csv = tmp_path / "MSYT.csv"
     input_csv.write_text("feature_id\n1\n", encoding="utf-8")
@@ -1456,6 +1917,7 @@ def test_run_btc_cli_wraps_windows_executable_and_records_wine_command(
         scratch_root=tmp_path / "scratch",
         log_dir=tmp_path / "logs",
         run_id="btc_wine_command",
+        wine_executable=sys.executable,
         env={"WINEPREFIX": str(wine_prefix)},
     )
 
@@ -1463,6 +1925,215 @@ def test_run_btc_cli_wraps_windows_executable_and_records_wine_command(
     assert result.output_csv_path.read_text(encoding="utf-8") == str(wine_prefix)
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     assert manifest["command"] == list(result.command)
+
+
+def test_run_btc_cli_records_runtime_fields_in_manifest_and_result(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    fake_btc = tmp_path / "fake_btc.exe"
+    fake_btc.write_text(
+        "from pathlib import Path\n"
+        "import sys\n"
+        "mode, input_name, output_name, error_name = sys.argv[1:5]\n"
+        "Path(output_name).write_text('feature_id,MVcon_0\\n1,2\\n', encoding='utf-8')\n"
+        "Path(error_name).write_text('warnings,errors\\n0,0\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(tipsy_module, "find_wine_executable", lambda: sys.executable)
+    wine_prefix = tmp_path / "wine-prefix"
+
+    result = run_btc_cli(
+        input_csv=input_csv,
+        mode="TSR",
+        executable_path=fake_btc,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id="btc_runtime_fields",
+        wine_prefix=wine_prefix,
+        wine_executable=sys.executable,
+        use_xvfb=False,
+        host_mode="wine",
+        env={},
+    )
+
+    assert result.host_mode == "wine"
+    assert result.wine_prefix == str(wine_prefix.resolve())
+    assert result.wine_executable == sys.executable
+    assert result.use_xvfb is False
+    assert result.command[:2] == (sys.executable, str(fake_btc.resolve()))
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["host_mode"] == "wine"
+    assert manifest["wine_prefix"] == str(wine_prefix.resolve())
+    assert manifest["wine_executable"] == sys.executable
+    assert manifest["use_xvfb"] is False
+    assert manifest["command"] == list(result.command)
+
+
+def test_run_btc_cli_uses_supplied_runtime_config_without_re_resolution(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    fake_btc = tmp_path / "fake_btc.exe"
+    fake_btc.write_text(
+        "from pathlib import Path\n"
+        "import sys\n"
+        "mode, input_name, output_name, error_name = sys.argv[1:5]\n"
+        "Path(output_name).write_text('feature_id,MVcon_0\\n1,2\\n', encoding='utf-8')\n"
+        "Path(error_name).write_text('warnings,errors\\n0,0\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(tipsy_module, "find_wine_executable", lambda: sys.executable)
+    monkeypatch.setattr(
+        tipsy_module,
+        "resolve_btc_runtime_config",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("resolution should be skipped when config is supplied")
+        ),
+    )
+    wine_prefix = tmp_path / "wine-prefix"
+    supplied_runtime = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=sys.executable,
+        wine_prefix=wine_prefix,
+        host_mode="wine",
+        use_xvfb=False,
+    )
+
+    result = run_btc_cli(
+        input_csv=input_csv,
+        mode="TSR",
+        executable_path=fake_btc,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id="btc_supplied_runtime",
+        btc_runtime_config=supplied_runtime,
+        env={},
+    )
+
+    assert result.host_mode == "wine"
+    assert result.wine_prefix == str(wine_prefix.resolve())
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["host_mode"] == "wine"
+    assert manifest["wine_prefix"] == str(wine_prefix.resolve())
+
+
+def test_run_btc_cli_rejects_conflicting_runtime_config(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    fake_btc = tmp_path / "fake_btc.exe"
+    fake_btc.write_text("stub", encoding="utf-8")
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    supplied_runtime = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=sys.executable,
+        wine_prefix=None,
+        host_mode="wine",
+        use_xvfb=False,
+    )
+
+    with pytest.raises(BTCRuntimeConfigError, match="host_mode"):
+        run_btc_cli(
+            input_csv=input_csv,
+            mode="TSR",
+            executable_path=fake_btc,
+            scratch_root=tmp_path / "scratch",
+            log_dir=tmp_path / "logs",
+            run_id="btc_conflicting_runtime",
+            btc_runtime_config=supplied_runtime,
+            host_mode="windows",
+            env={},
+        )
+
+
+def test_run_btc_cli_rejects_conflicting_wine_prefix_option(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    fake_btc = tmp_path / "fake_btc.exe"
+    fake_btc.write_text("stub", encoding="utf-8")
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    supplied_runtime = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=sys.executable,
+        wine_prefix=tmp_path / "configured-prefix",
+        host_mode="wine",
+        use_xvfb=False,
+    )
+
+    with pytest.raises(BTCRuntimeConfigError, match="wine_prefix"):
+        run_btc_cli(
+            input_csv=input_csv,
+            mode="TSR",
+            executable_path=fake_btc,
+            scratch_root=tmp_path / "scratch",
+            log_dir=tmp_path / "logs",
+            run_id="btc_conflicting_prefix",
+            btc_runtime_config=supplied_runtime,
+            wine_prefix=tmp_path / "different-prefix",
+            env={},
+        )
+
+
+def test_run_btc_cli_xvfb_wraps_headless_wine_command(
+    monkeypatch, tmp_path: Path
+) -> None:
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    fake_btc = tmp_path / "fake_btc.exe"
+    fake_btc.write_text(
+        "from pathlib import Path\n"
+        "import sys\n"
+        "mode, input_name, output_name, error_name = sys.argv[1:5]\n"
+        "Path(output_name).write_text('feature_id,MVcon_0\\n1,2\\n', encoding='utf-8')\n"
+        "Path(error_name).write_text('warnings,errors\\n0,0\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    fake_xvfb = tmp_path / "fake_xvfb_run"
+    fake_xvfb.write_text(
+        "#!/bin/sh\nif [ \"$1\" = \"-a\" ]; then shift; fi\nexec \"$@\"\n",
+        encoding="utf-8",
+    )
+    fake_xvfb.chmod(0o755)
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(tipsy_module, "find_wine_executable", lambda: sys.executable)
+    monkeypatch.setattr(tipsy_module, "is_headless", lambda env: True)
+    wine_prefix = tmp_path / "wine-prefix"
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=sys.executable,
+        wine_prefix=wine_prefix,
+        host_mode="wine",
+        use_xvfb=True,
+        xvfb_executable=str(fake_xvfb),
+    )
+
+    result = run_btc_cli(
+        input_csv=input_csv,
+        mode="TSR",
+        executable_path=fake_btc,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id="btc_xvfb",
+        btc_runtime_config=runtime_config,
+        env={},
+    )
+
+    assert result.exit_code == 0
+    assert result.command[0] == str(fake_xvfb)
+    assert result.command[1] == "-a"
+    assert result.command[2:4] == (sys.executable, str(fake_btc.resolve()))
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["command"] == list(result.command)
+    assert manifest["host_mode"] == "wine"
+    assert manifest["use_xvfb"] is True
 
 
 def test_run_btc_cli_defaults_to_tipsy_runtime_roots(
@@ -1594,6 +2265,640 @@ def test_run_btc_cli_tsr_preset_uses_overlay_with_backup_restore(
     assert "MAI\t\tMAI\t{yr}" in seen_overlay_text["text"]
     assert "SPH:000\t\tSPH000\t{yr}" in seen_overlay_text["text"]
     assert overlay_path.read_text(encoding="utf-8") == "ORIGINAL OVERLAY\n"
+
+
+def test_run_btc_cli_wsl_interop_full_run_with_windows_visible_scratch(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """End-to-end wsl-interop run: powershell carrier, WINEPREFIX popped, no /mnt writes."""
+    # Make the WINEPREFIX-popping assertion meaningful: interop must strip a
+    # non-empty WINEPREFIX from the child env, not a no-op empty lookup.
+    monkeypatch.setenv("WINEPREFIX", "/tmp/fake-wineprefix-for-interop-test")
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    fake_powershell = tmp_path / "powershell.exe"
+    fake_powershell.write_text(
+        "#!/usr/bin/env python3\n"
+        "import os, shlex, sys\n"
+        "from pathlib import Path\n"
+        "tokens = shlex.split(sys.argv[3])\n"
+        "exe, mode, input_name, output_name, error_name = tokens[1:6]\n"
+        "Path(output_name).write_text('WINEPREFIX=' + os.environ.get('WINEPREFIX', '__UNSET__') + '\\n', encoding='utf-8')\n"
+        "Path(error_name).write_text('warnings,errors\\n0,0\\n', encoding='utf-8')\n"
+        "sys.exit(0)\n",
+        encoding="utf-8",
+    )
+    fake_powershell.chmod(0o755)
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        tipsy_module,
+        "resolve_btc_executable",
+        lambda **kwargs: tipsy_module.BTCRuntimeDiscovery(
+            executable_path=Path("/mnt/c/femic/TIPSYbtc.exe"),
+            source="wineprefix:/mnt/c/femic",
+        ),
+    )
+    work_dir = tmp_path / "work"
+    work_dir.mkdir(parents=True, exist_ok=True)
+
+    def _fake_prepare(**kwargs):
+        return types.SimpleNamespace(
+            working_dir=work_dir,
+            executable_path=kwargs["executable_path"],
+            staged_input_csv=work_dir / "MSYT.csv",
+            install_root=Path("/mnt/c/femic"),
+            copied_install=False,
+            uses_live_overlay=False,
+            report_template_path=None,
+        )
+
+    monkeypatch.setattr(tipsy_module, "prepare_btc_runtime", _fake_prepare)
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=str(fake_powershell),
+        wine_prefix=None,
+        host_mode="wsl-interop",
+        use_xvfb=False,
+    )
+
+    result = run_btc_cli(
+        input_csv=input_csv,
+        mode="TSR",
+        scratch_root=Path("/mnt/c/femic/scratch"),
+        log_dir=tmp_path / "logs",
+        run_id="btc_wsl_interop",
+        btc_runtime_config=runtime_config,
+        env={},
+    )
+
+    assert result.exit_code == 0
+    assert result.host_mode == "wsl-interop"
+    assert result.wine_prefix is None
+    assert tuple(result.command) == (
+        str(fake_powershell),
+        "-NoProfile",
+        "-Command",
+        "& 'C:\\femic\\TIPSYbtc.exe' '/TSR' 'MSYT.csv' 'MSYT_output.csv' 'MSYT_error.csv'",
+    )
+    assert result.output_csv_path.read_text(encoding="utf-8") == (
+        "WINEPREFIX=__UNSET__\n"
+    )
+    manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+    assert manifest["host_mode"] == "wsl-interop"
+    assert manifest["command"] == list(result.command)
+
+
+def test_btc_runtime_prefix_candidates_ordering_env_beats_discovered(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """m5: FEMIC_BTC_WINEPREFIX > WINEPREFIX > discovered prefix, no re-resolution."""
+    discovered_prefix = tmp_path / "discovered"
+    monkeypatch.setattr(
+        tipsy_module,
+        "resolve_btc_runtime_config",
+        lambda **kwargs: BTCRuntimeConfig(
+            batch_tipsy_exe=None,
+            wine_executable=None,
+            wine_prefix=discovered_prefix,
+            host_mode="wine",
+            use_xvfb=False,
+        ),
+    )
+    candidates = tipsy_module._btc_runtime_prefix_candidates(
+        {
+            FEMIC_BTC_WINEPREFIX: str(tmp_path / "from-femic-env"),
+            "WINEPREFIX": str(tmp_path / "from-wine-env"),
+        }
+    )
+    assert candidates == [
+        tmp_path / "from-femic-env",
+        tmp_path / "from-wine-env",
+        discovered_prefix,
+    ]
+
+
+def test_resolve_btc_executable_prefix_ordering_and_windows_default(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """Ordering: FEMIC_BTC_WINEPREFIX > WINEPREFIX > discovered prefix > C:\\ default."""
+    discovered_prefix = tmp_path / "discovered"
+    monkeypatch.setattr(
+        tipsy_module,
+        "resolve_btc_runtime_config",
+        lambda **kwargs: BTCRuntimeConfig(
+            batch_tipsy_exe=None,
+            wine_executable=None,
+            wine_prefix=discovered_prefix,
+            host_mode="wine",
+            use_xvfb=False,
+        ),
+    )
+    # No prefix install exists -> nothing to run; the C:\ default is only a
+    # native-Windows fallback, so discovery fails loudly on POSIX.
+    with pytest.raises(FileNotFoundError, match="Could not resolve BatchTIPSY"):
+        resolve_btc_executable(env={})
+
+    # A discovered-prefix install wins over the C:\ default.
+    discovered_install = (
+        discovered_prefix
+        / "drive_c"
+        / "Program Files"
+        / "TIPSY 4.7"
+        / "BTC"
+        / "TIPSYbtc.exe"
+    )
+    discovered_install.parent.mkdir(parents=True)
+    discovered_install.write_text("stub", encoding="utf-8")
+    discovered = resolve_btc_executable(env={})
+    assert discovered.executable_path == discovered_install.resolve()
+    assert discovered.source == f"wineprefix:{discovered_prefix}"
+
+    # FEMIC_BTC_WINEPREFIX install wins over WINEPREFIX install, and both
+    # beat the discovered prefix.
+    femic_install = (
+        tmp_path
+        / "femic-env"
+        / "drive_c"
+        / "Program Files"
+        / "TIPSY 4.7"
+        / "BTC"
+        / "TIPSYbtc.exe"
+    )
+    femic_install.parent.mkdir(parents=True)
+    femic_install.write_text("stub", encoding="utf-8")
+    wine_install = (
+        tmp_path
+        / "wine-env"
+        / "drive_c"
+        / "Program Files"
+        / "TIPSY 4.7"
+        / "BTC"
+        / "TIPSYbtc.exe"
+    )
+    wine_install.parent.mkdir(parents=True)
+    wine_install.write_text("stub", encoding="utf-8")
+    discovered = resolve_btc_executable(
+        env={
+            FEMIC_BTC_WINEPREFIX: str(tmp_path / "femic-env"),
+            "WINEPREFIX": str(tmp_path / "wine-env"),
+        }
+    )
+    assert discovered.executable_path == femic_install.resolve()
+    assert discovered.source == f"wineprefix:{tmp_path / 'femic-env'}"
+
+    # WINEPREFIX install wins over the discovered prefix when no FEMIC env
+    # variable is set.
+    discovered = resolve_btc_executable(
+        env={"WINEPREFIX": str(tmp_path / "wine-env")}
+    )
+    assert discovered.executable_path == wine_install.resolve()
+    assert discovered.source == f"wineprefix:{tmp_path / 'wine-env'}"
+
+
+def test_assert_btc_runtime_config_matches_rejects_wine_executable_conflict() -> None:
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="/opt/wine",
+        wine_prefix=None,
+        host_mode="wine",
+        use_xvfb=False,
+    )
+    with pytest.raises(BTCRuntimeConfigError, match="wine_executable"):
+        tipsy_module._assert_btc_runtime_config_matches(
+            runtime=runtime_config,
+            executable_path=None,
+            wine_prefix=None,
+            wine_executable="/different/wine",
+            use_xvfb=None,
+            host_mode=None,
+        )
+
+
+def test_assert_btc_runtime_config_matches_rejects_use_xvfb_conflict() -> None:
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=None,
+        wine_prefix=None,
+        host_mode="wine",
+        use_xvfb=False,
+    )
+    with pytest.raises(BTCRuntimeConfigError, match="use_xvfb"):
+        tipsy_module._assert_btc_runtime_config_matches(
+            runtime=runtime_config,
+            executable_path=None,
+            wine_prefix=None,
+            wine_executable=None,
+            use_xvfb=True,
+            host_mode=None,
+        )
+
+
+def test_assert_btc_runtime_config_matches_rejects_option_without_config_value() -> None:
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=None,
+        wine_prefix=None,
+        host_mode="wine",
+        use_xvfb=False,
+    )
+    with pytest.raises(BTCRuntimeConfigError, match="wine_prefix"):
+        tipsy_module._assert_btc_runtime_config_matches(
+            runtime=runtime_config,
+            executable_path=None,
+            wine_prefix=Path("/x"),
+            wine_executable=None,
+            use_xvfb=None,
+            host_mode=None,
+        )
+    with pytest.raises(BTCRuntimeConfigError, match="wine_executable"):
+        tipsy_module._assert_btc_runtime_config_matches(
+            runtime=runtime_config,
+            executable_path=None,
+            wine_prefix=None,
+            wine_executable="/opt/wine",
+            use_xvfb=None,
+            host_mode=None,
+        )
+    # Contrast: the executable_path/batch_tipsy_exe pair only fires when both
+    # sides are set and disagree, so a one-sided option is accepted.
+    tipsy_module._assert_btc_runtime_config_matches(
+        runtime=runtime_config,
+        executable_path=Path("/x/TIPSYbtc.exe"),
+        wine_prefix=None,
+        wine_executable=None,
+        use_xvfb=None,
+        host_mode=None,
+    )
+
+
+def test_assert_btc_runtime_config_matches_expanduser_tilde_match(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """m4: ~-relative options match an already-expanded config path."""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=tmp_path / "TIPSYbtc.exe",
+        wine_executable=None,
+        wine_prefix=tmp_path / "prefix",
+        host_mode="wine",
+        use_xvfb=False,
+    )
+    tipsy_module._assert_btc_runtime_config_matches(
+        runtime=runtime_config,
+        executable_path=Path("~/TIPSYbtc.exe"),
+        wine_prefix=Path("~/prefix"),
+        wine_executable=None,
+        use_xvfb=None,
+        host_mode=None,
+    )
+
+
+def test_assert_btc_runtime_config_matches_expanduser_mismatch_raises(
+    tmp_path: Path,
+) -> None:
+    """m4: expanduser-normalized mismatch still fails fast."""
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=tmp_path / "a.exe",
+        wine_executable=None,
+        wine_prefix=None,
+        host_mode="wine",
+        use_xvfb=False,
+    )
+    with pytest.raises(BTCRuntimeConfigError, match="executable_path"):
+        tipsy_module._assert_btc_runtime_config_matches(
+            runtime=runtime_config,
+            executable_path=tmp_path / "b.exe",
+            wine_prefix=None,
+            wine_executable=None,
+            use_xvfb=None,
+            host_mode=None,
+        )
+
+
+def test_run_btc_cli_rejects_conflicting_executable_path_option(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """M2: executable_path must agree with a supplied trusted config."""
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    fake_btc = tmp_path / "fake_btc.exe"
+    fake_btc.write_text("stub", encoding="utf-8")
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    supplied_runtime = BTCRuntimeConfig(
+        batch_tipsy_exe=tmp_path / "configured.exe",
+        wine_executable=None,
+        wine_prefix=None,
+        host_mode="wine",
+        use_xvfb=False,
+    )
+
+    with pytest.raises(BTCRuntimeConfigError, match="executable_path"):
+        run_btc_cli(
+            input_csv=input_csv,
+            mode="TSR",
+            executable_path=tmp_path / "different.exe",
+            scratch_root=tmp_path / "scratch",
+            log_dir=tmp_path / "logs",
+            run_id="btc_conflicting_exe",
+            btc_runtime_config=supplied_runtime,
+            env={},
+        )
+
+
+def test_run_btc_cli_wsl_interop_validates_before_staging(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """M3: an unmappable interop executable fails before prepare_btc_runtime."""
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        tipsy_module,
+        "resolve_btc_executable",
+        lambda **kwargs: tipsy_module.BTCRuntimeDiscovery(
+            executable_path=Path("/home/gep/TIPSYbtc.exe"),
+            source="explicit",
+        ),
+    )
+    monkeypatch.setattr(
+        tipsy_module,
+        "prepare_btc_runtime",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("staging must not start on a guaranteed failure")
+        ),
+    )
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable="powershell.exe",
+        wine_prefix=None,
+        host_mode="wsl-interop",
+        use_xvfb=False,
+    )
+
+    with pytest.raises(RuntimeError, match=DEFAULT_BATCHTIPSY_EXE_ENV):
+        run_btc_cli(
+            input_csv=input_csv,
+            mode="TSR",
+            scratch_root=tmp_path / "scratch",
+            log_dir=tmp_path / "logs",
+            run_id="btc_wsl_interop_pre",
+            btc_runtime_config=runtime_config,
+            env={},
+        )
+
+
+def test_run_btc_cli_windows_mode_on_posix_validates_before_staging(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """M3: windows mode on POSIX fails before prepare_btc_runtime."""
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    fake_btc = tmp_path / "TIPSYbtc.exe"
+    fake_btc.write_text("stub", encoding="utf-8")
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        tipsy_module,
+        "prepare_btc_runtime",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("staging must not start on a guaranteed failure")
+        ),
+    )
+    runtime_config = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=None,
+        wine_prefix=None,
+        host_mode="windows",
+        use_xvfb=False,
+    )
+
+    with pytest.raises(RuntimeError, match="not native Windows"):
+        run_btc_cli(
+            input_csv=input_csv,
+            mode="TSR",
+            executable_path=fake_btc,
+            scratch_root=tmp_path / "scratch",
+            log_dir=tmp_path / "logs",
+            run_id="btc_windows_pre",
+            btc_runtime_config=runtime_config,
+            env={},
+        )
+
+
+def test_resolve_btc_executable_uses_wine_runtime_without_rereading_config(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """m5: wine_runtime is trusted; resolve_btc_runtime_config is never re-invoked."""
+    prefix = tmp_path / "prefix"
+    exe = prefix / "drive_c" / "Program Files" / "TIPSY 4.7" / "BTC" / "TIPSYbtc.exe"
+    exe.parent.mkdir(parents=True)
+    exe.write_text("stub", encoding="utf-8")
+    runtime = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=None,
+        wine_prefix=prefix,
+        host_mode="wine",
+        use_xvfb=False,
+    )
+    monkeypatch.setattr(
+        tipsy_module,
+        "resolve_btc_runtime_config",
+        lambda **kwargs: (_ for _ in ()).throw(
+            AssertionError("config re-resolution should be skipped with wine_runtime")
+        ),
+    )
+    discovered = resolve_btc_executable(env={}, wine_runtime=runtime)
+    assert discovered.executable_path == exe.resolve()
+    assert discovered.source == f"wineprefix:{prefix}"
+
+
+def test_cmd_quote_arg_quotes_whitespace_and_escapes_percent() -> None:
+    """m6: cmd.exe quoting escapes % and double-quotes whitespace."""
+    assert tipsy_module._cmd_quote_arg("MSYT.csv") == "MSYT.csv"
+    assert tipsy_module._cmd_quote_arg("MSYT output.csv") == '"MSYT output.csv"'
+    assert tipsy_module._cmd_quote_arg("100%") == "100%%"
+    assert tipsy_module._cmd_quote_arg("a b%c") == '"a b%%c"'
+
+
+def test_cmd_quote_arg_rejects_embedded_quotes_and_metacharacters() -> None:
+    """m6: cmd.exe quoting rejects ambiguous arguments with a loud error."""
+    with pytest.raises(RuntimeError, match="double quote"):
+        tipsy_module._cmd_quote_arg('say "hi"')
+    for character in "&|<>^":
+        with pytest.raises(RuntimeError, match="cmd.exe"):
+            tipsy_module._cmd_quote_arg(f"a{character}b")
+
+
+def test_resolve_btc_executable_env_none_consults_os_environ(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """m7: env=None consults the full os.environ."""
+    env_exe = tmp_path / "env.exe"
+    env_exe.write_text("stub", encoding="utf-8")
+    monkeypatch.setenv(DEFAULT_BATCHTIPSY_EXE_ENV, str(env_exe))
+    discovered = resolve_btc_executable()
+    assert discovered.executable_path == env_exe.resolve()
+    assert discovered.source == f"env:{DEFAULT_BATCHTIPSY_EXE_ENV}"
+
+
+def test_resolve_btc_executable_env_empty_dict_skips_os_environ(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    """m7: env={} is an explicitly empty environment; no env lookups happen."""
+    env_exe = tmp_path / "env.exe"
+    env_exe.write_text("stub", encoding="utf-8")
+    monkeypatch.setenv(DEFAULT_BATCHTIPSY_EXE_ENV, str(env_exe))
+    monkeypatch.setattr(
+        tipsy_module,
+        "resolve_btc_runtime_config",
+        lambda **kwargs: BTCRuntimeConfig(
+            batch_tipsy_exe=None,
+            wine_executable=None,
+            wine_prefix=None,
+            host_mode="wine",
+            use_xvfb=False,
+        ),
+    )
+    with pytest.raises(FileNotFoundError, match=DEFAULT_BATCHTIPSY_EXE_ENV):
+        resolve_btc_executable(env={})
+
+
+def test_run_btc_cli_threads_instance_root_to_runtime_resolution(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """m8: instance_root flows into runtime resolution when no config is supplied."""
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    fake_btc = tmp_path / "fake_btc.py"
+    fake_btc.write_text(
+        "from pathlib import Path\n"
+        "import sys\n"
+        "mode, input_name, output_name, error_name = sys.argv[1:5]\n"
+        "Path(output_name).write_text('feature_id,MVcon_0\\n1,2\\n', encoding='utf-8')\n"
+        "Path(error_name).write_text('warnings,errors\\n0,0\\n', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    seen_kwargs: dict = {}
+    monkeypatch.setattr(
+        tipsy_module,
+        "resolve_btc_runtime_config",
+        lambda **kwargs: seen_kwargs.update(kwargs)
+        or BTCRuntimeConfig(
+            batch_tipsy_exe=None,
+            wine_executable=sys.executable,
+            wine_prefix=None,
+            host_mode="wine",
+            use_xvfb=False,
+        ),
+    )
+    instance_root = tmp_path / "instance-root"
+    result = run_btc_cli(
+        input_csv=input_csv,
+        mode="TSR",
+        executable_path=sys.executable,
+        scratch_root=tmp_path / "scratch",
+        log_dir=tmp_path / "logs",
+        run_id="btc_instance_root",
+        instance_root=instance_root,
+        env={},
+        extra_executable_args=(fake_btc,),
+    )
+
+    assert result.exit_code == 0
+    assert seen_kwargs.get("instance_root") == instance_root
+
+
+def test_run_btc_cli_rejects_auto_runtime_config(
+    monkeypatch, tmp_path: Path
+) -> None:
+    """m9: a supplied trusted config with host_mode='auto' is rejected up front."""
+    input_csv = tmp_path / "MSYT.csv"
+    input_csv.write_text("feature_id\n1\n", encoding="utf-8")
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    auto_runtime = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=None,
+        wine_prefix=None,
+        host_mode="auto",
+        use_xvfb=False,
+    )
+    with pytest.raises(BTCRuntimeConfigError, match="host_mode must be resolved"):
+        run_btc_cli(
+            input_csv=input_csv,
+            mode="TSR",
+            scratch_root=tmp_path / "scratch",
+            log_dir=tmp_path / "logs",
+            run_id="btc_auto_rejected",
+            btc_runtime_config=auto_runtime,
+            env={},
+        )
+
+
+def test_wrap_btc_command_for_host_rejects_auto_runtime(monkeypatch) -> None:
+    """m9: the host wrapper refuses an unresolved 'auto' runtime mode."""
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    auto_runtime = BTCRuntimeConfig(
+        batch_tipsy_exe=None,
+        wine_executable=None,
+        wine_prefix=None,
+        host_mode="auto",
+        use_xvfb=False,
+    )
+    with pytest.raises(RuntimeError, match="host_mode must be resolved"):
+        tipsy_module._wrap_btc_command_for_host(
+            ["/opt/TIPSY/TIPSYbtc.exe", "/TSR"],
+            env={},
+            runtime=auto_runtime,
+        )
+
+
+def test_wrap_btc_command_for_host_legacy_wsl_wine_prefix_env_selects_wine(
+    monkeypatch,
+) -> None:
+    """M1: legacy wrapper path treats env Wine intent as Wine, not wsl-interop."""
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        "femic.pipeline.btc_runtime.shutil.which",
+        lambda _name: None,
+    )
+    monkeypatch.setattr(tipsy_module, "find_wine_executable", lambda: "/usr/bin/wine64")
+
+    command = tipsy_module._wrap_btc_command_for_host(
+        ["/opt/TIPSY/TIPSYbtc.exe", "/TSR"],
+        env={"WSL_DISTRO_NAME": "Ubuntu", FEMIC_BTC_WINEPREFIX: "/opt/wine"},
+    )
+
+    assert command == ["/usr/bin/wine64", "/opt/TIPSY/TIPSYbtc.exe", "/TSR"]
+
+
+def test_wrap_btc_command_for_host_legacy_wsl_no_wine_intent_selects_interop(
+    monkeypatch,
+) -> None:
+    """M1: without Wine intent the legacy wrapper still auto-selects wsl-interop."""
+    monkeypatch.setattr(tipsy_module, "_tipsy_is_windows_host", lambda: False)
+    monkeypatch.setattr(
+        "femic.pipeline.btc_runtime.shutil.which",
+        lambda name: "/mnt/c/Windows/System32/powershell.exe"
+        if name == "powershell.exe"
+        else None,
+    )
+
+    command = tipsy_module._wrap_btc_command_for_host(
+        ["/mnt/c/Program Files/TIPSY 4.7/BTC/TIPSYbtc.exe", "/TSR"],
+        env={"WSL_DISTRO_NAME": "Ubuntu"},
+    )
+
+    assert command == [
+        "/mnt/c/Windows/System32/powershell.exe",
+        "-NoProfile",
+        "-Command",
+        "& 'C:\\Program Files\\TIPSY 4.7\\BTC\\TIPSYbtc.exe' '/TSR'",
+    ]
 
 
 def test_resolve_windows_documents_dir_uses_user_shell_folders(

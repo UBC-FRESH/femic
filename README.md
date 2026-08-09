@@ -514,6 +514,10 @@ The TIPSY stage is currently a human-in-the-loop boundary:
 3. Batch TIPSY is run manually in Windows GUI.
 4. Raw TIPSY output is copied back to Linux for automated downstream stages.
 
+For running TIPSY BTC (/TSR) yield-curve generation on any OS — Windows native,
+Linux+Wine, or WSL interop — see `docs/guides/tipsy-btc-wine-runtime.rst`, and use
+`femic tipsy preflight-btc` to verify your runtime.
+
 Draft config scaffolding for this handoff now lives in `config/tipsy/`:
 
 - `config/tipsy/README.md`

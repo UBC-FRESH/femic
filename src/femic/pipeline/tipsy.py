@@ -1,4 +1,12 @@
-"""Reusable TIPSY parameter helper utilities."""
+"""Reusable TIPSY parameter helper utilities.
+
+The supervised BTC launcher (:func:`run_btc_cli`) runs the Windows
+BatchTIPSY executable in one of three host modes: native ``windows``,
+Wine (``wine``), or ``wsl-interop`` through ``powershell.exe``/``cmd.exe``.
+Runtime settings (host mode, Wine prefix, Wine executable, xvfb wrapping)
+are resolved by :mod:`femic.pipeline.btc_runtime`; see
+``config/tipsy.btc.runtime.yaml`` for the config surface.
+"""
 
 from __future__ import annotations
 
@@ -18,6 +26,20 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from femic.pipeline.btc_runtime import (
+    DEFAULT_BATCHTIPSY_WINDOWS_EXE,
+    FEMIC_BTC_WINEPREFIX,
+    BTCRuntimeConfig,
+    BTCRuntimeConfigError,
+    _interop_carrier_available,
+    env_has_wine_intent,
+    find_xvfb_run,
+    is_headless,
+    is_wsl_interop_carrier,
+    resolve_btc_runtime_config,
+    resolve_host_mode,
+    to_windows_host_path,
+)
 from femic.pipeline.diagnostics import build_timestamped_event
 from femic.patchworks_runtime import find_wine_executable
 
@@ -434,7 +456,6 @@ _BTC_MSYT_SITE_INDEX_COLUMNS = tuple(
     column for column in DEFAULT_BTC_MSYT_COLUMNS if column.endswith("_si")
 )
 DEFAULT_BATCHTIPSY_EXE_ENV = "FEMIC_BATCHTIPSY_EXE"
-DEFAULT_BATCHTIPSY_WINDOWS_EXE = Path(r"C:\Program Files\TIPSY 4.7\BTC\TIPSYbtc.exe")
 _BTC_SUPPORTED_MODES = {"TSR", "FLP"}
 _BTC_REPORT_FILENAME_BY_MODE = {
     "TSR": "TimberSupply.rpt",
@@ -485,6 +506,10 @@ class BTCRunResult:
     duration_sec: float
     report_template_path: Path | None
     uses_live_overlay: bool = False
+    host_mode: str = "auto"
+    wine_prefix: str | None = None
+    wine_executable: str | None = None
+    use_xvfb: bool = False
 
 
 @dataclass(frozen=True)
@@ -536,12 +561,43 @@ def _tipsy_is_windows_host() -> bool:
     return os.name == "nt"
 
 
+_BTC_WINDOWS_DRIVE_PATH_RE = re.compile(r"^[A-Za-z]:\\")
+_BTC_WSL_MNT_PATH_RE = re.compile(r"^/mnt/[A-Za-z](?:/|$)")
+
+
 def _wrap_btc_command_for_host(
     command: Sequence[str],
     *,
     env: Mapping[str, str],
+    runtime: "BTCRuntimeConfig | None" = None,
 ) -> list[str]:
-    """Use Wine for Windows BTC executables when running on a non-Windows host."""
+    """Adapt a Windows BTC command for the effective host runtime.
+
+    Native Windows hosts and non-``.exe`` commands are returned unchanged.
+    ``wine`` mode prepends the Wine executable, taken from
+    ``runtime.wine_executable``, then ``FEMIC_WINE_EXE``, then PATH
+    discovery. ``wsl-interop`` mode builds a ``powershell.exe`` (or, failing
+    that, ``cmd.exe``) carrier that invokes the Windows-visible executable
+    from a PowerShell/cmd script.
+
+    Args:
+        command: BTC CLI argv with the Windows executable first.
+        env: Merged environment used for Wine and prefix lookups.
+        runtime: Resolved BTC runtime config; when ``None`` the host mode is
+            auto-detected and Wine lookup follows the legacy fallback
+            (``FEMIC_WINE_EXE`` then PATH discovery).
+
+    Returns:
+        The argv to execute on this host: the original command for native
+        Windows and non-``.exe`` commands, ``[wine, *command]`` in ``wine``
+        mode, or the ``powershell.exe``/``cmd.exe`` carrier argv in
+        ``wsl-interop`` mode.
+
+    Raises:
+        RuntimeError: when the effective host mode cannot run (``windows``
+            requested on a POSIX host, unresolved ``auto``, an unknown mode,
+            or a missing Wine executable/interop carrier).
+    """
     command_list = list(command)
     if (
         _tipsy_is_windows_host()
@@ -549,8 +605,47 @@ def _wrap_btc_command_for_host(
         or Path(command_list[0]).suffix.lower() != ".exe"
     ):
         return command_list
+    if runtime is not None:
+        effective_mode = str(runtime.host_mode).strip().lower()
+    elif resolve_host_mode(
+        env=env, wine_intent=env_has_wine_intent(env)
+    ) == "wsl-interop":
+        effective_mode = "wsl-interop"
+    else:
+        effective_mode = "wine"
+    if effective_mode == "wine":
+        return _wrap_btc_command_with_wine(command_list, env=env, runtime=runtime)
+    if effective_mode == "wsl-interop":
+        return _build_wsl_interop_carrier(command_list, runtime=runtime)
+    if effective_mode == "windows":
+        raise RuntimeError(
+            "BTC host mode 'windows' was requested, but this host is not "
+            f"native Windows (os.name={os.name!r}). Use 'wine' or "
+            "'wsl-interop' instead."
+        )
+    if effective_mode == "auto":
+        raise RuntimeError(
+            "btc_runtime_config.host_mode must be resolved ('auto' is not a "
+            "runnable mode); construct with host_mode='wine', 'windows', or "
+            "'wsl-interop'"
+        )
+    raise RuntimeError(f"Unknown BTC host mode {effective_mode!r}.")
 
-    wine_executable = env.get(DEFAULT_WINE_EXE_ENV, "").strip()
+
+def _wrap_btc_command_with_wine(
+    command_list: list[str],
+    *,
+    env: Mapping[str, str],
+    runtime: "BTCRuntimeConfig | None",
+) -> list[str]:
+    """Prepend the Wine executable for a Windows BTC command."""
+    wine_executable = (
+        str(runtime.wine_executable).strip()
+        if runtime is not None and runtime.wine_executable
+        else ""
+    )
+    if not wine_executable:
+        wine_executable = env.get(DEFAULT_WINE_EXE_ENV, "").strip()
     if not wine_executable:
         wine_executable = find_wine_executable() or ""
     if not wine_executable:
@@ -560,6 +655,104 @@ def _wrap_btc_command_for_host(
             f"{DEFAULT_WINE_EXE_ENV}."
         )
     return [wine_executable, *command_list]
+
+
+def _build_wsl_interop_carrier(
+    command_list: list[str],
+    *,
+    runtime: "BTCRuntimeConfig | None",
+) -> list[str]:
+    """Build a powershell.exe/cmd.exe carrier argv for WSL interop runs."""
+    translated_exe = to_windows_host_path(str(command_list[0]))
+    translated_args = [_translate_interop_arg(str(arg)) for arg in command_list[1:]]
+    carrier = (
+        str(runtime.wine_executable).strip()
+        if runtime is not None and runtime.wine_executable
+        else ""
+    )
+    if not carrier:
+        carrier = shutil.which("powershell.exe") or ""
+    if not carrier:
+        carrier = shutil.which("cmd.exe") or ""
+    if not carrier:
+        raise RuntimeError(
+            "BatchTIPSY wsl-interop mode requires a Windows interop carrier: "
+            "set wine_executable to powershell.exe/cmd.exe, or make sure "
+            "powershell.exe or cmd.exe is reachable on PATH."
+        )
+    if Path(carrier).name.lower() == "cmd.exe":
+        script = " ".join(
+            [f'"{translated_exe}"', *(_cmd_quote_arg(arg) for arg in translated_args)]
+        )
+        return [carrier, "/c", script]
+    script = " ".join(
+        [
+            "&",
+            _powershell_quote_arg(translated_exe),
+            *(_powershell_quote_arg(arg) for arg in translated_args),
+        ]
+    )
+    return [carrier, "-NoProfile", "-Command", script]
+
+
+def _translate_interop_arg(argument: str) -> str:
+    """Translate a Windows-visible path argument, leaving flags/as-is args."""
+    if _BTC_WSL_MNT_PATH_RE.match(argument) or _BTC_WINDOWS_DRIVE_PATH_RE.match(
+        argument
+    ):
+        return to_windows_host_path(argument)
+    return argument
+
+
+def _powershell_quote_arg(value: str) -> str:
+    """Single-quote an argument for a PowerShell command string."""
+    return "'" + value.replace("'", "''") + "'"
+
+
+_CMD_METACHARACTERS = "&|<>^"
+
+
+def _cmd_quote_arg(value: str) -> str:
+    """Quote one argument for a cmd.exe ``/c`` carrier command string.
+
+    cmd.exe expands ``%VAR%`` even inside double quotes and treats
+    ``&``/``|``/``<``/``>``/``^`` as command structure, so the fallback
+    carrier cannot represent every argument safely. This helper escapes
+    ``%`` as ``%%``, double-quotes whitespace arguments, and rejects values
+    that would still be ambiguous: embedded double quotes, or unquoted cmd
+    metacharacters. Callers needing such arguments should use
+    ``wine_executable=powershell.exe`` or ``host_mode=wine``.
+    """
+    if '"' in value:
+        raise RuntimeError(
+            "cmd.exe carrier cannot represent an argument containing an "
+            f"embedded double quote: {value!r}. Use powershell.exe as the "
+            "wsl-interop carrier or host_mode=wine for this argument."
+        )
+    if not (value.startswith('"') and value.endswith('"')):
+        for character in _CMD_METACHARACTERS:
+            if character in value:
+                raise RuntimeError(
+                    "cmd.exe carrier cannot safely pass an argument "
+                    f"containing {character!r}: {value!r}. Use powershell.exe "
+                    "as the wsl-interop carrier or host_mode=wine."
+                )
+    escaped = value.replace("%", "%%")
+    if any(character in escaped for character in " \t"):
+        return f'"{escaped}"'
+    return escaped
+
+
+def _require_windows_visible_working_dir(working_dir: Path) -> None:
+    """Raise when a working directory is invisible to Windows interop."""
+    text = str(working_dir)
+    if _BTC_WINDOWS_DRIVE_PATH_RE.match(text) or _BTC_WSL_MNT_PATH_RE.match(text):
+        return
+    raise RuntimeError(
+        "BTC wsl-interop mode needs a Windows-visible working directory, "
+        f"got {text!r}. Put --scratch-dir under /mnt/c "
+        "(e.g. /mnt/c/femic/scratch)."
+    )
 
 
 @dataclass(frozen=True)
@@ -1499,22 +1692,118 @@ def _resolve_btc_user_overlay_report_path(*, mode: str) -> Path:
     return preferred
 
 
+def _btc_runtime_prefix_candidates(
+    env: Mapping[str, str] | None,
+    *,
+    runtime: "BTCRuntimeConfig | None" = None,
+    instance_root: str | Path | None = None,
+) -> list[Path]:
+    """Return candidate Wine prefixes hosting a Windows TIPSY install.
+
+    ``FEMIC_BTC_WINEPREFIX`` then ``WINEPREFIX`` always come first, followed
+    by the resolved config prefix. When ``runtime`` is supplied it is trusted
+    and no config re-resolution happens (the caller already resolved the
+    runtime config). Otherwise the config is resolved once; config errors
+    (for example an unparseable ``FEMIC_BTC_USE_XVFB``) are re-raised as
+    ``BTCRuntimeConfigError`` so executable discovery never leaks a raw
+    env-parsing ``ValueError``.
+    """
+    lookup = env if env is not None else os.environ
+    candidates: list[Path] = []
+    seen: set[str] = set()
+    for raw_prefix in (lookup.get(FEMIC_BTC_WINEPREFIX), lookup.get("WINEPREFIX")):
+        if raw_prefix and str(raw_prefix) not in seen:
+            candidates.append(Path(raw_prefix).expanduser())
+            seen.add(str(raw_prefix))
+    if runtime is not None:
+        resolved_prefix = runtime.wine_prefix
+    else:
+        try:
+            resolved_prefix = resolve_btc_runtime_config(
+                env=env, instance_root=instance_root
+            ).wine_prefix
+        except (ValueError, BTCRuntimeConfigError) as exc:
+            raise BTCRuntimeConfigError(
+                "Could not resolve BTC runtime config while discovering Wine "
+                f"prefix candidates: {exc}"
+            ) from exc
+    if resolved_prefix is not None and str(resolved_prefix) not in seen:
+        candidates.append(resolved_prefix)
+    return candidates
+
+
 def resolve_btc_executable(
     *,
     executable_path: str | Path | None = None,
     env: Mapping[str, str] | None = None,
+    wine_prefixes: Sequence[str | Path] | None = None,
+    wine_runtime: "BTCRuntimeConfig | None" = None,
+    instance_root: str | Path | None = None,
 ) -> BTCRuntimeDiscovery:
-    """Resolve the BatchTIPSY BTC executable path on Windows-first hosts."""
+    """Resolve the BatchTIPSY BTC executable on Windows and POSIX hosts.
+
+    Candidate order: explicit path, ``FEMIC_BATCHTIPSY_EXE``, Wine-prefix
+    installs (``drive_c/Program Files/TIPSY 4.7/BTC/TIPSYbtc.exe`` under
+    ``FEMIC_BTC_WINEPREFIX``/``WINEPREFIX``/discovered prefixes), then the
+    native Windows default path.
+
+    When ``wine_prefixes`` is supplied it is trusted as the authoritative
+    prefix candidate list. When ``wine_runtime`` is supplied its
+    ``wine_prefix`` is used instead of re-resolving the runtime config
+    (avoiding a second YAML read and discovery pass); ``wine_prefixes`` wins
+    over ``wine_runtime`` when both are given.
+
+    Environment semantics: ``env=None`` consults the full ``os.environ``;
+    ``env={}`` is an explicitly empty environment (no environment lookups,
+    so ``FEMIC_BATCHTIPSY_EXE`` and env prefixes are not considered).
+
+    Args:
+        executable_path: Explicit BatchTIPSY executable path; takes priority
+            over every other candidate.
+        env: Environment mapping used for ``FEMIC_BATCHTIPSY_EXE`` and prefix
+            lookups (defaults to ``os.environ``).
+        wine_prefixes: Authoritative prefix candidate list; when supplied it
+            wins over ``wine_runtime`` and no config re-resolution happens.
+        wine_runtime: Resolved BTC runtime config whose ``wine_prefix`` is
+            used as a candidate; avoids a second YAML read and discovery pass.
+        instance_root: Directory whose ``config/`` may hold the runtime YAML,
+            used only when neither ``wine_prefixes`` nor ``wine_runtime`` is
+            supplied.
+
+    Returns:
+        A :class:`BTCRuntimeDiscovery` with the first existing executable
+        candidate and the source label that produced it.
+
+    Raises:
+        FileNotFoundError: when no candidate exists; the message lists every
+            searched path and the env var/explicit-path escape hatch.
+    """
+    lookup = env if env is not None else os.environ
     candidates: list[tuple[Path | None, str]] = [
         (Path(executable_path) if executable_path is not None else None, "explicit"),
         (
-            Path((env or os.environ)[DEFAULT_BATCHTIPSY_EXE_ENV])
-            if (env or os.environ).get(DEFAULT_BATCHTIPSY_EXE_ENV)
+            Path(lookup[DEFAULT_BATCHTIPSY_EXE_ENV])
+            if lookup.get(DEFAULT_BATCHTIPSY_EXE_ENV)
             else None,
             f"env:{DEFAULT_BATCHTIPSY_EXE_ENV}",
         ),
-        (DEFAULT_BATCHTIPSY_WINDOWS_EXE, "default"),
     ]
+    if wine_prefixes is not None:
+        prefixes = [Path(prefix).expanduser() for prefix in wine_prefixes]
+    else:
+        prefixes = _btc_runtime_prefix_candidates(
+            env=env,
+            runtime=wine_runtime,
+            instance_root=instance_root,
+        )
+    for prefix in prefixes:
+        candidates.append(
+            (
+                prefix / "drive_c" / "Program Files" / "TIPSY 4.7" / "BTC" / "TIPSYbtc.exe",
+                f"wineprefix:{prefix}",
+            )
+        )
+    candidates.append((DEFAULT_BATCHTIPSY_WINDOWS_EXE, "default"))
     for candidate, source in candidates:
         if candidate is None:
             continue
@@ -1845,6 +2134,235 @@ def prepare_btc_runtime(
     )
 
 
+def _resolve_run_btc_runtime_config(
+    *,
+    btc_runtime_config: "BTCRuntimeConfig | None",
+    executable_path: str | Path | None,
+    wine_prefix: str | Path | None,
+    wine_executable: str | None,
+    use_xvfb: bool | None,
+    host_mode: str | None,
+    env: Mapping[str, str],
+    instance_root: str | Path | None = None,
+) -> "BTCRuntimeConfig":
+    """Resolve the single trusted BTC runtime config for one run.
+
+    When ``btc_runtime_config`` is supplied it is used as-is, provided it is
+    fully resolved (``host_mode`` is never ``"auto"``) and every per-field
+    option agrees with it (fail fast on mismatch). Otherwise the config is
+    resolved with arg > env > YAML > discovery precedence.
+
+    Args:
+        btc_runtime_config: Trusted fully resolved config; when given, the
+            per-field options below must agree with it.
+        executable_path: Explicit BatchTIPSY executable path.
+        wine_prefix: Explicit Wine prefix directory.
+        wine_executable: Explicit Wine (or interop carrier) executable.
+        use_xvfb: Explicit xvfb-run wrapping flag.
+        host_mode: Explicit host mode (``auto``/``windows``/``wine``/
+            ``wsl-interop``).
+        env: Environment mapping to consult for per-field resolution.
+        instance_root: Directory whose ``config/`` may hold the runtime YAML.
+
+    Returns:
+        The resolved :class:`BTCRuntimeConfig` for this run.
+
+    Raises:
+        BTCRuntimeConfigError: when a supplied config is unresolved
+            (``host_mode="auto"``) or conflicts with a per-field option.
+    """
+    if btc_runtime_config is not None:
+        if str(btc_runtime_config.host_mode).strip().lower() == "auto":
+            raise BTCRuntimeConfigError(
+                "btc_runtime_config.host_mode must be resolved ('auto' is not "
+                "a runnable mode); construct with host_mode='wine', 'windows', "
+                "or 'wsl-interop'"
+            )
+        _assert_btc_runtime_config_matches(
+            runtime=btc_runtime_config,
+            executable_path=executable_path,
+            wine_prefix=wine_prefix,
+            wine_executable=wine_executable,
+            use_xvfb=use_xvfb,
+            host_mode=host_mode,
+        )
+        return btc_runtime_config
+    return resolve_btc_runtime_config(
+        btc_exe=executable_path,
+        wine_prefix=wine_prefix,
+        wine_executable=wine_executable,
+        use_xvfb=use_xvfb,
+        host_mode=host_mode,
+        instance_root=instance_root,
+        env=env,
+    )
+
+
+def _assert_btc_runtime_config_matches(
+    *,
+    runtime: "BTCRuntimeConfig",
+    executable_path: str | Path | None,
+    wine_prefix: str | Path | None,
+    wine_executable: str | None,
+    use_xvfb: bool | None,
+    host_mode: str | None,
+) -> None:
+    """Fail fast when per-field runtime options contradict the config.
+
+    Path fields (``executable_path``/``batch_tipsy_exe`` and ``wine_prefix``)
+    are compared after ``expanduser`` so ``~``-relative callers cannot trip a
+    spurious conflict against an already-expanded config value. For the
+    ``executable_path``/``batch_tipsy_exe`` pair the assert only fires when
+    both sides are set and disagree; for ``wine_prefix`` and
+    ``wine_executable`` it also fires when the option is set but the config
+    carries no value.
+
+    Args:
+        runtime: The trusted resolved config being validated.
+        executable_path: Per-field explicit BatchTIPSY executable path.
+        wine_prefix: Per-field explicit Wine prefix directory.
+        wine_executable: Per-field explicit Wine executable.
+        use_xvfb: Per-field explicit xvfb wrapping flag.
+        host_mode: Per-field explicit host mode.
+
+    Returns:
+        None when every set per-field option agrees with ``runtime``.
+
+    Raises:
+        BTCRuntimeConfigError: listing every conflicting per-field option.
+    """
+    mismatches: list[str] = []
+    if (
+        executable_path is not None
+        and runtime.batch_tipsy_exe is not None
+        and Path(str(executable_path)).expanduser()
+        != Path(str(runtime.batch_tipsy_exe)).expanduser()
+    ):
+        mismatches.append(
+            f"executable_path={str(executable_path)!r} (config: "
+            f"{runtime.batch_tipsy_exe!r})"
+        )
+    if wine_prefix is not None and (
+        runtime.wine_prefix is None
+        or Path(str(runtime.wine_prefix)).expanduser()
+        != Path(str(wine_prefix)).expanduser()
+    ):
+        mismatches.append(
+            f"wine_prefix={str(wine_prefix)!r} (config: {runtime.wine_prefix!r})"
+        )
+    if wine_executable is not None and runtime.wine_executable != wine_executable:
+        mismatches.append(
+            f"wine_executable={wine_executable!r} (config: "
+            f"{runtime.wine_executable!r})"
+        )
+    if use_xvfb is not None and runtime.use_xvfb != use_xvfb:
+        mismatches.append(f"use_xvfb={use_xvfb!r} (config: {runtime.use_xvfb!r})")
+    if host_mode is not None and runtime.host_mode != host_mode:
+        mismatches.append(f"host_mode={host_mode!r} (config: {runtime.host_mode!r})")
+    if mismatches:
+        raise BTCRuntimeConfigError(
+            "run_btc_cli received both btc_runtime_config and conflicting "
+            "per-field runtime options: " + "; ".join(mismatches)
+        )
+
+
+def _apply_xvfb_wrap(
+    command: list[str],
+    *,
+    runtime: "BTCRuntimeConfig",
+    env: Mapping[str, str],
+) -> list[str]:
+    """Wrap a Wine BTC command in ``xvfb-run -a`` on headless hosts."""
+    if not (runtime.use_xvfb and runtime.host_mode == "wine" and is_headless(env=env)):
+        return command
+    xvfb_executable = runtime.xvfb_executable or find_xvfb_run()
+    if xvfb_executable is None:
+        raise RuntimeError(
+            "use_xvfb was requested for a headless Wine BTC run, but xvfb-run "
+            "was not found on PATH. Install xvfb (xvfb-run) or disable xvfb "
+            "wrapping (FEMIC_BTC_USE_XVFB=0)."
+        )
+    return [xvfb_executable, "-a", *command]
+
+
+def _validate_btc_run_prerequisites(
+    *,
+    runtime: "BTCRuntimeConfig",
+    discovery: BTCRuntimeDiscovery,
+    scratch_root: Path,
+) -> None:
+    """Fail fast on unsatisfiable BTC run prerequisites before staging.
+
+    Runs immediately after executable discovery and scratch-root resolution,
+    before any install copy or staging work, so mode/transport errors surface
+    before files are written:
+
+    - ``wsl-interop`` requires a Windows-visible executable (an
+      unmappable path is a config error naming ``FEMIC_BATCHTIPSY_EXE``)
+      and an interop carrier whose basename is ``powershell.exe`` or
+      ``cmd.exe`` (from ``runtime.wine_executable``, falling back to
+      ``powershell.exe``/``cmd.exe`` on PATH); the scratch root must live at
+      a Windows-visible path (``/mnt/<drive>/…`` or ``C:\…``).
+    - ``windows`` is only runnable on native Windows.
+    - ``auto`` must already have been resolved to a runnable mode.
+
+    Args:
+        runtime: The resolved BTC runtime config for this run.
+        discovery: The resolved BatchTIPSY executable discovery.
+        scratch_root: The resolved scratch root hosting the staged run.
+
+    Returns:
+        None when every prerequisite is satisfiable.
+
+    Raises:
+        RuntimeError: describing the first unsatisfiable prerequisite.
+    """
+    mode = str(runtime.host_mode).strip().lower()
+    if mode == "auto":
+        raise RuntimeError(
+            "btc_runtime_config.host_mode must be resolved ('auto' is not a "
+            "runnable mode); construct with host_mode='wine', 'windows', or "
+            "'wsl-interop'"
+        )
+    if mode == "windows":
+        if not _tipsy_is_windows_host():
+            raise RuntimeError(
+                "BTC host mode 'windows' was requested, but this host is not "
+                f"native Windows (os.name={os.name!r}). Use 'wine' or "
+                "'wsl-interop' instead."
+            )
+        return
+    if mode != "wsl-interop":
+        return
+    try:
+        to_windows_host_path(str(discovery.executable_path))
+    except ValueError as exc:
+        raise RuntimeError(
+            "BTC wsl-interop mode needs a Windows-visible BatchTIPSY "
+            f"executable, got {str(discovery.executable_path)!r}. Point "
+            f"{DEFAULT_BATCHTIPSY_EXE_ENV} at the /mnt/<drive>/ install (or "
+            "use host_mode=wine for a Wine-prefix install)."
+        ) from exc
+    carrier = (
+        str(runtime.wine_executable).strip()
+        if runtime.wine_executable
+        else ""
+    )
+    if carrier and not is_wsl_interop_carrier(carrier):
+        raise RuntimeError(
+            "BTC wsl-interop mode carrier must be powershell.exe or "
+            f"cmd.exe, got {carrier!r}. Use host_mode=wine for a Wine "
+            "executable, or set wine_executable to powershell.exe/cmd.exe."
+        )
+    if not carrier and not _interop_carrier_available():
+        raise RuntimeError(
+            "BTC wsl-interop mode requires a Windows interop carrier: set "
+            "wine_executable to powershell.exe/cmd.exe, or make sure "
+            "powershell.exe or cmd.exe is reachable on PATH."
+        )
+    _require_windows_visible_working_dir(scratch_root)
+
+
 def run_btc_cli(
     *,
     input_csv: str | Path,
@@ -1862,9 +2380,92 @@ def run_btc_cli(
     env: Mapping[str, str] | None = None,
     extra_executable_args: Sequence[str | Path] = (),
     timeout_seconds: float | None = None,
+    wine_prefix: str | Path | None = None,
+    wine_executable: str | None = None,
+    use_xvfb: bool | None = None,
+    host_mode: str | None = None,
+    btc_runtime_config: "BTCRuntimeConfig | None" = None,
+    instance_root: str | Path | None = None,
 ) -> BTCRunResult:
-    """Run BTC `/TSR` or `/FLP` in a supervised writable scratch environment."""
-    discovery = resolve_btc_executable(executable_path=executable_path, env=env)
+    """Run BTC `/TSR` or `/FLP` in a supervised writable scratch environment.
+
+    Host-mode behavior:
+        - ``windows`` (native Windows): direct invocation.
+        - ``wine`` (default on POSIX): the Windows executable is launched
+          through Wine, with ``WINEPREFIX`` set from the resolved prefix and
+          optional ``xvfb-run`` wrapping on headless hosts.
+        - ``wsl-interop`` (WSL hosts with Windows interop): the executable is
+          launched through ``powershell.exe``/``cmd.exe`` against the
+          Windows-visible install; the scratch/working directory must live at
+          a Windows-visible path (``/mnt/<drive>/…`` or ``C:\…``).
+
+    Runtime precedence per field: explicit option > environment variable >
+    ``config/tipsy.btc.runtime.yaml`` > host discovery (see
+    :func:`femic.pipeline.btc_runtime.resolve_btc_runtime_config`).
+
+    Args:
+        input_csv: Source MSYT-style CSV staged into the scratch workdir.
+        mode: BTC mode, ``TSR`` or ``FLP``.
+        output_csv: Requested output CSV path (defaults to the staged file).
+        error_csv: Requested error CSV path (defaults to the staged file).
+        executable_path: Explicit BatchTIPSY executable path.
+        report_template: Optional report template used for copied-install runs.
+        report_preset_name: Optional runtime report preset name.
+        indicator_bank_names: Indicator banks applied to runtime presets.
+        copy_install: Copy the TIPSY install into scratch before running.
+        scratch_root: Scratch root hosting the staged runtime and workdir.
+        log_dir: Directory for stdout/stderr logs and the run manifest.
+        run_id: Run identifier used for log/manifest naming.
+        env: Extra environment variables merged over ``os.environ``.
+        extra_executable_args: Extra argv entries placed before the mode flag.
+        timeout_seconds: Subprocess timeout in seconds.
+        wine_prefix: Wine prefix hosting the Windows TIPSY install.
+        wine_executable: Wine (or wsl-interop carrier) executable override.
+        use_xvfb: Wrap headless Wine runs in ``xvfb-run``.
+        host_mode: Force ``auto``/``windows``/``wine``/``wsl-interop``.
+        btc_runtime_config: Fully resolved trusted config; when given, the
+            per-field options above must agree with it or the call fails fast.
+        instance_root: Directory whose ``config/`` may hold the runtime YAML,
+            used only when no trusted config is supplied.
+
+    Returns:
+        A :class:`BTCRunResult` describing the completed run (exit code,
+        produced output/error CSVs, manifest path, resolved host mode, and
+        the executed command).
+
+    Raises:
+        ValueError: when ``mode`` is not ``TSR`` or ``FLP``.
+        BTCRuntimeConfigError: when a supplied trusted config is unresolved
+            or conflicts with per-field options.
+        RuntimeError: when run prerequisites are unsatisfiable (missing Wine
+            or interop carrier, non-Windows-visible executable/scratch for
+            ``wsl-interop``, or ``windows`` mode on a POSIX host).
+        FileNotFoundError: when no BatchTIPSY executable can be resolved.
+    """
+    merged_env = dict(os.environ)
+    merged_env.update(env or {})
+    runtime = _resolve_run_btc_runtime_config(
+        btc_runtime_config=btc_runtime_config,
+        executable_path=executable_path,
+        wine_prefix=wine_prefix,
+        wine_executable=wine_executable,
+        use_xvfb=use_xvfb,
+        host_mode=host_mode,
+        env=merged_env,
+        instance_root=instance_root,
+    )
+    if runtime.host_mode == "wine" and runtime.wine_prefix is not None:
+        merged_env["WINEPREFIX"] = str(runtime.wine_prefix)
+    if runtime.host_mode == "wsl-interop":
+        merged_env.pop("WINEPREFIX", None)
+    discovery = resolve_btc_executable(
+        executable_path=(
+            runtime.batch_tipsy_exe if executable_path is None else executable_path
+        ),
+        env=merged_env,
+        wine_runtime=runtime,
+        instance_root=instance_root,
+    )
     normalized_mode = str(mode).strip().upper()
     if normalized_mode not in _BTC_SUPPORTED_MODES:
         supported = ", ".join(sorted(_BTC_SUPPORTED_MODES))
@@ -1878,6 +2479,11 @@ def run_btc_cli(
         else (DEFAULT_BTC_SCRATCH_ROOT / f"btc-{effective_run_id}")
         .expanduser()
         .resolve()
+    )
+    _validate_btc_run_prerequisites(
+        runtime=runtime,
+        discovery=discovery,
+        scratch_root=resolved_scratch_root,
     )
     should_copy_install = (
         bool(copy_install)
@@ -1914,8 +2520,6 @@ def run_btc_cli(
     else:
         staged_error = prep.working_dir / f"{input_path.stem}_error.csv"
         requested_error = staged_error
-    merged_env = dict(os.environ)
-    merged_env.update(env or {})
     command = _wrap_btc_command_for_host(
         build_btc_cli_command(
             executable_path=prep.executable_path,
@@ -1926,7 +2530,9 @@ def run_btc_cli(
             extra_executable_args=extra_executable_args,
         ),
         env=merged_env,
+        runtime=runtime,
     )
+    final_command = _apply_xvfb_wrap(command, runtime=runtime, env=merged_env)
     stdout_log_path = resolved_log_dir / f"btc_stdout-{effective_run_id}.log"
     stderr_log_path = resolved_log_dir / f"btc_stderr-{effective_run_id}.log"
     manifest_path = resolved_log_dir / f"btc_manifest-{effective_run_id}.json"
@@ -1936,7 +2542,7 @@ def run_btc_cli(
         "status": "started",
         "mode": normalized_mode,
         "started_at_utc": started_at.isoformat(),
-        "command": command,
+        "command": final_command,
         "log_dir": str(resolved_log_dir),
         "input_csv": str(Path(input_csv).expanduser().resolve()),
         "staged_input_csv": str(prep.staged_input_csv),
@@ -1953,6 +2559,12 @@ def run_btc_cli(
         ),
         "indicator_bank_names": list(indicator_bank_names),
         "discovery_source": discovery.source,
+        "host_mode": runtime.host_mode,
+        "wine_prefix": (
+            str(runtime.wine_prefix) if runtime.wine_prefix is not None else None
+        ),
+        "wine_executable": runtime.wine_executable,
+        "use_xvfb": runtime.use_xvfb,
     }
     _write_btc_manifest(manifest_path, manifest_started)
     started_monotonic = time.monotonic()
@@ -1990,7 +2602,7 @@ def run_btc_cli(
             )
         else:
             completed = subprocess.run(
-                command,
+                final_command,
                 cwd=prep.working_dir,
                 env=merged_env,
                 capture_output=True,
@@ -2116,7 +2728,7 @@ def run_btc_cli(
     return BTCRunResult(
         run_id=effective_run_id,
         mode=normalized_mode,
-        command=tuple(command),
+        command=tuple(final_command),
         manifest_path=manifest_path,
         stdout_log_path=stdout_log_path,
         stderr_log_path=stderr_log_path,
@@ -2130,6 +2742,12 @@ def run_btc_cli(
         duration_sec=duration_sec,
         report_template_path=prep.report_template_path,
         uses_live_overlay=prep.uses_live_overlay,
+        host_mode=runtime.host_mode,
+        wine_prefix=(
+            str(runtime.wine_prefix) if runtime.wine_prefix is not None else None
+        ),
+        wine_executable=runtime.wine_executable,
+        use_xvfb=runtime.use_xvfb,
     )
 
 

@@ -12,10 +12,11 @@ import platform
 import re
 import subprocess
 import sys
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path, PosixPath, WindowsPath
 import shutil
-from typing import Any
+from typing import Any, Literal
 import zipfile
 
 import typer
@@ -245,6 +246,16 @@ from femic.tsr_catalog import (
     write_tsr_fact_report_csv,
     write_tsr_index,
 )
+from femic.pipeline.btc_runtime import (
+    BTCRuntimeConfig,
+    BTCRuntimeConfigError,
+    DEFAULT_BTC_RUNTIME_CONFIG_RELPATH,
+    find_xvfb_run,
+    host_mode_label,
+    is_headless,
+    is_wsl_interop_carrier,
+    resolve_btc_runtime_config,
+)
 from femic.pipeline.io import (
     build_pipeline_run_config,
     file_sha256,
@@ -263,11 +274,13 @@ from femic.pipeline.tipsy import (
     probe_btc_report_columns,
     probe_btc_indicator_banks,
     BTCRunResult,
+    BTCRuntimeDiscovery,
     BTCCustomReportColumn,
     BTCCustomReportTemplate,
     btc_report_template_preset,
     build_btc_custom_report_template,
     parse_btc_custom_report_template,
+    resolve_btc_executable,
     run_btc_cli,
     write_btc_custom_report_template,
 )
@@ -7329,6 +7342,41 @@ def tsa_btc_post_tipsy(
         help="Optional scratch root for copied BTC installs and staged run files.",
         show_default=False,
     ),
+    wine_prefix: Path | None = typer.Option(
+        None,
+        "--wine-prefix",
+        help=(
+            "Wine prefix directory hosting the Windows TIPSY install; "
+            "resolved under the instance root when relative."
+        ),
+        show_default=False,
+    ),
+    wine_exe: str | None = typer.Option(
+        None,
+        "--wine-exe",
+        help=(
+            "Wine executable override (or powershell.exe/cmd.exe for "
+            "wsl-interop mode)."
+        ),
+        show_default=False,
+    ),
+    use_xvfb: bool | None = typer.Option(
+        None,
+        "--use-xvfb/--no-xvfb",
+        help="Wrap headless Wine BTC runs in xvfb-run.",
+        show_default=False,
+    ),
+    host_mode: Literal["auto", "windows", "wine", "wsl-interop"] | None = (
+        typer.Option(
+            None,
+            "--host-mode",
+            help=(
+                "BTC host mode: auto (discover), windows (native), wine, or "
+                "wsl-interop (Windows interop on WSL)."
+            ),
+            show_default=False,
+        )
+    ),
     report_preset: str = typer.Option(
         "tsr-unattended-default",
         "--report-preset",
@@ -7346,7 +7394,16 @@ def tsa_btc_post_tipsy(
     ),
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
-    """Run unattended BTC for selected FMU/code targets, then resume post-TIPSY bundle assembly."""
+    """Run unattended BTC for selected FMU/code targets, then resume post-TIPSY bundle assembly.
+
+    BTC host modes: ``auto`` discovers the best mode for this host,
+    ``windows`` runs the native Windows executable directly, ``wine``
+    launches through Wine (optionally wrapped in ``xvfb-run`` on headless
+    hosts), and ``wsl-interop`` launches through
+    ``powershell.exe``/``cmd.exe`` on WSL. Per-field overrides
+    (``--wine-prefix``, ``--wine-exe``, ``--use-xvfb``, ``--host-mode``) take
+    precedence over the runtime YAML and environment.
+    """
     instance_context = _resolve_cli_instance_context(instance_root=instance_root)
     explicit_yield_assumptions_path = (
         yield_assumptions_path if isinstance(yield_assumptions_path, Path) else None
@@ -7441,6 +7498,15 @@ def tsa_btc_post_tipsy(
                 else None
             )
         ),
+        wine_prefix=(
+            instance_context.resolve_path(wine_prefix)
+            if wine_prefix is not None
+            else None
+        ),
+        wine_executable=wine_exe,
+        use_xvfb=use_xvfb,
+        host_mode=host_mode,
+        instance_root=instance_context.root,
     )
     for btc_result in run_result.btc_results:
         console.print(
@@ -7695,6 +7761,41 @@ def tipsy_run_btc(
         help="Explicit TIPSYbtc.exe path; otherwise use env/default discovery.",
         show_default=False,
     ),
+    wine_prefix: Path | None = typer.Option(
+        None,
+        "--wine-prefix",
+        help=(
+            "Wine prefix directory hosting the Windows TIPSY install; "
+            "resolved under the instance root when relative."
+        ),
+        show_default=False,
+    ),
+    wine_exe: str | None = typer.Option(
+        None,
+        "--wine-exe",
+        help=(
+            "Wine executable override (or powershell.exe/cmd.exe for "
+            "wsl-interop mode)."
+        ),
+        show_default=False,
+    ),
+    use_xvfb: bool | None = typer.Option(
+        None,
+        "--use-xvfb/--no-xvfb",
+        help="Wrap headless Wine BTC runs in xvfb-run.",
+        show_default=False,
+    ),
+    host_mode: Literal["auto", "windows", "wine", "wsl-interop"] | None = (
+        typer.Option(
+            None,
+            "--host-mode",
+            help=(
+                "BTC host mode: auto (discover), windows (native), wine, or "
+                "wsl-interop (Windows interop on WSL)."
+            ),
+            show_default=False,
+        )
+    ),
     report_template: Path | None = typer.Option(
         None,
         "--report-template",
@@ -7747,7 +7848,15 @@ def tipsy_run_btc(
     ),
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
-    """Run BTC in supervised CLI mode with optional copied-install report override."""
+    """Run BTC in supervised CLI mode with optional copied-install report override.
+
+    Host modes: ``auto`` discovers the best mode for this host, ``windows``
+    runs the native Windows executable directly, ``wine`` launches through
+    Wine (optionally wrapped in ``xvfb-run`` on headless hosts), and
+    ``wsl-interop`` launches through ``powershell.exe``/``cmd.exe`` on WSL.
+    Per-field overrides (``--wine-prefix``, ``--wine-exe``, ``--use-xvfb``,
+    ``--host-mode``) take precedence over the runtime YAML and environment.
+    """
     if report_template is not None and report_preset is not None:
         raise typer.BadParameter(
             "Use either --report-template or --report-preset, not both."
@@ -7766,6 +7875,11 @@ def tipsy_run_btc(
     resolved_template = (
         instance_context.resolve_path(report_template)
         if report_template is not None
+        else None
+    )
+    resolved_wine_prefix = (
+        instance_context.resolve_path(wine_prefix)
+        if wine_prefix is not None
         else None
     )
     effective_preset = report_preset
@@ -7798,6 +7912,11 @@ def tipsy_run_btc(
         ),
         log_dir=instance_context.resolve_path(log_dir),
         run_id=run_id,
+        wine_prefix=resolved_wine_prefix,
+        wine_executable=wine_exe,
+        use_xvfb=use_xvfb,
+        host_mode=host_mode,
+        instance_root=instance_context.root,
     )
     console.print(
         "[green]BTC run completed[/green] "
@@ -7806,6 +7925,282 @@ def tipsy_run_btc(
     )
     console.print(f"error: {result.error_csv_path}")
     console.print(f"manifest: {result.manifest_path}")
+
+
+_BTC_PREFLIGHT_EXIT_OK = 0
+_BTC_PREFLIGHT_EXIT_CONFIG_INVALID = 1
+_BTC_PREFLIGHT_EXIT_TOOL_MISSING = 2
+
+
+class _BtcPreflightToolMissingError(RuntimeError):
+    """Optional BTC runtime tool is absent; preflight exits with code 2."""
+
+
+def _btc_preflight_exit_code(error: BaseException) -> int:
+    """Map a preflight failure to its documented CLI exit code."""
+    if isinstance(error, _BtcPreflightToolMissingError):
+        return _BTC_PREFLIGHT_EXIT_TOOL_MISSING
+    return _BTC_PREFLIGHT_EXIT_CONFIG_INVALID
+
+
+def _btc_wsl_interop_carrier_available(runtime: "BTCRuntimeConfig") -> bool:
+    """Return true when a Windows interop carrier is available.
+
+    A resolved ``runtime.wine_executable`` is trusted when its basename is
+    ``powershell.exe``/``cmd.exe`` (the carriers the WSL-interop wrapper
+    constructs); otherwise PATH is searched for those carriers. This keeps
+    the preflight in agreement with ``tipsy._validate_btc_run_prerequisites``.
+
+    Args:
+        runtime: The resolved BTC runtime config being preflighted.
+
+    Returns:
+        True when the resolved carrier (if any) is valid or an interop
+        carrier is reachable on PATH.
+    """
+    if runtime.wine_executable:
+        return is_wsl_interop_carrier(str(runtime.wine_executable))
+    return (
+        shutil.which("powershell.exe") is not None
+        or shutil.which("cmd.exe") is not None
+    )
+
+
+def _btc_preflight_config_file(*, instance_root: Path) -> Path | None:
+    """Return the BTC runtime YAML file resolved for this instance, if any."""
+    candidates = (
+        Path(instance_root).expanduser() / DEFAULT_BTC_RUNTIME_CONFIG_RELPATH,
+        Path.cwd() / DEFAULT_BTC_RUNTIME_CONFIG_RELPATH,
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _print_btc_preflight_report(
+    *,
+    runtime: "BTCRuntimeConfig",
+    instance_root: Path,
+    discovery: "BTCRuntimeDiscovery | None",
+) -> None:
+    """Print the resolved BTC runtime report lines."""
+    console.print("[bold]BTC runtime preflight[/bold]")
+    console.print(f"host_mode={host_mode_label(runtime.host_mode)}")
+    if runtime.host_mode == "wine":
+        wine_version_check = (
+            shutil.which(runtime.wine_executable)
+            if runtime.wine_executable
+            else None
+        )
+        console.print(
+            "wine_executable="
+            f"{runtime.wine_executable or 'none discovered'} "
+            "version_check="
+            f"{'available (wine --version)' if wine_version_check else 'not on PATH'}"
+        )
+    else:
+        console.print(
+            "wine_executable="
+            f"{runtime.wine_executable or 'n/a'} "
+            "(not needed for this host mode)"
+        )
+    console.print(f"wine_prefix={runtime.wine_prefix or 'none discovered'}")
+    console.print(
+        "xvfb_executable="
+        f"{(runtime.xvfb_executable or find_xvfb_run()) or 'not on PATH'}"
+    )
+    if runtime.host_mode == "wsl-interop":
+        console.print(
+            "wsl_interop_carriers="
+            + (
+                "powershell.exe/cmd.exe available"
+                if _btc_wsl_interop_carrier_available(runtime)
+                else "none available"
+            )
+        )
+    if discovery is not None:
+        console.print(
+            "batch_tipsy_exe="
+            f"{discovery.executable_path} "
+            f"exists={discovery.executable_path.is_file()} source={discovery.source}"
+        )
+    else:
+        console.print("batch_tipsy_exe=not resolved")
+    config_file = _btc_preflight_config_file(instance_root=instance_root)
+    if config_file is not None:
+        console.print(f"config_file={config_file}")
+    else:
+        console.print("config_file=no config file")
+
+
+def _collect_btc_preflight_tool_problems(
+    *,
+    runtime: "BTCRuntimeConfig",
+) -> list[str]:
+    """Return optional-tool problems that map to preflight exit code 2."""
+    problems: list[str] = []
+    if runtime.host_mode == "wine" and not runtime.wine_executable:
+        problems.append(
+            "BTC host mode is 'wine' but no Wine executable was resolved; "
+            "set FEMIC_WINE_EXE, --wine-exe, or install Wine on PATH."
+        )
+    if (
+        runtime.host_mode == "wine"
+        and runtime.use_xvfb
+        and is_headless(env=os.environ)
+        and (runtime.xvfb_executable or find_xvfb_run()) is None
+    ):
+        problems.append(
+            "use_xvfb is enabled on a headless host but xvfb-run was not "
+            "found on PATH; install xvfb or set FEMIC_BTC_USE_XVFB=0."
+        )
+    if runtime.host_mode == "wsl-interop":
+        carrier = (
+            str(runtime.wine_executable).strip()
+            if runtime.wine_executable
+            else ""
+        )
+        if carrier and not is_wsl_interop_carrier(carrier):
+            problems.append(
+                "BTC host mode is 'wsl-interop' but the resolved "
+                f"wine_executable {carrier!r} is not an interop carrier; "
+                "set it to powershell.exe or cmd.exe, or use host_mode=wine "
+                "for a Wine executable."
+            )
+        elif not carrier and not _btc_wsl_interop_carrier_available(runtime):
+            problems.append(
+                "BTC host mode is 'wsl-interop' but neither powershell.exe "
+                "nor cmd.exe is reachable on PATH."
+            )
+    return problems
+
+
+def _run_btc_preflight_probe(*, runtime: "BTCRuntimeConfig") -> None:
+    """Run a minimal BTC /TSR smoke through the resolved runtime.
+
+    Stages a tiny inline CSV in a temporary scratch directory and reuses
+    ``run_btc_cli`` with the fully resolved runtime config. The probe is
+    intentionally minimal: it proves the resolved executable can be launched
+    through the resolved host mode rather than producing a valid MSYT table.
+    """
+    scratch_root = Path(tempfile.mkdtemp(prefix="femic_btc_preflight_probe_"))
+    tiny_input = scratch_root / "preflight_probe_input.csv"
+    tiny_input.write_text("feature_id\n1\n", encoding="utf-8")
+    console.print(
+        f"[yellow]probe:[/yellow] running minimal BTC /TSR smoke in "
+        f"{scratch_root}"
+    )
+    result = run_btc_cli(
+        input_csv=tiny_input,
+        mode="TSR",
+        scratch_root=scratch_root / "scratch",
+        log_dir=scratch_root / "logs",
+        run_id="btc_preflight_probe",
+        btc_runtime_config=runtime,
+    )
+    console.print(
+        f"probe exit_code={result.exit_code} output={result.output_csv_path}"
+    )
+    if result.exit_code != 0:
+        console.print(
+            "[yellow]probe:[/yellow] BTC smoke run returned non-zero exit; "
+            "the tiny inline CSV is not a valid MSYT table. Treat this as a "
+            "launch signal, not a table-validation result."
+        )
+
+
+@tipsy_app.command("preflight-btc")
+def tipsy_preflight_btc(
+    btc_exe: Path | None = typer.Option(
+        None,
+        "--btc-exe",
+        help="Explicit TIPSYbtc.exe path; otherwise use env/default discovery.",
+        show_default=False,
+    ),
+    probe: bool = typer.Option(
+        False,
+        "--probe/--no-probe",
+        help=(
+            "Run a real minimal BTC /TSR smoke through the resolved runtime "
+            "(launches the executable; intended for operator verification)."
+        ),
+        show_default=True,
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Preflight the cross-platform BTC/Wine runtime without launching BTC.
+
+    Reports the resolved host mode, Wine executable and prefix, BatchTIPSY
+    executable, xvfb-run, and WSL-interop carriers, then fails with a
+    documented exit code when the runtime cannot run:
+
+    - 0: runtime OK
+    - 1: invalid config (unparseable YAML, impossible host mode, or a
+      BatchTIPSY executable that cannot be resolved)
+    - 2: optional tool missing (Wine in ``wine`` mode, ``xvfb-run`` when
+      ``--use-xvfb`` is requested on a headless host, or a missing/invalid
+      WSL-interop carrier)
+    """
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    try:
+        runtime = resolve_btc_runtime_config(
+            btc_exe=btc_exe,
+            instance_root=instance_context.root,
+            env=os.environ,
+        )
+    except (BTCRuntimeConfigError, ValueError, RuntimeError) as exc:
+        console.print(f"[red]BTC runtime config invalid:[/red] {exc}")
+        raise typer.Exit(code=_BTC_PREFLIGHT_EXIT_CONFIG_INVALID) from exc
+
+    try:
+        discovery = resolve_btc_executable(
+            executable_path=runtime.batch_tipsy_exe,
+            env=os.environ,
+            wine_prefixes=(
+                [runtime.wine_prefix] if runtime.wine_prefix is not None else None
+            ),
+        )
+    except FileNotFoundError as exc:
+        discovery = None
+        exe_error: FileNotFoundError | None = exc
+    else:
+        exe_error = None
+
+    _print_btc_preflight_report(
+        runtime=runtime,
+        instance_root=instance_context.root,
+        discovery=discovery,
+    )
+
+    problems = _collect_btc_preflight_tool_problems(runtime=runtime)
+    if problems:
+        for problem in problems:
+            console.print(f"[red]Error:[/red] {problem}")
+        raise typer.Exit(code=_BTC_PREFLIGHT_EXIT_TOOL_MISSING)
+
+    if discovery is None:
+        console.print(f"[red]Error:[/red] {exe_error}")
+        raise typer.Exit(code=_BTC_PREFLIGHT_EXIT_CONFIG_INVALID) from exe_error
+
+    if probe:
+        try:
+            _run_btc_preflight_probe(runtime=runtime)
+        except (
+            _BtcPreflightToolMissingError,
+            BTCRuntimeConfigError,
+            ValueError,
+            RuntimeError,
+            FileNotFoundError,
+        ) as exc:
+            console.print(f"[red]probe failed:[/red] {exc}")
+            raise typer.Exit(code=_btc_preflight_exit_code(exc)) from exc
+
+    console.print(
+        "[green]BTC runtime preflight passed[/green] "
+        f"host_mode={host_mode_label(runtime.host_mode)} "
+        f"batch_tipsy_exe={discovery.executable_path}"
+    )
 
 
 def _parse_btc_probe_alias_overrides(values: list[str]) -> dict[str, tuple[str, ...]]:

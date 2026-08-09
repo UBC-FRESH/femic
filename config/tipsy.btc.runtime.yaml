@@ -1,0 +1,9 @@
+# BTC / BatchTIPSY runtime configuration for the femic launcher.
+# Resolution order per field: CLI option > environment variable > this file > auto-discovery.
+# See docs/guides/tipsy-btc-wine-runtime.rst for the full reference.
+tipsy_btc:
+  batch_tipsy_exe: null        # or: /home/you/.wine-tipsy64/drive_c/Program Files/TIPSY 4.7/BTC/TIPSYbtc.exe
+  wine_prefix: null            # or: /home/you/.wine-tipsy64
+  wine_executable: null        # or: /usr/bin/wine
+  use_xvfb: false              # auto-wrap the wine subprocess in xvfb-run when headless
+  host_mode: auto              # auto | windows | wine | wsl-interop

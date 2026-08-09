@@ -76,6 +76,35 @@ because that key is part of the current CLI/runtime compatibility contract.
 Treat it as "selected FMU/code(s)" in generic FEMIC usage unless the case is
 literally a BC Timber Supply Area.
 
+BTC Runtime Environment Variables
+---------------------------------
+
+The BTC/Wine runtime for TIPSY yield-curve generation is configured through
+the following environment variables. Per-field precedence: CLI option >
+environment variable > `config/tipsy.btc.runtime.yaml` > discovery default.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Variable
+     - Meaning
+   * - ``FEMIC_BATCHTIPSY_EXE``
+     - Path to the BatchTIPSY executable.
+   * - ``FEMIC_WINE_EXE``
+     - Wine binary to use (``wine``/``wine64`` or an absolute path; in
+       ``wsl-interop`` mode, ``powershell.exe`` or ``cmd.exe``).
+   * - ``FEMIC_BTC_WINEPREFIX``
+     - Wine prefix containing the TIPSY install.
+   * - ``FEMIC_BTC_USE_XVFB``
+     - ``1``/``true``/``yes`` enables the headless ``xvfb-run`` wrap;
+       ``0``/``false``/``no`` disables it. Any other value fails loudly.
+   * - ``FEMIC_BTC_HOST_MODE``
+     - ``auto`` (default) | ``windows`` | ``wine`` | ``wsl-interop``.
+
+See `docs/guides/tipsy-btc-wine-runtime.rst` for the full cross-platform
+BTC runtime guide.
+
 Example
 -------
 
