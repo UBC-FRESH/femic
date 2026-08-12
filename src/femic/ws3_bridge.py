@@ -22,6 +22,22 @@ class Ws3BridgeResult:
     trn_path: Path
 
 
+MASC_LANDSCAPE_UNIT_CODES = (
+    "1376",
+    "1378",
+    "1382",
+    "1383",
+    "1384",
+    "1387",
+    "1389",
+    "1390",
+    "1391",
+    "1393",
+    "1404",
+)
+MASC_LANDSCAPE_UNIT_AGGREGATE = "masc_lu_subset"
+
+
 def build_ws3_sections_from_femic_woodstock(
     *,
     woodstock_dir: Path,
@@ -67,6 +83,16 @@ def build_ws3_sections_from_femic_woodstock(
     )
     areas["age"] = pd.to_numeric(areas["age"], errors="coerce").fillna(0).astype(int)
     areas["area_ha"] = pd.to_numeric(areas["area_ha"], errors="coerce").fillna(0.0)
+    has_landscape_units = "landscape_unit_id" in areas.columns
+    if has_landscape_units:
+        areas["landscape_unit_id"] = pd.to_numeric(
+            areas["landscape_unit_id"], errors="coerce"
+        )
+        if areas["landscape_unit_id"].isna().any():
+            raise ValueError(
+                "Woodstock areas contain missing landscape_unit_id values."
+            )
+        areas["landscape_unit_id"] = areas["landscape_unit_id"].astype(int).astype(str)
 
     actions["tsa"] = actions["tsa"].astype(str).str.lower()
     actions["from_ifm"] = actions["from_ifm"].astype(str).str.lower()
@@ -121,9 +147,17 @@ def build_ws3_sections_from_femic_woodstock(
         path=lan_path,
         tsa_codes=sorted(set(curve_map["tsa"].tolist())),
         ifm_codes=sorted(set(curve_map["ifm"].tolist())),
-        au_ids=sorted(set(int(v) for v in curve_map["au_id"].tolist())),
+        au_ids=sorted({int(v) for v in curve_map["au_id"].tolist()}),
         stratum_codes=sorted(set(curve_map["stratum_code"].tolist())),
-        curve_ids=sorted(set(int(v) for v in curve_map["curve_id"].tolist())),
+        curve_ids=sorted({int(v) for v in curve_map["curve_id"].tolist()}),
+        landscape_unit_codes=(
+            sorted(
+                set(areas["landscape_unit_id"].tolist())
+                | set(MASC_LANDSCAPE_UNIT_CODES)
+            )
+            if has_landscape_units
+            else None
+        ),
     )
 
     _write_are(
@@ -136,10 +170,16 @@ def build_ws3_sections_from_femic_woodstock(
         path=yld_path,
         yields=yields,
         curve_map=curve_map,
+        has_landscape_units=has_landscape_units,
     )
 
-    _write_act(path=act_path, actions=actions)
-    _write_trn(path=trn_path, transitions=transitions, curve_map=curve_map)
+    _write_act(path=act_path, actions=actions, has_landscape_units=has_landscape_units)
+    _write_trn(
+        path=trn_path,
+        transitions=transitions,
+        curve_map=curve_map,
+        has_landscape_units=has_landscape_units,
+    )
 
     return Ws3BridgeResult(
         model_name=model_name,
@@ -160,6 +200,7 @@ def _write_lan(
     au_ids: list[int],
     stratum_codes: list[str],
     curve_ids: list[int],
+    landscape_unit_codes: list[str] | None = None,
 ) -> None:
     lines: list[str] = []
     lines.append("*THEME Timber Supply Area (TSA)")
@@ -172,6 +213,11 @@ def _write_lan(
     lines.extend(str(v) for v in stratum_codes)
     lines.append("*THEME Yield curve ID")
     lines.extend(str(v) for v in curve_ids)
+    if landscape_unit_codes is not None:
+        lines.append("*THEME Landscape Unit")
+        lines.extend(landscape_unit_codes)
+        lines.append(f"*AGGREGATE {MASC_LANDSCAPE_UNIT_AGGREGATE}")
+        lines.append(" ".join(MASC_LANDSCAPE_UNIT_CODES))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -179,9 +225,19 @@ def _write_are(*, path: Path, areas: pd.DataFrame, curve_map: pd.DataFrame) -> N
     merged = areas.merge(curve_map, on=["tsa", "ifm", "au_id"], how="left")
     merged = merged.dropna(subset=["curve_id", "stratum_code"])
     merged["curve_id"] = merged["curve_id"].astype(int)
+    area_theme_columns = ["landscape_unit_id"] if "landscape_unit_id" in merged else []
     grouped = (
         merged.groupby(
-            ["tsa", "ifm", "au_id", "stratum_code", "curve_id", "age"], as_index=False
+            [
+                "tsa",
+                "ifm",
+                "au_id",
+                "stratum_code",
+                "curve_id",
+                *area_theme_columns,
+                "age",
+            ],
+            as_index=False,
         )
         .agg(area_ha=("area_ha", "sum"))
         .sort_values(["tsa", "ifm", "au_id", "curve_id", "age"])
@@ -189,7 +245,9 @@ def _write_are(*, path: Path, areas: pd.DataFrame, curve_map: pd.DataFrame) -> N
     lines = [
         (
             f"*A {row.tsa} {row.ifm} {_to_int(row.au_id)} {row.stratum_code} "
-            f"{_to_int(row.curve_id)} {_to_int(row.age)} {_to_float(row.area_ha):.6f}"
+            f"{_to_int(row.curve_id)} "
+            f"{(f'{row.landscape_unit_id} ' if area_theme_columns else '')}"
+            f"{_to_int(row.age)} {_to_float(row.area_ha):.6f}"
         )
         for row in grouped.itertuples()
         if _to_float(row.area_ha) > 0
@@ -197,7 +255,13 @@ def _write_are(*, path: Path, areas: pd.DataFrame, curve_map: pd.DataFrame) -> N
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _write_yld(*, path: Path, yields: pd.DataFrame, curve_map: pd.DataFrame) -> None:
+def _write_yld(
+    *,
+    path: Path,
+    yields: pd.DataFrame,
+    curve_map: pd.DataFrame,
+    has_landscape_units: bool,
+) -> None:
     lines: list[str] = []
     seen_blocks: set[tuple[str, str, int, str, int]] = set()
     for row in curve_map.sort_values(["tsa", "ifm", "au_id", "curve_id"]).itertuples():
@@ -219,14 +283,21 @@ def _write_yld(*, path: Path, yields: pd.DataFrame, curve_map: pd.DataFrame) -> 
         ].sort_values("age")
         if subset.empty:
             continue
-        lines.append(f"*Y {key[0]} {key[1]} {key[2]} {key[3]} {key[4]}")
+        landscape_unit_token = " ?" if has_landscape_units else ""
+        lines.append(
+            f"*Y {key[0]} {key[1]} {key[2]} {key[3]} {key[4]}"
+            f"{landscape_unit_token}"
+        )
         lines.append("_AGE totvol")
         for r in subset.itertuples():
             lines.append(f"{_to_int(r.age)} {_to_float(r.volume):.6f}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _write_act(*, path: Path, actions: pd.DataFrame) -> None:
+def _write_act(
+    *, path: Path, actions: pd.DataFrame, has_landscape_units: bool
+) -> None:
+    landscape_unit_token = " ?" if has_landscape_units else ""
     lines: list[str] = ["ACTIONS"]
     for action_id, block in actions.groupby("action_id"):
         lines.append(f"*ACTION {action_id} Y")
@@ -237,7 +308,8 @@ def _write_act(*, path: Path, actions: pd.DataFrame) -> None:
             .itertuples(index=False)
         ):
             lines.append(
-                f"{row.tsa} {row.from_ifm} {_to_int(row.au_id)} ? ? "
+                f"{row.tsa} {row.from_ifm} {_to_int(row.au_id)} ? ?"
+                f"{landscape_unit_token} "
                 f"_AGE >= {_to_int(row.min_age)} AND _AGE <= {_to_int(row.max_age)}"
             )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -248,6 +320,7 @@ def _write_trn(
     path: Path,
     transitions: pd.DataFrame,
     curve_map: pd.DataFrame,
+    has_landscape_units: bool,
 ) -> None:
     curve_lookup: dict[tuple[str, str, int], tuple[str, int]] = {}
     for row in curve_map.itertuples(index=False):
@@ -256,6 +329,7 @@ def _write_trn(
             _to_int(row.curve_id),
         )
 
+    landscape_unit_token = " ?" if has_landscape_units else ""
     lines: list[str] = []
     for action_id, block in transitions.groupby("action_id"):
         lines.append(f"*CASE {action_id}")
@@ -264,7 +338,10 @@ def _write_trn(
             .drop_duplicates()
             .itertuples(index=False)
         ):
-            lines.append(f"*SOURCE {row.tsa} {row.from_ifm} {_to_int(row.au_id)} ? ?")
+            lines.append(
+                f"*SOURCE {row.tsa} {row.from_ifm} {_to_int(row.au_id)}"
+                f" ? ?{landscape_unit_token}"
+            )
             target_key = (str(row.tsa), str(row.to_ifm), _to_int(row.next_au_id))
             target = curve_lookup.get(target_key)
             if target is None:
@@ -276,7 +353,8 @@ def _write_trn(
                 continue
             stratum_code, curve_id = target
             lines.append(
-                f"*TARGET {row.tsa} {row.to_ifm} {_to_int(row.next_au_id)} {stratum_code} {curve_id} 100"
+                f"*TARGET {row.tsa} {row.to_ifm} {_to_int(row.next_au_id)} "
+                f"{stratum_code} {curve_id}{landscape_unit_token} 100"
             )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 

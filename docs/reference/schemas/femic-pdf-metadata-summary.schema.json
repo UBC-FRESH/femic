@@ -1,0 +1,366 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/UBC-FRESH/femic/blob/main/docs/reference/schemas/femic-pdf-metadata-summary.schema.json",
+  "title": "FEMIC PDF metadata summary",
+  "description": "Deterministic, machine-searchable JSON summary for one cached FEMIC PDF. The schema captures document-level metadata, optional figrecover figure candidates, per-page text snippets, and provenance for the run that produced the summary. Optional figure_datasets / tsr_facts / ws3_links sections appear once a chart-digitisation pipeline (see scripts/tsa29/digitise_tsr_2026_pdp_figures.py) has annotated the summary with per-figure datasets, structured TSR facts, and external-reference links to the WS3 model inventory.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_url",
+    "generated_utc",
+    "document",
+    "inventory",
+    "text_summary",
+    "figures",
+    "rendered_pages",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "FEMIC PDF metadata summary schema version."
+    },
+    "schema_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Canonical URL of this schema."
+    },
+    "generated_utc": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC ISO-8601 timestamp marking when the summary was generated."
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file_name",
+        "local_path",
+        "source_url",
+        "size_bytes",
+        "sha256",
+        "fetched_at_utc",
+        "page_count"
+      ],
+      "properties": {
+        "file_name": {"type": "string"},
+        "local_path": {"type": "string"},
+        "source_url": {"type": "string", "format": "uri"},
+        "source_relative_path": {"type": ["string", "null"]},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$",
+          "description": "SHA-256 checksum of the cached PDF file."
+        },
+        "fetched_at_utc": {"type": ["string", "null"], "format": "date-time"},
+        "format": {"type": ["string", "null"]},
+        "title": {"type": ["string", "null"]},
+        "author": {"type": ["string", "null"]},
+        "subject": {"type": ["string", "null"]},
+        "keywords": {"type": ["string", "null"]},
+        "creator": {"type": ["string", "null"]},
+        "producer": {"type": ["string", "null"]},
+        "creation_date": {"type": ["string", "null"]},
+        "mod_date": {"type": ["string", "null"]},
+        "page_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tsa_id": {"type": ["string", "null"]},
+        "tsa_code": {"type": ["string", "null"]},
+        "tsa_name": {"type": ["string", "null"]},
+        "cycle_label": {"type": ["string", "null"]},
+        "cycle_year": {"type": ["integer", "null"]},
+        "document_type": {"type": ["string", "null"]},
+        "inventory_relative_path": {"type": ["string", "null"]}
+      }
+    },
+    "text_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title_page_text",
+        "title_page_normalized",
+        "page_count_with_text",
+        "page_summaries"
+      ],
+      "properties": {
+        "title_page_text": {"type": ["string", "null"]},
+        "title_page_normalized": {"type": ["string", "null"]},
+        "page_count_with_text": {"type": "integer", "minimum": 0},
+        "page_summaries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["page_number", "char_count", "has_text", "snippet"],
+            "properties": {
+              "page_number": {"type": "integer", "minimum": 1},
+              "char_count": {"type": "integer", "minimum": 0},
+              "snippet": {"type": ["string", "null"]},
+              "has_text": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    },
+    "figures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["figure_id", "page_number", "source", "confidence"],
+        "properties": {
+          "figure_id": {"type": "string"},
+          "document_id": {"type": ["string", "null"]},
+          "page_number": {"type": "integer", "minimum": 1},
+          "source": {"type": "string"},
+          "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+          "render_dpi": {"type": ["integer", "null"], "minimum": 1},
+          "label": {"type": ["string", "null"]},
+          "caption": {"type": ["string", "null"]},
+          "image_path": {"type": ["string", "null"]},
+          "source_image_path": {"type": ["string", "null"]},
+          "crop_path": {"type": ["string", "null"]},
+          "crop_relpath": {"type": ["string", "null"]},
+          "crop_checksum": {"type": ["string", "null"]},
+          "figure_logical_id": {"type": ["string", "null"]},
+          "dataset_relpath": {"type": ["string", "null"]},
+          "dataset_checksum": {"type": ["string", "null"]},
+          "chart_type": {"type": ["string", "null"]},
+          "is_quantitative": {"type": ["boolean", "null"]},
+          "bbox": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["left", "top", "right", "bottom"],
+            "properties": {
+              "left": {"type": "number"},
+              "top": {"type": "number"},
+              "right": {"type": "number"},
+              "bottom": {"type": "number"}
+            }
+          },
+          "metadata": {"type": "object"}
+        }
+      }
+    },
+    "rendered_pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["page_number", "image_path", "width_px", "height_px", "dpi"],
+        "properties": {
+          "page_number": {"type": "integer", "minimum": 1},
+          "document_id": {"type": ["string", "null"]},
+          "image_path": {"type": "string"},
+          "source_pdf": {"type": ["string", "null"]},
+          "width_px": {"type": "integer", "minimum": 1},
+          "height_px": {"type": "integer", "minimum": 1},
+          "dpi": {"type": "integer", "minimum": 1},
+          "renderer": {"type": ["string", "null"]},
+          "metadata": {"type": "object"}
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "figrecover_version",
+        "pymupdf_version",
+        "pypdf_version",
+        "femic_version"
+      ],
+      "properties": {
+        "figrecover_version": {"type": ["string", "null"]},
+        "pymupdf_version": {"type": ["string", "null"]},
+        "pypdf_version": {"type": ["string", "null"]},
+        "femic_version": {"type": ["string", "null"]},
+        "femic_command": {"type": ["string", "null"]},
+        "render_manifest_path": {"type": ["string", "null"]},
+        "figure_manifest_path": {"type": ["string", "null"]}
+      }
+    },
+    "figure_datasets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "schema_url",
+        "generated_utc",
+        "render_dpi",
+        "figrecover_version",
+        "femic_command",
+        "summary_records",
+        "image_block_to_logical"
+      ],
+      "properties": {
+        "schema_version": {"type": "integer", "minimum": 1},
+        "schema_url": {"type": "string", "format": "uri"},
+        "generated_utc": {"type": "string", "format": "date-time"},
+        "render_dpi": {"type": "integer", "minimum": 1},
+        "figrecover_version": {"type": ["string", "null"]},
+        "femic_command": {"type": ["string", "null"]},
+        "summary_records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "logical_figure_id",
+              "csv_path",
+              "json_path",
+              "row_count",
+              "is_quantitative",
+              "csv_sha256",
+              "image_block_figure_ids",
+              "annotations_count",
+              "curated_rows_count",
+              "crop_paths",
+              "crop_checksums",
+              "primary_crop_relpath",
+              "primary_crop_checksum",
+              "extraction_method",
+              "digitisations_warning_count",
+              "digitisations_point_count",
+              "confidence"
+            ],
+            "properties": {
+              "logical_figure_id": {"type": "string"},
+              "csv_path": {"type": "string"},
+              "json_path": {"type": "string"},
+              "row_count": {"type": "integer", "minimum": 0},
+              "is_quantitative": {"type": "boolean"},
+              "skip_reason": {"type": ["string", "null"]},
+              "csv_sha256": {"type": ["string", "null"]},
+              "image_block_figure_ids": {"type": "array", "items": {"type": "string"}},
+              "annotations_count": {"type": "integer", "minimum": 0},
+              "curated_rows_count": {"type": "integer", "minimum": 0},
+              "crop_paths": {"type": "array", "items": {"type": "string"}},
+              "crop_checksums": {"type": "array", "items": {"type": "string"}},
+              "primary_crop_relpath": {"type": ["string", "null"]},
+              "primary_crop_checksum": {"type": ["string", "null"]},
+              "extraction_method": {"type": "string"},
+              "digitisations_warning_count": {"type": "integer", "minimum": 0},
+              "digitisations_point_count": {"type": "integer", "minimum": 0},
+              "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+            }
+          }
+        },
+        "image_block_to_logical": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        }
+      }
+    },
+    "tsr_facts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "schema_url", "facts"],
+      "properties": {
+        "schema_version": {"type": "integer", "minimum": 1},
+        "schema_url": {"type": "string", "format": "uri"},
+        "facts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "value", "page_number", "quote"],
+            "properties": {
+              "key": {"type": "string"},
+              "value": {},
+              "unit": {"type": ["string", "null"]},
+              "page_number": {"type": "integer", "minimum": 1},
+              "quote": {"type": "string"},
+              "source_document_section": {"type": ["string", "null"]},
+              "evidence_kind": {"type": ["string", "null"]},
+              "related_figure_id": {"type": ["string", "null"]}
+            }
+          }
+        }
+      }
+    },
+    "ws3_links": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "schema_url",
+        "model_inventory_summary",
+        "use_classification",
+        "modifies_model_inventory",
+        "links",
+        "inventory_index"
+      ],
+      "properties": {
+        "schema_version": {"type": "integer", "minimum": 1},
+        "schema_url": {"type": "string", "format": "uri"},
+        "model_inventory_summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["model_id", "model_path", "tracks_path", "au_count"],
+          "properties": {
+            "model_id": {"type": "string"},
+            "model_path": {"type": "string"},
+            "tracks_path": {"type": "string"},
+            "au_count": {"type": "integer", "minimum": 0}
+          }
+        },
+        "use_classification": {"type": "string"},
+        "modifies_model_inventory": {"type": "boolean"},
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tsr_fact_key",
+              "tsr_fact_value",
+              "tsr_unit",
+              "tsr_page_number",
+              "tsr_quote",
+              "model_id",
+              "model_track_table",
+              "model_observation",
+              "match_kind",
+              "is_authoritative"
+            ],
+            "properties": {
+              "tsr_fact_key": {"type": "string"},
+              "tsr_fact_value": {},
+              "tsr_unit": {"type": ["string", "null"]},
+              "tsr_page_number": {"type": "integer", "minimum": 1},
+              "tsr_quote": {"type": "string"},
+              "model_id": {"type": "string"},
+              "model_track_table": {"type": "string"},
+              "model_observation": {"type": "string"},
+              "match_kind": {"type": "string"},
+              "is_authoritative": {"type": "boolean"}
+            }
+          }
+        },
+        "inventory_index": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["AU", "TRACK", "tsr_cited", "citation_summary"],
+            "properties": {
+              "AU": {"type": "string"},
+              "TRACK": {"type": ["string", "null"]},
+              "tsr_cited": {"type": "boolean"},
+              "citation_summary": {"type": "string"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

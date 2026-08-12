@@ -1,0 +1,70 @@
+{
+  "attempted_utc": "2026-08-09T18:34:20.783932Z",
+  "scope": "TSA 29 (Williams Lake)",
+  "commands": {
+    "dry_run": "env PYTHONPATH=src python -m femic tsr catalog-refresh --tsa 29 --dry-run --json-report /tmp/tsa29-catalog-refresh-dry-run.json",
+    "write": "env PYTHONPATH=src python -m femic tsr catalog-refresh --tsa 29 --write --json-report /tmp/tsa29-catalog-refresh-write.json",
+    "fetch": "env PYTHONPATH=src python -m femic tsr fetch --tsa 29 --documents-path metadata/tsr/tsa_documents.json --corpus-root external/femic-tsa29-instance/reference --manifest-path external/femic-tsa29-instance/reference/tsa29_tsr_fetch_manifest.json"
+  },
+  "duration_seconds": {
+    "dry_run": 4.81,
+    "write": 4.83,
+    "fetch": 2.93
+  },
+  "source_outcomes": {
+    "source_failures": [],
+    "unreachable": [],
+    "http_statuses": {
+      "BC MoF landing page": 200,
+      "BC MoF TSA FTP index": 200
+    },
+    "generated_utc": "2026-08-09T18:34:20.783932+00:00",
+    "write_generated_utc": "2026-08-09T18:34:29.628891+00:00"
+  },
+  "diff": {
+    "additions": ["TSR_2026/Public_Discussion_Paper/29ts_pdp_2026_williams_lake_discussion_paper.pdf"],
+    "changes": [],
+    "missing": [],
+    "unreachable": []
+  },
+  "catalog": {
+    "before_inventory_entries": 677,
+    "after_inventory_entries": 678,
+    "declared_document_count_before": 678,
+    "declared_document_count_after": 678,
+    "before_tsa29": 19,
+    "after_tsa29": 20,
+    "write_report_catalog_count": 678,
+    "write_report_discovered_count": 19
+  },
+  "dry_run": {
+    "report": "/tmp/tsa29-catalog-refresh-dry-run.json",
+    "stdout": "/tmp/tsa29-catalog-refresh-dry-run.stdout",
+    "stderr": "/tmp/tsa29-catalog-refresh-dry-run.stderr",
+    "written": false,
+    "mutation_performed": false,
+    "mutation_blocked": true,
+    "scope_tsa": "29"
+  },
+  "write": {
+    "report": "/tmp/tsa29-catalog-refresh-write.json",
+    "stdout": "/tmp/tsa29-catalog-refresh-write.stdout",
+    "stderr": "/tmp/tsa29-catalog-refresh-write.stderr",
+    "written": true,
+    "mutation_performed": true,
+    "scope_tsa": "29"
+  },
+  "materialization": {
+    "manifest": "external/femic-tsa29-instance/reference/tsa29_tsr_fetch_manifest.json",
+    "corpus_root": "external/femic-tsa29-instance/reference",
+    "selected_document_count": 18,
+    "materialized_count": 18,
+    "failure_count": 0,
+    "failures": []
+  },
+  "result": "discovery succeeded with no source failures; catalog written atomically and full discovered TSA29 PDF corpus materialized",
+  "evidence_reports": {
+    "dry_run_json": "/tmp/tsa29-catalog-refresh-dry-run.json",
+    "write_json": "/tmp/tsa29-catalog-refresh-write.json"
+  }
+}
