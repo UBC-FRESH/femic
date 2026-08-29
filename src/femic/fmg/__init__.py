@@ -49,6 +49,12 @@ from .woodstock import (
     WoodstockExportResult,
     export_woodstock_package,
 )
+from femic.ws3_bridge import (
+    DEFAULT_WS3_CC_MAX_AGE,
+    DEFAULT_WS3_CC_MIN_AGE,
+    Ws3ExportResult,
+    export_ws3_package,
+)
 
 __all__ = [
     "DEFAULT_CC_MAX_AGE",
@@ -92,4 +98,8 @@ __all__ = [
     "DEFAULT_WOODSTOCK_OUTPUT_DIR",
     "WoodstockExportResult",
     "export_woodstock_package",
+    "Ws3ExportResult",
+    "export_ws3_package",
+    "DEFAULT_WS3_CC_MAX_AGE",
+    "DEFAULT_WS3_CC_MIN_AGE",
 ]

@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Iterable, cast
 
 import pandas as pd
+
+from femic.fmg.woodstock import (
+    DEFAULT_WOODSTOCK_CC_MAX_AGE,
+    DEFAULT_WOODSTOCK_CC_MIN_AGE,
+    export_woodstock_package,
+    WoodstockExportResult,
+)
+from .fmg.adapters import build_bundle_model_context
 
 
 @dataclass(frozen=True)
@@ -287,3 +295,159 @@ def _to_int(value: object) -> int:
 
 def _to_float(value: object) -> float:
     return float(cast(Any, value))
+
+
+@dataclass(frozen=True)
+class Ws3ExportResult:
+    """Paths and counts from a FEMIC → ws3 section file export."""
+
+    woodstock: WoodstockExportResult
+    model_name: str
+    output_dir: Path
+    woodstock_dir: Path
+    ws3_dir: Path
+    lan_path: Path
+    are_path: Path
+    yld_path: Path
+    act_path: Path
+    trn_path: Path
+    tsa_list: list[str]
+    au_count: int
+    yield_rows: int
+    area_rows: int
+    action_rows: int
+    transition_rows: int
+
+
+# Default operability bounds for clearcut actions in TSA models.
+DEFAULT_WS3_CC_MIN_AGE = 60
+DEFAULT_WS3_CC_MAX_AGE = 300
+
+
+def export_ws3_package(
+    *,
+    bundle_dir: Path,
+    checkpoint_path: Path | None = None,
+    woodstock_dir: Path | None = None,
+    output_dir: Path,
+    model_name: str = "femic_ws3",
+    tsa_list: Iterable[str],
+    cc_min_age: int = DEFAULT_WS3_CC_MIN_AGE,
+    cc_max_age: int = DEFAULT_WS3_CC_MAX_AGE,
+    fragments_crs: str = "EPSG:3005",
+) -> Ws3ExportResult:
+    """Export ws3-compatible section files from FEMIC bundle inputs.
+
+    Two modes:
+    1. With ``checkpoint_path``: full pipeline
+       bundle + checkpoint → woodstock CSVs → ws3 section files
+    2. With ``woodstock_dir``: bypass step 1; use pre-built woodstock CSVs
+       (e.g. from a prior run or external source).
+
+    Parameters
+    ----------
+    bundle_dir:
+        Path to the model-input-bundle directory containing ``au_table.csv``,
+        ``curve_table.csv``, and ``curve_points_table.csv``.
+    checkpoint_path:
+        Path to the FEMIC checkpoint Feather file (containing fragment geometries
+        and age/IFM attributes used to build the areas table).
+        Required when ``woodstock_dir`` is not provided.
+    woodstock_dir:
+        Path to a directory containing pre-built ``woodstock_yields.csv``,
+        ``woodstock_areas.csv``, ``woodstock_actions.csv``, and
+        ``woodstock_transitions.csv``.  When provided, the function skips the
+        woodstock CSV generation step entirely.  Useful for instances built
+        before the checkpoint Feather file was added to the pipeline, or when
+        areas were computed by a separate process.
+    output_dir:
+        Directory where the final ws3 section files will be written
+        (subdirectory ``<output_dir>/ws3/``).
+    model_name:
+        Stem for ws3 section files (default ``"femic_ws3"`` → ``femic_ws3.lan``,
+        etc.).
+    tsa_list:
+        Iterable of TSA code strings to include in the model.
+    cc_min_age:
+        Lower operability bound for the clearcut action (default 60 yr).
+    cc_max_age:
+        Upper operability bound for the clearcut action (default 300 yr).
+    fragments_crs:
+        EPSG CRS string for the fragments shapefile
+        (default ``"EPSG:3005"``).
+
+    Returns
+    -------
+    Ws3ExportResult
+        Paths to all generated files plus row/area counts for QA.
+    """
+    normalized_tsa = sorted({str(t).strip().lower() for t in tsa_list})
+    if not normalized_tsa:
+        raise ValueError("provide at least one TSA code for ws3 export")
+
+    ws3_dir = Path(output_dir) / "ws3"
+
+    if woodstock_dir is not None:
+        # Mode 2: use pre-built woodstock CSVs, skip generation entirely
+        woodstock_result = WoodstockExportResult(
+            yields_csv_path=Path(woodstock_dir) / "woodstock_yields.csv",
+            areas_csv_path=Path(woodstock_dir) / "woodstock_areas.csv",
+            actions_csv_path=Path(woodstock_dir) / "woodstock_actions.csv",
+            transitions_csv_path=Path(woodstock_dir) / "woodstock_transitions.csv",
+            tsa_list=normalized_tsa,
+            yield_rows=int(pd.read_csv(Path(woodstock_dir) / "woodstock_yields.csv").shape[0]),
+            area_rows=int(pd.read_csv(Path(woodstock_dir) / "woodstock_areas.csv").shape[0]),
+            action_rows=int(pd.read_csv(Path(woodstock_dir) / "woodstock_actions.csv").shape[0]),
+            transition_rows=int(pd.read_csv(Path(woodstock_dir) / "woodstock_transitions.csv").shape[0]),
+        )
+        woodstock_dir_resolved = Path(woodstock_dir)
+    elif checkpoint_path is not None:
+        # Mode 1: generate woodstock CSVs from bundle + checkpoint
+        woodstock_dir_resolved = Path(output_dir) / "woodstock"
+        woodstock_result = export_woodstock_package(
+            bundle_dir=bundle_dir,
+            checkpoint_path=checkpoint_path,
+            output_dir=woodstock_dir_resolved,
+            tsa_list=normalized_tsa,
+            cc_min_age=cc_min_age,
+            cc_max_age=cc_max_age,
+            fragments_crs=fragments_crs,
+        )
+    else:
+        raise ValueError(
+            "export_ws3_package requires either ``checkpoint_path`` or "
+            "``woodstock_dir`` to be provided."
+        )
+
+    # Convert woodstock CSVs → ws3 section files
+    bridge_result = build_ws3_sections_from_femic_woodstock(
+        woodstock_dir=woodstock_dir_resolved,
+        output_dir=ws3_dir,
+        model_name=model_name,
+    )
+
+    # Count AUs from bundle context for accurate metadata
+    context = build_bundle_model_context(
+        bundle_dir=bundle_dir,
+        tsa_list=normalized_tsa,
+    )
+    au_count = len(context.analysis_units)
+
+    return Ws3ExportResult(
+        woodstock=woodstock_result,
+        model_name=model_name,
+        output_dir=Path(output_dir),
+        woodstock_dir=woodstock_dir_resolved,
+        ws3_dir=ws3_dir,
+        lan_path=bridge_result.lan_path,
+        are_path=bridge_result.are_path,
+        yld_path=bridge_result.yld_path,
+        act_path=bridge_result.act_path,
+        trn_path=bridge_result.trn_path,
+        tsa_list=normalized_tsa,
+        au_count=au_count,
+        yield_rows=woodstock_result.yield_rows,
+        area_rows=woodstock_result.area_rows,
+        action_rows=woodstock_result.action_rows,
+        transition_rows=woodstock_result.transition_rows,
+    )
