@@ -15044,3 +15044,17 @@
   CLI bridge call test, and a real CLI round-trip on the minimal 4-CSV fixture.
 - VRI 2025 provincial archives materialized in `external/femic-public-data`
   (4.17 GB L1 R1 + 403 MB VDYP7 input) for the P113.2 data lane.
+
+## 2026-10-11 - P113.2 five per-MU instance repos + fresh VRI 2025 lane
+
+- Five public DataLad instance repos created and wired as femic submodules:
+  `femic-tsa08|16|24|40|41-instance` (standard structure, Sphinx docs + GitHub
+  Pages, Arbutus S3 annex remotes, directory markers, `resume=false` for fresh runs).
+- Fresh data lane: 2025 provincial VRI archives (L1 R1 + VDYP7 input) materialized
+  and extracted in `external/femic-public-data` (6.1 GB + 1.7 GB gdbs; annex upload
+  to Arbutus in progress); 2025 entries registered in
+  `metadata/required_datasets.yaml`; `pipeline/io.py` resolution prefers 2025;
+  `instance_bootstrap` notes the stale BCDC direct URLs (now 404).
+- `femic prep validate-case` green for all five instances with
+  `FEMIC_EXTERNAL_DATA_ROOT` pointing at the public mirror.
+- femic docs: `wbi-aoi-instances` guide added to the guides toctree.

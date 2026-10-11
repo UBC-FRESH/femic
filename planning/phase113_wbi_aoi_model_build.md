@@ -83,13 +83,14 @@ Each instance repo mirrors the established instance layout (exemplar:
         around `build_ws3_sections_from_femic_woodstock`).
   - [x] Tests: provider metadata + command construction + CLI round-trip on the
         minimal 4-CSV fixture.
-- [ ] P113.2 — Five per-MU instance repos.
-  - [ ] Create `UBC-FRESH/femic-tsa<code>-instance` for 08/16/24/40/41
+- [x] P113.2 — Five per-MU instance repos.
+  - [x] Create `UBC-FRESH/femic-tsa<code>-instance` for 08/16/24/40/41
         (DataLad datasets, public); scaffold via `femic instance init`; per-MU
         run profile + TIPSY config + rebuild spec + runbooks.
-  - [ ] Standard structure incl. Sphinx docs site + GitHub Pages workflow.
-  - [ ] Fresh VRI 2025 + FADM data lane documented and materialized.
-  - [ ] Wire as submodules (`external/`); instance catalog/README entries.
+  - [x] Standard structure incl. Sphinx docs site + GitHub Pages workflow.
+  - [x] Fresh VRI 2025 + FADM data lane documented and materialized.
+  - [x] Wire as submodules (`external/`); README/QUICKSTART present
+        (instance-catalog entry points deferred).
 - [ ] P113.3 — Per-MU model-build graphs.
   - [ ] `workflows/freshforge/wbi_tsa<code>_model_build_workflow.yaml` per MU,
         plan-green (`freshforge validate|inspect|plan`).
