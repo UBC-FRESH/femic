@@ -552,32 +552,43 @@ def build_tipsy_params_from_config(
                     species_code_overrides=species_code_overrides,
                 )
             )
-    for rule in config["rules"]:
-        if _rule_matches(
-            rule,
-            au_id=au_id,
-            leading_species=leading_species,
-            bec=bec,
-            forest_type=forest_type,
-            stratum_code=stratum_code,
-            si_level=si_level,
-        ):
-            for side in ("e", "f"):
-                tp[side].update(
-                    _resolve_assignment_block(
-                        rule["assign"][side],
-                        leading_species=leading_species,
-                        bec=bec,
-                        forest_type=forest_type,
-                        species_ranked=species_ranked,
-                        species_code_overrides=species_code_overrides,
+
+    def _apply_config_rules(rule_bec: Any) -> bool:
+        for rule in config["rules"]:
+            if _rule_matches(
+                rule,
+                au_id=au_id,
+                leading_species=leading_species,
+                bec=rule_bec,
+                forest_type=forest_type,
+                stratum_code=stratum_code,
+                si_level=si_level,
+            ):
+                for side in ("e", "f"):
+                    tp[side].update(
+                        _resolve_assignment_block(
+                            rule["assign"][side],
+                            leading_species=leading_species,
+                            bec=rule_bec,
+                            forest_type=forest_type,
+                            species_ranked=species_ranked,
+                            species_code_overrides=species_code_overrides,
+                        )
                     )
-                )
-            break
-    else:
+                return True
+        return False
+
+    matched = _apply_config_rules(bec)
+    if not matched:
+        # Mixed-zone stands: when the AU's leading stand BEC has no configured
+        # rule, fall back to the stratum zone (e.g. "SBS_SX" -> "SBS").
+        stratum_bec = str(stratum_code).split("_", 1)[0].strip().upper()
+        if stratum_bec and stratum_bec != str(bec).strip().upper():
+            matched = _apply_config_rules(stratum_bec)
+    if not matched:
         raise ValueError(
             f"No TIPSY config rule matched AU {au_id} (leading_species={leading_species}, "
-            f"BEC={bec}, forest_type={forest_type})"
+            f"BEC={bec}, stratum={stratum_code or 'n/a'}, forest_type={forest_type})"
         )
 
     si = compute_vdyp_site_index(vdyp_out)
