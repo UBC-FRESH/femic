@@ -15033,3 +15033,14 @@
   BCDC resolver: `VEG_COMP_LYR_R1_POLY_2025` +
   `VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2025` direct zips; AOI-scoped WFS fetch
   recorded as an alternative (five-TSA bbox 830258,878714,1393732,1682754).
+
+## 2026-10-11 - P113.1 ws3 handoff provider nodes + CLI
+
+- New FreshForge nodes: `femic.export_woodstock` (Woodstock CSV export seam) and
+  `femic.ws3_bridge` (Woodstock CSV -> ws3 section files).
+- New CLI: `femic export ws3-sections --woodstock-dir ... --output-dir ... --model-name ...`
+  wrapping `build_ws3_sections_from_femic_woodstock`.
+- Tests: provider metadata (10 node types), command construction for both nodes,
+  CLI bridge call test, and a real CLI round-trip on the minimal 4-CSV fixture.
+- VRI 2025 provincial archives materialized in `external/femic-public-data`
+  (4.17 GB L1 R1 + 403 MB VDYP7 input) for the P113.2 data lane.

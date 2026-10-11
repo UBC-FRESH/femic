@@ -77,11 +77,11 @@ Each instance repo mirrors the established instance layout (exemplar:
 
 ## Tasks
 
-- [ ] P113.1 — FreshForge ws3 handoff nodes + CLI.
-  - [ ] `femic.export_woodstock` node (wraps `femic export woodstock`).
-  - [ ] `femic.ws3_bridge` node (wraps a new `femic export ws3-sections` CLI
+- [x] P113.1 — FreshForge ws3 handoff nodes + CLI.
+  - [x] `femic.export_woodstock` node (wraps `femic export woodstock`).
+  - [x] `femic.ws3_bridge` node (wraps a new `femic export ws3-sections` CLI
         around `build_ws3_sections_from_femic_woodstock`).
-  - [ ] Tests: provider metadata + command construction + CLI round-trip on the
+  - [x] Tests: provider metadata + command construction + CLI round-trip on the
         minimal 4-CSV fixture.
 - [ ] P113.2 — Five per-MU instance repos.
   - [ ] Create `UBC-FRESH/femic-tsa<code>-instance` for 08/16/24/40/41

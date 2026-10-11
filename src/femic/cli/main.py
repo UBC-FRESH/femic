@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
-import json
-import os
 import csv
 import getpass
 import importlib
 import importlib.metadata
+import json
+import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
+import zipfile
 from datetime import UTC, datetime
 from pathlib import Path, PosixPath, WindowsPath
-import shutil
 from typing import Any
-import zipfile
 
 import typer
 import yaml
@@ -32,57 +32,33 @@ from femic.bcdc_catalog import (
     resolve_bcdc_candidates,
     write_bcdc_manifest,
 )
+from femic.bcdc_dwds import (
+    DWDS_DEFAULT_OUTPUT_FORMAT,
+    BcdcDwdsError,
+    BcdcDwdsOrderResult,
+    BcdcDwdsStatusProbe,
+    follow_up_bcdc_dwds_order,
+    load_bcdc_dwds_manifest,
+    submit_bcdc_dwds_order,
+)
+from femic.bcdc_dwds import (
+    write_bcdc_dwds_manifest as write_single_bcdc_dwds_manifest,
+)
 from femic.bcdc_fetch import (
     BcdcFetchError,
     BcdcFetchResult,
     build_bbox_3005,
     fetch_bcdc_wfs_data,
     resolve_geomark_bbox_3005,
-    write_bcdc_fetch_manifest as write_single_bcdc_fetch_manifest,
 )
-from femic.bcdc_dwds import (
-    BcdcDwdsError,
-    BcdcDwdsOrderResult,
-    BcdcDwdsStatusProbe,
-    DWDS_DEFAULT_OUTPUT_FORMAT,
-    follow_up_bcdc_dwds_order,
-    load_bcdc_dwds_manifest,
-    submit_bcdc_dwds_order,
-    write_bcdc_dwds_manifest as write_single_bcdc_dwds_manifest,
+from femic.bcdc_fetch import (
+    write_bcdc_fetch_manifest as write_single_bcdc_fetch_manifest,
 )
 from femic.builtin_instances import (
     BuiltinInstanceCatalogError,
     install_builtin_instances,
     load_instance_catalog,
     resolve_builtin_repo_status,
-)
-from femic.fansier_runtime import (
-    DEFAULT_FANSIER_AGE_NAME,
-    DEFAULT_FANSIER_BATCH_OUTPUT_DIR,
-    DEFAULT_FANSIER_DISCOUNT_NAME,
-    DEFAULT_FANSIER_EXE_PATH,
-    DEFAULT_FANSIER_LOG_DIR,
-    DEFAULT_FANSIER_PRODUCT_NAME,
-    DEFAULT_FANSIER_REPORT_TYPE,
-    FansierRuntimeError,
-    run_fansier_batch,
-)
-from femic.fansier_reporting import (
-    DEFAULT_FANSIER_PARSED_OUTPUT_DIR,
-    FansierReportParseError,
-    parse_fansier_batch_output_dir,
-)
-from femic.fansier_workflow import (
-    FansierWorkflowError,
-    run_fansier_batch_and_parse,
-)
-from femic.geospatial_preflight import run_geospatial_preflight
-from femic.glb import build_tsa_raw_glb
-from femic.instance_bootstrap import bootstrap_instance_workspace
-from femic.instance_context import (
-    INSTANCE_ROOT_ENV,
-    InstanceContext,
-    resolve_instance_context,
 )
 from femic.document_figures import (
     DOCUMENT_FIGURE_DOWNSTREAM_USE_CLASSES,
@@ -95,6 +71,26 @@ from femic.document_figures import (
     compute_document_figure_file_sha256,
     current_document_figure_review_timestamp,
     write_document_figure_provenance_json,
+)
+from femic.fansier_reporting import (
+    DEFAULT_FANSIER_PARSED_OUTPUT_DIR,
+    FansierReportParseError,
+    parse_fansier_batch_output_dir,
+)
+from femic.fansier_runtime import (
+    DEFAULT_FANSIER_AGE_NAME,
+    DEFAULT_FANSIER_BATCH_OUTPUT_DIR,
+    DEFAULT_FANSIER_DISCOUNT_NAME,
+    DEFAULT_FANSIER_EXE_PATH,
+    DEFAULT_FANSIER_LOG_DIR,
+    DEFAULT_FANSIER_PRODUCT_NAME,
+    DEFAULT_FANSIER_REPORT_TYPE,
+    FansierRuntimeError,
+    run_fansier_batch,
+)
+from femic.fansier_workflow import (
+    FansierWorkflowError,
+    run_fansier_batch_and_parse,
 )
 from femic.fmg import (
     DEFAULT_CC_MAX_AGE,
@@ -113,6 +109,19 @@ from femic.fmg import (
     export_patchworks_package,
     export_woodstock_package,
 )
+from femic.geospatial_preflight import run_geospatial_preflight
+from femic.glb import build_tsa_raw_glb
+from femic.instance_bootstrap import bootstrap_instance_workspace
+from femic.instance_context import (
+    INSTANCE_ROOT_ENV,
+    InstanceContext,
+    resolve_instance_context,
+)
+from femic.named_pipelines import (
+    NamedPipelineError,
+    NamedPipelineExecutionResult,
+    run_named_pipeline_runbook,
+)
 from femic.patchworks_runtime import (
     DEFAULT_PATCHWORKS_CONFIG_PATH,
     DEFAULT_PATCHWORKS_LOG_DIR,
@@ -121,39 +130,49 @@ from femic.patchworks_runtime import (
     build_patchworks_blocks_dataset,
     format_command_for_display,
     load_patchworks_runtime_config,
-    run_patchworks_headless_pin,
     run_patchworks_command,
+    run_patchworks_headless_pin,
     run_patchworks_preflight,
 )
 from femic.patchworks_variants import (
     DEFAULT_PATCHWORKS_MATERIALIZATION_PROMPT_BYTES,
     DEFAULT_PATCHWORKS_USER_REGISTRY_PATH,
     PatchworksVariantRegistryError,
-    builtins_install_hint_for_variant,
     build_patchworks_variant_materialization_plan,
-    load_patchworks_variant_registry,
+    builtins_install_hint_for_variant,
     load_patchworks_user_registry_overlay,
+    load_patchworks_variant_registry,
     materialize_patchworks_variant,
     remove_patchworks_user_variant_entry,
     serialize_patchworks_variant_definition,
     summarize_patchworks_variant_materialization_by_dataset,
     upsert_patchworks_user_variant_entry,
 )
-from femic.named_pipelines import (
-    NamedPipelineError,
-    NamedPipelineExecutionResult,
-    run_named_pipeline_runbook,
+from femic.pipeline.io import (
+    build_pipeline_run_config,
+    file_sha256,
+    load_pipeline_run_profile,
+    resolve_effective_run_options,
+    resolve_legacy_external_data_paths,
+    resolve_windows_annex_pointer_payload_path,
 )
-from femic.user_config import (
-    FemicUserConfig,
-    FemicUserConfigError,
-    default_femic_user_paths,
-    default_femic_tsr_cache_manifest_path,
-    default_femic_tsr_corpus_root,
-    load_femic_user_config,
-    with_managed_external_root,
-    with_user_instance_root,
-    write_femic_user_config,
+from femic.pipeline.tipsy import (
+    DEFAULT_BTC_LOG_DIR,
+    BTCCustomReportColumn,
+    BTCCustomReportTemplate,
+    BTCRunResult,
+    apply_btc_indicator_banks,
+    btc_report_template_preset,
+    build_btc_custom_report_template,
+    parse_btc_custom_report_template,
+    probe_btc_indicator_banks,
+    probe_btc_report_columns,
+    run_btc_cli,
+    write_btc_custom_report_template,
+)
+from femic.pipeline.tipsy_config import (
+    discover_tipsy_config_tsas,
+    load_tipsy_tsa_config,
 )
 from femic.rebuild_baseline import (
     apply_diff_allowlist,
@@ -192,41 +211,41 @@ from femic.tsr_catalog import (
     TsrOverlayReport,
     TsrRecipeError,
     TsrRecipeInitResult,
+    TsrSourceLayerOverridesError,
+    TsrSourceLayerOverridesInitResult,
+    TsrSourceLayerOverridesReport,
     TsrSourceLayersRecipeBuildResult,
     TsrSourceLayersRecipeRunResult,
     TsrThlbNetdownRecipeBuildResult,
-    TsrThlbParentStepRunResult,
-    TsrThlbReconstructionComparisonBuildResult,
     TsrThlbNetdownRecipeRunResult,
     TsrThlbParallelBenchmarkResult,
+    TsrThlbParentStepRunResult,
+    TsrThlbReconstructionComparisonBuildResult,
     TsrThlbStep13AttributeCompileResult,
     TsrThlbWarmstartBuildResult,
     TsrThlbWorkbenchBuildResult,
     TsrThlbWorkbenchLockResult,
-    TsrSourceLayerOverridesError,
-    TsrSourceLayerOverridesInitResult,
-    TsrSourceLayerOverridesReport,
     TsrWrittenIndex,
     build_tsr_aflb_yield_bridge,
+    build_tsr_overlay_report,
+    build_tsr_source_layer_override_report,
     build_tsr_source_layers_recipe,
+    build_tsr_thlb_netdown_recipe,
     build_tsr_thlb_reconstruction_comparison,
     build_tsr_thlb_warmstart,
     build_tsr_thlb_workbench,
-    build_tsr_thlb_netdown_recipe,
     compile_tsr_thlb_step13_attributes,
-    build_tsr_overlay_report,
-    build_tsr_source_layer_override_report,
     default_tsr_source_layer_overrides_path,
     default_tsr_source_layers_recipe_path,
     default_tsr_thlb_netdown_audit_path,
     default_tsr_thlb_netdown_output_path,
     default_tsr_thlb_netdown_recipe_path,
     default_tsr_thlb_netdown_status_report_path,
-    default_tsr_thlb_step13_attribute_output_path,
     default_tsr_thlb_reconstructed_audit_path,
+    default_tsr_thlb_reconstructed_output_path,
     default_tsr_thlb_reconstruction_comparison_json_path,
     default_tsr_thlb_reconstruction_comparison_markdown_path,
-    default_tsr_thlb_reconstructed_output_path,
+    default_tsr_thlb_step13_attribute_output_path,
     default_tsr_thlb_warmstart_markdown_path,
     default_tsr_thlb_warmstart_yaml_path,
     default_tsr_thlb_workbench_notebook_path,
@@ -239,37 +258,22 @@ from femic.tsr_catalog import (
     lock_tsr_thlb_workbench,
     report_tsr_candidate_facts,
     run_tsr_source_layers_recipe,
+    run_tsr_thlb_netdown_recipe,
     run_tsr_thlb_parallel_benchmark,
     run_tsr_thlb_parent_step,
-    run_tsr_thlb_netdown_recipe,
     write_tsr_fact_report_csv,
     write_tsr_index,
 )
-from femic.pipeline.io import (
-    build_pipeline_run_config,
-    file_sha256,
-    load_pipeline_run_profile,
-    resolve_legacy_external_data_paths,
-    resolve_effective_run_options,
-    resolve_windows_annex_pointer_payload_path,
-)
-from femic.pipeline.tipsy_config import (
-    discover_tipsy_config_tsas,
-    load_tipsy_tsa_config,
-)
-from femic.pipeline.tipsy import (
-    DEFAULT_BTC_LOG_DIR,
-    apply_btc_indicator_banks,
-    probe_btc_report_columns,
-    probe_btc_indicator_banks,
-    BTCRunResult,
-    BTCCustomReportColumn,
-    BTCCustomReportTemplate,
-    btc_report_template_preset,
-    build_btc_custom_report_template,
-    parse_btc_custom_report_template,
-    run_btc_cli,
-    write_btc_custom_report_template,
+from femic.user_config import (
+    FemicUserConfig,
+    FemicUserConfigError,
+    default_femic_tsr_cache_manifest_path,
+    default_femic_tsr_corpus_root,
+    default_femic_user_paths,
+    load_femic_user_config,
+    with_managed_external_root,
+    with_user_instance_root,
+    write_femic_user_config,
 )
 from femic.vdyp.reporting import (
     VdypWarningBudget,
@@ -277,12 +281,13 @@ from femic.vdyp.reporting import (
     summarize_curve_selection_rows,
     summarize_vdyp_logs,
 )
-from femic.ws3_smoke import run_ws3_smoke
 from femic.workflows.legacy import (
     run_btc_and_post_tipsy_bundle_with_manifest,
     run_data_prep,
     run_post_tipsy_bundle_with_manifest,
 )
+from femic.ws3_bridge import build_ws3_sections_from_femic_woodstock
+from femic.ws3_smoke import run_ws3_smoke
 
 app = typer.Typer(
     add_completion=False,
@@ -1311,6 +1316,21 @@ EXPORT_WOODSTOCK_OUTPUT_DIR_OPTION = typer.Option(
     DEFAULT_WOODSTOCK_OUTPUT_DIR,
     "--output-dir",
     help="Output directory for Woodstock compatibility CSV files.",
+)
+EXPORT_WS3_WOODSTOCK_DIR_OPTION = typer.Option(
+    DEFAULT_WOODSTOCK_OUTPUT_DIR,
+    "--woodstock-dir",
+    help="Directory containing the FEMIC Woodstock CSV artifacts.",
+)
+EXPORT_WS3_OUTPUT_DIR_OPTION = typer.Option(
+    Path("output/ws3"),
+    "--output-dir",
+    help="Output directory for ws3 Woodstock section files.",
+)
+EXPORT_WS3_MODEL_NAME_OPTION = typer.Option(
+    "femic_ws3_bridge",
+    "--model-name",
+    help="Model name used for the emitted ws3 section files (<model>.lan, ...).",
 )
 EXPORT_RELEASE_CASE_ID_OPTION = typer.Option(
     None,
@@ -8234,6 +8254,41 @@ def export_woodstock(
     console.print(f"areas_csv: {result.areas_csv_path}")
     console.print(f"actions_csv: {result.actions_csv_path}")
     console.print(f"transitions_csv: {result.transitions_csv_path}")
+
+
+@export_app.command("ws3-sections")
+def export_ws3_sections(
+    woodstock_dir: Path = EXPORT_WS3_WOODSTOCK_DIR_OPTION,
+    output_dir: Path = EXPORT_WS3_OUTPUT_DIR_OPTION,
+    model_name: str = EXPORT_WS3_MODEL_NAME_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Build ws3 Woodstock section files from FEMIC Woodstock CSV artifacts."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_woodstock_dir = instance_context.resolve_path(woodstock_dir)
+    resolved_output_dir = instance_context.resolve_path(output_dir)
+    try:
+        result = build_ws3_sections_from_femic_woodstock(
+            woodstock_dir=resolved_woodstock_dir,
+            output_dir=resolved_output_dir,
+            model_name=model_name,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        console.print(f"[red]ws3 section build failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(
+        "[green]ws3 section build completed[/green] "
+        f"model_name={result.model_name} output_dir={result.output_dir}"
+    )
+    for label, path in (
+        ("lan", result.lan_path),
+        ("are", result.are_path),
+        ("yld", result.yld_path),
+        ("act", result.act_path),
+        ("trn", result.trn_path),
+    ):
+        console.print(f"{label}: {path}")
 
 
 @export_app.command("release")

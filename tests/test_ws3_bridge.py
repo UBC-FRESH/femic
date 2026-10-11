@@ -94,3 +94,33 @@ def test_build_ws3_sections_from_femic_woodstock(tmp_path: Path) -> None:
     assert "*Y 29 managed 101 st101 5001" in result.yld_path.read_text()
     assert "*ACTION cc Y" in result.act_path.read_text()
     assert "*CASE cc" in result.trn_path.read_text()
+
+
+def test_export_ws3_sections_cli_round_trip(tmp_path: Path) -> None:
+    from typer.testing import CliRunner
+
+    from femic.cli.main import app
+
+    woodstock_dir = tmp_path / "output" / "woodstock"
+    _write_minimal_woodstock(woodstock_dir)
+    output_dir = tmp_path / "output" / "ws3"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "export",
+            "ws3-sections",
+            "--instance-root",
+            str(tmp_path),
+            "--woodstock-dir",
+            "output/woodstock",
+            "--output-dir",
+            "output/ws3",
+            "--model-name",
+            "tsa29",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    for suffix in ("lan", "are", "yld", "act", "trn"):
+        assert (output_dir / f"tsa29.{suffix}").is_file()

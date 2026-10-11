@@ -87,10 +87,13 @@ The generic provider references currently exposed for model-build workflows are:
 - ``femic.validate_case``
 - ``femic.geospatial_preflight``
 - ``femic.compile_upstream``
+- ``femic.accepted_btc_handoff``
 - ``femic.btc_post_tipsy``
 - ``femic.export_patchworks``
 - ``femic.patchworks_preflight``
 - ``femic.matrix_build``
+- ``femic.export_woodstock``
+- ``femic.ws3_bridge``
 
 Instance-specific provider references are not shipped by FEMIC core. For
 example, the MKRF instance owns its executable adapter package and exposes

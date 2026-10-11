@@ -10,11 +10,10 @@ import typer
 import yaml
 from typer.testing import CliRunner
 
+from femic import bcdc_catalog, tsr_catalog
 from femic.arcgis_review import ArcgisReviewProjectResult
-from femic.glb import GlbBuildResult, GlbStashResult
-from femic import bcdc_catalog
-from femic import tsr_catalog
 from femic.cli import main as cli_main
+from femic.glb import GlbBuildResult, GlbStashResult
 
 
 def _set_cli_repo_root(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
@@ -8341,3 +8340,47 @@ def test_tsr_override_report_reports_errors(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert exc_info.value.exit_code == 1
     assert any("TSR override report error:" in msg for msg in messages)
+
+
+def test_export_ws3_sections_calls_bridge(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from types import SimpleNamespace
+
+    messages: list[str] = []
+    monkeypatch.setattr(cli_main.console, "print", messages.append)
+    called: dict[str, object] = {}
+
+    def _fake_build(*, woodstock_dir, output_dir, model_name):
+        called.update(
+            {
+                "woodstock_dir": woodstock_dir,
+                "output_dir": output_dir,
+                "model_name": model_name,
+            }
+        )
+        return SimpleNamespace(
+            model_name=model_name,
+            output_dir=output_dir,
+            lan_path=output_dir / f"{model_name}.lan",
+            are_path=output_dir / f"{model_name}.are",
+            yld_path=output_dir / f"{model_name}.yld",
+            act_path=output_dir / f"{model_name}.act",
+            trn_path=output_dir / f"{model_name}.trn",
+        )
+
+    monkeypatch.setattr(
+        cli_main, "build_ws3_sections_from_femic_woodstock", _fake_build
+    )
+
+    cli_main.export_ws3_sections(
+        woodstock_dir=Path("output/woodstock"),
+        output_dir=Path("output/ws3"),
+        model_name="tsa24",
+        instance_root=tmp_path,
+    )
+
+    assert called["woodstock_dir"] == tmp_path / "output/woodstock"
+    assert called["output_dir"] == tmp_path / "output/ws3"
+    assert called["model_name"] == "tsa24"
+    assert any("ws3 section build completed" in msg for msg in messages)

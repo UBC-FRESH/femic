@@ -3850,7 +3850,7 @@ FADM TSA boundaries + SiteProd from the public mirror
 
 Tasks:
 
-- [ ] P113.1 FreshForge ws3 handoff nodes (`femic.export_woodstock`,
+- [x] P113.1 FreshForge ws3 handoff nodes (`femic.export_woodstock`,
       `femic.ws3_bridge`) + `femic export ws3-sections` CLI + tests.
 - [ ] P113.2 Five per-MU instance repos (DataLad, UBC-FRESH) with the standard
       instance structure + Sphinx docs/Pages + fresh VRI 2025 data lane +
