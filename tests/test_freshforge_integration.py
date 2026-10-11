@@ -622,6 +622,9 @@ def test_provider_execution_failure_returns_freshforge_diagnostic() -> None:
 
 
 def test_export_woodstock_execution_constructs_export_command() -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus, WorkflowNode
+
     commands: list[tuple[str, ...]] = []
     provider = FemicFreshForgeProvider(command_runner=_successful_runner(commands))
     node_type = next(
@@ -668,6 +671,9 @@ def test_export_woodstock_execution_constructs_export_command() -> None:
 
 
 def test_ws3_bridge_execution_constructs_bridge_command() -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus, WorkflowNode
+
     commands: list[tuple[str, ...]] = []
     provider = FemicFreshForgeProvider(command_runner=_successful_runner(commands))
     node_type = next(
