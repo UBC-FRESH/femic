@@ -78,7 +78,7 @@ Known-good Windows-specific details now proven in `#95`:
   - `AWS_ACCESS_KEY_ID=<key-id>`
   - `AWS_SECRET_ACCESS_KEY=<secret-key>`
   - `AWS_DEFAULT_REGION=ca-west-1`
-  - `S3_ENDPOINT_URL=https://object-arbutus.cloud.computecanada.ca`
+  - `S3_ENDPOINT_URL=https://object-arbutus.alliancecan.ca`
   - `S3_BUCKET_NAME=<unique-bucket-name>`
 - quoted values in `arbutus.env` are a real failure mode; they cause Windows to
   export invalid literal credentials;
@@ -86,8 +86,8 @@ Known-good Windows-specific details now proven in `#95`:
   - `Set-ExecutionPolicy -Scope Process Bypass -Force`
 - the known-good `git annex initremote` parity flags are:
   - `public=yes`
-  - `publicurl=https://object-arbutus.cloud.computecanada.ca/<unique-bucket-name>`
-  - `host=object-arbutus.cloud.computecanada.ca`
+  - `publicurl=https://object-arbutus.alliancecan.ca/a0d141b801c74d0a819c09b4bde9c3fb:<unique-bucket-name>`
+  - `host=object-arbutus.alliancecan.ca`
   - `protocol=https`
   - `port=80`
   - `requeststyle=path`

@@ -58,7 +58,7 @@ Maintainer Workflow (Create/Publish Mirror Repo)
       AWS_ACCESS_KEY_ID=<key-id>
       AWS_SECRET_ACCESS_KEY=<secret-key>
       AWS_DEFAULT_REGION=ca-west-1
-      S3_ENDPOINT_URL=https://object-arbutus.cloud.computecanada.ca
+      S3_ENDPOINT_URL=https://object-arbutus.alliancecan.ca
       S3_BUCKET_NAME=<unique-bucket-name>
 
    Then load it in a bypassed PowerShell session:
@@ -134,8 +134,8 @@ Maintainer Workflow (Create/Publish Mirror Repo)
         encryption=none \
         bucket=<unique-bucket-name> \
         public=yes \
-        publicurl=https://object-arbutus.cloud.computecanada.ca/<unique-bucket-name> \
-        host=object-arbutus.cloud.computecanada.ca \
+        publicurl=https://object-arbutus.alliancecan.ca/a0d141b801c74d0a819c09b4bde9c3fb:<unique-bucket-name> \
+        host=object-arbutus.alliancecan.ca \
         protocol=https \
         port=80 \
         requeststyle=path \

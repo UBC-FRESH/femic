@@ -394,9 +394,9 @@ This file preserves long-form roadmap narrative and superseded structural fragme
     - validate a fresh cold clone using `git annex enableremote arbutus-s3`
       plus `datalad get -r .`.
   - Known-good remote shape from the Linux bootstrap environment:
-    - endpoint: `https://object-arbutus.cloud.computecanada.ca`
+    - endpoint: `https://object-arbutus.alliancecan.ca`
     - region: `ca-west-1`
-    - host: `object-arbutus.cloud.computecanada.ca`
+    - host: `object-arbutus.alliancecan.ca`
     - protocol: `https`
     - port: `80`
     - request style: `path`

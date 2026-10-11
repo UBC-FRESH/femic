@@ -893,7 +893,7 @@ def test_validate_windows_arbutus_env_file_reports_quoted_credentials(
                 "AWS_ACCESS_KEY_ID='quoted-key'",
                 "AWS_SECRET_ACCESS_KEY='quoted-secret'",
                 "AWS_DEFAULT_REGION=ca-west-1",
-                "S3_ENDPOINT_URL=https://object-arbutus.cloud.computecanada.ca",
+                "S3_ENDPOINT_URL=https://object-arbutus.alliancecan.ca",
             ]
         ),
         encoding="utf-8",
@@ -1039,7 +1039,7 @@ def test_validate_windows_annex_runtime_reports_bucket_visibility_failure(
             "AWS_ACCESS_KEY_ID": "abc123",
             "AWS_SECRET_ACCESS_KEY": "secret123",
             "AWS_DEFAULT_REGION": "ca-west-1",
-            "S3_ENDPOINT_URL": "https://object-arbutus.cloud.computecanada.ca",
+            "S3_ENDPOINT_URL": "https://object-arbutus.alliancecan.ca",
         },
     )
     monkeypatch.setattr(
@@ -1120,7 +1120,7 @@ def test_validate_windows_annex_runtime_passes_with_visible_public_bucket(
             "AWS_ACCESS_KEY_ID": "abc123",
             "AWS_SECRET_ACCESS_KEY": "secret123",
             "AWS_DEFAULT_REGION": "ca-west-1",
-            "S3_ENDPOINT_URL": "https://object-arbutus.cloud.computecanada.ca",
+            "S3_ENDPOINT_URL": "https://object-arbutus.alliancecan.ca",
         },
     )
     monkeypatch.setattr(
@@ -1201,7 +1201,7 @@ def test_arbutus_auth_status_reports_current_marker(
         "AWS_ACCESS_KEY_ID": "abc123456",
         "AWS_SECRET_ACCESS_KEY": "secret123456",
         "AWS_DEFAULT_REGION": "ca-west-1",
-        "S3_ENDPOINT_URL": "https://object-arbutus.cloud.computecanada.ca",
+        "S3_ENDPOINT_URL": "https://object-arbutus.alliancecan.ca",
     }
     env_file.write_text(
         cli_main._windows_arbutus_env_template(env_values), encoding="utf-8"
@@ -1292,7 +1292,7 @@ def test_arbutus_auth_status_reports_stale_marker_when_env_file_changes(
         "AWS_ACCESS_KEY_ID": "abc123456",
         "AWS_SECRET_ACCESS_KEY": "secret123456",
         "AWS_DEFAULT_REGION": "ca-west-1",
-        "S3_ENDPOINT_URL": "https://object-arbutus.cloud.computecanada.ca",
+        "S3_ENDPOINT_URL": "https://object-arbutus.alliancecan.ca",
     }
     env_file.write_text(
         cli_main._windows_arbutus_env_template(env_values), encoding="utf-8"
@@ -1383,7 +1383,7 @@ def test_arbutus_auth_status_uses_legacy_single_bucket_compatibility(
                 "AWS_ACCESS_KEY_ID=abc123456",
                 "AWS_SECRET_ACCESS_KEY=secret123456",
                 "AWS_DEFAULT_REGION=ca-west-1",
-                "S3_ENDPOINT_URL=https://object-arbutus.cloud.computecanada.ca",
+                "S3_ENDPOINT_URL=https://object-arbutus.alliancecan.ca",
                 "S3_BUCKET_NAME=legacy-bucket",
             ]
         )
@@ -1398,7 +1398,7 @@ def test_arbutus_auth_status_uses_legacy_single_bucket_compatibility(
     monkeypatch.setenv("AWS_DEFAULT_REGION", "ca-west-1")
     monkeypatch.setenv(
         "S3_ENDPOINT_URL",
-        "https://object-arbutus.cloud.computecanada.ca",
+        "https://object-arbutus.alliancecan.ca",
     )
     monkeypatch.setattr(
         cli_main,
