@@ -3822,3 +3822,42 @@ features that are not yet stable.
 
 Detailed plan: `planning/phase110_coordinator_model_build.md`.
 
+
+## Phase 113: WBI AOI Model-Build Pipelines — TSAs 08/16/24/40/41 (`#316`)
+
+Status: **active**
+
+Branch: `feature/p113-wbi-aoi-model-build`
+
+Goal: deliver the femic + FreshForge model-build path for the five WBI birds AOI
+management units (TSAs 08/16/24/40/41) so the manuscript repro chain
+(`UBC-FRESH/wbi-birds`) is self-bootstrappable from fresh public data through
+the ws3 handoff (`inputs/ws3/<model>.{lan,are,yld,act,trn}`).
+
+Architecture boundary:
+
+- femic owns the instance/overlay machinery, per-MU configs (TIPSY rules in
+  `config/tipsy/tsa<code>.yaml`; VDYP fit overrides in `config/vdyp_fit_policy.yaml`),
+  the compile lane (`femic run`), Woodstock export, and the ws3 bridge.
+- FreshForge owns declarative graphs, provider discovery, and run records; the
+  WBI AOI instance owns its workflows and per-MU overlays.
+- `UBC-FRESH/wbi-birds` owns consuming the staged sections (`wbi.compile_instance`).
+
+Data lane: fresh BC VRI 2024 (`VEG_COMP_LYR_R1_POLY_2024` + VDYP7-input 2024)
+via `femic instance init --download-bc-vri`; FADM TSA boundaries + SiteProd from
+the public mirror (`external/femic-public-data`, `arbutus-s3`).
+
+Tasks:
+
+- [ ] P113.1 FreshForge ws3 handoff nodes (`femic.export_woodstock`,
+      `femic.ws3_bridge`) + `femic export ws3-sections` CLI + tests.
+- [ ] P113.2 WBI AOI instance/overlay machinery for the five MUs + fresh VRI
+      2024 data lane + submodule wiring.
+- [ ] P113.3 Per-MU model-build graphs, plan-green, with documented instance
+      roots + data contract (closes the `UBC-FRESH/wbi-birds` femic-map open
+      questions).
+- [ ] P113.4 Executable smoke on at least one MU: compile -> curves ->
+      model-input bundle -> Woodstock CSVs -> ws3 sections -> engine
+      `compile_instance` + `build_model` + one scenario.
+
+Detailed plan: `planning/phase113_wbi_aoi_model_build.md`.

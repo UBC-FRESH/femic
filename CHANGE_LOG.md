@@ -15009,3 +15009,16 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -k "executes_target_parent_step_from_scratch or sequences_locked_parent_steps_from_scratch or materialize_tsa29_glb_checkpoint_normalizes_area_columns" -q`
   - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py tests/test_named_pipe
+
+## 2026-10-11 - Phase 113 activated (WBI AOI model-build pipelines, #316)
+
+- Added Phase 113 to the roadmap with the plan in
+  `planning/phase113_wbi_aoi_model_build.md`; branch
+  `feature/p113-wbi-aoi-model-build`.
+- Scope: ws3 handoff provider nodes (P113.1), WBI AOI instance/overlay
+  machinery with fresh VRI 2024 (P113.2), per-MU graphs (P113.3), executable
+  smoke on one MU (P113.4).
+- Findings recorded: P110 `femic.model_build.*` is documentation-only in this
+  checkout; the shipped generic `femic` provider has no Woodstock/ws3 node;
+  the open `p115-ws3-export-package` branch overlaps P113.1 and is noted for
+  coordination.
