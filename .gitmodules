@@ -21,3 +21,18 @@
 [submodule "external/femic-tsa29mini-instance"]
 	path = external/femic-tsa29mini-instance
 	url = https://github.com/UBC-FRESH/femic-tsa29mini-instance.git
+[submodule "external/femic-tsa08-instance"]
+	path = external/femic-tsa08-instance
+	url = https://github.com/UBC-FRESH/femic-tsa08-instance.git
+[submodule "external/femic-tsa16-instance"]
+	path = external/femic-tsa16-instance
+	url = https://github.com/UBC-FRESH/femic-tsa16-instance.git
+[submodule "external/femic-tsa24-instance"]
+	path = external/femic-tsa24-instance
+	url = https://github.com/UBC-FRESH/femic-tsa24-instance.git
+[submodule "external/femic-tsa40-instance"]
+	path = external/femic-tsa40-instance
+	url = https://github.com/UBC-FRESH/femic-tsa40-instance.git
+[submodule "external/femic-tsa41-instance"]
+	path = external/femic-tsa41-instance
+	url = https://github.com/UBC-FRESH/femic-tsa41-instance.git
