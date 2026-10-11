@@ -91,11 +91,11 @@ Each instance repo mirrors the established instance layout (exemplar:
   - [x] Fresh VRI 2025 + FADM data lane documented and materialized.
   - [x] Wire as submodules (`external/`); README/QUICKSTART present
         (instance-catalog entry points deferred).
-- [ ] P113.3 — Per-MU model-build graphs.
-  - [ ] `workflows/freshforge/wbi_tsa<code>_model_build_workflow.yaml` per MU,
-        plan-green (`freshforge validate|inspect|plan`).
-  - [ ] Documented instance roots + data contract; close the femic-map open
-        questions.
+- [x] P113.3 — Per-MU model-build graphs.
+  - [x] `workflows/freshforge/tsa<code>_model_build_workflow.yaml` per MU,
+        plan-green (`freshforge validate|plan`; six-node chain).
+  - [x] Documented instance roots + data contract; closed the femic-map open
+        questions (see `UBC-FRESH/wbi-birds` `planning/femic-map.md`).
 - [ ] P113.4 — Executable smoke on at least one MU (TSA24).
   - [ ] Compile lane on fresh VRI clip (VDYP via Wine; TIPSY/BTC via Wine,
         TIPSYbtc extracted from the public TIPSY 4.7 MSI).

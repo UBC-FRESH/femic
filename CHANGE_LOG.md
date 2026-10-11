@@ -15058,3 +15058,15 @@
 - `femic prep validate-case` green for all five instances with
   `FEMIC_EXTERNAL_DATA_ROOT` pointing at the public mirror.
 - femic docs: `wbi-aoi-instances` guide added to the guides toctree.
+
+## 2026-10-11 - P113.3 per-MU model-build graphs
+
+- Five instance-owned graphs (`workflows/freshforge/tsa<code>_model_build_workflow.yaml`),
+  six-node chain: `validate_case` -> `geospatial_preflight` -> `compile_upstream`
+  -> `btc_post_tipsy` -> `export_woodstock` -> `ws3_bridge`.
+- `freshforge validate` + `plan` green for all five; `femic freshforge workflows
+  list` discovers them.
+- Provider tests now run for real (freshforge installed via the `freshforge`
+  extra); the two new builder tests use lazy imports per file convention.
+- Engine-side contract questions resolved in `UBC-FRESH/wbi-birds`
+  `planning/femic-map.md`.

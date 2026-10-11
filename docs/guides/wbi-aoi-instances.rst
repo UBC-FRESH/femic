@@ -76,6 +76,22 @@ The bootstrap follows the split-repo pattern in
 8. Wire the submodule: ``git submodule add <url>
    external/femic-tsa<code>-instance``.
 
+Per-MU model-build graphs
+-------------------------
+
+Each instance owns its graph at
+``workflows/freshforge/tsa<code>_model_build_workflow.yaml``:
+
+.. code-block:: console
+
+   freshforge plan external/femic-tsa<code>-instance/workflows/freshforge/tsa<code>_model_build_workflow.yaml
+   freshforge run  external/femic-tsa<code>-instance/workflows/freshforge/tsa<code>_model_build_workflow.yaml \
+     --workdir runtime/freshforge --namespace tsa<code>/model-build --json
+
+Node chain: ``validate_case`` -> ``geospatial_preflight`` -> ``compile_upstream``
+-> ``btc_post_tipsy`` -> ``export_woodstock`` -> ``ws3_bridge``; the final step
+delivers ``output/ws3/tsa<code>.{lan,are,yld,act,trn}`` for the WBI engine.
+
 Verification
 ------------
 

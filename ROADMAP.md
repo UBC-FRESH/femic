@@ -3855,7 +3855,7 @@ Tasks:
 - [x] P113.2 Five per-MU instance repos (DataLad, UBC-FRESH) with the standard
       instance structure + Sphinx docs/Pages + fresh VRI 2025 data lane +
       submodule wiring.
-- [ ] P113.3 Per-MU model-build graphs, plan-green, with documented instance
+- [x] P113.3 Per-MU model-build graphs, plan-green, with documented instance
       roots + data contract (closes the `UBC-FRESH/wbi-birds` femic-map open
       questions).
 - [ ] P113.4 Executable smoke on at least one MU: compile -> curves ->
