@@ -3843,16 +3843,18 @@ Architecture boundary:
   WBI AOI instance owns its workflows and per-MU overlays.
 - `UBC-FRESH/wbi-birds` owns consuming the staged sections (`wbi.compile_instance`).
 
-Data lane: fresh BC VRI 2024 (`VEG_COMP_LYR_R1_POLY_2024` + VDYP7-input 2024)
-via `femic instance init --download-bc-vri`; FADM TSA boundaries + SiteProd from
-the public mirror (`external/femic-public-data`, `arbutus-s3`).
+Data lane: fresh BC VRI 2025 (`VEG_COMP_LYR_R1_POLY_2025` + VDYP7-input 2025)
+resolved via `femic data bcdc-resolve` (direct zips + AOI-scoped WFS fetch);
+FADM TSA boundaries + SiteProd from the public mirror
+(`external/femic-public-data`, `arbutus-s3`).
 
 Tasks:
 
 - [ ] P113.1 FreshForge ws3 handoff nodes (`femic.export_woodstock`,
       `femic.ws3_bridge`) + `femic export ws3-sections` CLI + tests.
-- [ ] P113.2 WBI AOI instance/overlay machinery for the five MUs + fresh VRI
-      2024 data lane + submodule wiring.
+- [ ] P113.2 Five per-MU instance repos (DataLad, UBC-FRESH) with the standard
+      instance structure + Sphinx docs/Pages + fresh VRI 2025 data lane +
+      submodule wiring.
 - [ ] P113.3 Per-MU model-build graphs, plan-green, with documented instance
       roots + data contract (closes the `UBC-FRESH/wbi-birds` femic-map open
       questions).

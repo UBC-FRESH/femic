@@ -15022,3 +15022,14 @@
   checkout; the shipped generic `femic` provider has no Woodstock/ws3 node;
   the open `p115-ws3-export-package` branch overlaps P113.1 and is noted for
   coordination.
+
+## 2026-10-11 - P113 scope amended: five per-MU DataLad instances + VRI 2025
+
+- Instance layout decision revised: five separate public instance repos
+  (`UBC-FRESH/femic-tsa08|16|24|40|41-instance`), DataLad-managed, wired as
+  `external/` submodules, each with the established instance structure
+  (config, runbooks, Sphinx docs + GitHub Pages, README/ROADMAP/CHANGE_LOG).
+- Data lane upgraded from VRI 2024 to **VRI 2025** (current vintage) via the
+  BCDC resolver: `VEG_COMP_LYR_R1_POLY_2025` +
+  `VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2025` direct zips; AOI-scoped WFS fetch
+  recorded as an alternative (five-TSA bbox 830258,878714,1393732,1682754).

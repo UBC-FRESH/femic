@@ -36,21 +36,44 @@ the ws3 handoff (`inputs/ws3/<model>.{lan,are,yld,act,trn}`).
 
 ## Decisions
 
-- **Instance layout**: one public instance repo
-  (`UBC-FRESH/femic-wbi-aoi-instance`) hosting the five MUs as per-MU overlays
-  (run profiles, TIPSY configs, rebuild spec, per-MU FreshForge graphs), wired
-  into femic as `external/femic-wbi-aoi-instance`. This answers open question 2
-  in `UBC-FRESH/wbi-birds` `planning/femic-map.md` (femic-style overlay, not
-  engine-side instances).
+- **Instance layout**: five public instance repos, one per management unit —
+  `UBC-FRESH/femic-tsa08-instance`, `femic-tsa16-instance`,
+  `femic-tsa24-instance`, `femic-tsa40-instance`, `femic-tsa41-instance`.
+  Each is a DataLad-managed dataset under the UBC-FRESH org, wired into femic
+  as an `external/` git submodule, with the established instance structure
+  (see below). This answers open question 2 in `UBC-FRESH/wbi-birds`
+  `planning/femic-map.md` (femic-style instances).
 - **Artifact set per MU**: both. The instance keeps the model-input bundle
   (`data/model_input_bundle/`) and exports Woodstock CSVs
   (`output/woodstock/`) + ws3 sections (`output/ws3/<model>.{lan,...}`); the
   engine stages only the sections, with checksums recorded in the instance
   manifest (open questions 1 and 3).
-- **Data lane**: fresh VRI 2024 via `instance init --download-bc-vri`;
-  FADM TSA boundaries + SiteProd from `external/femic-public-data`
-  (`arbutus-s3`, verified reachable from this host). Record dataset ids +
-  checksums in the instance evidence.
+- **Data lane**: fresh **VRI 2025** — `VEG_COMP_LYR_R1_POLY_2025` +
+  `VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2025`, resolved via
+  `femic data bcdc-resolve`; direct zips under
+  `https://pub.data.gov.bc.ca/datasets/02dba161-fdb7-48ae-a4bb-bd6ef017c36d/current/`
+  (AOI-scoped WFS fetch is available as an alternative: five-TSA bbox
+  `830258,878714,1393732,1682754` EPSG:3005). FADM TSA boundaries + SiteProd
+  come from `external/femic-public-data` (`arbutus-s3`, verified reachable).
+  Extend `BC_VRI_DOWNLOADS` + `pipeline/io.py` resolution candidates to prefer
+  the 2025 vintage over 2024/2019.
+
+## Instance structure (consistency requirement)
+
+Each instance repo mirrors the established instance layout (exemplar:
+`UBC-FRESH/femic-tsa29-instance`):
+
+- DataLad dataset (`.datalad/config`, annex `.gitattributes` rules) under
+  `UBC-FRESH`; wired as a femic `external/` git submodule.
+- `config/`: `run_profile.tsa<code>.yaml`, `tipsy/tsa<code>.yaml`,
+  `rebuild.spec.yaml`, `rebuild.allowlist.yaml`,
+  `patchworks.runtime.windows.yaml`.
+- `workflows/freshforge/tsa<code>_model_build_workflow.yaml` (P113.3).
+- `docs/`: Sphinx site (`conf.py`, `index.rst`, content pages) +
+  `.github/workflows/docs-pages.yml` publishing to GitHub Pages.
+- `README.md`, `QUICKSTART.md`, `ROADMAP.md`, `CHANGE_LOG.md`.
+- `data/` (annex-backed intermediates + per-MU clips), `output/`, `models/`,
+  `runbooks/`, `evidence/`.
 
 ## Tasks
 
@@ -60,12 +83,13 @@ the ws3 handoff (`inputs/ws3/<model>.{lan,are,yld,act,trn}`).
         around `build_ws3_sections_from_femic_woodstock`).
   - [ ] Tests: provider metadata + command construction + CLI round-trip on the
         minimal 4-CSV fixture.
-- [ ] P113.2 — WBI AOI instance/overlay machinery.
-  - [ ] Create `UBC-FRESH/femic-wbi-aoi-instance`; scaffold via
-        `femic instance init`; five per-MU overlays (run profiles + TIPSY
-        configs + rebuild spec).
-  - [ ] Fresh VRI 2024 + FADM data lane documented and materialized.
-  - [ ] Wire as submodule; instance catalog/README.
+- [ ] P113.2 — Five per-MU instance repos.
+  - [ ] Create `UBC-FRESH/femic-tsa<code>-instance` for 08/16/24/40/41
+        (DataLad datasets, public); scaffold via `femic instance init`; per-MU
+        run profile + TIPSY config + rebuild spec + runbooks.
+  - [ ] Standard structure incl. Sphinx docs site + GitHub Pages workflow.
+  - [ ] Fresh VRI 2025 + FADM data lane documented and materialized.
+  - [ ] Wire as submodules (`external/`); instance catalog/README entries.
 - [ ] P113.3 — Per-MU model-build graphs.
   - [ ] `workflows/freshforge/wbi_tsa<code>_model_build_workflow.yaml` per MU,
         plan-green (`freshforge validate|inspect|plan`).
