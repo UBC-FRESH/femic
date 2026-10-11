@@ -60,6 +60,10 @@ INSTANCE_TEMPLATE_FILES: tuple[Path, ...] = (
     Path("config/tipsy/template.case.yaml"),
     Path("config/patchworks.runtime.windows.yaml"),
 )
+# NOTE: the legacy pub.data.gov.bc.ca direct URLs for VRI 2024/2025 now return
+# 404; the canonical lane is the `external/femic-public-data` mirror archives
+# (data/bc/vri/2025). This bootstrap path is retained until the catalogue
+# publishes stable replacement URLs.
 BC_VRI_DOWNLOADS: tuple[DatasetDownloadSpec, ...] = (
     DatasetDownloadSpec(
         name="VRI Layer 1 Rank 1 (2024)",
