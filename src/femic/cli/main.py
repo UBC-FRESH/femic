@@ -1317,6 +1317,18 @@ EXPORT_WOODSTOCK_OUTPUT_DIR_OPTION = typer.Option(
     "--output-dir",
     help="Output directory for Woodstock compatibility CSV files.",
 )
+EXPORT_INITIAL_AGE_CAP_OPTION = typer.Option(
+    None,
+    "--initial-age-cap",
+    help="Clamp initial stand ages (years); e.g. 300.",
+    show_default=False,
+)
+EXPORT_SNAP_INITIAL_AGES_OPTION = typer.Option(
+    None,
+    "--snap-initial-ages",
+    help="Snap initial stand ages to N-year class midpoints; e.g. 10.",
+    show_default=False,
+)
 EXPORT_WS3_WOODSTOCK_DIR_OPTION = typer.Option(
     DEFAULT_WOODSTOCK_OUTPUT_DIR,
     "--woodstock-dir",
@@ -1331,6 +1343,11 @@ EXPORT_WS3_MODEL_NAME_OPTION = typer.Option(
     "femic_ws3_bridge",
     "--model-name",
     help="Model name used for the emitted ws3 section files (<model>.lan, ...).",
+)
+EXPORT_WS3_PERIOD_LENGTH_OPTION = typer.Option(
+    5,
+    "--period-length",
+    help="Model period length in years (.are ages are converted to periods).",
 )
 EXPORT_RELEASE_CASE_ID_OPTION = typer.Option(
     None,
@@ -8213,6 +8230,8 @@ def export_woodstock(
     cc_min_age: int = EXPORT_CC_MIN_AGE_OPTION,
     cc_max_age: int = EXPORT_CC_MAX_AGE_OPTION,
     fragments_crs: str = EXPORT_FRAGMENTS_CRS_OPTION,
+    initial_age_cap: int | None = EXPORT_INITIAL_AGE_CAP_OPTION,
+    snap_initial_ages: int | None = EXPORT_SNAP_INITIAL_AGES_OPTION,
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Export Woodstock CSV artifacts for the selected FMU/code targets."""
@@ -8239,6 +8258,8 @@ def export_woodstock(
             cc_min_age=cc_min_age,
             cc_max_age=cc_max_age,
             fragments_crs=fragments_crs,
+            initial_age_cap=initial_age_cap,
+            age_class_width=snap_initial_ages,
         )
     except (FileNotFoundError, ValueError) as exc:
         console.print(f"[red]Woodstock export failed:[/red] {exc}")
@@ -8261,6 +8282,7 @@ def export_ws3_sections(
     woodstock_dir: Path = EXPORT_WS3_WOODSTOCK_DIR_OPTION,
     output_dir: Path = EXPORT_WS3_OUTPUT_DIR_OPTION,
     model_name: str = EXPORT_WS3_MODEL_NAME_OPTION,
+    period_length: int = EXPORT_WS3_PERIOD_LENGTH_OPTION,
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Build ws3 Woodstock section files from FEMIC Woodstock CSV artifacts."""
@@ -8272,6 +8294,7 @@ def export_ws3_sections(
             woodstock_dir=resolved_woodstock_dir,
             output_dir=resolved_output_dir,
             model_name=model_name,
+            period_length=int(period_length),
         )
     except (FileNotFoundError, ValueError) as exc:
         console.print(f"[red]ws3 section build failed:[/red] {exc}")

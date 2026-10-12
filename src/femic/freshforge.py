@@ -602,22 +602,30 @@ def _build_export_woodstock_command(node: Any, _context: Any) -> tuple[str, ...]
     _append_option(command, node, "bundle_dir", "--bundle-dir")
     _append_option(command, node, "checkpoint", "--checkpoint")
     _append_option(command, node, "output_dir", "--output-dir")
+    _append_option(command, node, "cc_min_age", "--cc-min-age")
+    _append_option(command, node, "cc_max_age", "--cc-max-age")
+    _append_option(command, node, "initial_age_cap", "--initial-age-cap")
+    _append_option(command, node, "snap_initial_ages", "--snap-initial-ages")
     return tuple(command)
 
 
 def _build_ws3_bridge_command(node: Any, _context: Any) -> tuple[str, ...]:
-    return _python_m_femic(
-        "export",
-        "ws3-sections",
-        "--instance-root",
-        _parameter(node, "instance_root"),
-        "--woodstock-dir",
-        _parameter(node, "woodstock_dir"),
-        "--output-dir",
-        _parameter(node, "output_dir"),
-        "--model-name",
-        _parameter(node, "model_name"),
+    command = list(
+        _python_m_femic(
+            "export",
+            "ws3-sections",
+            "--instance-root",
+            _parameter(node, "instance_root"),
+            "--woodstock-dir",
+            _parameter(node, "woodstock_dir"),
+            "--output-dir",
+            _parameter(node, "output_dir"),
+            "--model-name",
+            _parameter(node, "model_name"),
+        )
     )
+    _append_option(command, node, "period_length", "--period-length")
+    return tuple(command)
 
 
 def _missing_key_diagnostics(

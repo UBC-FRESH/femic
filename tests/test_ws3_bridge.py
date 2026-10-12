@@ -90,7 +90,8 @@ def test_build_ws3_sections_from_femic_woodstock(tmp_path: Path) -> None:
     assert result.act_path.exists()
     assert result.trn_path.exists()
     assert "*THEME Timber Supply Area (TSA)" in result.lan_path.read_text()
-    assert "*A 29 managed 101 st101 5001 1 12.500000" in result.are_path.read_text()
+    # .are ages are in periods (1 year // 5 = 0 periods)
+    assert "*A 29 managed 101 st101 5001 0 12.500000" in result.are_path.read_text()
     assert "*Y 29 managed 101 st101 5001" in result.yld_path.read_text()
     assert "*ACTION cc Y" in result.act_path.read_text()
     assert "*CASE cc" in result.trn_path.read_text()
@@ -124,3 +125,32 @@ def test_export_ws3_sections_cli_round_trip(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     for suffix in ("lan", "are", "yld", "act", "trn"):
         assert (output_dir / f"tsa29.{suffix}").is_file()
+
+
+def test_ws3_bridge_writes_species_split_products(tmp_path: Path) -> None:
+    woodstock_dir = tmp_path / "woodstock"
+    _write_minimal_woodstock(woodstock_dir)
+    yields_path = woodstock_dir / "woodstock_yields.csv"
+    yields = pd.read_csv(yields_path)
+    yields["product"] = "totvol"
+    species_rows = yields.copy()
+    species_rows["product"] = "swdvol"
+    species_rows["volume"] = species_rows["volume"] * 0.8
+    hardwood_rows = yields.copy()
+    hardwood_rows["product"] = "hwdvol"
+    hardwood_rows["volume"] = hardwood_rows["volume"] * 0.2
+    pd.concat([yields, species_rows, hardwood_rows], ignore_index=True).to_csv(
+        yields_path, index=False
+    )
+
+    output_dir = tmp_path / "ws3"
+    result = build_ws3_sections_from_femic_woodstock(
+        woodstock_dir=woodstock_dir,
+        output_dir=output_dir,
+        model_name="tsa29",
+    )
+
+    text = result.yld_path.read_text()
+    assert "_AGE totvol" in text
+    assert "_AGE swdvol" in text
+    assert "_AGE hwdvol" in text
