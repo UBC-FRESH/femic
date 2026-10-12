@@ -145,7 +145,11 @@ def build_ws3_sections_from_femic_woodstock(
         curve_map=curve_map,
     )
 
-    _write_act(path=act_path, actions=actions)
+    _write_act(
+        path=act_path,
+        actions=actions,
+        period_length=int(period_length),
+    )
     _write_trn(path=trn_path, transitions=transitions, curve_map=curve_map)
 
     return Ws3BridgeResult(
@@ -253,7 +257,9 @@ def _write_yld(*, path: Path, yields: pd.DataFrame, curve_map: pd.DataFrame) -> 
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _write_act(*, path: Path, actions: pd.DataFrame) -> None:
+def _write_act(*, path: Path, actions: pd.DataFrame, period_length: int = 5) -> None:
+    if int(period_length) <= 0:
+        raise ValueError("period_length must be a positive integer")
     lines: list[str] = ["ACTIONS"]
     for action_id, block in actions.groupby("action_id"):
         lines.append(f"*ACTION {action_id} Y")
@@ -263,9 +269,13 @@ def _write_act(*, path: Path, actions: pd.DataFrame) -> None:
             .drop_duplicates()
             .itertuples(index=False)
         ):
+            # Woodstock action timing is in periods; ws3 multiplies by the
+            # period length when compiling operability bounds.
+            min_periods = _to_int(row.min_age) // int(period_length)
+            max_periods = _to_int(row.max_age) // int(period_length)
             lines.append(
                 f"{row.tsa} {row.from_ifm} {_to_int(row.au_id)} ? ? "
-                f"_AGE >= {_to_int(row.min_age)} AND _AGE <= {_to_int(row.max_age)}"
+                f"_AGE >= {min_periods} AND _AGE <= {max_periods}"
             )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
