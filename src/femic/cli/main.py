@@ -1329,6 +1329,12 @@ EXPORT_SNAP_INITIAL_AGES_OPTION = typer.Option(
     help="Snap initial stand ages to N-year class midpoints; e.g. 10.",
     show_default=False,
 )
+EXPORT_THLB_MIN_OPTION = typer.Option(
+    None,
+    "--thlb-min",
+    help="Restrict the landbase to stands with mean THLB signal >= N; e.g. 50.",
+    show_default=False,
+)
 EXPORT_WS3_WOODSTOCK_DIR_OPTION = typer.Option(
     DEFAULT_WOODSTOCK_OUTPUT_DIR,
     "--woodstock-dir",
@@ -8232,6 +8238,7 @@ def export_woodstock(
     fragments_crs: str = EXPORT_FRAGMENTS_CRS_OPTION,
     initial_age_cap: int | None = EXPORT_INITIAL_AGE_CAP_OPTION,
     snap_initial_ages: int | None = EXPORT_SNAP_INITIAL_AGES_OPTION,
+    thlb_min: float | None = EXPORT_THLB_MIN_OPTION,
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Export Woodstock CSV artifacts for the selected FMU/code targets."""
@@ -8260,6 +8267,7 @@ def export_woodstock(
             fragments_crs=fragments_crs,
             initial_age_cap=initial_age_cap,
             age_class_width=snap_initial_ages,
+            thlb_min=thlb_min,
         )
     except (FileNotFoundError, ValueError) as exc:
         console.print(f"[red]Woodstock export failed:[/red] {exc}")

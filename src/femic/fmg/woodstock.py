@@ -66,6 +66,7 @@ def compute_au_species_shares(
     species_checkpoint_path: Path,
     au_checkpoint_path: Path,
     hardwood_species: Iterable[str] = BROADLEAF_SPECIES_CODES,
+    min_thlb: float | None = None,
 ) -> dict[int, dict[str, float]]:
     """Area-weighted softwood/hardwood volume shares per AU.
 
@@ -82,7 +83,18 @@ def compute_au_species_shares(
     if not species_columns:
         return {}
     species_df = species_df[["FEATURE_ID", "FEATURE_AREA_SQM", *species_columns]]
-    au_df = pd.read_feather(au_checkpoint_path, columns=["FEATURE_ID", "au"])
+    au_columns = ["FEATURE_ID", "au"]
+    if min_thlb is not None:
+        au_columns.append("thlb_raw")
+    au_df = pd.read_feather(au_checkpoint_path, columns=au_columns)
+    if min_thlb is not None:
+        if "thlb_raw" not in au_df.columns:
+            raise ValueError(
+                f"min_thlb={min_thlb} requested but checkpoint lacks 'thlb_raw' "
+                f"({au_checkpoint_path})"
+            )
+        thlb_signal = pd.to_numeric(au_df["thlb_raw"], errors="coerce").fillna(0.0)
+        au_df = au_df.loc[thlb_signal >= float(min_thlb)]
     merged = species_df.merge(au_df, on="FEATURE_ID", how="inner")
     merged = merged.loc[merged["au"].notna()].copy()
     if merged.empty:
@@ -176,6 +188,7 @@ def build_woodstock_areas_table(
     fragments_crs: str = DEFAULT_FRAGMENTS_CRS,
     initial_age_cap: int | None = None,
     age_class_width: int | None = None,
+    thlb_min: float | None = None,
 ) -> pd.DataFrame:
     """Build Woodstock compatibility areas table from checkpoint geometries.
 
@@ -189,6 +202,7 @@ def build_woodstock_areas_table(
         au_table=au_table,
         tsa_list=tsa_list,
         fragments_crs=fragments_crs,
+        min_thlb=thlb_min,
     )
     ages = pd.to_numeric(fragments["F_AGE"], errors="coerce").fillna(0).astype(int)
     if initial_age_cap is not None:
@@ -268,6 +282,7 @@ def export_woodstock_package(
     species_checkpoint_path: Path | None = None,
     initial_age_cap: int | None = None,
     age_class_width: int | None = None,
+    thlb_min: float | None = None,
 ) -> WoodstockExportResult:
     """Export Woodstock compatibility CSV package from FEMIC outputs."""
     normalized_tsa = sorted({normalize_tsa_code(tsa) for tsa in tsa_list})
@@ -290,6 +305,7 @@ def export_woodstock_package(
         species_shares = compute_au_species_shares(
             species_checkpoint_path=resolved_species_checkpoint,
             au_checkpoint_path=checkpoint_path,
+            min_thlb=thlb_min,
         )
     yields = build_woodstock_yields_table(
         context=context,
@@ -302,6 +318,7 @@ def export_woodstock_package(
         fragments_crs=fragments_crs,
         initial_age_cap=initial_age_cap,
         age_class_width=age_class_width,
+        thlb_min=thlb_min,
     )
     actions = build_woodstock_actions_table(
         context=context,

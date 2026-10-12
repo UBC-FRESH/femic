@@ -102,6 +102,49 @@ def test_export_woodstock_package_writes_csv(
     assert transitions.loc[0, "to_ifm"] == "managed"
 
 
+def test_export_woodstock_package_thlb_filter(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    output_dir = tmp_path / "woodstock_export"
+
+    def _stand(area: float, thlb: float) -> dict[str, object]:
+        return {
+            "tsa_code": "k3z",
+            "au": 985501000,
+            "PROJ_AGE_1": 74,
+            "FEATURE_AREA_SQM": area,
+            "thlb_raw": thlb,
+            "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+        }
+
+    checkpoint_df = pd.DataFrame([_stand(12000.0, 80.0), _stand(8000.0, 20.0)])
+    monkeypatch.setattr(
+        "femic.fmg.patchworks.pd.read_feather", lambda _path: checkpoint_df
+    )
+
+    unfiltered = export_woodstock_package(
+        bundle_dir=bundle_dir,
+        checkpoint_path=checkpoint_path,
+        output_dir=output_dir,
+        tsa_list=["k3z"],
+    )
+    assert len(pd.read_csv(unfiltered.areas_csv_path)) == 2
+
+    filtered = export_woodstock_package(
+        bundle_dir=bundle_dir,
+        checkpoint_path=checkpoint_path,
+        output_dir=output_dir / "filtered",
+        tsa_list=["k3z"],
+        thlb_min=50.0,
+    )
+    areas_thlb = pd.read_csv(filtered.areas_csv_path)
+    assert len(areas_thlb) == 1
+    assert areas_thlb["area_ha"].sum() > 0
+
+
 def test_export_woodstock_package_requires_tsa(tmp_path: Path) -> None:
     bundle_dir = tmp_path / "bundle"
     _write_bundle_tables(bundle_dir)

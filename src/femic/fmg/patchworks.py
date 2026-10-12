@@ -5185,9 +5185,22 @@ def build_fragments_geodataframe(
     ifm_target_managed_share: float | None = DEFAULT_IFM_TARGET_MANAGED_SHARE,
     silviculture_config: dict[str, Any] | None = None,
     legacy_input_variables_config: dict[str, Any] | None = None,
+    min_thlb: float | None = None,
 ) -> Any:
-    """Build Patchworks fragments GeoDataFrame from FEMIC checkpoint output."""
+    """Build Patchworks fragments GeoDataFrame from FEMIC checkpoint output.
+
+    ``min_thlb`` restricts the landbase to stands whose mean THLB raster
+    signal (``thlb_raw``) is at least this value.
+    """
     df = pd.read_feather(checkpoint_path)
+    if min_thlb is not None:
+        if "thlb_raw" not in df.columns:
+            raise ValueError(
+                f"min_thlb={min_thlb} requested but checkpoint lacks 'thlb_raw' "
+                f"({checkpoint_path})"
+            )
+        thlb_signal = pd.to_numeric(df["thlb_raw"], errors="coerce").fillna(0.0)
+        df = df.loc[thlb_signal >= float(min_thlb)].copy()
     required = {"geometry", "tsa_code", "au", "PROJ_AGE_1"}
     missing = sorted(required.difference(df.columns))
     if missing:
