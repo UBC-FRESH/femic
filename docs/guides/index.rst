@@ -13,6 +13,7 @@ export modules.
    developer-environment-bootstrap
    vscode-coding-agent-onboarding
    deployment-instances
+   wbi-aoi-instances
    rebuild-repro-contract
    author-instance-rebuild-spec
    interpret-rebuild-reports

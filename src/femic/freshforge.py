@@ -101,6 +101,24 @@ _NODE_CONTRACTS: tuple[_NodeContract, ...] = (
         parameters=("instance_root", "patchworks_config", "run_id"),
         artifacts=("matrix_build_manifest",),
     ),
+    _NodeContract(
+        id="export_woodstock",
+        name="Export Woodstock artifacts",
+        description="Declare the FEMIC Woodstock CSV export seam for one FMU/code.",
+        inputs=("model_input_bundle",),
+        outputs=("woodstock_csvs",),
+        parameters=("instance_root", "tsa", "bundle_dir", "checkpoint", "output_dir"),
+        artifacts=("yields", "areas", "actions", "transitions"),
+    ),
+    _NodeContract(
+        id="ws3_bridge",
+        name="Build ws3 sections",
+        description="Declare the FEMIC Woodstock CSV -> ws3 section-file bridge.",
+        inputs=("woodstock_csvs",),
+        outputs=("ws3_sections",),
+        parameters=("instance_root", "woodstock_dir", "output_dir", "model_name"),
+        artifacts=("lan", "are", "yld", "act", "trn"),
+    ),
 )
 
 
@@ -427,6 +445,8 @@ def _generic_command_builders() -> dict[str, Callable[[Any, Any], tuple[str, ...
         "export_patchworks": _build_export_patchworks_command,
         "patchworks_preflight": _build_patchworks_preflight_command,
         "matrix_build": _build_matrix_build_command,
+        "export_woodstock": _build_export_woodstock_command,
+        "ws3_bridge": _build_ws3_bridge_command,
     }
 
 
@@ -565,6 +585,46 @@ def _build_matrix_build_command(node: Any, _context: Any) -> tuple[str, ...]:
         )
     )
     _append_option(command, node, "log_dir", "--log-dir")
+    return tuple(command)
+
+
+def _build_export_woodstock_command(node: Any, _context: Any) -> tuple[str, ...]:
+    command = list(
+        _python_m_femic(
+            "export",
+            "woodstock",
+            "--instance-root",
+            _parameter(node, "instance_root"),
+            "--tsa",
+            _parameter(node, "tsa"),
+        )
+    )
+    _append_option(command, node, "bundle_dir", "--bundle-dir")
+    _append_option(command, node, "checkpoint", "--checkpoint")
+    _append_option(command, node, "output_dir", "--output-dir")
+    _append_option(command, node, "cc_min_age", "--cc-min-age")
+    _append_option(command, node, "cc_max_age", "--cc-max-age")
+    _append_option(command, node, "initial_age_cap", "--initial-age-cap")
+    _append_option(command, node, "snap_initial_ages", "--snap-initial-ages")
+    return tuple(command)
+
+
+def _build_ws3_bridge_command(node: Any, _context: Any) -> tuple[str, ...]:
+    command = list(
+        _python_m_femic(
+            "export",
+            "ws3-sections",
+            "--instance-root",
+            _parameter(node, "instance_root"),
+            "--woodstock-dir",
+            _parameter(node, "woodstock_dir"),
+            "--output-dir",
+            _parameter(node, "output_dir"),
+            "--model-name",
+            _parameter(node, "model_name"),
+        )
+    )
+    _append_option(command, node, "period_length", "--period-length")
     return tuple(command)
 
 

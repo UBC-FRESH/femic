@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import tomllib
-import json
 from pathlib import Path
 
 import pytest
@@ -148,6 +148,39 @@ def test_provider_metadata_serializes_deterministically() -> None:
                 "name": "Patchworks matrix build",
                 "description": "Declare Patchworks matrix-builder compilation.",
             },
+            {
+                "id": "export_woodstock",
+                "inputs": ["model_input_bundle"],
+                "outputs": ["woodstock_csvs"],
+                "parameters": [
+                    "instance_root",
+                    "tsa",
+                    "bundle_dir",
+                    "checkpoint",
+                    "output_dir",
+                ],
+                "artifacts": ["yields", "areas", "actions", "transitions"],
+                "name": "Export Woodstock artifacts",
+                "description": (
+                    "Declare the FEMIC Woodstock CSV export seam for one FMU/code."
+                ),
+            },
+            {
+                "id": "ws3_bridge",
+                "inputs": ["woodstock_csvs"],
+                "outputs": ["ws3_sections"],
+                "parameters": [
+                    "instance_root",
+                    "woodstock_dir",
+                    "output_dir",
+                    "model_name",
+                ],
+                "artifacts": ["lan", "are", "yld", "act", "trn"],
+                "name": "Build ws3 sections",
+                "description": (
+                    "Declare the FEMIC Woodstock CSV -> ws3 section-file bridge."
+                ),
+            },
         ],
         "name": "FEMIC model-build provider",
         "description": (
@@ -224,8 +257,10 @@ def test_example_workflow_validates_and_plans() -> None:
 
 
 def test_missing_required_parameter_returns_provider_diagnostic() -> None:
-    from freshforge.validation import validate_workflow_document
-    from freshforge.validation import validate_workflow_with_providers
+    from freshforge.validation import (
+        validate_workflow_document,
+        validate_workflow_with_providers,
+    )
 
     document = _example_document()
     del document["nodes"][0]["parameters"]["run_config"]
@@ -245,8 +280,10 @@ def test_missing_required_parameter_returns_provider_diagnostic() -> None:
 
 
 def test_unknown_femic_node_type_fails_provider_validation() -> None:
-    from freshforge.validation import validate_workflow_document
-    from freshforge.validation import validate_workflow_with_providers
+    from freshforge.validation import (
+        validate_workflow_document,
+        validate_workflow_with_providers,
+    )
 
     document = _example_document()
     document["nodes"][0]["provider"] = "femic.not_a_stage"
@@ -582,3 +619,98 @@ def test_provider_execution_failure_returns_freshforge_diagnostic() -> None:
     assert {diagnostic.code for diagnostic in result.diagnostics} == {
         "femic.execution.command.failed"
     }
+
+
+def test_export_woodstock_execution_constructs_export_command() -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus, WorkflowNode
+
+    commands: list[tuple[str, ...]] = []
+    provider = FemicFreshForgeProvider(command_runner=_successful_runner(commands))
+    node_type = next(
+        item for item in provider.metadata().node_types if item.id == "export_woodstock"
+    )
+    node = WorkflowNode(
+        id="export_woodstock",
+        provider="femic.export_woodstock",
+        parameters={
+            "instance_root": "external/femic-tsa24-instance",
+            "tsa": "24",
+            "bundle_dir": "data/model_input_bundle",
+            "checkpoint": "data/ria_vri_vclr1p_checkpoint7.feather",
+            "output_dir": "output/woodstock",
+        },
+    )
+
+    result = provider.run_node(
+        node,
+        node_type,
+        context=RunContext(workflow_id="wf", workdir=Path(".")),
+    )
+
+    assert result.status is RunStatus.SUCCESS
+    assert commands == [
+        (
+            sys.executable,
+            "-m",
+            "femic",
+            "export",
+            "woodstock",
+            "--instance-root",
+            "external/femic-tsa24-instance",
+            "--tsa",
+            "24",
+            "--bundle-dir",
+            "data/model_input_bundle",
+            "--checkpoint",
+            "data/ria_vri_vclr1p_checkpoint7.feather",
+            "--output-dir",
+            "output/woodstock",
+        )
+    ]
+
+
+def test_ws3_bridge_execution_constructs_bridge_command() -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus, WorkflowNode
+
+    commands: list[tuple[str, ...]] = []
+    provider = FemicFreshForgeProvider(command_runner=_successful_runner(commands))
+    node_type = next(
+        item for item in provider.metadata().node_types if item.id == "ws3_bridge"
+    )
+    node = WorkflowNode(
+        id="ws3_bridge",
+        provider="femic.ws3_bridge",
+        parameters={
+            "instance_root": "external/femic-tsa24-instance",
+            "woodstock_dir": "output/woodstock",
+            "output_dir": "output/ws3",
+            "model_name": "tsa24",
+        },
+    )
+
+    result = provider.run_node(
+        node,
+        node_type,
+        context=RunContext(workflow_id="wf", workdir=Path(".")),
+    )
+
+    assert result.status is RunStatus.SUCCESS
+    assert commands == [
+        (
+            sys.executable,
+            "-m",
+            "femic",
+            "export",
+            "ws3-sections",
+            "--instance-root",
+            "external/femic-tsa24-instance",
+            "--woodstock-dir",
+            "output/woodstock",
+            "--output-dir",
+            "output/ws3",
+            "--model-name",
+            "tsa24",
+        )
+    ]

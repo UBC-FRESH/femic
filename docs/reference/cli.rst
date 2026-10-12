@@ -1193,6 +1193,7 @@ Subcommands
 
 - ``patchworks``: ``python -m femic export patchworks [OPTIONS]``
 - ``woodstock``: ``python -m femic export woodstock [OPTIONS]``
+- ``ws3-sections``: ``python -m femic export ws3-sections [OPTIONS]``
 - ``dual``: ``python -m femic export dual [OPTIONS]``
 - ``release``: ``python -m femic export release [OPTIONS]``
 

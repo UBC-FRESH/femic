@@ -20,10 +20,12 @@ DEFAULT_DEV_CONFIG_PATH = Path("config/dev.toml")
 FALLBACK_DEFAULT_TSA_LIST = ["08"]
 DEFAULT_RUN_CONFIG_PATH = Path("config/run_profile.yaml")
 DEFAULT_LEGACY_VRI_RELATIVE_PATHS: tuple[Path, ...] = (
+    Path("bc/vri/2025/VEG_COMP_LYR_R1_POLY_2025.gdb"),
     Path("bc/vri/2024/VEG_COMP_LYR_R1_POLY_2024.gdb"),
     Path("bc/vri/2019/VEG_COMP_LYR_R1_POLY.gdb"),
 )
 DEFAULT_LEGACY_VDYP_INPUT_RELATIVE_PATHS: tuple[Path, ...] = (
+    Path("bc/vri/2025/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2025.gdb"),
     Path("bc/vri/2024/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2024.gdb"),
     Path("bc/vri/2019/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2019.gdb"),
     Path("VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2019.gdb"),

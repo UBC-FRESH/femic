@@ -15009,3 +15009,79 @@
   - `.\.venv\Scripts\python.exe -m pytest tests/test_named_pipelines.py -k "executes_target_parent_step_from_scratch or sequences_locked_parent_steps_from_scratch or materialize_tsa29_glb_checkpoint_normalizes_area_columns" -q`
   - `.\.venv\Scripts\python.exe -m pytest tests/test_cli_main.py -k "pipelines_run" -q`
   - `.\.venv\Scripts\python.exe -m ruff check src/femic/named_pipelines.py tests/test_named_pipe
+
+## 2026-10-11 - Phase 113 activated (WBI AOI model-build pipelines, #316)
+
+- Added Phase 113 to the roadmap with the plan in
+  `planning/phase113_wbi_aoi_model_build.md`; branch
+  `feature/p113-wbi-aoi-model-build`.
+- Scope: ws3 handoff provider nodes (P113.1), WBI AOI instance/overlay
+  machinery with fresh VRI 2024 (P113.2), per-MU graphs (P113.3), executable
+  smoke on one MU (P113.4).
+- Findings recorded: P110 `femic.model_build.*` is documentation-only in this
+  checkout; the shipped generic `femic` provider has no Woodstock/ws3 node;
+  the open `p115-ws3-export-package` branch overlaps P113.1 and is noted for
+  coordination.
+
+## 2026-10-11 - P113 scope amended: five per-MU DataLad instances + VRI 2025
+
+- Instance layout decision revised: five separate public instance repos
+  (`UBC-FRESH/femic-tsa08|16|24|40|41-instance`), DataLad-managed, wired as
+  `external/` submodules, each with the established instance structure
+  (config, runbooks, Sphinx docs + GitHub Pages, README/ROADMAP/CHANGE_LOG).
+- Data lane upgraded from VRI 2024 to **VRI 2025** (current vintage) via the
+  BCDC resolver: `VEG_COMP_LYR_R1_POLY_2025` +
+  `VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2025` direct zips; AOI-scoped WFS fetch
+  recorded as an alternative (five-TSA bbox 830258,878714,1393732,1682754).
+
+## 2026-10-11 - P113.1 ws3 handoff provider nodes + CLI
+
+- New FreshForge nodes: `femic.export_woodstock` (Woodstock CSV export seam) and
+  `femic.ws3_bridge` (Woodstock CSV -> ws3 section files).
+- New CLI: `femic export ws3-sections --woodstock-dir ... --output-dir ... --model-name ...`
+  wrapping `build_ws3_sections_from_femic_woodstock`.
+- Tests: provider metadata (10 node types), command construction for both nodes,
+  CLI bridge call test, and a real CLI round-trip on the minimal 4-CSV fixture.
+- VRI 2025 provincial archives materialized in `external/femic-public-data`
+  (4.17 GB L1 R1 + 403 MB VDYP7 input) for the P113.2 data lane.
+
+## 2026-10-11 - P113.2 five per-MU instance repos + fresh VRI 2025 lane
+
+- Five public DataLad instance repos created and wired as femic submodules:
+  `femic-tsa08|16|24|40|41-instance` (standard structure, Sphinx docs + GitHub
+  Pages, Arbutus S3 annex remotes, directory markers, `resume=false` for fresh runs).
+- Fresh data lane: 2025 provincial VRI archives (L1 R1 + VDYP7 input) materialized
+  and extracted in `external/femic-public-data` (6.1 GB + 1.7 GB gdbs; annex upload
+  to Arbutus in progress); 2025 entries registered in
+  `metadata/required_datasets.yaml`; `pipeline/io.py` resolution prefers 2025;
+  `instance_bootstrap` notes the stale BCDC direct URLs (now 404).
+- `femic prep validate-case` green for all five instances with
+  `FEMIC_EXTERNAL_DATA_ROOT` pointing at the public mirror.
+- femic docs: `wbi-aoi-instances` guide added to the guides toctree.
+
+## 2026-10-11 - P113.3 per-MU model-build graphs
+
+- Five instance-owned graphs (`workflows/freshforge/tsa<code>_model_build_workflow.yaml`),
+  six-node chain: `validate_case` -> `geospatial_preflight` -> `compile_upstream`
+  -> `btc_post_tipsy` -> `export_woodstock` -> `ws3_bridge`.
+- `freshforge validate` + `plan` green for all five; `femic freshforge workflows
+  list` discovers them.
+- Provider tests now run for real (freshforge installed via the `freshforge`
+  extra); the two new builder tests use lazy imports per file convention.
+- Engine-side contract questions resolved in `UBC-FRESH/wbi-birds`
+  `planning/femic-map.md`.
+
+## 2026-10-12 - P113.4 TSA24 end-to-end smoke complete
+
+- Full chain executed from fresh public data: VRI 2025 clip -> VDYP (Wine) ->
+  TIPSY/BTC (Wine, TIPSYbtc from the public MSI) -> model-input bundle ->
+  Woodstock export (species-split products; cc 80..400; initial-age cap 300 +
+  10-year snapping) -> ws3 sections -> engine `build_model` + one ε-scenario:
+  **optimal, harvest 41,899,620.69 m3, birds 59,432,387.76**.
+- Fixes landed along the way: instance `plots/` directory; TIPSY rule fallback
+  to the stratum BEC zone; BTC wine launcher cwd; species-split yield products
+  (`swdvol`/`hwdvol` from area-weighted VRI species volumes); initial-age
+  snapping/cap options; `.are` age and `.act` action-timing period-unit
+  conversion (ws3 Woodstock time-unit contract); engine runner honors
+  `spec.harvest_acodes`.
+- Evidence record: `external/femic-tsa24-instance/evidence/p113_4_smoke_2026-10-12.md`.

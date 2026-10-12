@@ -3822,3 +3822,46 @@ features that are not yet stable.
 
 Detailed plan: `planning/phase110_coordinator_model_build.md`.
 
+
+## Phase 113: WBI AOI Model-Build Pipelines — TSAs 08/16/24/40/41 (`#316`)
+
+Status: **active**
+
+Branch: `feature/p113-wbi-aoi-model-build`
+
+Goal: deliver the femic + FreshForge model-build path for the five WBI birds AOI
+management units (TSAs 08/16/24/40/41) so the manuscript repro chain
+(`UBC-FRESH/wbi-birds`) is self-bootstrappable from fresh public data through
+the ws3 handoff (`inputs/ws3/<model>.{lan,are,yld,act,trn}`).
+
+Architecture boundary:
+
+- femic owns the instance/overlay machinery, per-MU configs (TIPSY rules in
+  `config/tipsy/tsa<code>.yaml`; VDYP fit overrides in `config/vdyp_fit_policy.yaml`),
+  the compile lane (`femic run`), Woodstock export, and the ws3 bridge.
+- FreshForge owns declarative graphs, provider discovery, and run records; the
+  WBI AOI instance owns its workflows and per-MU overlays.
+- `UBC-FRESH/wbi-birds` owns consuming the staged sections (`wbi.compile_instance`).
+
+Data lane: fresh BC VRI 2025 (`VEG_COMP_LYR_R1_POLY_2025` + VDYP7-input 2025)
+resolved via `femic data bcdc-resolve` (direct zips + AOI-scoped WFS fetch);
+FADM TSA boundaries + SiteProd from the public mirror
+(`external/femic-public-data`, `arbutus-s3`).
+
+Tasks:
+
+- [x] P113.1 FreshForge ws3 handoff nodes (`femic.export_woodstock`,
+      `femic.ws3_bridge`) + `femic export ws3-sections` CLI + tests.
+- [x] P113.2 Five per-MU instance repos (DataLad, UBC-FRESH) with the standard
+      instance structure + Sphinx docs/Pages + fresh VRI 2025 data lane +
+      submodule wiring.
+- [x] P113.3 Per-MU model-build graphs, plan-green, with documented instance
+      roots + data contract (closes the `UBC-FRESH/wbi-birds` femic-map open
+      questions).
+- [x] P113.4 Executable smoke on TSA24 (2026-10-12): fresh VRI 2025 clip ->
+      VDYP (Wine) -> TIPSY/BTC (Wine) -> bundle -> Woodstock (species splits,
+      snapped ages) -> ws3 sections -> engine `build_model` + one ε-scenario
+      (optimal; harvest 41.9M m3, birds 59.4M). Evidence:
+      `external/femic-tsa24-instance/evidence/p113_4_smoke_2026-10-12.md`.
+
+Detailed plan: `planning/phase113_wbi_aoi_model_build.md`.

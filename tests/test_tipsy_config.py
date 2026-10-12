@@ -1019,3 +1019,37 @@ def test_build_tipsy_params_from_config_matches_on_si_level() -> None:
         config=cfg,
     )
     assert out["e"]["SPP_2"] == "CW"
+
+
+def test_config_rule_falls_back_to_stratum_bec_zone() -> None:
+    import pandas as pd
+
+    from femic.pipeline.tipsy_config import (
+        build_tipsy_params_from_config,
+        load_tipsy_tsa_config,
+    )
+
+    config = load_tipsy_tsa_config(tsa_code="24", config_dir="config/tipsy")
+    assert config is not None
+
+    ss = pd.DataFrame(
+        {"BEC_ZONE_CODE": ["ICH"], "SITE_INDEX": [18.0], "forest_type": [1]}
+    )
+    au_data = {
+        "ss": ss,
+        "species": {"SX": {"pct": 100.0}},
+        "stratum_code": "SBS_SX",
+        "si_level": "M",
+    }
+
+    tp = build_tipsy_params_from_config(
+        au_id=2000, au_data=au_data, vdyp_out={}, config=config
+    )
+    assert tp["e"]["AU"] == 12000
+    assert tp["e"]["SPP_1"] == "SW"
+
+    no_fallback = dict(au_data, stratum_code="ICH_SX")
+    with pytest.raises(ValueError, match="No TIPSY config rule matched"):
+        build_tipsy_params_from_config(
+            au_id=2000, au_data=no_fallback, vdyp_out={}, config=config
+        )

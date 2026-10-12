@@ -8,13 +8,65 @@ notes:
   - "For directory artifacts (`*.gdb`), checksum values are SHA256 of deterministic tar streams (`tar --sort=name --mtime=UTC 1970-01-01 --owner=0 --group=0 --numeric-owner`)."
 
 datasets:
+  - id: bc_vri_l1_r1_2025_gdb
+    category: inventory
+    required_for:
+      - "legacy stage 00 stand extraction"
+      - "default provincial compile workflow"
+      - "WBI AOI instance builds (Phase 113)"
+    canonical_instance_path: "data/bc/vri/2025/VEG_COMP_LYR_R1_POLY_2025.gdb"
+    preferred: true
+    fallback_ids:
+      - "bc_vri_l1_r1_2024_gdb"
+      - "bc_vri_l1_r1_2019_gdb"
+    source:
+      publisher: "BC Data Catalogue"
+      url: "https://catalogue.data.gov.bc.ca/dataset/vri-2025-forest-vegetation-composite-rank-1-layer-r1"
+      access_mode: "datalad_mirror"
+      license: "Open Government Licence - British Columbia"
+      provenance_notes: "Provincial 2025 archive tracked in `external/femic-public-data` (data/bc/vri/2025); the legacy direct pub.data.gov.bc.ca URL now returns 404."
+    checksum:
+      algorithm: "md5"
+      value: "8d53ec1653390dcd1f035d8c011af9e0"
+      status: "recorded"
+      target_artifact: "VEG_COMP_LYR_R1_POLY_2025.gdb.zip"
+    datalad_mirror:
+      include: true
+      rationale: "BCDC direct-download URL is stale; the mirror archive is the canonical lane."
+
+  - id: bc_vri_vdyp7_input_2025_gdb
+    category: inventory
+    required_for:
+      - "legacy stage 00 VDYP input extraction"
+      - "default provincial compile workflow"
+      - "WBI AOI instance builds (Phase 113)"
+    canonical_instance_path: "data/bc/vri/2025/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2025.gdb"
+    preferred: true
+    fallback_ids:
+      - "bc_vri_vdyp7_input_2024_gdb"
+      - "bc_vri_vdyp7_input_2019_gdb"
+    source:
+      publisher: "BC Data Catalogue"
+      url: "https://catalogue.data.gov.bc.ca/dataset/vri-2025-variable-density-yield-projection-7-vdyp7-input-layer"
+      access_mode: "datalad_mirror"
+      license: "Open Government Licence - British Columbia"
+      provenance_notes: "Provincial 2025 archive tracked in `external/femic-public-data` (data/bc/vri/2025); the legacy direct pub.data.gov.bc.ca URL now returns 404."
+    checksum:
+      algorithm: "md5"
+      value: "48cbbb4577aa0ae52a71d9470d4a4205"
+      status: "recorded"
+      target_artifact: "VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2025.gdb.zip"
+    datalad_mirror:
+      include: true
+      rationale: "BCDC direct-download URL is stale; the mirror archive is the canonical lane."
+
   - id: bc_vri_l1_r1_2024_gdb
     category: inventory
     required_for:
       - "legacy stage 00 stand extraction"
       - "default provincial compile workflow"
     canonical_instance_path: "data/bc/vri/2024/VEG_COMP_LYR_R1_POLY_2024.gdb"
-    preferred: true
+    preferred: false
     fallback_ids:
       - "bc_vri_l1_r1_2019_gdb"
     source:
@@ -38,7 +90,7 @@ datasets:
       - "legacy stage 00 VDYP input extraction"
       - "default provincial compile workflow"
     canonical_instance_path: "data/bc/vri/2024/VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2024.gdb"
-    preferred: true
+    preferred: false
     fallback_ids:
       - "bc_vri_vdyp7_input_2019_gdb"
     source:

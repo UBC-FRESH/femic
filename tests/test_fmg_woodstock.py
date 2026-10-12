@@ -112,3 +112,74 @@ def test_export_woodstock_package_requires_tsa(tmp_path: Path) -> None:
             output_dir=tmp_path / "woodstock_export",
             tsa_list=[],
         )
+
+
+def test_export_woodstock_package_emits_species_split_products(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _write_bundle_tables(bundle_dir)
+    checkpoint_path = tmp_path / "checkpoint7.feather"
+    species_checkpoint_path = tmp_path / "ria_vri_vclr1p_checkpoint4.feather"
+    output_dir = tmp_path / "woodstock_export"
+    checkpoint_path.touch()
+    species_checkpoint_path.touch()
+
+    checkpoint_df = pd.DataFrame(
+        [
+            {
+                "tsa_code": "k3z",
+                "au": 985501000,
+                "PROJ_AGE_1": 74,
+                "FEATURE_AREA_SQM": 12000.0,
+                "thlb_raw": 1,
+                "geometry": Polygon([(0, 0), (100, 0), (100, 100), (0, 100), (0, 0)]),
+            }
+        ]
+    )
+    species_df = pd.DataFrame(
+        [
+            {
+                "FEATURE_ID": 1,
+                "FEATURE_AREA_SQM": 100.0,
+                "live_vol_per_ha_125_SW": 30.0,
+                "live_vol_per_ha_125_AT": 10.0,
+            }
+        ]
+    )
+    au_df = pd.DataFrame([{"FEATURE_ID": 1, "au": 985501000}])
+
+    def _fake_read_feather(path, *args, **kwargs):
+        if str(path).endswith("checkpoint4.feather"):
+            return species_df
+        if "columns" in kwargs:
+            wanted = set(kwargs["columns"])
+            return au_df[[c for c in au_df.columns if c in wanted]]
+        return checkpoint_df
+
+    monkeypatch.setattr("femic.fmg.patchworks.pd.read_feather", _fake_read_feather)
+
+    result = export_woodstock_package(
+        bundle_dir=bundle_dir,
+        checkpoint_path=checkpoint_path,
+        output_dir=output_dir,
+        tsa_list=["k3z"],
+    )
+
+    yields = pd.read_csv(result.yields_csv_path)
+    assert "product" in yields.columns
+    products = set(yields["product"].unique())
+    assert products == {"totvol", "swdvol", "hwdvol"}
+    unmanaged_sw = yields[
+        (yields["ifm"] == "unmanaged")
+        & (yields["product"] == "swdvol")
+        & (yields["age"] == 1)
+    ]
+    unmanaged_hw = yields[
+        (yields["ifm"] == "unmanaged")
+        & (yields["product"] == "hwdvol")
+        & (yields["age"] == 1)
+    ]
+    # 30/(30+10) = 0.75 softwood, 0.25 hardwood of totvol=10.0
+    assert abs(float(unmanaged_sw["volume"].iloc[0]) - 7.5) < 1e-9
+    assert abs(float(unmanaged_hw["volume"].iloc[0]) - 2.5) < 1e-9

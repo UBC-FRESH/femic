@@ -103,6 +103,23 @@ Use:
 
 Outputs CSV compatibility tables for yield/area/action/transition ingestion.
 
+ws3 Section Handoff
+-------------------
+
+Use:
+
+.. code-block:: bash
+
+   PYTHONPATH=src python -m femic export ws3-sections \
+     --woodstock-dir output/woodstock \
+     --output-dir output/ws3 \
+     --model-name <model>
+
+Builds the five ws3 Woodstock section files (``<model>.lan``, ``.are``, ``.yld``,
+``.act``, ``.trn``) from the Woodstock CSV artifacts — the file contract consumed
+by the WBI birds engine. The FreshForge nodes ``femic.export_woodstock`` and
+``femic.ws3_bridge`` wrap these two steps for per-MU graphs.
+
 Dual-Fork Export (Patchworks + Woodstock + Optional ws3 Smoke)
 --------------------------------------------------------------
 

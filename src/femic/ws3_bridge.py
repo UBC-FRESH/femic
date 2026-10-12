@@ -27,8 +27,14 @@ def build_ws3_sections_from_femic_woodstock(
     woodstock_dir: Path,
     output_dir: Path,
     model_name: str = "femic_ws3_bridge",
+    period_length: int = 5,
 ) -> Ws3BridgeResult:
-    """Convert FEMIC Woodstock CSV outputs to ws3 Woodstock section text files."""
+    """Convert FEMIC Woodstock CSV outputs to ws3 Woodstock section text files.
+
+    ws3's Woodstock importer measures ``.are`` stand ages in **periods** and
+    converts them to years by multiplying by the model period length; FEMIC
+    checkpoint ages are in years, so the bridge converts them here.
+    """
     resolved_input = woodstock_dir.expanduser().resolve()
     resolved_output = output_dir.expanduser().resolve()
     yields = pd.read_csv(resolved_input / "woodstock_yields.csv")
@@ -127,6 +133,7 @@ def build_ws3_sections_from_femic_woodstock(
     )
 
     _write_are(
+        period_length=int(period_length),
         path=are_path,
         areas=areas,
         curve_map=curve_map,
@@ -138,7 +145,11 @@ def build_ws3_sections_from_femic_woodstock(
         curve_map=curve_map,
     )
 
-    _write_act(path=act_path, actions=actions)
+    _write_act(
+        path=act_path,
+        actions=actions,
+        period_length=int(period_length),
+    )
     _write_trn(path=trn_path, transitions=transitions, curve_map=curve_map)
 
     return Ws3BridgeResult(
@@ -175,10 +186,20 @@ def _write_lan(
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _write_are(*, path: Path, areas: pd.DataFrame, curve_map: pd.DataFrame) -> None:
+def _write_are(
+    *,
+    path: Path,
+    areas: pd.DataFrame,
+    curve_map: pd.DataFrame,
+    period_length: int = 5,
+) -> None:
+    if int(period_length) <= 0:
+        raise ValueError("period_length must be a positive integer")
     merged = areas.merge(curve_map, on=["tsa", "ifm", "au_id"], how="left")
     merged = merged.dropna(subset=["curve_id", "stratum_code"])
     merged["curve_id"] = merged["curve_id"].astype(int)
+    # Woodstock .are ages are in periods; ws3 multiplies by the period length.
+    merged["age"] = merged["age"].astype(int) // int(period_length)
     grouped = (
         merged.groupby(
             ["tsa", "ifm", "au_id", "stratum_code", "curve_id", "age"], as_index=False
@@ -199,6 +220,8 @@ def _write_are(*, path: Path, areas: pd.DataFrame, curve_map: pd.DataFrame) -> N
 
 def _write_yld(*, path: Path, yields: pd.DataFrame, curve_map: pd.DataFrame) -> None:
     lines: list[str] = []
+    products = ("totvol", "swdvol", "hwdvol")
+    has_product = "product" in yields.columns
     seen_blocks: set[tuple[str, str, int, str, int]] = set()
     for row in curve_map.sort_values(["tsa", "ifm", "au_id", "curve_id"]).itertuples():
         key = (
@@ -211,22 +234,32 @@ def _write_yld(*, path: Path, yields: pd.DataFrame, curve_map: pd.DataFrame) -> 
         if key in seen_blocks:
             continue
         seen_blocks.add(key)
-        subset = yields[
+        subset_all = yields[
             (yields["tsa"] == key[0])
             & (yields["ifm"] == key[1])
             & (yields["au_id"] == key[2])
             & (yields["curve_id"] == key[4])
-        ].sort_values("age")
-        if subset.empty:
-            continue
-        lines.append(f"*Y {key[0]} {key[1]} {key[2]} {key[3]} {key[4]}")
-        lines.append("_AGE totvol")
-        for r in subset.itertuples():
-            lines.append(f"{_to_int(r.age)} {_to_float(r.volume):.6f}")
+        ]
+        for product in products:
+            if has_product:
+                subset = subset_all[subset_all["product"] == product]
+            elif product == "totvol":
+                subset = subset_all
+            else:
+                continue
+            subset = subset.sort_values("age")
+            if subset.empty:
+                continue
+            lines.append(f"*Y {key[0]} {key[1]} {key[2]} {key[3]} {key[4]}")
+            lines.append(f"_AGE {product}")
+            for r in subset.itertuples():
+                lines.append(f"{_to_int(r.age)} {_to_float(r.volume):.6f}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _write_act(*, path: Path, actions: pd.DataFrame) -> None:
+def _write_act(*, path: Path, actions: pd.DataFrame, period_length: int = 5) -> None:
+    if int(period_length) <= 0:
+        raise ValueError("period_length must be a positive integer")
     lines: list[str] = ["ACTIONS"]
     for action_id, block in actions.groupby("action_id"):
         lines.append(f"*ACTION {action_id} Y")
@@ -236,9 +269,13 @@ def _write_act(*, path: Path, actions: pd.DataFrame) -> None:
             .drop_duplicates()
             .itertuples(index=False)
         ):
+            # Woodstock action timing is in periods; ws3 multiplies by the
+            # period length when compiling operability bounds.
+            min_periods = _to_int(row.min_age) // int(period_length)
+            max_periods = _to_int(row.max_age) // int(period_length)
             lines.append(
                 f"{row.tsa} {row.from_ifm} {_to_int(row.au_id)} ? ? "
-                f"_AGE >= {_to_int(row.min_age)} AND _AGE <= {_to_int(row.max_age)}"
+                f"_AGE >= {min_periods} AND _AGE <= {max_periods}"
             )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
