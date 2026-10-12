@@ -96,12 +96,13 @@ Each instance repo mirrors the established instance layout (exemplar:
         plan-green (`freshforge validate|plan`; six-node chain).
   - [x] Documented instance roots + data contract; closed the femic-map open
         questions (see `UBC-FRESH/wbi-birds` `planning/femic-map.md`).
-- [ ] P113.4 — Executable smoke on at least one MU (TSA24).
-  - [ ] Compile lane on fresh VRI clip (VDYP via Wine; TIPSY/BTC via Wine,
+- [x] P113.4 — Executable smoke on TSA24 (2026-10-12).
+  - [x] Compile lane on fresh VRI clip (VDYP via Wine; TIPSY/BTC via Wine,
         TIPSYbtc extracted from the public TIPSY 4.7 MSI).
-  - [ ] Bundle -> Woodstock CSVs -> ws3 sections.
-  - [ ] Engine handshake: `wbi.compile_instance` + `build_model` + one
-        scenario against the genuine export.
+  - [x] Bundle -> Woodstock CSVs -> ws3 sections (species splits; periods
+        contract for `.are` ages and `.act` action timing).
+  - [x] Engine handshake: `build_model` + one ε-scenario on the genuine export
+        (optimal; harvest 41.9M m3, birds 59.4M).
 
 ## Out of scope
 

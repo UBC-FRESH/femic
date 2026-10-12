@@ -3858,8 +3858,10 @@ Tasks:
 - [x] P113.3 Per-MU model-build graphs, plan-green, with documented instance
       roots + data contract (closes the `UBC-FRESH/wbi-birds` femic-map open
       questions).
-- [ ] P113.4 Executable smoke on at least one MU: compile -> curves ->
-      model-input bundle -> Woodstock CSVs -> ws3 sections -> engine
-      `compile_instance` + `build_model` + one scenario.
+- [x] P113.4 Executable smoke on TSA24 (2026-10-12): fresh VRI 2025 clip ->
+      VDYP (Wine) -> TIPSY/BTC (Wine) -> bundle -> Woodstock (species splits,
+      snapped ages) -> ws3 sections -> engine `build_model` + one ε-scenario
+      (optimal; harvest 41.9M m3, birds 59.4M). Evidence:
+      `external/femic-tsa24-instance/evidence/p113_4_smoke_2026-10-12.md`.
 
 Detailed plan: `planning/phase113_wbi_aoi_model_build.md`.

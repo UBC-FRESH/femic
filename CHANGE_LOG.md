@@ -15070,3 +15070,18 @@
   extra); the two new builder tests use lazy imports per file convention.
 - Engine-side contract questions resolved in `UBC-FRESH/wbi-birds`
   `planning/femic-map.md`.
+
+## 2026-10-12 - P113.4 TSA24 end-to-end smoke complete
+
+- Full chain executed from fresh public data: VRI 2025 clip -> VDYP (Wine) ->
+  TIPSY/BTC (Wine, TIPSYbtc from the public MSI) -> model-input bundle ->
+  Woodstock export (species-split products; cc 80..400; initial-age cap 300 +
+  10-year snapping) -> ws3 sections -> engine `build_model` + one ε-scenario:
+  **optimal, harvest 41,899,620.69 m3, birds 59,432,387.76**.
+- Fixes landed along the way: instance `plots/` directory; TIPSY rule fallback
+  to the stratum BEC zone; BTC wine launcher cwd; species-split yield products
+  (`swdvol`/`hwdvol` from area-weighted VRI species volumes); initial-age
+  snapping/cap options; `.are` age and `.act` action-timing period-unit
+  conversion (ws3 Woodstock time-unit contract); engine runner honors
+  `spec.harvest_acodes`.
+- Evidence record: `external/femic-tsa24-instance/evidence/p113_4_smoke_2026-10-12.md`.
