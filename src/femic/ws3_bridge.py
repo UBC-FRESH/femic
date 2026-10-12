@@ -336,10 +336,12 @@ def _write_trn(
             if target is None:
                 continue
             stratum_code, curve_id = target
-            # Target age 0: the stand regenerates and can re-enter the
-            # operable window (legacy spades_ws3 used `targetage: 0`).
+            # Trailing token is the target PROPORTION in percent
+            # (ws3: tprop = value * 0.01); the regeneration age comes from the
+            # action's `*ACTION <code> Y` flag (targetage = 0), matching the
+            # legacy spades_ws3 `targetage: 0` multi-rotation setup.
             lines.append(
-                f"*TARGET {row.tsa} {row.to_ifm} {_to_int(row.next_au_id)} {stratum_code} {curve_id} 0"
+                f"*TARGET {row.tsa} {row.to_ifm} {_to_int(row.next_au_id)} {stratum_code} {curve_id} 100"
             )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
