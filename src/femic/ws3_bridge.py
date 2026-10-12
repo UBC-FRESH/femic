@@ -266,18 +266,18 @@ def _write_yld(
             width = int(period_length)
             ages = subset["age"].astype(int)
             subset = subset.assign(
-                _age_periods=ages // width,
-                _mid_dist=(ages % width - width / 2).abs(),
+                age_periods=ages // width,
+                mid_dist=(ages % width - width / 2).abs(),
             )
             subset = (
-                subset.sort_values(["_age_periods", "_mid_dist"])
-                .drop_duplicates("_age_periods", keep="first")
-                .sort_values("_age_periods")
+                subset.sort_values(["age_periods", "mid_dist"])
+                .drop_duplicates("age_periods", keep="first")
+                .sort_values("age_periods")
             )
             lines.append(f"*Y {key[0]} {key[1]} {key[2]} {key[3]} {key[4]}")
             lines.append(f"_AGE {product}")
             for r in subset.itertuples():
-                lines.append(f"{int(r._age_periods)} {_to_float(r.volume):.6f}")
+                lines.append(f"{int(r.age_periods)} {_to_float(r.volume):.6f}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
