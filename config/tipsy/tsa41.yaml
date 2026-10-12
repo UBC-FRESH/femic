@@ -131,6 +131,35 @@ rules:
         PCT_4: 2
         Density: 1219
         Util_DBH_cm: 12.5
+  - id: "aspen_forest_type_3"
+    when:
+      leading_species_in: ["AC", "ACB", "ACT", "AD", "AT", "AX"]
+      forest_type_in: [3]
+    assign:
+      e:
+        SPP_1: "AT"
+        SPP_2: null
+        SPP_3: null
+        SPP_4: null
+        PCT_1: 100
+        PCT_2: null
+        PCT_3: null
+        PCT_4: null
+        Density: 3134
+        Regen_Method: "N"
+        Util_DBH_cm: 12.5
+      f:
+        SPP_1: "AT"
+        SPP_2: null
+        SPP_3: null
+        SPP_4: null
+        PCT_1: 100
+        PCT_2: null
+        PCT_3: null
+        PCT_4: null
+        Density: 3134
+        Regen_Method: "N"
+        Util_DBH_cm: 12.5
   - id: "aspen_forest_type_4"
     when:
       leading_species_in: ["AC", "ACB", "ACT", "AD", "AT", "AX"]
