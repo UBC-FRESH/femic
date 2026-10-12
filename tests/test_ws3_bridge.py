@@ -89,9 +89,13 @@ def test_build_ws3_sections_from_femic_woodstock(tmp_path: Path) -> None:
     assert result.yld_path.exists()
     assert result.act_path.exists()
     assert result.trn_path.exists()
+    assert "*TARGET 29 managed 101 st101 5001 0" in result.trn_path.read_text()
     assert "*THEME Timber Supply Area (TSA)" in result.lan_path.read_text()
-    # .are ages are in periods (1 year // 5 = 0 periods)
+    # .are/.yld ages are in periods (1 year // 5 = 0 periods)
     assert "*A 29 managed 101 st101 5001 0 12.500000" in result.are_path.read_text()
+    yld_text = result.yld_path.read_text()
+    assert "_AGE totvol" in yld_text
+    assert "\n0 2.500000" in yld_text
     assert "*Y 29 managed 101 st101 5001" in result.yld_path.read_text()
     assert "*ACTION cc Y" in result.act_path.read_text()
     assert "*CASE cc" in result.trn_path.read_text()

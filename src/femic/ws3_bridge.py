@@ -143,6 +143,7 @@ def build_ws3_sections_from_femic_woodstock(
         path=yld_path,
         yields=yields,
         curve_map=curve_map,
+        period_length=int(period_length),
     )
 
     _write_act(
@@ -218,7 +219,15 @@ def _write_are(
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _write_yld(*, path: Path, yields: pd.DataFrame, curve_map: pd.DataFrame) -> None:
+def _write_yld(
+    *,
+    path: Path,
+    yields: pd.DataFrame,
+    curve_map: pd.DataFrame,
+    period_length: int = 5,
+) -> None:
+    if int(period_length) <= 0:
+        raise ValueError("period_length must be a positive integer")
     lines: list[str] = []
     products = ("totvol", "swdvol", "hwdvol")
     has_product = "product" in yields.columns
@@ -253,7 +262,10 @@ def _write_yld(*, path: Path, yields: pd.DataFrame, curve_map: pd.DataFrame) -> 
             lines.append(f"*Y {key[0]} {key[1]} {key[2]} {key[3]} {key[4]}")
             lines.append(f"_AGE {product}")
             for r in subset.itertuples():
-                lines.append(f"{_to_int(r.age)} {_to_float(r.volume):.6f}")
+                # Woodstock .yld ages are in periods; ws3 multiplies age-based
+                # yield components by the model period length.
+                age_periods = _to_int(r.age) // int(period_length)
+                lines.append(f"{age_periods} {_to_float(r.volume):.6f}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -312,8 +324,10 @@ def _write_trn(
             if target is None:
                 continue
             stratum_code, curve_id = target
+            # Target age 0: the stand regenerates and can re-enter the
+            # operable window (legacy spades_ws3 used `targetage: 0`).
             lines.append(
-                f"*TARGET {row.tsa} {row.to_ifm} {_to_int(row.next_au_id)} {stratum_code} {curve_id} 100"
+                f"*TARGET {row.tsa} {row.to_ifm} {_to_int(row.next_au_id)} {stratum_code} {curve_id} 0"
             )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
