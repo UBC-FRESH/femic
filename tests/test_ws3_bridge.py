@@ -95,7 +95,9 @@ def test_build_ws3_sections_from_femic_woodstock(tmp_path: Path) -> None:
     assert "*A 29 managed 101 st101 5001 0 12.500000" in result.are_path.read_text()
     yld_text = result.yld_path.read_text()
     assert "_AGE totvol" in yld_text
-    assert "\n0 2.500000" in yld_text
+    # yearly samples collapse to one per period, midpoint-closest row wins
+    # (ages 1,2 in period 0 -> midpoint 2.5 -> age 2 kept)
+    assert "\n0 5.000000" in yld_text
     assert "*Y 29 managed 101 st101 5001" in result.yld_path.read_text()
     assert "*ACTION cc Y" in result.act_path.read_text()
     assert "*CASE cc" in result.trn_path.read_text()

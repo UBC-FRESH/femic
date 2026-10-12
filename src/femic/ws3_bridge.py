@@ -259,13 +259,25 @@ def _write_yld(
             subset = subset.sort_values("age")
             if subset.empty:
                 continue
+            # Woodstock .yld ages are in periods; ws3 multiplies age-based
+            # yield components by the model period length. Yearly samples are
+            # collapsed to one sample per period, taking the row closest to the
+            # period midpoint (linear interpolation preserves the curve shape).
+            width = int(period_length)
+            ages = subset["age"].astype(int)
+            subset = subset.assign(
+                _age_periods=ages // width,
+                _mid_dist=(ages % width - width / 2).abs(),
+            )
+            subset = (
+                subset.sort_values(["_age_periods", "_mid_dist"])
+                .drop_duplicates("_age_periods", keep="first")
+                .sort_values("_age_periods")
+            )
             lines.append(f"*Y {key[0]} {key[1]} {key[2]} {key[3]} {key[4]}")
             lines.append(f"_AGE {product}")
             for r in subset.itertuples():
-                # Woodstock .yld ages are in periods; ws3 multiplies age-based
-                # yield components by the model period length.
-                age_periods = _to_int(r.age) // int(period_length)
-                lines.append(f"{age_periods} {_to_float(r.volume):.6f}")
+                lines.append(f"{int(r._age_periods)} {_to_float(r.volume):.6f}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
