@@ -2132,6 +2132,19 @@ def _resolve_ct_configs_for_au(
     else:
         payloads = [ct_payload]
 
+    raw_origins = ct_payload.get("origins", ["planted"])
+    if isinstance(raw_origins, str):
+        origins = [raw_origins.strip().lower()]
+    elif isinstance(raw_origins, (list, tuple)):
+        origins = [str(item).strip().lower() for item in raw_origins if str(item).strip()]
+    else:
+        raise ValueError("commercial_thinning.origins must be a string or list")
+    state_by_origin = ct_payload.get("state_by_origin", {})
+    if state_by_origin is None:
+        state_by_origin = {}
+    if not isinstance(state_by_origin, dict):
+        raise ValueError("commercial_thinning.state_by_origin must be a mapping/object")
+
     configs: list[dict[str, Any]] = []
     for payload in payloads:
         bucket_label = str(payload.get("label", "CT")).strip().upper() or "CT"
@@ -2142,20 +2155,46 @@ def _resolve_ct_configs_for_au(
                 resolved_qmd_fraction = max(0.0, float(by_bucket[bucket_label]))
             except (TypeError, ValueError):
                 pass
-        configs.append(
-            {
-                "label": bucket_label,
-                "from_state": str(payload.get("from_state", "cc_pl")).strip().lower(),
-                "to_state": str(payload.get("to_state", "cc_pl_ct")).strip().lower(),
-                "min_origin": str(payload.get("min_origin", "planted")).strip().lower(),
-                "ct_age": ct_age,
-                "basal_area_fraction": basal_area_fraction,
-                "ba_to_volume_ratio": ba_to_volume_ratio,
-                "removal_fraction": removal_fraction,
-                "qmd_response_fraction": resolved_qmd_fraction,
-                "final_felling_gap_factor": final_felling_gap_factor,
-            }
-        )
+        for origin in origins:
+            origin_state = state_by_origin.get(origin, {})
+            if not isinstance(origin_state, dict):
+                raise ValueError(
+                    f"commercial_thinning.state_by_origin.{origin} must be a mapping/object"
+                )
+            default_from = _default_silv_state_for_origin(origin)
+            from_state = str(
+                origin_state.get(
+                    "from_state",
+                    payload.get("from_state", default_from)
+                    if origin == "planted"
+                    else default_from,
+                )
+            ).strip().lower()
+            to_state = str(
+                origin_state.get(
+                    "to_state",
+                    payload.get("to_state", f"{from_state}_ct")
+                    if origin == "planted"
+                    else f"{from_state}_ft",
+                )
+            ).strip().lower()
+            configs.append(
+                {
+                    "label": bucket_label,
+                    "origin": origin,
+                    "from_state": from_state,
+                    "to_state": to_state,
+                    "min_origin": str(
+                        payload.get("min_origin", "planted")
+                    ).strip().lower(),
+                    "ct_age": ct_age,
+                    "basal_area_fraction": basal_area_fraction,
+                    "ba_to_volume_ratio": ba_to_volume_ratio,
+                    "removal_fraction": removal_fraction,
+                    "qmd_response_fraction": resolved_qmd_fraction,
+                    "final_felling_gap_factor": final_felling_gap_factor,
+                }
+            )
     return tuple(configs)
 
 
@@ -3715,29 +3754,31 @@ def build_patchworks_forestmodel_definition(
                             ),
                         )
                     )
-                for ct_config in ct_configs:
-                    if ct_config["from_state"] != default_silv_state:
-                        continue
-                    track_treatments_list.append(
-                        TreatmentDefinition(
-                            label=str(ct_config["label"]),
-                            min_age=int(ct_config["ct_age"]),
-                            max_age=int(ct_config["ct_age"]),
-                            adjust="R",
-                            assignments=(
-                                TreatmentAssignment(
-                                    field="treatment",
-                                    value=_as_quoted_literal(str(ct_config["label"])),
-                                ),
+            for ct_config in ct_configs:
+                if str(ct_config.get("origin", "planted")) != origin:
+                    continue
+                if ct_config["from_state"] != default_silv_state:
+                    continue
+                track_treatments_list.append(
+                    TreatmentDefinition(
+                        label=str(ct_config["label"]),
+                        min_age=int(ct_config["ct_age"]),
+                        max_age=int(ct_config["ct_age"]),
+                        adjust="R",
+                        assignments=(
+                            TreatmentAssignment(
+                                field="treatment",
+                                value=_as_quoted_literal(str(ct_config["label"])),
                             ),
-                            transition_assignments=(
-                                TreatmentAssignment(
-                                    field="SILV_STATE",
-                                    value=_as_quoted_literal(ct_config["to_state"]),
-                                ),
+                        ),
+                        transition_assignments=(
+                            TreatmentAssignment(
+                                field="SILV_STATE",
+                                value=_as_quoted_literal(ct_config["to_state"]),
                             ),
-                        )
+                        ),
                     )
+                )
             track_treatments = tuple(track_treatments_list)
             selects.append(
                 SelectDefinition(
@@ -3773,6 +3814,10 @@ def build_patchworks_forestmodel_definition(
         planted_species_prop_points = _species_curve_points_by_species(
             context=context,
             species_curve_map=planted_species_curve_map,
+        )
+        natural_species_prop_points = _species_curve_points_by_species(
+            context=context,
+            species_curve_map=natural_species_curve_map,
         )
         pct_state_payload_by_to_state: dict[str, dict[str, Any]] = {}
         if pct_configs and managed_total_curve is not None:
@@ -4089,12 +4134,27 @@ def build_patchworks_forestmodel_definition(
                     "stems_curve_points": pct_stems_curve_points,
                 }
 
-        if ct_configs and managed_total_curve is not None:
+        if ct_configs and (managed_total_curve is not None or unmanaged_total_curve is not None):
             for ct_config in ct_configs:
-                ct_species_prop_points = planted_species_prop_points
+                ct_origin = str(ct_config.get("origin", "planted"))
+                ct_total_curve = (
+                    managed_total_curve if ct_origin == "planted" else unmanaged_total_curve
+                )
+                if ct_total_curve is None:
+                    continue
+                ct_species_prop_points = (
+                    planted_species_prop_points
+                    if ct_origin == "planted"
+                    else natural_species_prop_points
+                )
+                ct_species_curve_map = (
+                    planted_species_curve_map
+                    if ct_origin == "planted"
+                    else natural_species_curve_map
+                )
                 ct_species_prop_curve_refs = {
                     species: source_curve_ref_by_id[curve_id]
-                    for species, curve_id in planted_species_curve_map.items()
+                    for species, curve_id in ct_species_curve_map.items()
                     if curve_id in source_curve_ref_by_id
                 }
                 ct_stems_source_points = managed_stems_curve_points
@@ -4111,7 +4171,7 @@ def build_patchworks_forestmodel_definition(
                     )
                 ct_age = int(ct_config["ct_age"])
                 fert_sequence: tuple[dict[str, Any], ...] = ()
-                if managed_total_curve is not None:
+                if ct_origin == "planted" and managed_total_curve is not None:
                     fert_sequence = _resolve_fertilization_sequence_for_au(
                         silviculture_config=silviculture_config,
                         au_id=au.au_id,
@@ -4139,7 +4199,7 @@ def build_patchworks_forestmodel_definition(
                     max(
                         0.0,
                         _curve_value_at_x(
-                            points=managed_total_curve.points, x=float(ct_age)
+                            points=ct_total_curve.points, x=float(ct_age)
                         )
                         * float(ct_config["removal_fraction"]),
                     ),
@@ -4148,11 +4208,11 @@ def build_patchworks_forestmodel_definition(
                 ct_product_curve_ref = f"au_{au_token}_{state_slug}_harvest_total"
                 ct_residual_curve_ref = f"au_{au_token}_{state_slug}_residual_total"
                 curves[ct_product_curve_ref] = _build_constant_curve_points_like(
-                    source_curve_points=managed_total_curve.points,
+                    source_curve_points=ct_total_curve.points,
                     value=ct_removed_volume,
                 )
                 curves[ct_residual_curve_ref] = _build_curve_with_post_thinning_gap(
-                    source_curve_points=managed_total_curve.points,
+                    source_curve_points=ct_total_curve.points,
                     transition_age=ct_age,
                     gap_at_transition_value=ct_removed_volume,
                     final_gap_factor=float(ct_config["final_felling_gap_factor"]),
@@ -4253,7 +4313,7 @@ def build_patchworks_forestmodel_definition(
                 if qmd_enabled:
                     ct_qmd_curve_ref = f"au_{au_token}_managed_{state_slug}_qmd"
                     curves[ct_qmd_curve_ref] = _build_qmd_curve_points(
-                        source_curve_points=managed_total_curve.points,
+                        source_curve_points=ct_total_curve.points,
                         si_level=au.si_level,
                         site_index=(
                             float(qmd_support.site_index)

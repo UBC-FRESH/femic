@@ -941,6 +941,61 @@ def test_build_forestmodel_xml_tree_uses_configured_ct_treatment_label() -> None
     assert "CT" not in labels
 
 
+def test_build_forestmodel_xml_tree_emits_ct_for_configured_origins() -> None:
+    """A `commercial_thinning.origins` list emits FT on each origin's track."""
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=1.0, y=5.0),
+            CurvePoint(x=40.0, y=200.0),
+            CurvePoint(x=60.0, y=320.0),
+        ),
+        managed_points=(
+            CurvePoint(x=1.0, y=8.0),
+            CurvePoint(x=40.0, y=240.0),
+            CurvePoint(x=60.0, y=360.0),
+        ),
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "label": "FT",
+            "origins": ["natural", "planted"],
+            "state_by_origin": {
+                "natural": {"from_state": "baseline", "to_state": "baseline_ft"},
+                "planted": {"from_state": "cc_pl", "to_state": "cc_pl_ft"},
+            },
+            "eligible_au_ids": [985502001],
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "qmd": {"enabled": True, "harvested_product_accounts_enabled": True},
+    }
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config=silviculture_config,
+    )
+    natural_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'natural' and SILV_STATE eq 'baseline'\"]"
+    )
+    assert natural_select is not None
+    natural_labels = [
+        n.attrib["label"] for n in natural_select.findall("./track/treatment")
+    ]
+    assert "FT" in natural_labels
+    planted_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'\"]"
+    )
+    assert planted_select is not None
+    planted_labels = [
+        n.attrib["label"] for n in planted_select.findall("./track/treatment")
+    ]
+    assert "FT" in planted_labels
+
+
 def test_build_forestmodel_xml_tree_adds_ctfert_log_grade_products_for_cc_and_ct() -> (
     None
 ):
