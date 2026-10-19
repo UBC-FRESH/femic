@@ -4134,6 +4134,7 @@ def build_patchworks_forestmodel_definition(
                             )
                 fert1_config = fert_sequence[0] if fert_sequence else None
                 state_slug = _sanitize_id_component(str(ct_config["to_state"]))
+                ct_label = str(ct_config["label"])
                 ct_removed_volume = round(
                     max(
                         0.0,
@@ -4159,14 +4160,14 @@ def build_patchworks_forestmodel_definition(
                 )
                 ct_product_attrs = [
                     AttributeBinding(
-                        label="product.Treated.managed.CT", curve_idref="unity"
+                        label=f"product.Treated.managed.{ct_label}", curve_idref="unity"
                     ),
                     AttributeBinding(
                         label="product.Yield.managed.Total",
                         curve_idref=ct_product_curve_ref,
                     ),
                     AttributeBinding(
-                        label="product.HarvestedVolume.managed.Total.CT",
+                        label=f"product.HarvestedVolume.managed.Total.{ct_label}",
                         curve_idref=ct_product_curve_ref,
                     ),
                 ]
@@ -4190,7 +4191,7 @@ def build_patchworks_forestmodel_definition(
                         managed_indicator_curves=managed_indicator_curves,
                         source_curve_points=curves[ct_product_curve_ref],
                         au_token=au_token,
-                        treatment_label="CT",
+                        treatment_label=ct_label,
                         silv_state=str(ct_config["from_state"]),
                         curve_ref_prefix=(f"au_{au_token}_{state_slug}_ct_log_grade"),
                         compile_recipe=btc_indicator_bank_compile_recipes.get(
@@ -4297,7 +4298,7 @@ def build_patchworks_forestmodel_definition(
                             AttributeBinding(
                                 label=_harvested_treated_area_product_label(
                                     au_token=au_token,
-                                    treatment_label="CT",
+                                    treatment_label=ct_label,
                                 ),
                                 curve_idref="unity",
                             )
@@ -4306,7 +4307,7 @@ def build_patchworks_forestmodel_definition(
                             AttributeBinding(
                                 label=_harvested_qmd_numerator_product_label(
                                     au_token=au_token,
-                                    treatment_label="CT",
+                                    treatment_label=ct_label,
                                 ),
                                 curve_idref=managed_qmd_curve_ref,
                             )
@@ -4385,7 +4386,7 @@ def build_patchworks_forestmodel_definition(
                         )
                         ct_product_attrs.append(
                             AttributeBinding(
-                                label=f"product.HarvestedVolume.managed.{species}.CT",
+                                label=f"product.HarvestedVolume.managed.{species}.{ct_label}",
                                 curve_idref=product_curve_ref,
                             )
                         )
@@ -4398,7 +4399,7 @@ def build_patchworks_forestmodel_definition(
                         grade_curve_points_by_indicator=ct_log_grade_curves,
                         au_token=au_token,
                         origin="planted",
-                        treatment_label="CT",
+                        treatment_label=ct_label,
                         curve_ref_prefix=(
                             f"au_{au_token}_{state_slug}_ct_log_grade_species"
                         ),

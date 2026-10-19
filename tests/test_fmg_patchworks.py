@@ -894,6 +894,53 @@ def test_build_forestmodel_xml_tree_adds_ct_track_and_qmd_when_configured() -> N
     assert f1_treatment_labels == ["CC", "F2"]
 
 
+def test_build_forestmodel_xml_tree_uses_configured_ct_treatment_label() -> None:
+    """A `commercial_thinning.label` renames the CT treatment and its accounts."""
+    context = _build_single_au_context(
+        au_id=985502001,
+        stratum_code="CWHvm_FDC+HW",
+        si_level="M",
+        unmanaged_points=(
+            CurvePoint(x=1.0, y=5.0),
+            CurvePoint(x=40.0, y=200.0),
+            CurvePoint(x=60.0, y=320.0),
+        ),
+        managed_points=(
+            CurvePoint(x=1.0, y=8.0),
+            CurvePoint(x=40.0, y=240.0),
+            CurvePoint(x=60.0, y=360.0),
+        ),
+    )
+    silviculture_config = {
+        "commercial_thinning": {
+            "enabled": True,
+            "label": "FT",
+            "eligible_au_ids": [985502001],
+            "from_state": "cc_pl",
+            "to_state": "cc_pl_ft",
+            "age_by_au": {"985502001": 40},
+            "basal_area_removal_fraction": 0.30,
+            "basal_area_to_volume_ratio": 1.0,
+        },
+        "qmd": {"enabled": True, "harvested_product_accounts_enabled": True},
+    }
+    root = build_forestmodel_xml_tree_from_context(
+        context=context,
+        silviculture_config=silviculture_config,
+    )
+    xml_text = et.tostring(root, encoding="unicode")
+    assert "product.Treated.managed.CWHvm_FDC_HW_M.FT" in xml_text
+    assert "product.HarvestedVolume.managed.Total.FT" in xml_text
+    assert "product.HarvestedVolume.managed.Total.CT" not in xml_text
+    managed_select = root.find(
+        "./select[@statement=\"AU eq 985502001 and IFM eq 'managed' and ORIGIN eq 'planted' and SILV_STATE eq 'cc_pl'\"]"
+    )
+    assert managed_select is not None
+    labels = [n.attrib["label"] for n in managed_select.findall("./track/treatment")]
+    assert "FT" in labels
+    assert "CT" not in labels
+
+
 def test_build_forestmodel_xml_tree_adds_ctfert_log_grade_products_for_cc_and_ct() -> (
     None
 ):
