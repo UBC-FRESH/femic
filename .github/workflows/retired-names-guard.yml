@@ -1,0 +1,32 @@
+name: retired-names-guard
+
+# Runs the naming guard alone rather than the whole suite. The suite has pre-existing
+# failures unrelated to naming, so a full gate would be red for reasons that would train
+# people to ignore it. This job exists to make one class of regression impossible to
+# merge: the return of the retired `ria_` prefix (see femic#329).
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  guard:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install pytest
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Retired-name guard
+        run: python -m pytest tests/test_no_ria_prefix.py -q
