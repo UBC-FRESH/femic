@@ -12,6 +12,7 @@
       build_woodstock_areas_table
       build_woodstock_transitions_table
       build_woodstock_yields_table
+      compute_au_species_shares
       export_woodstock_package
    
    .. rubric:: Classes

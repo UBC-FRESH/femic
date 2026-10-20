@@ -6,7 +6,7 @@ from pathlib import Path
 from femic.pipeline.io import (
     FALLBACK_DEFAULT_TSA_LIST,
     build_legacy_data_artifact_paths,
-    build_ria_vri_checkpoint_paths,
+    build_vri_checkpoint_paths,
     build_legacy_execution_plan,
     build_pipeline_run_config,
     file_sha256,
@@ -96,10 +96,10 @@ def test_resolve_run_paths_uses_instance_root_when_provided(tmp_path: Path) -> N
     assert resolved.log_dir == (instance_root / "vdyp_io" / "logs").resolve()
 
 
-def test_build_ria_vri_checkpoint_paths_defaults() -> None:
-    paths = build_ria_vri_checkpoint_paths()
-    assert paths[1] == Path("data/ria_vri_vclr1p_checkpoint1.feather")
-    assert paths[8] == Path("data/ria_vri_vclr1p_checkpoint8.feather")
+def test_build_vri_checkpoint_paths_defaults() -> None:
+    paths = build_vri_checkpoint_paths()
+    assert paths[1] == Path("data/vri_vclr1p_checkpoint1.feather")
+    assert paths[8] == Path("data/vri_vclr1p_checkpoint8.feather")
 
 
 def test_build_legacy_data_artifact_paths_defaults() -> None:

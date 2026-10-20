@@ -54,7 +54,7 @@ try:
     )
     from femic.pipeline.io import (
         build_legacy_data_artifact_paths,
-        build_ria_vri_checkpoint_paths,
+        build_vri_checkpoint_paths,
         resolve_legacy_external_data_paths,
     )
     from femic.pipeline.vdyp import build_vdyp_cache_paths
@@ -119,7 +119,7 @@ except ModuleNotFoundError:
     )
     from femic.pipeline.io import (
         build_legacy_data_artifact_paths,
-        build_ria_vri_checkpoint_paths,
+        build_vri_checkpoint_paths,
         resolve_legacy_external_data_paths,
     )
     from femic.pipeline.vdyp import build_vdyp_cache_paths
@@ -218,11 +218,11 @@ _external_paths = resolve_legacy_external_data_paths(
 )
 vri_vclr1p_path = _external_paths.vri_vclr1p_path
 _legacy_data_paths = build_legacy_data_artifact_paths()
-ria_stands_path = _legacy_data_paths.ria_stands_path
+stands_path = _legacy_data_paths.stands_path
 tsa_boundaries_path = _external_paths.tsa_boundaries_path
 print(f"using VRI source: {vri_vclr1p_path}")
 print(f"using TSA boundaries source: {tsa_boundaries_path}")
-ria_maptiles_path = "ria_maptiles.csv"
+maptiles_path = "maptiles.csv"
 vdyp_input_pandl_path = _external_paths.vdyp_input_pandl_path
 if not vdyp_input_pandl_path.exists():
     vdyp_input_pandl_path = _legacy_data_paths.vdyp_input_pandl_path
@@ -236,19 +236,19 @@ if not site_prod_bc_gdb_path.exists():
 print(f"using site productivity source: {site_prod_bc_gdb_path}")
 
 tsa_boundaries_feather_path = _legacy_data_paths.tsa_boundaries_feather_path
-_ria_vri_checkpoint_paths = build_ria_vri_checkpoint_paths()
-ria_vri_vclr1p_checkpoint1_feather_path = _ria_vri_checkpoint_paths[1]
-ria_vri_vclr1p_checkpoint2_feather_path = _ria_vri_checkpoint_paths[2]
-ria_vri_vclr1p_checkpoint3_feather_path = _ria_vri_checkpoint_paths[3]
-ria_vri_vclr1p_checkpoint4_feather_path = _ria_vri_checkpoint_paths[4]
-ria_vri_vclr1p_checkpoint5_feather_path = _ria_vri_checkpoint_paths[5]
-ria_vri_vclr1p_checkpoint6_feather_path = _ria_vri_checkpoint_paths[6]
-ria_vri_vclr1p_checkpoint7_feather_path = _ria_vri_checkpoint_paths[7]
-ria_vri_vclr1p_checkpoint8_feather_path = _ria_vri_checkpoint_paths[8]
+_vri_checkpoint_paths = build_vri_checkpoint_paths()
+vri_vclr1p_checkpoint1_feather_path = _vri_checkpoint_paths[1]
+vri_vclr1p_checkpoint2_feather_path = _vri_checkpoint_paths[2]
+vri_vclr1p_checkpoint3_feather_path = _vri_checkpoint_paths[3]
+vri_vclr1p_checkpoint4_feather_path = _vri_checkpoint_paths[4]
+vri_vclr1p_checkpoint5_feather_path = _vri_checkpoint_paths[5]
+vri_vclr1p_checkpoint6_feather_path = _vri_checkpoint_paths[6]
+vri_vclr1p_checkpoint7_feather_path = _vri_checkpoint_paths[7]
+vri_vclr1p_checkpoint8_feather_path = _vri_checkpoint_paths[8]
 vri_vclr1p_categorical_columns_path = (
     _legacy_data_paths.vri_vclr1p_categorical_columns_path
 )
-ria_vclr1p_feature_tif_path = _legacy_data_paths.ria_vclr1p_feature_tif_path
+vclr1p_feature_tif_path = _legacy_data_paths.vclr1p_feature_tif_path
 
 arc_raster_rescue_exe_path = Path("../ArcRasterRescue/build/arc_raster_rescue.exe")
 siteprod_gdb_path = site_prod_bc_gdb_path
@@ -270,12 +270,12 @@ vdyp_curves_smooth_feather_path = _legacy_data_paths.vdyp_curves_smooth_feather_
 
 tipsy_params_path_prefix = _legacy_data_paths.tipsy_params_path_prefix
 
-_default_ria_tsas = ["08", "16", "24", "40", "41"]
+_default_tsas = ["08", "16", "24", "40", "41"]
 _femic_tsa_list = os.environ.get("FEMIC_TSA_LIST")
 if _femic_tsa_list:
-    ria_tsas = [tsa.strip() for tsa in _femic_tsa_list.split(",") if tsa.strip()]
+    tsas = [tsa.strip() for tsa in _femic_tsa_list.split(",") if tsa.strip()]
 else:
-    ria_tsas = _default_ria_tsas
+    tsas = _default_tsas
 _femic_resume = os.environ.get("FEMIC_RESUME", "0") == "1"
 _femic_debug_rows_raw = os.environ.get("FEMIC_DEBUG_ROWS")
 _femic_no_cache_raw = os.environ.get("FEMIC_NO_CACHE", "0")
@@ -464,12 +464,12 @@ if import_tsa_boundaries_data:
             )
         boundary_code = _femic_boundary_code
         if not boundary_code:
-            if len(ria_tsas) != 1:
+            if len(tsas) != 1:
                 raise ValueError(
                     "Set FEMIC_BOUNDARY_CODE when running custom boundary mode with "
                     "multiple tsa codes."
                 )
-            boundary_code = ria_tsas[0]
+            boundary_code = tsas[0]
         custom_geom = unary_union(list(custom_boundary.geometry.values))
         tsa_boundaries = gpd.GeoDataFrame(
             {"TSA_NUMBER": [boundary_code], "geometry": [custom_geom]},
@@ -479,13 +479,13 @@ if import_tsa_boundaries_data:
         tsa_boundaries = gpd.read_file(tsa_boundaries_path)
         tsa_boundaries = (
             tsa_boundaries[["TSA_NUMBER", "geometry"]]
-            .loc[tsa_boundaries.TSA_NUMBER.isin(ria_tsas)]
+            .loc[tsa_boundaries.TSA_NUMBER.isin(tsas)]
             .dissolve(by="TSA_NUMBER")
         )
         tsa_boundaries["geometry"] = tsa_boundaries.geometry.simplify(
             tolerance=1000, preserve_topology=True
         )
-    _missing_tsas = [tsa for tsa in ria_tsas if tsa not in tsa_boundaries.index]
+    _missing_tsas = [tsa for tsa in tsas if tsa not in tsa_boundaries.index]
     if _missing_tsas:
         raise ValueError(
             "Boundary geometry missing requested tsa codes: %s (available=%s)"
@@ -513,20 +513,20 @@ if import_vri_vclr1p_data:
 
     tsa_gdfs = lbview.map_async(
         load_vri_vclr1p,
-        [vri_vclr1p_path for tsa in ria_tsas],
-        ria_tsas,
-        [tsa_boundaries.loc[tsa].geometry for tsa in ria_tsas],
+        [vri_vclr1p_path for tsa in tsas],
+        tsas,
+        [tsa_boundaries.loc[tsa].geometry for tsa in tsas],
         ordered=True,
     )
     rc.wait_interactive()
-    ria_vri_vclr1p = pd.concat(tsa_gdfs, axis=0, ignore_index=True)
-    ria_vri_vclr1p.to_feather(ria_vri_vclr1p_checkpoint1_feather_path)
+    vri_vclr1p = pd.concat(tsa_gdfs, axis=0, ignore_index=True)
+    vri_vclr1p.to_feather(vri_vclr1p_checkpoint1_feather_path)
 else:
     print("loading VRI data from checkpoint1 feather")
-    ria_vri_vclr1p = gpd.read_feather(ria_vri_vclr1p_checkpoint1_feather_path)
-    ria_vri_vclr1p = _apply_debug_rows(ria_vri_vclr1p, "checkpoint1")
+    vri_vclr1p = gpd.read_feather(vri_vclr1p_checkpoint1_feather_path)
+    vri_vclr1p = _apply_debug_rows(vri_vclr1p, "checkpoint1")
 
-f = ria_vri_vclr1p
+f = vri_vclr1p
 
 
 # Normalize TSA codes to zero-padded strings for consistent indexing.
@@ -565,7 +565,7 @@ if not siteprod_tif_path.is_file():
     )
 
 
-species_list = derive_species_list_from_slots(f_table=ria_vri_vclr1p)
+species_list = derive_species_list_from_slots(f_table=vri_vclr1p)
 
 # --- cell 24 ---
 process_checkpoint2 = 1 if _femic_no_cache else 0
@@ -586,10 +586,10 @@ if process_checkpoint2:
         row_apply_fn=_row_apply,
         out_col="siteprod",
     )
-    f.to_feather(ria_vri_vclr1p_checkpoint2_feather_path)
+    f.to_feather(vri_vclr1p_checkpoint2_feather_path)
 else:
     print("loading VRI data from checkpoint2 feather")
-    f = gpd.read_feather(ria_vri_vclr1p_checkpoint2_feather_path)
+    f = gpd.read_feather(vri_vclr1p_checkpoint2_feather_path)
     f = _apply_debug_rows(f, "checkpoint2")
 
 # --- cell 26 ---
@@ -605,10 +605,10 @@ if process_checkpoint3:
         wait_fn=rc.wait_interactive,
         message_fn=print,
     )
-    f.to_feather(ria_vri_vclr1p_checkpoint3_feather_path)
+    f.to_feather(vri_vclr1p_checkpoint3_feather_path)
 else:
     print("loading VRI data from checkpoint3 feather")
-    f = gpd.read_feather(ria_vri_vclr1p_checkpoint3_feather_path)
+    f = gpd.read_feather(vri_vclr1p_checkpoint3_feather_path)
     f = _apply_debug_rows(f, "checkpoint3")
 
 
@@ -630,7 +630,7 @@ stratum_col = "stratum"
 f = assign_forest_type_from_species_pct(f_table=f, out_col="forest_type")
 
 # --- cell 38 ---
-f.to_feather(ria_vri_vclr1p_checkpoint4_feather_path)
+f.to_feather(vri_vclr1p_checkpoint4_feather_path)
 
 # --- cell 42 ---
 # f = f.reset_index().set_index('tsa_code')
@@ -798,7 +798,7 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
     scsi_au,
     vdyp_curves_smooth,
     tipsy_curves,
-    ria_tsas,
+    tsas,
     canfi_species_fn,
 ):
     _bundle_ready = bundle_tables_ready(paths=bundle_paths)
@@ -815,7 +815,7 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
         )
     else:
         _bundle_assembly = build_bundle_tables_from_curves(
-            tsa_list=ria_tsas,
+            tsa_list=tsas,
             vdyp_curves_smooth=vdyp_curves_smooth,
             tipsy_curves=tipsy_curves,
             scsi_au=scsi_au,
@@ -890,7 +890,7 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
     f_ = assign_stratum_matches_from_au_table(
         f_table=f_,
         au_table=au_table,
-        tsa_list=ria_tsas,
+        tsa_list=tsas,
         stratum_col=stratum_col,
         message_fn=print,
     )
@@ -951,7 +951,7 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
 def _run_legacy_tsa_orchestration_stage(
     *,
     f_table,
-    ria_tsas,
+    tsas,
     legacy_data_paths,
     scsi_au,
     vdyp_curves_smooth,
@@ -960,7 +960,7 @@ def _run_legacy_tsa_orchestration_stage(
     execute_legacy_tsa_stage(
         script_path=Path(__file__).with_name("01a_run-tsa.py"),
         module_name="run_tsa_01a",
-        tsa_list=ria_tsas[:],
+        tsa_list=tsas[:],
         should_skip_fn=_should_skip_01a,
         build_run_kwargs_fn=_build_01a_run_kwargs,
     )
@@ -968,7 +968,7 @@ def _run_legacy_tsa_orchestration_stage(
     execute_legacy_tsa_stage(
         script_path=Path(__file__).with_name("01b_run-tsa.py"),
         module_name="run_tsa_01b",
-        tsa_list=ria_tsas[:],
+        tsa_list=tsas[:],
         should_skip_fn=_should_skip_01b,
         build_run_kwargs_fn=_build_01b_run_kwargs,
     )
@@ -984,22 +984,22 @@ def _run_legacy_tsa_orchestration_stage(
         femic_no_cache=_femic_no_cache,
         normalize_tsa_code_fn=_normalize_tsa_code,
         apply_debug_rows_fn=_apply_debug_rows,
-        checkpoint1_path=ria_vri_vclr1p_checkpoint1_feather_path,
-        checkpoint5_path=ria_vri_vclr1p_checkpoint5_feather_path,
-        checkpoint6_path=ria_vri_vclr1p_checkpoint6_feather_path,
-        checkpoint7_path=ria_vri_vclr1p_checkpoint7_feather_path,
+        checkpoint1_path=vri_vclr1p_checkpoint1_feather_path,
+        checkpoint5_path=vri_vclr1p_checkpoint5_feather_path,
+        checkpoint6_path=vri_vclr1p_checkpoint6_feather_path,
+        checkpoint7_path=vri_vclr1p_checkpoint7_feather_path,
         legacy_data_paths=legacy_data_paths,
         scsi_au=scsi_au,
         vdyp_curves_smooth=vdyp_curves_smooth,
         tipsy_curves=tipsy_curves,
-        ria_tsas=ria_tsas,
+        tsas=tsas,
         canfi_species_fn=canfi_species,
     )
 
 
 f, au_table, curve_table, curve_points_table = _run_legacy_tsa_orchestration_stage(
     f_table=f,
-    ria_tsas=ria_tsas,
+    tsas=tsas,
     legacy_data_paths=_legacy_data_paths,
     scsi_au=scsi_au,
     vdyp_curves_smooth=vdyp_curves_smooth,
@@ -1008,7 +1008,7 @@ f, au_table, curve_table, curve_points_table = _run_legacy_tsa_orchestration_sta
 
 # --- cell 115 ---
 if not _femic_no_cache:
-    f = gpd.read_feather(ria_vri_vclr1p_checkpoint7_feather_path)
+    f = gpd.read_feather(vri_vclr1p_checkpoint7_feather_path)
     f = _apply_debug_rows(f, "checkpoint7")
 
 # --- cell 116 ---
@@ -1040,7 +1040,7 @@ f = assign_thlb_area_and_flag(
 )
 
 # --- cell 126 ---
-f.to_feather(ria_vri_vclr1p_checkpoint8_feather_path)
+f.to_feather(vri_vclr1p_checkpoint8_feather_path)
 
 
 columns = build_stands_column_map(
@@ -1060,7 +1060,7 @@ if _skip_stands_shp:
     )
 else:
     export_stands_shapefiles(
-        tsa_list=ria_tsas[:],
+        tsa_list=tsas[:],
         f_table=f,
         au_table=au_table,
         columns_map=columns,

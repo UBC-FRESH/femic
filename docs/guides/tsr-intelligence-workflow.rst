@@ -373,7 +373,7 @@ lane, keep the benchmark order straight:
 
    Workbench execution follows the staged FEMIC pipeline boundary, but current
    TSA29 strict validation must stay on validated ``data/tsr/*.feather`` seam
-   checkpoints rather than legacy ``ria_vri_vclr1p_checkpoint*.feather``
+   checkpoints rather than implicit legacy checkpoint fallbacks
    fallback files.
 
    For example, TSA29 step ``014`` (sites with low growing timber potential)

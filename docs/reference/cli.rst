@@ -934,7 +934,7 @@ workflow into a text -> code -> output -> interpretation ladder grouped by:
 The generated cells also respect the stage boundary in the underlying FEMIC
 pipeline, but current TSA29 strict validation must stay on validated
 ``data/tsr/*.feather`` seam checkpoints rather than legacy
-``ria_vri_vclr1p_checkpoint*.feather`` fallbacks.
+implicit checkpoint fallbacks.
 
 ``tsr thlb-netdown-workbench-lock`` options
 
@@ -1201,7 +1201,7 @@ Subcommands
 
 - ``--tsa TEXT`` (repeatable, required; selected FMU/code values)
 - ``--bundle-dir PATH`` (default: ``data/model_input_bundle``)
-- ``--checkpoint PATH`` (default: ``data/ria_vri_vclr1p_checkpoint7.feather``)
+- ``--checkpoint PATH`` (default: ``data/vri_vclr1p_checkpoint7.feather``)
 - ``--output-dir PATH`` (default: ``output/patchworks``)
 - ``--start-year INTEGER`` (default: ``2026``)
 - ``--horizon-years INTEGER`` (default: ``300``)
@@ -1224,7 +1224,7 @@ Subcommands
 
 - ``--tsa TEXT`` (repeatable, required; selected FMU/code values)
 - ``--bundle-dir PATH`` (default: ``data/model_input_bundle``)
-- ``--checkpoint PATH`` (default: ``data/ria_vri_vclr1p_checkpoint7.feather``)
+- ``--checkpoint PATH`` (default: ``data/vri_vclr1p_checkpoint7.feather``)
 - ``--output-dir PATH`` (default: ``output/woodstock``)
 - ``--cc-min-age INTEGER`` (default: ``0``)
 - ``--cc-max-age INTEGER`` (default: ``1000``)
@@ -1235,7 +1235,7 @@ Subcommands
 
 - ``--tsa TEXT`` (repeatable, required; selected FMU/code values)
 - ``--bundle-dir PATH`` (default: ``data/model_input_bundle``)
-- ``--checkpoint PATH`` (default: ``data/ria_vri_vclr1p_checkpoint7.feather``)
+- ``--checkpoint PATH`` (default: ``data/vri_vclr1p_checkpoint7.feather``)
 - ``--patchworks-output-dir PATH`` (default: ``output/patchworks``)
 - ``--woodstock-output-dir PATH`` (default: ``output/woodstock``)
 - ``--with-ws3-smoke / --no-ws3-smoke`` (default: ``--no-ws3-smoke``)

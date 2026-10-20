@@ -154,7 +154,7 @@ def test_legacy_orchestration_uses_runtime_and_stage_setup_helpers() -> None:
         "initialize_parallel_execution_backend": 1,
         "resolve_legacy_external_data_paths": 1,
         "build_legacy_data_artifact_paths": 1,
-        "build_ria_vri_checkpoint_paths": 1,
+        "build_vri_checkpoint_paths": 1,
         "build_vdyp_cache_paths": 1,
         "list_siteprod_layers": 1,
         "export_and_stack_siteprod_layers": 1,

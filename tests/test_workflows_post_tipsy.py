@@ -130,7 +130,7 @@ def test_load_species_universe_can_fallback_to_checkpoint1_case_artifact(
             "SPECIES_CD_6": ["", "", ""],
             "SPECIES_PCT_6": [0.0, 0.0, 0.0],
         }
-    ).to_feather(data_root / "ria_vri_vclr1p_checkpoint1-tsak3z.feather")
+    ).to_feather(data_root / "vri_vclr1p_checkpoint1-tsak3z.feather")
 
     messages: list[str] = []
     out = _load_species_universe_for_tsas(
@@ -301,7 +301,7 @@ def test_run_post_tipsy_bundle_can_rebuild_vdyp_species_props_from_vdyp_layer_wh
             "SPECIES_CD_6": [""],
             "SPECIES_PCT_6": [0.0],
         }
-    ).to_feather(data_root / f"ria_vri_vclr1p_checkpoint1-tsa{tsa}.feather")
+    ).to_feather(data_root / f"vri_vclr1p_checkpoint1-tsa{tsa}.feather")
 
     def _fake_run_01b(
         *,
@@ -397,7 +397,7 @@ def test_run_post_tipsy_bundle_emits_species_prop_curves_from_checkpoint1_case_a
             "SPECIES_CD_6": [""],
             "SPECIES_PCT_6": [0.0],
         }
-    ).to_feather(data_root / "ria_vri_vclr1p_checkpoint1-tsak3z.feather")
+    ).to_feather(data_root / "vri_vclr1p_checkpoint1-tsak3z.feather")
 
     pd.DataFrame(
         {
@@ -660,7 +660,7 @@ def test_run_post_tipsy_bundle_applies_broadleaf_volume_exclusion_to_conifer_lea
             "SPECIES_CD_6": [""],
             "SPECIES_PCT_6": [0.0],
         }
-    ).to_feather(data_root / f"ria_vri_vclr1p_checkpoint1-tsa{tsa}.feather")
+    ).to_feather(data_root / f"vri_vclr1p_checkpoint1-tsa{tsa}.feather")
 
     results_for_tsa = [
         (
@@ -812,7 +812,7 @@ def test_run_post_tipsy_bundle_leaves_broadleaf_leading_untreated_aus_unchanged(
             "SPECIES_CD_6": [""],
             "SPECIES_PCT_6": [0.0],
         }
-    ).to_feather(data_root / f"ria_vri_vclr1p_checkpoint1-tsa{tsa}.feather")
+    ).to_feather(data_root / f"vri_vclr1p_checkpoint1-tsa{tsa}.feather")
 
     results_for_tsa = [
         (
