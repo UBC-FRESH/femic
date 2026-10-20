@@ -5573,10 +5573,10 @@ def _find_tsr_checkpoint_path(*, instance_root: Path, mode: str) -> Path:
             instance_root=resolved_instance_root,
             checkpoint_path=resolved_instance_root
             / "data"
-            / "ria_vri_vclr1p_checkpoint0.feather",
+            / "vri_vclr1p_checkpoint0.feather",
         )
     candidates = sorted(
-        resolved_instance_root.glob("data/ria_vri_vclr1p_checkpoint*.feather")
+        resolved_instance_root.glob("data/vri_vclr1p_checkpoint*.feather")
     )
     if not candidates:
         raise TsrRecipeError(
@@ -5619,10 +5619,10 @@ def _find_curve_ready_thlb_checkpoint_path(*, instance_root: Path) -> Path:
             instance_root=resolved_instance_root,
             checkpoint_path=resolved_instance_root
             / "data"
-            / "ria_vri_vclr1p_checkpoint0.feather",
+            / "vri_vclr1p_checkpoint0.feather",
         )
     candidates = sorted(
-        resolved_instance_root.glob("data/ria_vri_vclr1p_checkpoint*.feather")
+        resolved_instance_root.glob("data/vri_vclr1p_checkpoint*.feather")
     )
     if not candidates:
         raise TsrRecipeError(

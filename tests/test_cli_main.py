@@ -29,13 +29,13 @@ def _create_preflight_required_layout(repo_root: Path) -> None:
     data_root = repo_root / "data"
     data_root.mkdir(parents=True, exist_ok=True)
     (data_root / "tsa_boundaries.feather").touch()
-    (data_root / "ria_vri_vclr1p_checkpoint1.feather").touch()
+    (data_root / "vri_vclr1p_checkpoint1.feather").touch()
     (data_root / "tipsy_params_columns").touch()
     (data_root / "vdyp_ply.feather").touch()
     (data_root / "vdyp_lyr.feather").touch()
     (data_root / "vdyp_results.pkl").touch()
 
-    (repo_root / "ria_maptiles.csv").touch()
+    (repo_root / "maptiles.csv").touch()
 
     vdyp_cfg = repo_root / "vdyp_io" / "VDYP_CFG"
     vdyp_cfg.mkdir(parents=True, exist_ok=True)
@@ -1563,7 +1563,7 @@ def test_preflight_checks_fails_for_specific_missing_required_file(
 ) -> None:
     repo_root = _set_cli_repo_root(monkeypatch, tmp_path)
     _create_preflight_required_layout(repo_root)
-    missing_required = repo_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    missing_required = repo_root / "data" / "vri_vclr1p_checkpoint1.feather"
     missing_required.unlink()
 
     messages: list[str] = []
@@ -1896,7 +1896,7 @@ def test_export_patchworks_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> No
     cli_main.export_patchworks(
         tsa=["k3z"],
         bundle_dir=Path("data/model_input_bundle"),
-        checkpoint=Path("data/ria_vri_vclr1p_checkpoint7.feather"),
+        checkpoint=Path("data/vri_vclr1p_checkpoint7.feather"),
         output_dir=Path("output/patchworks"),
         start_year=2026,
         horizon_years=300,
@@ -1995,7 +1995,7 @@ def test_export_woodstock_calls_exporter(monkeypatch: pytest.MonkeyPatch) -> Non
     cli_main.export_woodstock(
         tsa=["k3z"],
         bundle_dir=Path("data/model_input_bundle"),
-        checkpoint=Path("data/ria_vri_vclr1p_checkpoint7.feather"),
+        checkpoint=Path("data/vri_vclr1p_checkpoint7.feather"),
         output_dir=Path("output/woodstock"),
         cc_min_age=0,
         cc_max_age=500,
@@ -4553,7 +4553,7 @@ def test_export_dual_runs_patchworks_and_woodstock(
     cli_main.export_dual(
         tsa=["29"],
         bundle_dir=Path("data/model_input_bundle"),
-        checkpoint=Path("data/ria_vri_vclr1p_checkpoint7.feather"),
+        checkpoint=Path("data/vri_vclr1p_checkpoint7.feather"),
         patchworks_output_dir=Path("output/patchworks"),
         woodstock_output_dir=Path("output/woodstock"),
         start_year=2026,
@@ -6722,7 +6722,7 @@ def test_tsr_thlb_netdown_step_run_uses_default_recipe_path(
             ),
             checkpoint_path=instance_root
             / "data"
-            / "ria_vri_vclr1p_checkpoint1.feather",
+            / "vri_vclr1p_checkpoint1.feather",
             selected_map_ids=("092O071",),
             selected_landscape_units=(),
             output_path=instance_root
@@ -6955,7 +6955,7 @@ def test_tsr_thlb_netdown_run_uses_default_paths(
             ),
             checkpoint_path=instance_root
             / "data"
-            / "ria_vri_vclr1p_checkpoint8.feather",
+            / "vri_vclr1p_checkpoint8.feather",
             output_path=instance_root
             / "data"
             / "tsr"
@@ -7265,7 +7265,7 @@ def test_tsr_thlb_netdown_run_passes_map_id_smoke_options(
             ),
             checkpoint_path=instance_root
             / "data"
-            / "ria_vri_vclr1p_checkpoint1.feather",
+            / "vri_vclr1p_checkpoint1.feather",
             output_path=instance_root
             / "data"
             / "tsr"
@@ -7371,7 +7371,7 @@ def test_tsr_thlb_netdown_run_can_disable_aflb_gpkg(
             ),
             checkpoint_path=instance_root
             / "data"
-            / "ria_vri_vclr1p_checkpoint1.feather",
+            / "vri_vclr1p_checkpoint1.feather",
             output_path=instance_root
             / "data"
             / "tsr"

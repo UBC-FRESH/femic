@@ -163,14 +163,14 @@ def _load_species_universe_for_tsas(
         | {f"SPECIES_PCT_{idx}" for idx in range(1, 7)}
     )
     normalized = {str(tsa).zfill(2).lower() for tsa in tsa_list}
-    candidate_paths: list[Path] = [data_root / "ria_vri_vclr1p_checkpoint8.feather"]
+    candidate_paths: list[Path] = [data_root / "vri_vclr1p_checkpoint8.feather"]
     candidate_paths.extend(
-        data_root / f"ria_vri_vclr1p_checkpoint1-tsa{tsa}.feather"
+        data_root / f"vri_vclr1p_checkpoint1-tsa{tsa}.feather"
         for tsa in sorted(normalized)
     )
-    candidate_paths.append(data_root / "ria_vri_vclr1p_checkpoint1.feather")
+    candidate_paths.append(data_root / "vri_vclr1p_checkpoint1.feather")
     candidate_paths.extend(
-        sorted(data_root.glob("ria_vri_vclr1p_checkpoint1-tsa*.feather"))
+        sorted(data_root.glob("vri_vclr1p_checkpoint1-tsa*.feather"))
     )
     seen_candidates: set[Path] = set()
     checkpoint_path: Path | None = None

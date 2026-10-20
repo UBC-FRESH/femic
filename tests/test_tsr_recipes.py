@@ -65,7 +65,7 @@ class _FixtureAdjudicationProvider:
         self, *, instance_root: Path, checkpoint_path: Path
     ) -> None:
         _ = instance_root
-        if checkpoint_path.name.startswith("ria_vri_vclr1p_checkpoint"):
+        if checkpoint_path.name.startswith("vri_vclr1p_checkpoint"):
             raise tsr_adjudication.TsrAdjudicationOverlayError(
                 "Fixture legacy checkpoint fallback is disabled."
             )
@@ -2751,7 +2751,7 @@ def test_thlb_status_report_prefers_parent_steps_when_present() -> None:
     markdown = tsr_recipes._build_tsr_thlb_status_report_markdown(
         recipe=recipe,
         recipe_relative_path="config/tsr/thlb_netdown.recipe.yaml",
-        checkpoint_relative_path="data/ria_vri_vclr1p_checkpoint1.feather",
+        checkpoint_relative_path="data/vri_vclr1p_checkpoint1.feather",
         output_relative_path="data/tsr/thlb_reconstructed_checkpoint.feather",
         audit_relative_path="config/tsr/thlb_reconstructed.audit.json",
         execution_mode="reconstructed",
@@ -5006,7 +5006,7 @@ def test_run_tsr_thlb_parent_step_blocks_obvious_smoke_extent_mismatch(
         encoding="utf-8",
     )
 
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {
@@ -5920,7 +5920,7 @@ def test_run_tsr_thlb_parent_step_executes_first_tranche_parent_and_writes_runti
         encoding="utf-8",
     )
 
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {
@@ -6121,7 +6121,7 @@ def test_run_tsr_thlb_parent_step_buffers_line_sources_for_roads_step(
         encoding="utf-8",
     )
 
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {
@@ -6271,7 +6271,7 @@ def test_run_tsr_thlb_parent_step_reports_applied_with_blockers_for_partial_succ
         encoding="utf-8",
     )
 
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {
@@ -6682,7 +6682,7 @@ def test_run_tsr_thlb_parent_step_preserves_geometry_for_later_stage_spatial_exc
         encoding="utf-8",
     )
 
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {
@@ -6840,7 +6840,7 @@ def test_run_tsr_thlb_parent_step_step13_combines_attribute_and_spatial_exclusio
         encoding="utf-8",
     )
 
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint7.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint7.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {
@@ -6992,7 +6992,7 @@ def test_run_tsr_thlb_parent_step_lu_parallel_matches_serial_removed_area(
         encoding="utf-8",
     )
 
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {
@@ -7868,7 +7868,7 @@ def test_run_tsr_thlb_parallel_benchmark_writes_summary(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     gpd.GeoDataFrame(
         {
@@ -8146,7 +8146,7 @@ def test_default_workbench_checkpoint_path_prefers_step13_attribute_checkpoint(
 ) -> None:
     instance_root = tmp_path / "instance"
     (instance_root / "data" / "tsr").mkdir(parents=True)
-    (instance_root / "data" / "ria_vri_vclr1p_checkpoint7.feather").write_text(
+    (instance_root / "data" / "vri_vclr1p_checkpoint7.feather").write_text(
         "base", encoding="utf-8"
     )
     enriched_path = (
@@ -8175,7 +8175,7 @@ def test_find_tsr_checkpoint_path_rejects_configured_legacy_fallback(
     config_path = instance_root / "config" / "tsr" / "adjudication_overlay.yaml"
     config_path.parent.mkdir(parents=True)
     config_path.write_text("provider_id: fixture\n", encoding="utf-8")
-    (data_root / "ria_vri_vclr1p_checkpoint1.feather").write_text(
+    (data_root / "vri_vclr1p_checkpoint1.feather").write_text(
         "legacy", encoding="utf-8"
     )
 
@@ -8197,7 +8197,7 @@ def test_find_curve_ready_thlb_checkpoint_path_rejects_configured_legacy_fallbac
     config_path = instance_root / "config" / "tsr" / "adjudication_overlay.yaml"
     config_path.parent.mkdir(parents=True)
     config_path.write_text("provider_id: fixture\n", encoding="utf-8")
-    (data_root / "ria_vri_vclr1p_checkpoint7.feather").write_text(
+    (data_root / "vri_vclr1p_checkpoint7.feather").write_text(
         "legacy", encoding="utf-8"
     )
 
@@ -9050,7 +9050,7 @@ def test_run_tsr_thlb_parent_step_treats_no_matching_filtered_source_as_noop(
         encoding="utf-8",
     )
 
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {
@@ -9206,7 +9206,7 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
         encoding="utf-8",
     )
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {"FEATURE_ID": [1], "MAP_ID": ["092O071"]},
@@ -9230,7 +9230,7 @@ def test_run_tsr_thlb_parent_step_uses_curve_ready_checkpoint_for_step14(
         names=["Test LU"],
     )
 
-    checkpoint7_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint7.feather"
+    checkpoint7_path = instance_root / "data" / "vri_vclr1p_checkpoint7.feather"
     checkpoint7 = gpd.GeoDataFrame(
         {
             "FEATURE_ID": [1, 2, 3, 4],
@@ -9720,7 +9720,7 @@ def test_run_tsr_thlb_netdown_recipe_writes_thlb_fact_checkpoint_and_audit(
     )
     exclusion.to_file(exclusion_path, driver="GPKG")
 
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint8.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {
@@ -9925,7 +9925,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
     )
     exclusion.to_file(exclusion_path, driver="GPKG")
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -9969,7 +9969,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_fragments_binary_thlb(
         names=["Test LU"],
     )
 
-    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8_path = instance_root / "data" / "vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
         {
             "FEATURE_ID": [1],
@@ -10221,7 +10221,7 @@ def test_run_tsr_thlb_netdown_recipe_can_restart_from_aflb_checkpoint(
         / "thlb_netdown.recipe.yaml",
     )
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -10509,7 +10509,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_applies_explicit_aspatia
     )
     exclusion.to_file(exclusion_path, driver="GPKG")
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -10539,7 +10539,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_applies_explicit_aspatia
         names=["Test LU"],
     )
 
-    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8_path = instance_root / "data" / "vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
         {"FEATURE_ID": [1], "thlb_raw": [100.0]},
         geometry=[box(0, 0, 100, 100)],
@@ -10714,7 +10714,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_executes_aspatial_area_f
         / "thlb_netdown.recipe.yaml",
     )
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -10744,7 +10744,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_executes_aspatial_area_f
         names=["Test LU"],
     )
 
-    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8_path = instance_root / "data" / "vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
         {"FEATURE_ID": [1], "thlb_raw": [100.0]},
         geometry=[box(0, 0, 100, 100)],
@@ -10847,7 +10847,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_can_auto_select_map_id_s
         / "thlb_netdown.recipe.yaml",
     )
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -10871,7 +10871,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_can_auto_select_map_id_s
         names=["Test LU"],
     )
 
-    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8_path = instance_root / "data" / "vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
         {
             "FEATURE_ID": [1],
@@ -10957,7 +10957,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_chunks_exact_overlay(
     )
     exclusion.to_file(exclusion_path, driver="GPKG")
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -10997,7 +10997,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_chunks_exact_overlay(
         names=["West", "Central", "East"],
     )
 
-    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8_path = instance_root / "data" / "vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
         {"FEATURE_ID": [1], "thlb_raw": [100.0]},
         geometry=[box(0, 0, 10, 10)],
@@ -11144,7 +11144,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_respects_lu_boundary_cro
         crs="EPSG:3005",
     ).to_file(exclusion_path, driver="GPKG")
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -11174,7 +11174,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_respects_lu_boundary_cro
         names=["West", "East"],
     )
 
-    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8_path = instance_root / "data" / "vri_vclr1p_checkpoint8.feather"
     gpd.GeoDataFrame(
         {"FEATURE_ID": [1], "thlb_raw": [100.0]},
         geometry=[box(0, 0, 20, 10)],
@@ -11298,7 +11298,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_can_opt_into_stand_binar
     )
     exclusion.to_file(exclusion_path, driver="GPKG")
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -11327,7 +11327,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_can_opt_into_stand_binar
     )
     checkpoint1.to_feather(checkpoint1_path)
 
-    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8_path = instance_root / "data" / "vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
         {"FEATURE_ID": [1], "thlb_raw": [100.0]},
         geometry=[box(0, 0, 10, 10)],
@@ -11442,7 +11442,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_blocks_failed_exact_over
     )
     exclusion.to_file(exclusion_path, driver="GPKG")
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -11472,7 +11472,7 @@ def test_run_tsr_thlb_netdown_recipe_reconstructed_mode_blocks_failed_exact_over
         names=["Test LU"],
     )
 
-    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8_path = instance_root / "data" / "vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
         {"FEATURE_ID": [1], "thlb_raw": [100.0]},
         geometry=[box(0, 0, 10, 10)],
@@ -11595,7 +11595,7 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_can_resume_prefix_output(
     )
     exclusion.to_file(exclusion_path, driver="GPKG")
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -11625,7 +11625,7 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_can_resume_prefix_output(
         names=["Test LU"],
     )
 
-    checkpoint8_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint8.feather"
+    checkpoint8_path = instance_root / "data" / "vri_vclr1p_checkpoint8.feather"
     checkpoint8 = gpd.GeoDataFrame(
         {"FEATURE_ID": [1], "thlb_raw": [100.0]},
         geometry=[box(0, 0, 10, 10)],
@@ -11746,7 +11746,7 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_aspatial_area_redu
         / "thlb_netdown.recipe.yaml",
     )
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -12043,7 +12043,7 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_select_attribute_w
         / "thlb_netdown.recipe.yaml",
     )
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -12171,7 +12171,7 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_executes_curve_threshold_wi
         encoding="utf-8",
     )
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -13369,7 +13369,7 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_restores_harvested_select_a
         crs="EPSG:3005",
     ).to_file(cutblock_path, driver="GPKG")
 
-    checkpoint1_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint1_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint1_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint1 = gpd.GeoDataFrame(
         {
@@ -13514,7 +13514,7 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_lu_mode_respects_source_att
         crs="EPSG:3005",
     ).to_file(source_path, driver="GPKG")
 
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {
@@ -13684,7 +13684,7 @@ def test_run_tsr_thlb_reconstructed_diagnostic_slice_can_use_parallel_auto_mode(
         crs="EPSG:3005",
     ).to_file(source_path, driver="GPKG")
 
-    checkpoint_path = instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather"
+    checkpoint_path = instance_root / "data" / "vri_vclr1p_checkpoint1.feather"
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = gpd.GeoDataFrame(
         {

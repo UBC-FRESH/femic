@@ -645,7 +645,9 @@ TSR_THLB_CHECKPOINT_PATH_OPTION = typer.Option(
         "Optional stand checkpoint vector dataset used as the THLB netdown execution base. "
         "Explicit inputs may be Feather or a readable vector dataset such as GeoPackage. "
         "Current strict validation must use an explicit validated checkpoint "
-        "under `data/tsr/`; legacy `ria_vri_vclr1p_checkpoint*.feather` fallbacks are rejected."
+        "under `data/tsr/`; implicit checkpoint fallbacks are rejected. Instances that "
+        "predate the checkpoint-name change can be migrated with "
+        "`scripts/migrate_legacy_checkpoint_names.py`."
     ),
     show_default=False,
 )
@@ -1206,7 +1208,7 @@ EXPORT_BUNDLE_DIR_OPTION = typer.Option(
     help="Directory containing au_table.csv / curve_table.csv / curve_points_table.csv.",
 )
 EXPORT_CHECKPOINT_OPTION = typer.Option(
-    Path("data/ria_vri_vclr1p_checkpoint7.feather"),
+    Path("data/vri_vclr1p_checkpoint7.feather"),
     "--checkpoint",
     help="Stand checkpoint feather used to build fragments shapefile.",
 )
@@ -1783,7 +1785,7 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
             required_files.extend(
                 [
                     (data_root / "tsa_boundaries.feather", None),
-                    (data_root / "ria_vri_vclr1p_checkpoint1.feather", None),
+                    (data_root / "vri_vclr1p_checkpoint1.feather", None),
                 ]
             )
         for primary, fallback in required_files:
@@ -1800,8 +1802,8 @@ def _preflight_checks(*, resume: bool, instance_context: InstanceContext) -> Non
             if not path_obj.exists():
                 warnings.append(f"Optional cache missing: {path_obj}")
 
-    maptiles_path = repo_root / "ria_maptiles.csv"
-    source_maptiles_path = source_root / "ria_maptiles.csv"
+    maptiles_path = repo_root / "maptiles.csv"
+    source_maptiles_path = source_root / "maptiles.csv"
     if not maptiles_path.exists() and not source_maptiles_path.exists():
         warnings.append(f"Optional maptiles file missing: {maptiles_path}")
 

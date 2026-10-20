@@ -1,5 +1,18 @@
 # Change Log
 
+## 2026-10-20
+- Retired the `ria_` filename prefix throughout the engine (#329). It is leftover Western
+  Boreal Initiative nomenclature with no meaning in FEMIC, and it kept being reintroduced.
+  - `build_ria_vri_checkpoint_paths` -> `build_vri_checkpoint_paths`; default stem is now
+    `vri_vclr1p_checkpoint`.
+  - Renamed `ria_stands_path`, `ria_vclr1p_feature_tif_path`, `ria_vclr1p_feature_raster`,
+    `ria_tsas` and the legacy stage-00 locals that carried the prefix.
+  - `ria_maptiles.csv` -> `maptiles.csv` at the repository root.
+  - Added `scripts/migrate_legacy_checkpoint_names.py`: renames an older instance's
+    artifacts, dry run by default, `git mv` inside a work tree so annex keys survive.
+  - Added `tests/test_no_ria_prefix.py`, which fails if the prefix reappears anywhere in
+    `src/femic` or `scripts`.
+
 ## 2026-07-31
 - Completed Phase 109.3: Bridge K3Z QMD growth increment response to MKRF instance.
   - Added per-bucket `qmd_response_fraction_by_bucket` override in core CT path (`src/femic/fmg/patchworks.py`).

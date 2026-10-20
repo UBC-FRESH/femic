@@ -249,7 +249,7 @@ def rebuild_tsa29_instance(
 
     upstream_required = [
         instance_root / "data" / "tsa_boundaries.feather",
-        instance_root / "data" / "ria_vri_vclr1p_checkpoint1.feather",
+        instance_root / "data" / "vri_vclr1p_checkpoint1.feather",
         instance_root / "VDYP7" / "VDYP7" / "VDYP7Console.exe",
     ]
     upstream_available = all(path.exists() for path in upstream_required)

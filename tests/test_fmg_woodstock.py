@@ -163,7 +163,7 @@ def test_export_woodstock_package_emits_species_split_products(
     bundle_dir = tmp_path / "bundle"
     _write_bundle_tables(bundle_dir)
     checkpoint_path = tmp_path / "checkpoint7.feather"
-    species_checkpoint_path = tmp_path / "ria_vri_vclr1p_checkpoint4.feather"
+    species_checkpoint_path = tmp_path / "vri_vclr1p_checkpoint4.feather"
     output_dir = tmp_path / "woodstock_export"
     checkpoint_path.touch()
     species_checkpoint_path.touch()

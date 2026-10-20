@@ -60,14 +60,14 @@ def normalize_tsa_list(
     return [str(tsa).zfill(2) for tsa in tsa_list]
 
 
-def build_ria_vri_checkpoint_paths(
+def build_vri_checkpoint_paths(
     *,
     output_root: str | Path = "data",
     count: int = 8,
-    stem_prefix: str = "ria_vri_vclr1p_checkpoint",
+    stem_prefix: str = "vri_vclr1p_checkpoint",
     suffix: str = ".feather",
 ) -> dict[int, Path]:
-    """Build ordered legacy VRI checkpoint artifact paths."""
+    """Build ordered VRI checkpoint artifact paths."""
     root = Path(output_root)
     return {
         idx: root / f"{stem_prefix}{idx}{suffix}" for idx in range(1, int(count) + 1)
@@ -221,12 +221,12 @@ class LegacyExecutionPlan:
 class LegacyDataArtifactPaths:
     """Legacy data artifact paths used by 00_data-prep orchestration."""
 
-    ria_stands_path: Path
+    stands_path: Path
     vdyp_input_pandl_path: Path
     site_prod_bc_gdb_path: Path
     tsa_boundaries_feather_path: Path
     vri_vclr1p_categorical_columns_path: Path
-    ria_vclr1p_feature_tif_path: Path
+    vclr1p_feature_tif_path: Path
     siteprod_gdb_path: Path
     siteprod_tmpexport_tif_path_prefix: Path
     siteprod_tif_path: Path
@@ -382,12 +382,12 @@ def build_legacy_data_artifact_paths(
     """Build legacy 00_data-prep artifact path payload under one data root."""
     root = Path(output_root)
     return LegacyDataArtifactPaths(
-        ria_stands_path=root / "veg_comp_lyr_r1_poly-ria.shp",
+        stands_path=root / "veg_comp_lyr_r1_poly-ria.shp",
         vdyp_input_pandl_path=root / "VEG_COMP_VDYP7_INPUT_POLY_AND_LAYER_2019.gdb",
         site_prod_bc_gdb_path=root / "bc" / "siteprod" / "Site_Prod_BC.gdb",
         tsa_boundaries_feather_path=root / "tsa_boundaries.feather",
         vri_vclr1p_categorical_columns_path=root / "vri_vclr1p_categorical_columns",
-        ria_vclr1p_feature_tif_path=root / "ria_vclr1p_feature_raster.tif",
+        vclr1p_feature_tif_path=root / "vclr1p_feature_raster.tif",
         siteprod_gdb_path=root / "bc" / "siteprod" / "Site_Prod_BC.gdb",
         siteprod_tmpexport_tif_path_prefix=root / "site_prod_bc_",
         siteprod_tif_path=root / "siteprod.tif",

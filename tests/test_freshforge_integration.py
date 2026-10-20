@@ -637,7 +637,7 @@ def test_export_woodstock_execution_constructs_export_command() -> None:
             "instance_root": "external/femic-tsa24-instance",
             "tsa": "24",
             "bundle_dir": "data/model_input_bundle",
-            "checkpoint": "data/ria_vri_vclr1p_checkpoint7.feather",
+            "checkpoint": "data/vri_vclr1p_checkpoint7.feather",
             "output_dir": "output/woodstock",
         },
     )
@@ -663,7 +663,7 @@ def test_export_woodstock_execution_constructs_export_command() -> None:
             "--bundle-dir",
             "data/model_input_bundle",
             "--checkpoint",
-            "data/ria_vri_vclr1p_checkpoint7.feather",
+            "data/vri_vclr1p_checkpoint7.feather",
             "--output-dir",
             "output/woodstock",
         )

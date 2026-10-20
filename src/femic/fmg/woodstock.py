@@ -25,7 +25,7 @@ from .patchworks import (
 
 DEFAULT_WOODSTOCK_OUTPUT_DIR = Path("output/woodstock")
 SPECIES_VOLUME_COLUMN_PREFIX = "live_vol_per_ha_125_"
-DEFAULT_SPECIES_CHECKPOINT_NAME = "ria_vri_vclr1p_checkpoint4.feather"
+DEFAULT_SPECIES_CHECKPOINT_NAME = "vri_vclr1p_checkpoint4.feather"
 DEFAULT_WOODSTOCK_CC_MIN_AGE = DEFAULT_CC_MIN_AGE
 DEFAULT_WOODSTOCK_CC_MAX_AGE = DEFAULT_CC_MAX_AGE
 
