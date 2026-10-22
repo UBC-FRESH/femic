@@ -20,7 +20,7 @@ artifact_inventory:
         - data/model_input_bundle/au_table.csv
         - data/model_input_bundle/curve_table.csv
         - data/model_input_bundle/curve_points_table.csv
-        - data/ria_vri_vclr1p_checkpoint7.feather
+        - data/vri_vclr1p_checkpoint1-tsak3z.feather
       notes:
         - can override checkpoint with --checkpoint
         - can tune IFM assignment with --ifm-source-col/--ifm-threshold/--ifm-target-managed-share
@@ -89,7 +89,7 @@ lineage_chain:
       - data/model_input_bundle/au_table.csv
       - data/model_input_bundle/curve_table.csv
       - data/model_input_bundle/curve_points_table.csv
-      - data/ria_vri_vclr1p_checkpoint7.feather
+      - data/vri_vclr1p_checkpoint1-tsak3z.feather
   - step: export patchworks package
     command: >
       PYTHONPATH=src python -m femic export patchworks --tsa k3z
