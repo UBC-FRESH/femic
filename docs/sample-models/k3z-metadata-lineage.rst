@@ -28,7 +28,7 @@ The key dataset families feeding ``output/``, ``tracks/``, and ``blocks/`` are:
    * - Fragments shapefile
      - ``output/patchworks_k3z_validated/fragments/fragments.*``
      - ``data/model_input_bundle/au_table.csv`` plus stand checkpoint
-       ``data/ria_vri_vclr1p_checkpoint7.feather`` (or explicit ``--checkpoint``)
+       ``data/vri_vclr1p_checkpoint1-tsak3z.feather`` (or explicit ``--checkpoint``)
      - ``femic export patchworks``
    * - ForestModel XML
      - ``output/patchworks_k3z_validated/forestmodel.xml``

@@ -214,11 +214,11 @@ datasets:
       include: true
       rationale: "Primary target for P10.6 mirror due to source unavailability."
 
-  - id: ria_maptiles_csv
+  - id: maptiles_csv
     category: support
     required_for:
       - "optional map-tiling support in legacy stage 00"
-    canonical_instance_path: "ria_maptiles.csv"
+    canonical_instance_path: "maptiles.csv"
     preferred: true
     source:
       publisher: "FEMIC repository asset"
@@ -230,7 +230,7 @@ datasets:
       algorithm: "sha256"
       value: null
       status: "pending"
-      target_artifact: "ria_maptiles.csv"
+      target_artifact: "maptiles.csv"
     datalad_mirror:
       include: false
       rationale: "Already versioned in FEMIC source repository."
