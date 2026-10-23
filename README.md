@@ -4,6 +4,14 @@
 
 Hello!
 
+## Runtime lane
+
+For current MKRF and North Island (TSA 48 / NICC) work, **ws4 is the primary
+runtime**. FEMIC remains the inventory/curve/XML/fragments builder; the
+Patchworks export and retained Patchworks model packages are
+reference/interchange-only, not the active runtime lane. See
+`docs/sample-models/mkrf.rst` and the North Island instance docs.
+
 ## Documentation
 
 Published docs (target URL): `https://ubc-fresh.github.io/femic/`
@@ -364,7 +372,10 @@ With seral config enabled, export writes inventory-state accounts
 (`feature.Seral.*`) plus CC-treatment consequence area accounts with AU/stage
 specific labels (`product.Seral.area.<stage>.<au_id>.CC`).
 
-8. (Optional) Run proprietary Patchworks Matrix Builder under Wine:
+8. (Optional, reference-only) Run proprietary Patchworks Matrix Builder under Wine:
+
+   Patchworks is retained as a reference/interchange surface. For current
+   model runs, use ws4; see the MKRF and North Island instance docs.
 
 ```bash
 femic patchworks preflight --config config/patchworks.runtime.yaml

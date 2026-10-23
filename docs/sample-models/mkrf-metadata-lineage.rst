@@ -7,7 +7,11 @@ Scope
 This page documents the current metadata inventory and runtime/benchmark
 lineage for the MKRF instance surfaces.
 
-The active canonical rebuild package now lives at:
+**Runtime lane:** ``ws4`` is the primary MKRF/NICC runtime. The packages below
+are FEMIC build inputs and Patchworks reference/interchange evidence, not the
+active runtime.
+
+The canonical FEMIC input/interchange package now lives at:
 
 - ``external/femic-mkrf-instance/models/mkrf_patchworks_model``
 
@@ -33,15 +37,18 @@ The key tracked artifact families in the current MKRF instance are:
    * - Artifact family
      - Current in-repo path
      - Current status
-   * - Runtime model package
+   * - ws4 runtime
+     - ``external/femic-mkrf-instance/ws4/``
+     - Active MKRF/NICC runtime lane
+   * - Input/interchange model package
      - ``external/femic-mkrf-instance/models/mkrf_patchworks_model``
-     - Canonical FEMIC-native rebuild runtime surface
+     - Canonical FEMIC rebuild and Patchworks interchange surface
    * - PoC benchmark package
      - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``
      - Accepted MKRF benchmark/intermediate reference surface
    * - Canonical rebuild XML / tracks / spatial
      - ``external/femic-mkrf-instance/models/mkrf_patchworks_model/{xml,tracks,spatial}/*``
-     - Source-faithful canonical rebuild runtime artifacts
+     - Source-faithful rebuild/interchange artifacts
    * - PoC XML / tracks / spatial
      - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc/{XML,Tracks,Spatial}/*``
      - Benchmark/reference runtime artifacts
@@ -112,7 +119,8 @@ Accepted interpretation:
 Current Boundary
 ----------------
 
-Use the current canonical rebuild package as evidence for:
+Use ws4 as the current runtime evidence surface. Use the canonical
+input/interchange package as evidence for:
 
 - source-faithful runtime spatial publication,
 - accepted canonical runtime XML/track/product/account generation, and
