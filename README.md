@@ -12,6 +12,16 @@ Patchworks export and retained Patchworks model packages are
 reference/interchange-only, not the active runtime lane. See
 `docs/sample-models/mkrf.rst` and the North Island instance docs.
 
+The two North Island instance datasets are deliberately related but
+independent. They live in separate public repositories:
+
+- [`external/femic-tsa48-instance`](https://github.com/UBC-FRESH/femic-tsa48-instance) — full TSA 48 AAC/THLB benchmark;
+- [`UBC-FRESH/femic-northisland-instance`](https://github.com/UBC-FRESH/femic-northisland-instance) — TSA 48 ∩ NICC + K3Z planning model (separate repository; currently a local worktree in this checkout).
+
+Either can be used alone. The full model carries the NICC overlap as a `part`
+flag and supplies the current NICC harvest reference; the NICC model does not
+import the full-TSA runtime.
+
 ## Documentation
 
 Published docs (target URL): `https://ubc-fresh.github.io/femic/`
