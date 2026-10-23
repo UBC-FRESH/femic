@@ -42,3 +42,9 @@
 [submodule "external/femic-northisland-instance"]
 	path = external/femic-northisland-instance
 	url = https://github.com/UBC-FRESH/femic-northisland-instance.git
+[submodule "external/femic-tsa46-instance"]
+	path = external/femic-tsa46-instance
+	url = https://github.com/UBC-FRESH/femic-tsa46-instance.git
+[submodule "external/femic-tsa47-instance"]
+	path = external/femic-tsa47-instance
+	url = https://github.com/UBC-FRESH/femic-tsa47-instance.git
