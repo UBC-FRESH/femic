@@ -45,6 +45,8 @@
 [submodule "external/femic-tsa46-instance"]
 	path = external/femic-tsa46-instance
 	url = https://github.com/UBC-FRESH/femic-tsa46-instance.git
+	branch = main
 [submodule "external/femic-tsa47-instance"]
 	path = external/femic-tsa47-instance
 	url = https://github.com/UBC-FRESH/femic-tsa47-instance.git
+	branch = main
