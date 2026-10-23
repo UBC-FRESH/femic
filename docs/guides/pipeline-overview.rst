@@ -78,9 +78,12 @@ Tracked downstream economics extraction is now available too:
    The export flag remains ``--tsa`` for compatibility, but it should be read
    generically as the selected FMU/code target.
 
-For Patchworks runtime launch, prefer the registry-backed operator surfaces
-(``run-variant``, ``run-scenario``, ``run-scenario-set``) over raw `.pin`
-paths when you are using shipped or user-registered FEMIC variants.
+For current MKRF/NICC work, **ws4 is the primary runtime**. The Patchworks
+export is an interchange input to ``ws4 build``; Patchworks runtime launch is
+retained as reference-only. For reference Patchworks launch, prefer the
+registry-backed operator surfaces (``run-variant``, ``run-scenario``,
+``run-scenario-set``) over raw `.pin` paths when you are using shipped or
+user-registered FEMIC variants.
 
 Stage Boundaries
 ----------------

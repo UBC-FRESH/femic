@@ -6,13 +6,25 @@ Purpose
 
 FEMIC keeps this page as a short pointer for the current MKRF instance.
 
-The active canonical rebuild runtime package now lives at:
+Runtime lane
+------------
+
+**ws4 is the primary MKRF/NICC runtime.** The FEMIC rebuild produces the
+inventory, curves, ForestModel XML and fragments; ws4 compiles, simulates,
+optimizes and serves the model. The Patchworks model packages are retained as
+reference/interchange evidence, not as the active runtime.
+
+The canonical FEMIC input/interchange package now lives at:
 
 - ``external/femic-mkrf-instance/models/mkrf_patchworks_model``
 
 The retained PoC benchmark package remains alongside it as comparison evidence:
 
 - ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``
+
+The ws4 runtime surface and translation notes are under
+``external/femic-mkrf-instance/ws4/`` and
+``external/femic-mkrf-instance/docs/ws4-pilot.rst``.
 
 Canonical MKRF Docs
 -------------------
@@ -27,23 +39,26 @@ Canonical MKRF Docs
 
 Use the current MKRF instance surfaces as source of truth for:
 
-- the canonical rebuild runtime package and claim boundary,
-- retained PoC benchmark/reference evidence,
-- generated XML / tracks / spatial runtime evidence, and
+- the ws4 runtime lane for MKRF/NICC work,
+- the canonical FEMIC input/interchange package and rebuild claim boundary,
+- retained PoC/Patchworks benchmark and reference evidence,
+- generated XML / tracks / spatial interchange evidence, and
 - accepted legacy-only helper/control seams that remain outside the canonical
   rebuild claim boundary.
 
 Current Scope Boundary
 ----------------------
 
-The current MKRF instance in FEMIC now contains two distinct lanes:
+The current MKRF instance in FEMIC now contains three distinct surfaces:
 
-- a canonical rebuild runtime package under
+- the active ws4 runtime under ``external/femic-mkrf-instance/ws4/``;
+- a canonical FEMIC input/interchange package under
   ``external/femic-mkrf-instance/models/mkrf_patchworks_model``; and
 - a retained PoC benchmark/intermediate package under
   ``external/femic-mkrf-instance/models/mkrf_patchworks_model_poc``.
 
-The canonical rebuild lane is now the source of truth for:
+The ws4 lane is the source of truth for current runtime results and scenario
+work. The canonical input/interchange lane is the source of truth for:
 
 - source-faithful runtime spatial publication,
 - canonical ForestModel / tracks / products / accounts generation, and
@@ -67,8 +82,10 @@ The PoC lane remains appropriate only for:
 
 The practical handoff is:
 
-- use the canonical rebuild package for current runtime/package reference;
-- use the PoC package only for benchmark/reference comparison; and
+- use ws4 for current runtime/scenario work;
+- use the canonical input/interchange package for build and package reference;
+- use the PoC and Patchworks packages only for benchmark/reference comparison;
+  and
 - use Phase 60 / ``#173`` for the remaining closeout/docs claim-boundary work.
 
 Commercial thinning follow-up
