@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -22,16 +22,44 @@ def tipsy_vdyp_plot_path(au: int, tsa_code: str, root: Path = Path("plots")) -> 
     return root / f"tipsy_vdyp_tsa{tsa}-{au}.png"
 
 
+#: Coastal TSAs whose productive stands exceed the legacy 600 m3/ha plot top.
+_COASTAL_TSA_YLIM: dict[str, tuple[float, float]] = {
+    "46": (0.0, 2000.0),
+    "47": (0.0, 2000.0),
+}
+
+
+def _normalize_tsa_code(tsa_code: str) -> str:
+    """Return a zero-padded TSA code without a ``tsa`` prefix."""
+    text = str(tsa_code).strip().lower().removeprefix("tsa")
+    return text.zfill(2)
+
+
 def tipsy_vdyp_ylim_for_tsa(
     tsa_code: str,
     default: tuple[float, float] = (0.0, 600.0),
     configured: tuple[float, float] | None = None,
 ) -> tuple[float, float]:
-    """Return legacy TIPSY-vs-VDYP plot y-limits for a TSA/custom unit."""
-    _ = tsa_code
+    """Return legacy TIPSY-vs-VDYP plot y-limits for a TSA/custom unit.
+
+    Parameters
+    ----------
+    tsa_code : str
+        The TSA code, with or without a ``tsa`` prefix.
+    default : tuple of float, optional
+        The fallback limits for a TSA without a coastal override. Defaults to ``(0, 600)``.
+    configured : tuple of float or None, optional
+        A run-profile override. It takes precedence over the TSA default.
+
+    Returns
+    -------
+    tuple of float
+        The lower and upper y-axis limits. TSA 46 and 47 use ``(0, 2000)`` so their
+        high-productivity coastal yield curves are not clipped at the legacy 600 m3/ha top.
+    """
     if configured is not None:
         return configured
-    return default
+    return _COASTAL_TSA_YLIM.get(_normalize_tsa_code(tsa_code), default)
 
 
 @dataclass(frozen=True)
@@ -230,7 +258,7 @@ def plot_strata_site_index_diagnostics(
     x_lo = float(hist_xlim[0])
     x_hi = float(hist_xlim[1])
     try:
-        observed_max = float(getattr(strata_df.site_index_median, "max")())
+        observed_max = float(strata_df.site_index_median.max())
     except (AttributeError, TypeError, ValueError):
         observed_max = x_hi
     if math.isfinite(observed_max):
@@ -320,9 +348,9 @@ def render_strata_distribution_plot(
     plt_module.savefig(strata_png_path, facecolor="white", bbox_inches="tight")
     return StrataDistributionPlotMetadata(
         site_index_xlim=window_xlim,
-        total_points=int(len(plot_frame)),
-        window_points=int(len(window_frame)),
-        strip_points_plotted=int(len(strip_frame)),
+        total_points=len(plot_frame),
+        window_points=len(window_frame),
+        strip_points_plotted=len(strip_frame),
         clipped_low_count=int(clipped_low),
         clipped_high_count=int(clipped_high),
     )
