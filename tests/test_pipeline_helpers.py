@@ -757,12 +757,16 @@ def test_plot_path_helpers() -> None:
     tipsy_path = tipsy_vdyp_plot_path(23005, "08")
     configured_ylim = tipsy_vdyp_ylim_for_tsa("custom", configured=(0.0, 2000.0))
     default_ylim = tipsy_vdyp_ylim_for_tsa("08")
+    coastal_north = tipsy_vdyp_ylim_for_tsa("46")
+    coastal_south = tipsy_vdyp_ylim_for_tsa("tsa47")
 
     assert pdf_path == Path("plots/strata-tsa08.pdf")
     assert png_path == Path("plots/strata-tsa08.png")
     assert tipsy_path == Path("plots/tipsy_vdyp_tsa08-23005.png")
     assert configured_ylim == (0.0, 2000.0)
     assert default_ylim == (0.0, 600.0)
+    assert coastal_north == (0.0, 2000.0)
+    assert coastal_south == (0.0, 2000.0)
 
 
 def test_build_vdyp_cache_paths() -> None:
