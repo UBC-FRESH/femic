@@ -15111,3 +15111,6 @@
   and a CBM4 adapter-readiness note.
 - The planning note is `planning/phase115_forest_carbon.md`.
 - WS3 remains the reference implementation; WS4 consumes the package and runs libcbm.
+- Scaffold verification: the worktree test run is blocked by uninitialized instance/submodule data,
+  and the roadmap-control test reports the pre-existing duplicate Phase 107. This change set touches
+  only `ROADMAP.md`, `CHANGE_LOG.md`, and `planning/phase115_forest_carbon.md`.
