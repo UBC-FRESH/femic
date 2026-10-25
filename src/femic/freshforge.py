@@ -119,6 +119,17 @@ _NODE_CONTRACTS: tuple[_NodeContract, ...] = (
         parameters=("instance_root", "woodstock_dir", "output_dir", "model_name"),
         artifacts=("lan", "are", "yld", "act", "trn"),
     ),
+    _NodeContract(
+        id="ws4_quality",
+        name="Apply and check ws4 provenance",
+        description=(
+            "Declare the instance provenance sidecar install and ws4 quality gate."
+        ),
+        inputs=("dataset",),
+        outputs=("quality_report",),
+        parameters=("instance_root", "dataset", "sidecar", "targets", "check"),
+        artifacts=("quality_report",),
+    ),
 )
 
 
@@ -447,6 +458,7 @@ def _generic_command_builders() -> dict[str, Callable[[Any, Any], tuple[str, ...
         "matrix_build": _build_matrix_build_command,
         "export_woodstock": _build_export_woodstock_command,
         "ws3_bridge": _build_ws3_bridge_command,
+        "ws4_quality": _build_ws4_quality_command,
     }
 
 
@@ -606,6 +618,24 @@ def _build_export_woodstock_command(node: Any, _context: Any) -> tuple[str, ...]
     _append_option(command, node, "cc_max_age", "--cc-max-age")
     _append_option(command, node, "initial_age_cap", "--initial-age-cap")
     _append_option(command, node, "snap_initial_ages", "--snap-initial-ages")
+    return tuple(command)
+
+
+def _build_ws4_quality_command(node: Any, _context: Any) -> tuple[str, ...]:
+    """Build the ws4 quality install/check command for one dataset."""
+    command = [
+        sys.executable,
+        "-m",
+        "ws4.cli",
+        "quality",
+        "--dataset",
+        _parameter(node, "dataset"),
+    ]
+    _append_option(command, node, "sidecar", "--sidecar")
+    _append_option(command, node, "targets", "--targets")
+    check = node.parameters.get("check")
+    if check is True or str(check).strip().lower() in {"1", "true", "yes"}:
+        command.append("--check")
     return tuple(command)
 
 
