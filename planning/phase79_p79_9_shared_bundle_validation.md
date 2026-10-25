@@ -1,7 +1,7 @@
 # P79.9 Shared Product Bundle Validation
 
 Phase: P79.9 / `#350`
-Status: producer validation complete; consumer parity blocked
+Status: complete; P79 close-out queued
 Parent: P79 / `#211`
 Branch: `feature/p79-lidar-pipeline`
 Bundle: `lidarbc-995fb1f771f4d7fe`
@@ -90,21 +90,29 @@ These are reference support aggregations for WS4-style fragment/block means and
 FHOPS-style block p95 values. They are not results from WS4 or FHOPS consumer
 code.
 
-## Consumer Status And Blocker
+## Consumer Parity
 
-WS4 P43 (`UBC-FRESH/ws4#317`) and FHOPS P13 (`UBC-FRESH/fhops#188`) are still
-planned. Neither repository contains LiDAR/FEMIC product consumer code in the
-current checkout. FHOPS also has active uncommitted work on a separate branch.
+WS4 P52.1 (`UBC-FRESH/ws4#318`, branch `feature/p52-lidar-products`, commit
+`8f4feb0`) and FHOPS P14.1 (`UBC-FRESH/fhops#189`, branch
+`feature/phase14-lidar-products`, commit `8b6adb6c`) now implement the consumer
+contract.
 
-Therefore:
+Both consumers:
 
-- actual WS4/FHOPS cross-repo parity was **not run**;
-- P79.9 acceptance criterion "cross-repo parity within a documented tolerance"
-  is **not met**;
-- P79 must remain open until WS4 P43.1 and FHOPS P13.1 implement and run the
-  consumer contract.
+- pinned bundle `lidarbc-995fb1f771f4d7fe` / `2026.10.0-tfl6-pilot`;
+- validated schema, OGL-BC licence, checksums, CRS, 1 m resolution, CGVD2013,
+  and source-tile membership;
+- read `slope` and `chm` through the bundle manifest;
+- summarized seven shared TFL 6 polygons with mean and p95.
 
-This report deliberately does not claim parity that was not executed.
+Results:
+
+- WS4 and FHOPS matched exactly on every value;
+- maximum absolute difference: `0.0`;
+- both also matched the FEMIC producer-side reference rows exactly;
+- documented tolerance: `1e-9`; result is within tolerance.
+
+This is actual independent consumer code, not a simulated check.
 
 ## Recommended Consumer Contract
 
@@ -139,22 +147,20 @@ Complete:
   checks;
 - performance and storage evidence;
 - shared-AOI reference aggregation fixture;
+- actual WS4 P52.1 and FHOPS P14.1 consumer parity with max difference `0.0`;
 - docs, roadmap, changelog updates.
 
-Blocked:
-
-- actual WS4/FHOPS consumer parity and P79 close-out.
+P79 close-out is queued for maintainer approval.
 
 ## Next Steps
 
-1. Activate WS4 P43.1 (`#318`) and FHOPS P13.1 (`#189`) against
-   `lidarbc-995fb1f771f4d7fe`.
-2. Add manifest/checksum/CRS/resolution/licence validation in each consumer.
-3. Recompute the shared-AOI rows and compare with the fixture.
-4. Reopen P79.9 close-out only after both consumers pass.
+1. Review and merge WS4 P52.1 (`8f4feb0`) and FHOPS P14.1 (`8b6adb6c`).
+2. Continue WS4 P52.2/P52.3 and FHOPS P14.2/P14.3 for compiled-dataset and
+   scenario integration.
+3. Close P79 after maintainer approval of this validation report.
 
 ## Caveats
 
 - Single 1 km TFL 6 AOI, not a provincial release.
-- Consumer parity is pending; producer-side parity is not a substitute.
+- The shared AOI is one 1 km TFL 6 pilot, not a provincial release.
 - No model-input or production data switch was made.

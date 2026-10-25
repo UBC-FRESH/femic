@@ -173,12 +173,12 @@ canopy. All checksums, sizes, CRS, 1 m resolution, CGVD2013, OGL-BC, source-tile
 membership, and canopy schema checks passed.
 
 Bundle slope/CHM values matched the pre-bundle source rasters exactly over seven
-shared-AOI VRI polygons. This is producer-side parity, not WS4/FHOPS consumer
-parity. WS4 P43 and FHOPS P13 consumer code is not implemented yet, so actual
-cross-repo parity remains blocked and P79 stays open.
+shared-AOI VRI polygons. WS4 P52.1 and FHOPS P14.1 consumer contracts were then
+run independently against the bundle; both matched each other and the producer
+reference exactly (maximum absolute difference `0.0`, tolerance `1e-9`).
 
 See `planning/phase79_p79_9_shared_bundle_validation.md` in the parent FEMIC
-repository for the evidence and the recommended consumer tolerance.
+repository for the evidence and the consumer pins.
 
 Storage And Delivery
 --------------------

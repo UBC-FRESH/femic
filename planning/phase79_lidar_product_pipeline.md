@@ -237,16 +237,18 @@ Shared bundle:
 - Slope/CHM bundle values matched pre-bundle source rasters exactly over seven
   shared-AOI VRI polygons.
 
-Consumer blocker:
+Consumer parity:
 
-- WS4 P43 (`#317`) and FHOPS P13 (`#188`) are still planned and contain no
-  LiDAR product consumer code.
-- Actual cross-repo parity was not run.
-- P79.9 acceptance is not met and P79 remains open.
+- WS4 P52.1 (`#318`, commit `8f4feb0`) and FHOPS P14.1 (`#189`, commit
+  `8b6adb6c`) implement independent consumer contracts.
+- Both pinned `lidarbc-995fb1f771f4d7fe`, validated checksums, OGL-BC licence,
+  CRS, 1 m resolution, CGVD2013, and source tiles, and summarized seven AOI
+  polygons.
+- WS4/FHOPS slope/CHM mean and p95 matched exactly: maximum absolute
+  difference `0.0` (tolerance `1e-9`).
+- Evidence: `planning/phase79_p79_9_consumer_parity.json`.
 
-Next: activate WS4 P43.1 (`#318`) and FHOPS P13.1 (`#189`), pin the bundle,
-implement manifest/checksum/CRS/resolution/licence validation, and rerun the
-shared parity rows.
+P79.9 is complete. P79 close-out is queued for maintainer approval.
 
 ## P79.8 implementation
 
@@ -291,9 +293,9 @@ materialization.
 6. P79.5 CLI/docs/tests and instance hooks (complete).
 7. P79.6 TFL 6 pilot (complete).
 8. P79.7 canopy/precision products and TFL 6 canopy pilot (complete).
-9. P79.9 producer validation (complete) and consumer parity (blocked on WS4
-   P43.1/FHOPS P13.1).
-10. P79 close-out after consumer parity passes.
+9. P79.9 producer validation and WS4 P52.1/FHOPS P14.1 consumer parity
+   (complete).
+10. P79 close-out queued for maintainer approval.
 
 Do not start consumer integration in WS4/FHOPS until a real shared bundle
 passes both consumer contracts.

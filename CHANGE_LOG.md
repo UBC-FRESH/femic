@@ -15379,3 +15379,31 @@
 - Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference P79.9.
+
+## 2026-10-25 - P79.9 consumer parity passed; P79 close-out queued (#350)
+
+- Renumbered the LiDAR consumer phases to avoid existing roadmap collisions:
+  WS4 P43 -> P52 (`feature/p52-lidar-products`) and FHOPS P13 -> P14
+  (`feature/phase14-lidar-products`). Parent/child issue titles and bodies were
+  updated.
+- WS4 P52.1 (commit `8f4feb0`) and FHOPS P14.1 (commit `8b6adb6c`) implemented
+  independent FEMIC LidarBC consumer contracts:
+  - bundle id/version and manifest/checksum validation;
+  - OGL-BC, CRS, resolution, vertical datum, and source-tile checks;
+  - no reprojection/resampling;
+  - polygon support summaries.
+- Both consumers pinned `lidarbc-995fb1f771f4d7fe` / `2026.10.0-tfl6-pilot`
+  and summarized seven shared TFL 6 polygons.
+- Cross-repo parity: slope/CHM mean and p95 matched exactly; maximum absolute
+  difference `0.0` (tolerance `1e-9`). The same values also matched the FEMIC
+  producer reference rows.
+- Updated the P79.9 report, metrics, roadmap, planning notes, and product-bundle
+  guide. P79.9 is complete; P79 close-out is queued for maintainer approval.
+- Evidence: `planning/phase79_p79_9_consumer_parity.json`.
+- Verification:
+  - WS4: 5 consumer-contract tests passed, Sphinx `-W` passed,
+    `scripts/check_workflow.py` passed, and targeted ruff/mypy passed.
+  - FHOPS: 5 consumer-contract tests passed, Sphinx `-W` passed, and targeted
+    ruff/mypy passed.
+  - FEMIC selected docs-contract tests passed; full-repo baseline remains
+    non-green only on pre-existing unrelated surfaces.

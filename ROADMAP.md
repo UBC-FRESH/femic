@@ -2156,13 +2156,13 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 
 ## Phase 79: Native LidarBC Data-Product Pipeline For WS4 And FHOPS (`#211`)
 
-Status: active (2026-10-25). Branch: `feature/p79-lidar-pipeline`.
+Status: close-out queued (2026-10-25). Branch: `feature/p79-lidar-pipeline`.
 
 Goal: make FEMIC the authoritative upstream producer of native LidarBC data
 products for WS4 and FHOPS. FEMIC discovers and resolves LidarBC projects and
 tiles, materializes them reproducibly, preserves native resolution and
 provenance, compiles terrain/canopy/precision-forestry products, and delivers
-versioned consumer-ready bundles. WS4 P43 (`UBC-FRESH/ws4#317`) and FHOPS P13
+versioned consumer-ready bundles. WS4 P52 (`UBC-FRESH/ws4#317`) and FHOPS P14
 (`UBC-FRESH/fhops#188`) consume those bundles; they do not duplicate discovery
 or materialization. The packaged product manifest/bundle is the delivery
 boundary. A full provincial mirror remains out of scope.
@@ -2218,18 +2218,18 @@ boundary. A full provincial mirror remains out of scope.
   - [x] P79.8c Add build/inspect CLI and Python entry points plus consumer
     contract docs for WS4 P43 and FHOPS P13.
   - [x] P79.8d Add a bounded AOI product fixture and reproducibility test.
-- [ ] P79.9 Validate the packaged product with WS4/FHOPS and close out P79
-  (`#350`). Producer validation complete; consumer parity blocked.
+- [x] P79.9 Validate the packaged product with WS4/FHOPS and close out P79
+  (`#350`). Consumer parity passed; P79 close-out queued.
   - [x] P79.9a Run the bounded AOI catalog-to-product build and validate the
     shared bundle contract.
-  - [ ] P79.9b Compare terrain/canopy values with actual WS4 P43 and FHOPS P13
-    consumer implementations. Blocked: neither consumer has LiDAR product code
-    yet.
+  - [x] P79.9b Compare terrain/canopy values with actual WS4 P52 and FHOPS P14
+    consumer implementations. WS4 commit `8f4feb0`, FHOPS commit `8b6adb6c`,
+    maximum difference `0.0`.
   - [x] P79.9c Record native-resolution, CRS, vertical-datum, licence,
     checksum, storage, and performance evidence.
   - [x] P79.9d Write the shared-bundle validation report and reference
     aggregation fixture.
-  - [ ] P79.9e Post the final P79 close-out after WS4/FHOPS parity passes.
+  - [x] P79.9e Post the P79 validation close-out for maintainer approval.
 
 ## Phase 80: FreshForge Provider Integration For FEMIC Model-Build Workflows (`#220`)
 
@@ -3533,16 +3533,16 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     `planning/phase79_p79_7_tfl6_canopy_pilot.md`. The full workflow is exposed
     through `femic lidar discover|materialize|terrain|streams|canopy|trees|
     bundle|inspect`, with instance-root defaults and integration docs. P79.9
-    (`#350`) has a validated shared bundle (`lidarbc-995fb1f771f4d7fe`,
-    `2026.10.0-tfl6-pilot`) with exact producer-side source/bundle parity over
-    seven AOI polygons. Actual WS4 P43/FHOPS P13 parity is blocked because
-    neither consumer repository has LiDAR product code yet; P79 therefore
-    remains open. Next is activating WS4 P43.1 (`#318`) and FHOPS P13.1
-    (`#189`), then rerunning the shared parity fixture and closing P79.
-    Consumers must not reimplement discovery or materialization. The TFL 6
-    instance keeps its locked CDED Step 220 proxy until a fragment-level
-    LidarBC comparison is reviewed, and no canopy product is promoted to model
-    input.
+    (`#350`) is complete: shared bundle `lidarbc-995fb1f771f4d7fe`
+    (`2026.10.0-tfl6-pilot`) passed native-resolution, licence, checksum, and
+    source-tile checks, and actual WS4 P52.1 (`8f4feb0`) / FHOPS P14.1
+    (`8b6adb6c`) consumer contracts matched slope/CHM values exactly over seven
+    shared AOI polygons (maximum difference `0.0`). P79 close-out is queued for
+    maintainer approval. Next consumer work is WS4 P52.2/P52.3 and FHOPS
+    P14.2/P14.3. Consumers must not reimplement discovery or materialization.
+    The TFL 6 instance keeps its locked CDED Step 220 proxy until a
+    fragment-level LidarBC comparison is reviewed, and no canopy product is
+    promoted to model input.
   - `P78.6` / `#209` is complete: the optional document-figure recovery
     workflow is documented in `docs/guides/document-figure-recovery.rst`, the
     CLI reference includes `femic doc figures` commands, and
