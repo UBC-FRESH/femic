@@ -119,7 +119,10 @@ Tables
    Long-form classifier values: ``classifier_id``, ``classifier``, ``value``,
    and optional ``description``. A classifier id has one name; a
    ``classifier_id``/``value`` pair is unique. ``classifier_id`` defines the
-   order used by ``track_carbon_map.classifier_set``.
+   order used by ``track_carbon_map.classifier_set``. In the first lane the
+   species classifier values are the CBM species names (for example
+   ``White spruce``), not the softwood/hardwood aggregate, so CBM can use its
+   species-specific volume-to-biomass parameters.
 
 ``disturbance_types.csv``
    ``user_dist_type``, ``default_dist_type``, ``removes_biomass``,
@@ -140,7 +143,8 @@ Tables
 ``yield.csv``
    ``track_name``, ``species``, ``leading_species``, ``age``, ``volume_m3_ha``.
    The key is ``track_name``/``species``/``age``. Every track has at least one
-   row. Volume is merchantable volume in ``m3/ha``.
+   row. Volume is merchantable volume in ``m3/ha``. ``species`` and
+   ``leading_species`` both carry the CBM species classifier value.
 
 ``track_carbon_map.csv``
    The bridge table: ``track_name``, ``classifier_set``, ``leading_species``,

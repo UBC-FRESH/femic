@@ -15141,6 +15141,14 @@
 - Cross-repo check: a synthetic FEMIC package written with the exporter loads in the WS4
   `load_carbon_package` consumer with zero findings. The package has one managed track, a
   valid manifest, and the WS4 fingerprint matches.
+- Materialized the TSA24 instance submodule and fetched the stands shapefile from the
+  Arbutus annex remote, then built a 537,243-stand checkpoint and ran the real export:
+  **54 tracks, 6,016,466.4 ha, 1,674 yield rows**. The package uses CBM species classifier
+  names (for example `White spruce`) so libcbm can apply species-specific parameters.
+- The real TSA24 package loads in the WS4 `load_carbon_package` consumer with **zero
+  findings** and the expected 54 tracks / 6,016,466.4 ha.
+- Extended `build_woodstock_areas_table` with pass-through IFM arguments so an explicit
+  `IFM_FLAG` in the checkpoint can drive managed/unmanaged without changing the default
+  proportional behaviour.
 - Verification: `sphinx-build -b html docs _build/html -W` passed; targeted pytest and
-  `ruff`/`mypy` checks pass. The real TSA24 instance smoke is still pending because the
-  instance submodule is not materialized in this worktree, so P115.2 remains open.
+  `ruff`/`mypy` checks pass.

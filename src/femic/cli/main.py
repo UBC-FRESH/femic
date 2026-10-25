@@ -8374,6 +8374,10 @@ def carbon_export_package(
     initial_age_cap: int | None = EXPORT_INITIAL_AGE_CAP_OPTION,
     snap_initial_ages: int | None = EXPORT_SNAP_INITIAL_AGES_OPTION,
     thlb_min: float | None = EXPORT_THLB_MIN_OPTION,
+    ifm_mode: str = EXPORT_IFM_MODE_OPTION,
+    ifm_source_col: str | None = EXPORT_IFM_SOURCE_COL_OPTION,
+    ifm_threshold: float | None = EXPORT_IFM_THRESHOLD_OPTION,
+    ifm_target_managed_share: float | None = (EXPORT_IFM_TARGET_MANAGED_SHARE_OPTION),
     instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Export a static CBM carbon package from the selected FMU/code targets."""
@@ -8418,6 +8422,10 @@ def carbon_export_package(
             initial_age_cap=initial_age_cap,
             age_class_width=snap_initial_ages,
             thlb_min=thlb_min,
+            ifm_mode=ifm_mode,
+            ifm_source_col=ifm_source_col,
+            ifm_threshold=ifm_threshold,
+            ifm_target_managed_share=ifm_target_managed_share,
         )
     except (FileNotFoundError, ValueError) as exc:
         console.print(f"[red]Carbon export failed:[/red] {exc}")

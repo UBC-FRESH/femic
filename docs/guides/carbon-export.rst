@@ -66,9 +66,9 @@ Model choices in the first version
 ----------------------------------
 
 - **One leading species per track.** The yield table uses the total merchantable
-  volume curve and assigns it to the softwood or hardwood classifier, following
-  the WS3 reference. The softwood and hardwood shares remain in the track map for
-  provenance and for a later species-resolved curve.
+  volume curve and assigns it to the CBM species classifier (for example
+  ``White spruce``), following the WS3 reference. The softwood and hardwood shares
+  remain in the track map for provenance and for a later species-resolved curve.
 - **Canonical track names when no dataset is supplied.** The default
   ``AU(<id>)+IFM(<ifm>)+treatment()`` form matches the simple matrix builder. A
   model with additional themes should pass ``--dataset-dir`` or supply an

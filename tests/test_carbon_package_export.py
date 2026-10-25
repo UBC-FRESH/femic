@@ -97,7 +97,7 @@ def test_build_tables_has_all_contract_tables() -> None:
     }
     assert tables["inventory"]["area_ha"].sum() == 5.0
     assert tables["track_carbon_map"].shape[0] == 1
-    assert tables["track_carbon_map"].loc[0, "classifier_set"].endswith(";softwood")
+    assert tables["track_carbon_map"].loc[0, "classifier_set"].endswith(";White spruce")
     assert tables["yield"].shape[0] == 31
     assert (
         tables["yield"].loc[tables["yield"]["age"] == 10, "volume_m3_ha"].iloc[0]

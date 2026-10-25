@@ -484,6 +484,10 @@ def export_carbon_package(
     initial_age_cap: int | None = None,
     age_class_width: int | None = None,
     thlb_min: float | None = None,
+    ifm_mode: str = "proportional",
+    ifm_source_col: str | None = None,
+    ifm_threshold: float | None = None,
+    ifm_target_managed_share: float | None = None,
     species_by_au: Mapping[int, str] | None = None,
 ) -> CarbonExportResult:
     """Export a carbon package from a FEMIC bundle and checkpoint.
@@ -556,6 +560,10 @@ def export_carbon_package(
         initial_age_cap=initial_age_cap,
         age_class_width=age_class_width,
         thlb_min=thlb_min,
+        ifm_mode=ifm_mode,
+        ifm_source_col=ifm_source_col,
+        ifm_threshold=ifm_threshold,
+        ifm_target_managed_share=ifm_target_managed_share,
     )
     shares: dict[int, tuple[float, float]] = {}
     resolved_species_checkpoint = (
@@ -843,8 +851,7 @@ def _yield_tables(
         if curve is None:
             raise ValueError(f"AU {au_id} has no {ifm} curve {curve_id}")
         mapping = track_species[str(track_name)]
-        softwood, hardwood = track_shares[str(track_name)]
-        component = "softwood" if softwood >= hardwood else "hardwood"
+        component = mapping.cbm_species
         for age in ages:
             yield_rows.append(
                 {
@@ -907,7 +914,7 @@ def _classifier_table(
                 "description": track_name,
             }
         )
-    components = sorted({mapping.wood_type for mapping in track_species.values()})
+    components = sorted({mapping.cbm_species for mapping in track_species.values()})
     for component in components:
         rows.append(
             {
@@ -934,7 +941,7 @@ def _track_map(
         first = block.iloc[0]
         mapping = track_species[str(track_name)]
         softwood, hardwood = track_shares[str(track_name)]
-        component = "softwood" if softwood >= hardwood else "hardwood"
+        component = mapping.cbm_species
         rows.append(
             {
                 "track_name": str(track_name),
