@@ -50,3 +50,6 @@
 	path = external/femic-tsa47-instance
 	url = https://github.com/UBC-FRESH/femic-tsa47-instance.git
 	branch = main
+[submodule "external/femic-gnn-instance"]
+	path = external/femic-gnn-instance
+	url = https://github.com/UBC-FRESH/femic-gnn-instance.git
