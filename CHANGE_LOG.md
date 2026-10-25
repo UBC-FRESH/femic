@@ -15345,3 +15345,37 @@
 - Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference P79.7.
+
+## 2026-10-25 - P79.9 shared product validation; consumer parity blocked (#350)
+
+- Added `slope` as a supported derived raster product kind in the P79.8 bundle
+  contract and added `femic.lidar.canopy_structure.v1` to the canopy structure
+  report.
+- Built the shared TFL 6 bundle from the P79.6/P79.7 AOI:
+  - `bundle_id`: `lidarbc-995fb1f771f4d7fe`
+  - `bundle_version`: `2026.10.0-tfl6-pilot`
+  - products: `dem`, `dsm`, `slope`, `chm`, `canopy`
+  - 5 products, 13,390,216 bytes, build runtime 3.24 s.
+- Validation passed for checksums, sizes, CRS (`EPSG:3005`), 1 m resolution,
+  CGVD2013, OGL-BC, source-tile membership, and canopy schema.
+- Slope/CHM bundle values matched pre-bundle source rasters exactly over seven
+  shared-AOI VRI polygons. This is producer-side parity, not WS4/FHOPS consumer
+  parity.
+- Added the shared-bundle validation report and reference aggregation fixture:
+  - `planning/phase79_p79_9_shared_bundle_validation.md`
+  - `planning/phase79_p79_9_shared_parity_metrics.json`
+  - `planning/phase79_p79_9_shared_parity_rows.csv`
+- Blocked: WS4 P43 (`UBC-FRESH/ws4#317`) and FHOPS P13
+  (`UBC-FRESH/fhops#188`) still have no LiDAR product consumer code. Actual
+  cross-repo parity was not run, P79.9 acceptance is not met, and P79 remains
+  open until WS4 P43.1 and FHOPS P13.1 implement and pass the contract.
+- Verification:
+  - All 192 LiDAR tests passed.
+  - Targeted `ruff check` passed for new LiDAR modules/tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Selected LiDAR/docs-contract tests passed. The worktree docs-contract
+    baseline still fails on uninitialized K3Z/TSA29 instance submodules.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference P79.9.

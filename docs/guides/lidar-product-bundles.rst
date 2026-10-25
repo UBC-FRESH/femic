@@ -164,6 +164,22 @@ scenario, operability, and harvest-cost integration. Consumer-side
 reprojection, if required, is an explicit consumer decision recorded in the
 consumer's own lineage.
 
+Shared TFL 6 Bundle Validation
+------------------------------
+
+A shared TFL 6 bundle (`lidarbc-995fb1f771f4d7fe`,
+`2026.10.0-tfl6-pilot`) packaged five products: DEM, DSM, slope, CHM, and
+canopy. All checksums, sizes, CRS, 1 m resolution, CGVD2013, OGL-BC, source-tile
+membership, and canopy schema checks passed.
+
+Bundle slope/CHM values matched the pre-bundle source rasters exactly over seven
+shared-AOI VRI polygons. This is producer-side parity, not WS4/FHOPS consumer
+parity. WS4 P43 and FHOPS P13 consumer code is not implemented yet, so actual
+cross-repo parity remains blocked and P79 stays open.
+
+See `planning/phase79_p79_9_shared_bundle_validation.md` in the parent FEMIC
+repository for the evidence and the recommended consumer tolerance.
+
 Storage And Delivery
 --------------------
 

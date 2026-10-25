@@ -2219,11 +2219,17 @@ boundary. A full provincial mirror remains out of scope.
     contract docs for WS4 P43 and FHOPS P13.
   - [x] P79.8d Add a bounded AOI product fixture and reproducibility test.
 - [ ] P79.9 Validate the packaged product with WS4/FHOPS and close out P79
-  (`#350`).
-  - [ ] P79.9a Run a shared-AOI parity check against WS4 P43 and FHOPS P13
-    consumer contracts.
-  - [ ] P79.9b Record storage, performance, licence, and provenance evidence.
-  - [ ] P79.9c Write the P79 close-out report and next-phase recommendation.
+  (`#350`). Producer validation complete; consumer parity blocked.
+  - [x] P79.9a Run the bounded AOI catalog-to-product build and validate the
+    shared bundle contract.
+  - [ ] P79.9b Compare terrain/canopy values with actual WS4 P43 and FHOPS P13
+    consumer implementations. Blocked: neither consumer has LiDAR product code
+    yet.
+  - [x] P79.9c Record native-resolution, CRS, vertical-datum, licence,
+    checksum, storage, and performance evidence.
+  - [x] P79.9d Write the shared-bundle validation report and reference
+    aggregation fixture.
+  - [ ] P79.9e Post the final P79 close-out after WS4/FHOPS parity passes.
 
 ## Phase 80: FreshForge Provider Integration For FEMIC Model-Build Workflows (`#220`)
 
@@ -3526,11 +3532,17 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     `planning/phase79_p79_6_tfl6_pilot.md` and
     `planning/phase79_p79_7_tfl6_canopy_pilot.md`. The full workflow is exposed
     through `femic lidar discover|materialize|terrain|streams|canopy|trees|
-    bundle|inspect`, with instance-root defaults and integration docs. Next is
-    P79.9 (`#350`) cross-repo validation and P79 close-out. Consumers must not
-    reimplement discovery or materialization. The TFL 6 instance keeps its
-    locked CDED Step 220 proxy until a fragment-level LidarBC comparison is
-    reviewed, and no canopy product is promoted to model input.
+    bundle|inspect`, with instance-root defaults and integration docs. P79.9
+    (`#350`) has a validated shared bundle (`lidarbc-995fb1f771f4d7fe`,
+    `2026.10.0-tfl6-pilot`) with exact producer-side source/bundle parity over
+    seven AOI polygons. Actual WS4 P43/FHOPS P13 parity is blocked because
+    neither consumer repository has LiDAR product code yet; P79 therefore
+    remains open. Next is activating WS4 P43.1 (`#318`) and FHOPS P13.1
+    (`#189`), then rerunning the shared parity fixture and closing P79.
+    Consumers must not reimplement discovery or materialization. The TFL 6
+    instance keeps its locked CDED Step 220 proxy until a fragment-level
+    LidarBC comparison is reviewed, and no canopy product is promoted to model
+    input.
   - `P78.6` / `#209` is complete: the optional document-figure recovery
     workflow is documented in `docs/guides/document-figure-recovery.rst`, the
     CLI reference includes `femic doc figures` commands, and

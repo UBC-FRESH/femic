@@ -1,0 +1,158 @@
+{
+  "bundle_id": "lidarbc-995fb1f771f4d7fe",
+  "bundle_version": "2026.10.0-tfl6-pilot",
+  "product_count": 5,
+  "total_bytes": 13390216,
+  "checks": {
+    "products": {
+      "dem": {
+        "path": "products/dem__01__lidarbc_dem_aoi_1m.tif",
+        "exists": true,
+        "sha256_matches": true,
+        "size_matches": true,
+        "source_sha256_matches": true,
+        "crs": "EPSG:3005",
+        "resolution_m": 1.0,
+        "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+        "licence_id": "OGL-BC"
+      },
+      "dsm": {
+        "path": "products/dsm__02__lidarbc_dsm_aoi_1m.tif",
+        "exists": true,
+        "sha256_matches": true,
+        "size_matches": true,
+        "source_sha256_matches": true,
+        "crs": "EPSG:3005",
+        "resolution_m": 1.0,
+        "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+        "licence_id": "OGL-BC"
+      },
+      "slope": {
+        "path": "products/slope__03__lidarbc_slope_pct_1m.tif",
+        "exists": true,
+        "sha256_matches": true,
+        "size_matches": true,
+        "source_sha256_matches": true,
+        "crs": "EPSG:3005",
+        "resolution_m": 1.0,
+        "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+        "licence_id": "OGL-BC"
+      },
+      "chm": {
+        "path": "products/chm__04__chm.tif",
+        "exists": true,
+        "sha256_matches": true,
+        "size_matches": true,
+        "source_sha256_matches": true,
+        "crs": "EPSG:3005",
+        "resolution_m": 1.0,
+        "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+        "licence_id": "OGL-BC"
+      },
+      "canopy": {
+        "path": "products/canopy__05__canopy_structure.json",
+        "exists": true,
+        "sha256_matches": true,
+        "size_matches": true,
+        "source_sha256_matches": true,
+        "crs": "EPSG:3005",
+        "resolution_m": 1.0,
+        "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+        "licence_id": "OGL-BC"
+      }
+    },
+    "all_checksums_match": true,
+    "all_sizes_match": true,
+    "native_crs": true,
+    "native_resolution": true,
+    "vertical_datum_consistent": true,
+    "licence_consistent": true,
+    "source_tiles_consistent": true,
+    "canopy_structure_schema": true,
+    "canopy_valid_pixels": 1000000,
+    "canopy_mean_m": 8.619585331008912,
+    "canopy_p95_m": 21.780885314941404,
+    "canopy_cover_ge_2m": 70.9363
+  },
+  "rows": [
+    {
+      "polygon_id": "23339490",
+      "valid_pixels": 54289,
+      "slope_mean_pct": 18.09368479755365,
+      "slope_p95_pct": 45.099568176269514,
+      "chm_mean_m": 10.65011212912247,
+      "chm_p95_m": 20.908148193359374,
+      "slope_bundle_equals_source": true,
+      "chm_bundle_equals_source": true
+    },
+    {
+      "polygon_id": "23339461",
+      "valid_pixels": 22372,
+      "slope_mean_pct": 51.546346954573075,
+      "slope_p95_pct": 146.55247268676757,
+      "chm_mean_m": 19.1968649030904,
+      "chm_p95_m": 37.102053070068365,
+      "slope_bundle_equals_source": true,
+      "chm_bundle_equals_source": true
+    },
+    {
+      "polygon_id": "23339462",
+      "valid_pixels": 52232,
+      "slope_mean_pct": 19.69319749321132,
+      "slope_p95_pct": 43.81108722686767,
+      "chm_mean_m": 1.0822378980344753,
+      "chm_p95_m": 8.235550689697256,
+      "slope_bundle_equals_source": true,
+      "chm_bundle_equals_source": true
+    },
+    {
+      "polygon_id": "23339458",
+      "valid_pixels": 731180,
+      "slope_mean_pct": 22.585566321885047,
+      "slope_p95_pct": 49.08007545471189,
+      "chm_mean_m": 8.70222810879686,
+      "chm_p95_m": 20.48614807128906,
+      "slope_bundle_equals_source": true,
+      "chm_bundle_equals_source": true
+    },
+    {
+      "polygon_id": "16625195",
+      "valid_pixels": 61279,
+      "slope_mean_pct": 40.468577112718805,
+      "slope_p95_pct": 156.18781433105468,
+      "chm_mean_m": 13.97379255928985,
+      "chm_p95_m": 27.064649963378905,
+      "slope_bundle_equals_source": true,
+      "chm_bundle_equals_source": true
+    },
+    {
+      "polygon_id": "16624698",
+      "valid_pixels": 66306,
+      "slope_mean_pct": 22.00791136516685,
+      "slope_p95_pct": 43.11737537384033,
+      "chm_mean_m": 1.9925869743888656,
+      "chm_p95_m": 16.3475341796875,
+      "slope_bundle_equals_source": true,
+      "chm_bundle_equals_source": true
+    },
+    {
+      "polygon_id": "19212607",
+      "valid_pixels": 12342,
+      "slope_mean_pct": 27.323783959068745,
+      "slope_p95_pct": 68.29227828979488,
+      "chm_mean_m": 16.535895914298134,
+      "chm_p95_m": 30.026400756835933,
+      "slope_bundle_equals_source": true,
+      "chm_bundle_equals_source": true
+    }
+  ],
+  "consumer_status": {
+    "ws4_p43_implementation_present": false,
+    "fhops_p13_implementation_present": false,
+    "parity_scope": "Producer-side native parity and reference support aggregations. Actual WS4/FHOPS consumer code is not implemented in this checkout."
+  },
+  "tolerance": {
+    "native_product_values": "exact byte/value equality",
+    "aggregate_recompute": "0.0 (same bundle raster)"
+  }
+}

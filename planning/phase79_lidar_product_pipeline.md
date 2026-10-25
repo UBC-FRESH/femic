@@ -219,6 +219,35 @@ TFL 6 canopy pilot (same 1 km AOI as P79.6):
 Evidence: `planning/phase79_p79_7_tfl6_canopy_pilot.md` and
 `planning/phase79_p79_7_tfl6_canopy_pilot_metrics.json`.
 
+## P79.9 shared bundle validation
+
+Build a five-product TFL 6 bundle (`dem`, `dsm`, `slope`, `chm`, `canopy`) from
+the P79.6/P79.7 AOI and validate its native contract. Added `slope` as a
+supported derived raster product kind and added a schema version to the canopy
+structure report.
+
+Shared bundle:
+
+- `bundle_id`: `lidarbc-995fb1f771f4d7fe`
+- `bundle_version`: `2026.10.0-tfl6-pilot`
+- 5 products, 13,390,216 bytes.
+- Build runtime 3.24 s; bundle inspect valid with no errors/warnings.
+- All checksums, sizes, CRS (`EPSG:3005`), 1 m resolution, CGVD2013, OGL-BC,
+  source-tile membership, and canopy schema checks passed.
+- Slope/CHM bundle values matched pre-bundle source rasters exactly over seven
+  shared-AOI VRI polygons.
+
+Consumer blocker:
+
+- WS4 P43 (`#317`) and FHOPS P13 (`#188`) are still planned and contain no
+  LiDAR product consumer code.
+- Actual cross-repo parity was not run.
+- P79.9 acceptance is not met and P79 remains open.
+
+Next: activate WS4 P43.1 (`#318`) and FHOPS P13.1 (`#189`), pin the bundle,
+implement manifest/checksum/CRS/resolution/licence validation, and rerun the
+shared parity rows.
+
 ## P79.8 implementation
 
 Add `femic.lidar.products` with:
@@ -262,7 +291,9 @@ materialization.
 6. P79.5 CLI/docs/tests and instance hooks (complete).
 7. P79.6 TFL 6 pilot (complete).
 8. P79.7 canopy/precision products and TFL 6 canopy pilot (complete).
-9. P79.9 cross-repo validation with WS4/FHOPS and P79 close-out.
+9. P79.9 producer validation (complete) and consumer parity (blocked on WS4
+   P43.1/FHOPS P13.1).
+10. P79 close-out after consumer parity passes.
 
 Do not start consumer integration in WS4/FHOPS until a real shared bundle
 passes both consumer contracts.

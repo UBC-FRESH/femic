@@ -419,3 +419,11 @@ def test_lidar_help_renders() -> None:
     assert result.exit_code == 0
     assert "bundle" in result.stdout
     assert "inspect" in result.stdout
+
+
+def test_slope_is_a_supported_derived_raster_product() -> None:
+    from femic.lidar import products
+
+    assert "slope" in products.LIDAR_PRODUCT_KINDS
+    assert "slope" in products.LIDAR_RASTER_PRODUCT_KINDS
+    assert "slope" in products.LIDAR_DERIVED_PRODUCT_KINDS

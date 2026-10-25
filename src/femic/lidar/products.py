@@ -41,9 +41,10 @@ LIDAR_PRODUCT_KINDS: tuple[str, ...] = (
     "chm",
     "canopy",
     "individual_tree",
+    "slope",
 )
-LIDAR_RASTER_PRODUCT_KINDS = frozenset({"dem", "dsm", "chm", "canopy"})
-LIDAR_DERIVED_PRODUCT_KINDS = frozenset({"chm", "canopy"})
+LIDAR_RASTER_PRODUCT_KINDS = frozenset({"dem", "dsm", "chm", "canopy", "slope"})
+LIDAR_DERIVED_PRODUCT_KINDS = frozenset({"chm", "canopy", "slope"})
 LIDAR_CONSUMER_PHASES: dict[str, str] = {"ws4": "P43", "fhops": "P13"}
 
 

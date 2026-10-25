@@ -29,6 +29,7 @@ from femic.lidar.terrain import (
 )
 
 CANOPY_QA_SCHEMA_VERSION = "femic.lidar.canopy_qa.v1"
+CANOPY_STRUCTURE_SCHEMA_VERSION = "femic.lidar.canopy_structure.v1"
 DEFAULT_CANOPY_THRESHOLDS: tuple[float, ...] = (2.0, 5.0, 10.0, 20.0)
 DEFAULT_CANOPY_COVER_THRESHOLD_M = 2.0
 DEFAULT_VRI_HEIGHT_FIELD = "proj_height_1"
@@ -107,11 +108,13 @@ class CanopyStructureResult:
     height_metrics: dict[str, object]
     cover_fractions: dict[str, float]
     warnings: tuple[str, ...] = ()
+    schema_version: str = CANOPY_STRUCTURE_SCHEMA_VERSION
 
     def to_dict(self) -> dict[str, object]:
         """Return the canopy structure result as a JSON-serializable mapping."""
 
         return {
+            "schema_version": self.schema_version,
             "path": str(self.path),
             "metadata": self.metadata.to_dict(),
             "thresholds_m": list(self.thresholds_m),

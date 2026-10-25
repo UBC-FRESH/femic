@@ -136,6 +136,7 @@ def test_derive_chm_and_structure(tmp_path: Path) -> None:
     assert structure.valid_pixels == 100
     assert structure.height_metrics["mean_m"] == pytest.approx(10.0)
     assert structure.to_dict()["thresholds_m"] == [2.0, 5.0, 10.0, 20.0]
+    assert structure.to_dict()["schema_version"] == "femic.lidar.canopy_structure.v1"
 
 
 def test_chm_negative_nodata_and_no_clamp(tmp_path: Path) -> None:
