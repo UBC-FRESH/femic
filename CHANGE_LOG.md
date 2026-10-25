@@ -15102,3 +15102,12 @@
 - P36.2: add the `femic.ws4_quality` FreshForge node contract and command builder. It runs
   `ws4 quality` with `--sidecar`, optional `--targets`, and `--check`; the provider metadata and
   exact command are covered by tests.
+
+## 2026-10-25 - P115 activation: forest carbon domain and CBM packages
+
+- Created parent issue #361 and tasks #362-#367 on `feature/p115-forest-carbon`.
+- The phase adds the carbon-domain contract and crosswalks, a static CBM input package exporter,
+  carbon validation and TSA24/MKRF fixtures, a GCBM walltowall export bridge, the WS4/WS3 handoff,
+  and a CBM4 adapter-readiness note.
+- The planning note is `planning/phase115_forest_carbon.md`.
+- WS3 remains the reference implementation; WS4 consumes the package and runs libcbm.
