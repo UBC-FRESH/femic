@@ -60,6 +60,10 @@ from femic.builtin_instances import (
     load_instance_catalog,
     resolve_builtin_repo_status,
 )
+from femic.carbon import (
+    export_carbon_package,
+    load_carbon_export_config,
+)
 from femic.document_figures import (
     DOCUMENT_FIGURE_DOWNSTREAM_USE_CLASSES,
     DOCUMENT_FIGURE_REVIEW_STATUSES,
@@ -315,6 +319,11 @@ export_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
     help="Export model artifacts for downstream planning systems.",
+)
+carbon_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Build the static forest carbon packages consumed by WS4 and WS3.",
 )
 patchworks_app = typer.Typer(
     add_completion=False,
@@ -1318,6 +1327,64 @@ EXPORT_WOODSTOCK_OUTPUT_DIR_OPTION = typer.Option(
     DEFAULT_WOODSTOCK_OUTPUT_DIR,
     "--output-dir",
     help="Output directory for Woodstock compatibility CSV files.",
+)
+CARBON_OUTPUT_DIR_OPTION = typer.Option(
+    Path("output/carbon"),
+    "--output-dir",
+    help="Output directory for the static carbon package.",
+)
+CARBON_CONFIG_DIR_OPTION = typer.Option(
+    Path("config/carbon"),
+    "--config-dir",
+    help="Directory holding the carbon crosswalk CSVs.",
+)
+CARBON_ADMIN_BOUNDARY_OPTION = typer.Option(
+    "British Columbia",
+    "--admin-boundary",
+    help="CBM administrative boundary name.",
+)
+CARBON_ECO_BOUNDARY_OPTION = typer.Option(
+    "Montane Cordillera",
+    "--eco-boundary",
+    help="CBM eco-boundary name for the package.",
+)
+CARBON_DEFAULTS_VERSION_OPTION = typer.Option(
+    None,
+    "--cbm-defaults-version",
+    help="CBM defaults database version; detected from libcbm when omitted.",
+    show_default=False,
+)
+CARBON_DEFAULTS_SHA256_OPTION = typer.Option(
+    None,
+    "--cbm-defaults-sha256",
+    help="CBM defaults database SHA-256; detected from libcbm when omitted.",
+    show_default=False,
+)
+CARBON_DEFAULTS_SOURCE_OPTION = typer.Option(
+    "libcbm",
+    "--cbm-defaults-source",
+    help="Source label for the CBM defaults database.",
+)
+CARBON_DATASET_DIR_OPTION = typer.Option(
+    None,
+    "--dataset-dir",
+    help="Optional compiled WS4 dataset used to resolve exact track names.",
+    show_default=False,
+)
+CARBON_AGE_INTERVAL_OPTION = typer.Option(
+    10,
+    "--age-interval",
+    help="Yield grid width in years.",
+)
+CARBON_MAX_AGE_OPTION = typer.Option(
+    300,
+    "--max-age",
+    help="Maximum yield age in years.",
+)
+CARBON_VOLUME_FEATURE_LABEL_OPTION = typer.Option(
+    "feature.Volume",
+    "--volume-feature-label",
+    help="WS4 feature label that carries merchantable volume.",
 )
 EXPORT_INITIAL_AGE_CAP_OPTION = typer.Option(
     None,
@@ -8287,6 +8354,86 @@ def export_woodstock(
     console.print(f"transitions_csv: {result.transitions_csv_path}")
 
 
+@carbon_app.command("export-package")
+def carbon_export_package(
+    tsa: list[str] | None = TSA_OPTION,
+    bundle_dir: Path = EXPORT_BUNDLE_DIR_OPTION,
+    checkpoint: Path = EXPORT_CHECKPOINT_OPTION,
+    output_dir: Path = CARBON_OUTPUT_DIR_OPTION,
+    config_dir: Path = CARBON_CONFIG_DIR_OPTION,
+    admin_boundary: str = CARBON_ADMIN_BOUNDARY_OPTION,
+    eco_boundary: str = CARBON_ECO_BOUNDARY_OPTION,
+    cbm_defaults_version: str | None = CARBON_DEFAULTS_VERSION_OPTION,
+    cbm_defaults_sha256: str | None = CARBON_DEFAULTS_SHA256_OPTION,
+    cbm_defaults_source: str = CARBON_DEFAULTS_SOURCE_OPTION,
+    dataset_dir: Path | None = CARBON_DATASET_DIR_OPTION,
+    age_interval: int = CARBON_AGE_INTERVAL_OPTION,
+    max_age: int = CARBON_MAX_AGE_OPTION,
+    volume_feature_label: str = CARBON_VOLUME_FEATURE_LABEL_OPTION,
+    fragments_crs: str = EXPORT_FRAGMENTS_CRS_OPTION,
+    initial_age_cap: int | None = EXPORT_INITIAL_AGE_CAP_OPTION,
+    snap_initial_ages: int | None = EXPORT_SNAP_INITIAL_AGES_OPTION,
+    thlb_min: float | None = EXPORT_THLB_MIN_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Export a static CBM carbon package from the selected FMU/code targets."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_bundle_dir = instance_context.resolve_path(bundle_dir)
+    resolved_checkpoint = instance_context.resolve_path(checkpoint)
+    resolved_output_dir = instance_context.resolve_path(output_dir)
+    resolved_config_dir = instance_context.resolve_path(config_dir)
+    resolved_dataset_dir = (
+        instance_context.resolve_path(dataset_dir) if dataset_dir is not None else None
+    )
+    targets = (
+        [str(v).zfill(2) if str(v).isdigit() else str(v).lower() for v in tsa]
+        if tsa
+        else []
+    )
+    if not targets:
+        console.print(
+            "[red]Provide at least one FMU/code via --tsa for carbon export.[/red]"
+        )
+        raise typer.Exit(code=1)
+    try:
+        config = load_carbon_export_config(
+            config_dir=resolved_config_dir,
+            admin_boundary=admin_boundary,
+            eco_boundary=eco_boundary,
+            cbm_defaults_version=cbm_defaults_version,
+            cbm_defaults_sha256=cbm_defaults_sha256,
+            cbm_defaults_source=cbm_defaults_source,
+            age_interval=age_interval,
+            max_age=max_age,
+            volume_feature_label=volume_feature_label,
+        )
+        result = export_carbon_package(
+            bundle_dir=resolved_bundle_dir,
+            checkpoint_path=resolved_checkpoint,
+            output_dir=resolved_output_dir,
+            tsa_list=targets,
+            config=config,
+            dataset_dir=resolved_dataset_dir,
+            fragments_crs=fragments_crs,
+            initial_age_cap=initial_age_cap,
+            age_class_width=snap_initial_ages,
+            thlb_min=thlb_min,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        console.print(f"[red]Carbon export failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(
+        "[green]carbon export completed[/green] "
+        f"tsa={targets} tracks={result.track_count} "
+        f"area_ha={result.inventory_area_ha:.1f} yield_rows={result.yield_rows}"
+    )
+    console.print(f"package_id: {result.package_id}")
+    console.print(f"package_dir: {result.package_dir}")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(f"fingerprint: {result.fingerprint}")
+
+
 @export_app.command("ws3-sections")
 def export_ws3_sections(
     woodstock_dir: Path = EXPORT_WS3_WOODSTOCK_DIR_OPTION,
@@ -10527,6 +10674,7 @@ freshforge_app.add_typer(freshforge_workflows_app, name="workflows")
 app.add_typer(freshforge_app, name="freshforge")
 app.add_typer(tsr_app, name="tsr")
 app.add_typer(export_app, name="export")
+app.add_typer(carbon_app, name="carbon")
 patchworks_app.add_typer(patchworks_instances_app, name="instances")
 patchworks_app.add_typer(patchworks_scenarios_app, name="scenarios")
 patchworks_app.add_typer(patchworks_scenario_sets_app, name="scenario-sets")

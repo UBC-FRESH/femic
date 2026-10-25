@@ -15126,3 +15126,21 @@
   eco-boundary names, YAML parse).
 - Verification: `sphinx-build -b html docs _build/html -W` passed; the new test module passes
   (5 tests); `ruff check` passes. The crosswalk science review is still open, so P115.1 remains open.
+
+## 2026-10-25 - P115.2 static CBM package exporter
+
+- Added `src/femic/carbon/` with `load_carbon_export_config`,
+  `build_carbon_package_tables`, `write_carbon_package`, `export_carbon_package`, and
+  `track_names_from_compiled_dataset`.
+- Added `femic carbon export-package` with bundle/checkpoint inputs, crosswalk config, optional
+  compiled-WS4 dataset track-name resolution, CBM defaults provenance, age-grid controls, and
+  the package manifest.
+- Added `docs/guides/carbon-export.rst` and the guide index entry.
+- Added `tests/test_carbon_package_export.py` for the table builder, writer/manifest, exact
+  track-name resolution, and crosswalk config. Nine carbon-domain tests pass.
+- Cross-repo check: a synthetic FEMIC package written with the exporter loads in the WS4
+  `load_carbon_package` consumer with zero findings. The package has one managed track, a
+  valid manifest, and the WS4 fingerprint matches.
+- Verification: `sphinx-build -b html docs _build/html -W` passed; targeted pytest and
+  `ruff`/`mypy` checks pass. The real TSA24 instance smoke is still pending because the
+  instance submodule is not materialized in this worktree, so P115.2 remains open.
