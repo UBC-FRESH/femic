@@ -3328,6 +3328,7 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase114_forest_hydrology_flood_risk.md`
   - `planning/phase106_mkrf_executable_model_build.md`
   - `planning/phase105_tfl6_executable_model_build.md`
   - `planning/phase104_freshforge_workflow_discovery.md`
@@ -3344,6 +3345,15 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
   - `planning/phase68_tsa29_comparison_docs_notes.md`
   - `planning/roadmap_notes_archive.md`
 - Current edge:
+  - `P114` / `#351` is active on `feature/p114-forest-hydrology-flood-risk`:
+    P114.1 (`#352`) is complete. `femic.hydrology.domain` defines the
+    `femic.hydrology.domain.v1` domain/receptor contract, the
+    `femic.hydrology.sources.v1` public source registry, structural
+    cross-reference validation, and a local layer audit with size/SHA-256
+    checks. Next is P114.2 (`#353`) public hydrology data bundle assembly,
+    starting with the snow-transient and rain/rain-on-snow pilot watershed
+    data audit. WS4 P49 and FHOPS P14 stay uncreated until the response
+    contract is stable.
   - `P106` / `#288` is complete and merged: parent PR `#289`, parent issue
     `#288`, MKRF PR `UBC-FRESH/femic-mkrf-instance#51`, and MKRF issue
     `UBC-FRESH/femic-mkrf-instance#50` are closed. MKRF is the second
@@ -3618,7 +3628,7 @@ As of the completion of Phase 106, the FEMIC roadmap has been refined to address
 
 The roadmap now follows a more consistent structure that should be easier for automated tools to parse while maintaining all the detailed implementation information that developers need. Future phases will follow these established patterns for better consistency and maintainability.
 
-## Phase 107 Closeout Status
+### Phase 107 Closeout Status
 
 ### Tasks Completed for Phase 107
 1. Created standardized roadmap structure templates in planning directory
@@ -3865,3 +3875,47 @@ Tasks:
       `external/femic-tsa24-instance/evidence/p113_4_smoke_2026-10-12.md`.
 
 Detailed plan: `planning/phase113_wbi_aoi_model_build.md`.
+
+## Phase 114: Forest Hydrology And Flood-Risk Optimization (`#351`)
+
+Status: **active** (2026-10-25).
+
+Branch: `feature/p114-forest-hydrology-flood-risk`
+
+Goal: add a reproducible forest-hydrology and flood-risk layer that evaluates
+how the spatiotemporal pattern of harvesting and road construction changes
+peak-flow frequency and downstream flood risk, then expose a versioned response
+bundle to WS4 spatial scheduling and FHOPS operational planning. This is
+screening/decision support, not regulatory flood mapping.
+
+Scientific framing: peak-flow response is frequency-dependent and
+nonstationary; rain, rain-on-snow, and snowmelt regimes are separate; landscape
+position and road connectivity matter; ECA-style metrics are screening
+diagnostics only. Use a model ladder from screening to stochastic
+flood-frequency response to process-based distributed hydrology to validated
+surrogates.
+
+Ownership: FEMIC owns the domain, public data bundle, disturbance ledger,
+response surfaces, flood-risk bundles, and validation. WS4 P49 and FHOPS P14
+consume the response contract and are created only after it stabilizes.
+
+Tasks:
+
+- [x] P114.1 Define the hydrologic domain and receptor contract (`#352`).
+  - [x] P114.1a Define domain, layer, receptor, gauge, HRU, and provenance
+    records.
+  - [x] P114.1b Add the public source registry for FWA, roads, DEM, gauges,
+    climate, soils, and land cover.
+  - [x] P114.1c Implement domain manifest build/load/validate and local audit.
+  - [x] P114.1d Add tests and the domain contract page.
+- [ ] P114.2 Assemble the public hydrology data bundle (`#353`).
+- [ ] P114.3 Build the harvest/road/retention disturbance ledger (`#354`).
+- [ ] P114.4 Add Tier 0 screening metrics and caveats (`#355`).
+- [ ] P114.5 Add stochastic flood-frequency response surfaces (`#356`).
+- [ ] P114.6 Add process-model adapters and scenario manifests (`#357`).
+- [ ] P114.7 Add surrogate training, validation, and applicability domains
+  (`#358`).
+- [ ] P114.8 Package hydrologic response and flood-risk bundles (`#359`).
+- [ ] P114.9 Benchmark, pilot, and close out P114 (`#360`).
+
+Detailed plan: `planning/phase114_forest_hydrology_flood_risk.md`.

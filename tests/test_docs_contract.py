@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import csv
 import json
-from pathlib import Path
 import re
 import subprocess
 import zipfile
+from pathlib import Path
 
 import pandas as pd
 import pytest
-from typer.testing import CliRunner
 import yaml
+from typer.testing import CliRunner
 
 from femic.cli.main import app
 
@@ -64,6 +64,7 @@ GUIDE_PAGES = [
     "author-instance-rebuild-spec",
     "interpret-rebuild-reports",
     "data-access-inventory",
+    "hydrology-domain-contract",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -94,6 +95,7 @@ CONTRACT_PAGES = [
     "instance-and-data-roots",
     "stage-boundaries-and-canonical-artifacts",
     "recovery-and-external-runtime-boundaries",
+    "hydrology-domain",
 ]
 
 NOTEBOOKS = [
@@ -1752,6 +1754,14 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Host Assumptions",
             "If Something Looks Wrong",
         ],
+        "hydrology-domain": [
+            "Purpose",
+            "Quick Contract",
+            "Domain Manifest",
+            "Source Registry",
+            "Audit Rules",
+            "Cross-References",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1784,6 +1794,18 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Patchworks",
             "BatchTIPSY",
         ],
+        "hydrology-domain": [
+            "femic.hydrology.domain.v1",
+            "femic.hydrology.sources.v1",
+            "EPSG:3005",
+            "watershed",
+            "stream",
+            "road",
+            "dem",
+            "receptor",
+            "gauge",
+            "No private",
+        ],
     }
 
     for slug in CONTRACT_PAGES:
@@ -1792,6 +1814,49 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             assert section in text, f"{slug}.rst missing required section: {section}"
         for marker in required_markers[slug]:
             assert marker in text, f"{slug}.rst missing required marker: {marker}"
+
+
+def test_hydrology_domain_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "hydrology-domain-contract.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Domain Manifest",
+        "Source Registry",
+        "Python Usage",
+        "Audit",
+        "Public-Data Boundary",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.hydrology.domain.v1",
+        "femic.hydrology.sources.v1",
+        "EPSG:3005",
+        "watershed",
+        "stream",
+        "road",
+        "dem",
+        "receptor",
+        "gauge",
+        "audit_hydrology_domain",
+        "No private",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-hydrology-domain.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.hydrology.domain",
+        "build_hydrology_domain",
+        "validate_hydrology_domain",
+        "audit_hydrology_domain",
+        "generated/femic.hydrology.domain",
+        "hydrology-domain",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-hydrology-domain" in modules_text
 
 
 def test_k3z_sample_model_docs_keep_required_sections() -> None:

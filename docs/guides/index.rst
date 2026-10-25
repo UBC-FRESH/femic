@@ -18,6 +18,7 @@ export modules.
    author-instance-rebuild-spec
    interpret-rebuild-reports
    data-access-inventory
+   hydrology-domain-contract
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery

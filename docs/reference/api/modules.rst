@@ -43,7 +43,8 @@ own real runtime contracts that are easy to miss when left as generated-only
 stubs.
 
 Current curated pages in this section include ``femic.instance_context``,
-``femic.instance_bootstrap``, ``femic.bcdc_catalog``,
+``femic.instance_bootstrap``, ``femic.hydrology.domain``,
+``femic.bcdc_catalog``,
 ``femic.bcdc_fetch``,
 ``femic.bcdc_dwds``,
 ``femic.document_figures``,
@@ -59,6 +60,7 @@ Current curated pages in this section include ``femic.instance_context``,
 
    femic-instance-context
    femic-instance-bootstrap
+   femic-hydrology-domain
    femic-bcdc-catalog
    femic-bcdc-fetch
    femic-bcdc-dwds

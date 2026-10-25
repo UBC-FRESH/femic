@@ -96,6 +96,7 @@ For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/instance-and-data-roots.rst`
 - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
 - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+- `docs/reference/contracts/hydrology-domain.rst`
 
 ## Patchworks Model Semantics Guardrails
 

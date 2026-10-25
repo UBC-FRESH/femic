@@ -33,3 +33,4 @@ Contract Pages
    instance-extension-boundaries
    stage-boundaries-and-canonical-artifacts
    recovery-and-external-runtime-boundaries
+   hydrology-domain

@@ -15102,3 +15102,33 @@
 - P36.2: add the `femic.ws4_quality` FreshForge node contract and command builder. It runs
   `ws4 quality` with `--sidecar`, optional `--targets`, and `--check`; the provider metadata and
   exact command are covered by tests.
+
+## 2026-10-25 - P114.1 hydrology domain and receptor contract (#352)
+
+- Activated P114 (`#351`) on `feature/p114-forest-hydrology-flood-risk` and
+  created the parent/child issue tree for the forest-hydrology and flood-risk
+  expansion.
+- Added `femic.hydrology.domain` with the `femic.hydrology.domain.v1`
+  domain/receptor contract:
+  - layer roles for watersheds, streams, roads, DEM, land cover, soils,
+    climate, gauges, receptors, and HRUs;
+  - watershed, downstream receptor, and gauge records;
+  - CRS, resolution, licence, checksum, size, and provenance fields.
+- Added the `femic.hydrology.sources.v1` public source registry for FWA
+  watersheds/streams, DRA/FTEN roads, LidarBC DEM, VRI land cover, BC soils,
+  PCIC climate, WSC gauges, and reviewed receptors.
+- Added structural cross-reference validation and a local audit for missing
+  files, size mismatches, and SHA-256 mismatches.
+- Added the hydrology domain guide, technical contract page, curated API page,
+  and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_domain.py` passed (18 tests).
+  - 100% branch coverage for `femic.hydrology.domain`.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 55 passed, 3 pre-existing submodule/data failures.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology module.
