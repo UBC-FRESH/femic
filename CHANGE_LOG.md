@@ -24,6 +24,11 @@
   environmental contracts (parent `#369`; children `#370`-`#372`). Contract home
   is `femic/contracts`, kept free of the modelling stack. No implementation yet;
   branch `feature/p116-shared-contracts`.
+- Added the Phase 117 roadmap entry and planning note for EFI inventory
+  attributes and biomass curves (parent `#374`; children `#375`-`#376`). The
+  phase builds on P79 LiDAR products and P116.3 model cards; it does not
+  duplicate P115 carbon. No implementation yet; branch
+  `feature/p117-efi-attributes`.
 
 ## 2026-10-20
 - Retired the `ria_` filename prefix throughout the engine (#329). It is leftover Western
