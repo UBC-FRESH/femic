@@ -28,6 +28,7 @@ Contract Pages
    :maxdepth: 1
 
    patchworks-model-semantics
+   carbon-domain
    repo-runtime-invariants
    instance-and-data-roots
    instance-extension-boundaries

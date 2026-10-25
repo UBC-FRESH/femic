@@ -1,0 +1,4 @@
+ifm,landclass,description,confidence,notes
+managed,0,Forest Land remaining Forest Land,high,Matches the WS3 reference default.
+unmanaged,0,Forest Land remaining Forest Land,medium,Use 16 (Unmanaged Forest Land) only when the reporting question requires it.
+nonforest,1,Cropland remaining,low,Only for an explicitly nonforest package.

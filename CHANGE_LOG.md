@@ -15114,3 +15114,15 @@
 - Scaffold verification: the worktree test run is blocked by uninitialized instance/submodule data,
   and the roadmap-control test reports the pre-existing duplicate Phase 107. This change set touches
   only `ROADMAP.md`, `CHANGE_LOG.md`, and `planning/phase115_forest_carbon.md`.
+
+## 2026-10-25 - P115.1 carbon-domain contract and draft crosswalks
+
+- Added `docs/reference/contracts/carbon-domain.rst`, the producer-side package contract: track-name
+  join, manifest provenance, table schemas, units, validation rules, and open review questions.
+- Added the draft crosswalk config under `config/carbon/`: BC species to CBM species, known TSA to
+  CBM eco boundary, treatment to CBM disturbance type, land-class defaults, and an example instance
+  block. Every row carries a confidence and a source/note.
+- Added `tests/test_carbon_domain_config.py` for structural checks (unique keys, valid types, CBM
+  eco-boundary names, YAML parse).
+- Verification: `sphinx-build -b html docs _build/html -W` passed; the new test module passes
+  (5 tests); `ruff check` passes. The crosswalk science review is still open, so P115.1 remains open.

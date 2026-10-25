@@ -1,0 +1,20 @@
+# Example instance-level carbon configuration.
+# Copy into an instance config or run profile and replace the placeholders.
+carbon:
+  schema_version: "0.1"
+  admin_boundary: British Columbia
+  eco_boundary: Montane Cordillera
+  species_map: config/carbon/species_map.bc.csv
+  eco_boundary_map: config/carbon/eco_boundary.bc.csv
+  disturbance_map: config/carbon/disturbance_map.bc.csv
+  land_class_map: config/carbon/land_class.bc.csv
+  cbm_defaults:
+    version: "1.2.9300.391"
+    source: "libcbm"
+  fallback:
+    softwood_species: "Unspecified softwood species"
+    hardwood_species: "Unspecified hardwood species"
+  review:
+    status: "draft"
+    reviewer: ""
+    reviewed_utc: ""
