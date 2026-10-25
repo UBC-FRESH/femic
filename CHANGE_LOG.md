@@ -15188,3 +15188,29 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   LiDAR modules.
+
+## 2026-10-25 - P79.3 terrain raster and slope APIs (#214)
+
+- Added `femic.lidar.terrain` with native-grid Horn 3x3 percent slope,
+  in-memory point-cloud cell aggregation (`min`, `max`, `mean`, `count`),
+  aligned zonal statistics, and `femic.lidar.terrain_qa.v1` JSON/CSV reports.
+- Enforced projected-metre, north-up, single-band inputs and exact
+  zones/values grid alignment. Geographic, rotated, misaligned, and multiband
+  inputs are rejected rather than reprojected or resampled.
+- Recorded the dependency decision: use core `numpy` and `rasterio`; no PDAL
+  or laspy dependency is required for the raster/terrain slice.
+- Added the terrain guide, technical contract page, curated API page, roadmap
+  and planning updates.
+- Verification:
+  - `pytest tests/test_lidar_terrain.py` passed (14 tests).
+  - 100% branch coverage for `femic.lidar.terrain` (measured with a
+    preloaded-numpy/rasterio coverage bootstrap because the local coverage
+    tracer otherwise conflicts with numpy/rasterio imports).
+  - All 141 LiDAR tests passed.
+  - Targeted `ruff check` passed for the new LiDAR modules and tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR modules.

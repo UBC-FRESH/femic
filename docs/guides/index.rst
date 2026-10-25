@@ -20,6 +20,7 @@ export modules.
    data-access-inventory
    lidar-data-products
    lidar-materialization
+   lidar-terrain-products
    lidar-product-bundles
    bc-data-catalogue-discovery
    tsr-intelligence-workflow

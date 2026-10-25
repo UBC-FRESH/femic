@@ -35,4 +35,5 @@ Contract Pages
    recovery-and-external-runtime-boundaries
    lidar-source-and-tile-index
    lidar-materialization
+   lidar-terrain-products
    lidar-product-bundle

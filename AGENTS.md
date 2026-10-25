@@ -98,6 +98,7 @@ For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
 - `docs/reference/contracts/lidar-source-and-tile-index.rst`
 - `docs/reference/contracts/lidar-materialization.rst`
+- `docs/reference/contracts/lidar-terrain-products.rst`
 - `docs/reference/contracts/lidar-product-bundle.rst`
 
 ## Patchworks Model Semantics Guardrails

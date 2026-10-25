@@ -109,6 +109,23 @@ Add `femic.lidar.materialization` with:
 P79.2 downloads selected public tiles only. It does not compile terrain or
 canopy products and does not create a provincial mirror.
 
+## P79.3 implementation
+
+Add `femic.lidar.terrain` with:
+
+- Native-grid percent slope using Horn 3x3 weights.
+- Strict projected-metre, north-up, single-band input checks.
+- Point-cloud cell aggregation (`min`, `max`, `mean`, `count`) for in-memory
+  sample points.
+- Zonal statistics over exactly aligned zones and values rasters.
+- `femic.lidar.terrain_qa.v1` JSON and CSV QA reports.
+- No reprojection, resampling, smoothing, ground classification, LAZ/COPC
+  reading, or instance-specific thresholds.
+
+Dependency decision: use the existing core `numpy` and `rasterio` stack. No
+PDAL or laspy dependency is required for the raster/terrain slice. Point-cloud
+file reading and canopy compilation remain later lanes.
+
 ## P79.8 implementation
 
 Add `femic.lidar.products` with:
@@ -146,9 +163,10 @@ materialization.
 
 1. P79.1 source/tile-index contract and tests (complete).
 2. P79.2 resumable materialization and status surfaces (complete).
-3. P79.8 product manifest, bundle, CLI, and fixture (complete).
-4. P79.3/P79.7 terrain and canopy products.
-5. P79.9 cross-repo validation with WS4/FHOPS.
+3. P79.3 terrain raster, slope, zonal statistics, and QA (complete).
+4. P79.8 product manifest, bundle, CLI, and fixture (complete).
+5. P79.4/P79.7 stream candidates, canopy, and precision products.
+6. P79.9 cross-repo validation with WS4/FHOPS.
 
 Do not start consumer integration in WS4/FHOPS until a real shared bundle
 passes both consumer contracts.

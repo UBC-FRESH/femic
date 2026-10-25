@@ -66,6 +66,7 @@ GUIDE_PAGES = [
     "data-access-inventory",
     "lidar-data-products",
     "lidar-materialization",
+    "lidar-terrain-products",
     "lidar-product-bundles",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
@@ -99,6 +100,7 @@ CONTRACT_PAGES = [
     "recovery-and-external-runtime-boundaries",
     "lidar-source-and-tile-index",
     "lidar-materialization",
+    "lidar-terrain-products",
     "lidar-product-bundle",
 ]
 
@@ -297,6 +299,49 @@ def test_lidar_materialization_guide_and_api_page_keep_required_contract() -> No
         assert snippet in api_text
     modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
     assert "femic-lidar-materialization" in modules_text
+
+
+def test_lidar_terrain_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-terrain-products.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Dependency Stack",
+        "Accepted Inputs",
+        "Slope",
+        "Point-Cloud Gridding",
+        "Zonal Statistics",
+        "QA Reports",
+        "Current Limits",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.lidar.terrain_qa.v1",
+        "Horn",
+        "slope_percent",
+        "rasterize_point_cloud",
+        "compute_zonal_statistics",
+        "terrain_qa.json",
+        "No reprojection",
+        "P79.7",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-lidar-terrain.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.lidar.terrain",
+        "derive_slope_percent",
+        "rasterize_point_cloud",
+        "compute_zonal_statistics",
+        "build_terrain_products",
+        "generated/femic.lidar.terrain",
+        "lidar-terrain-products",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-lidar-terrain" in modules_text
 
 
 def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
@@ -1931,6 +1976,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Storage Boundary",
             "See Also",
         ],
+        "lidar-terrain-products": [
+            "Purpose",
+            "Quick Contract",
+            "Input Contract",
+            "Slope Contract",
+            "Point-Cloud Gridding",
+            "Zonal Statistics",
+            "QA Report",
+            "No-Resampling Rule",
+            "See Also",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1998,6 +2054,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "failed",
             "OGL-BC",
             "EPSG:3005",
+        ],
+        "lidar-terrain-products": [
+            "femic.lidar.terrain_qa.v1",
+            "Horn",
+            "slope_percent",
+            "projected metres",
+            "rasterize_point_cloud",
+            "compute_zonal_statistics",
+            "terrain_qa.json",
+            "No reprojection",
+            "P79.7",
         ],
     }
 
