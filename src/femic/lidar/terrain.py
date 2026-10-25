@@ -84,6 +84,15 @@ class TerrainRasterMetadata:
 
 
 @dataclass(frozen=True)
+class TerrainGrid:
+    """One loaded terrain grid with validity mask and metadata."""
+
+    values: np.ndarray
+    valid: np.ndarray
+    metadata: TerrainRasterMetadata
+
+
+@dataclass(frozen=True)
 class TerrainRasterResult:
     """One derived terrain raster and its QA summary."""
 
@@ -223,6 +232,19 @@ def inspect_terrain_raster(path: Path) -> TerrainRasterMetadata:
         raise TerrainProcessingError(
             f"Unable to read raster {resolved}: {exc}"
         ) from exc
+
+
+def read_terrain_grid(path: Path) -> TerrainGrid:
+    """Load a single-band terrain grid and its validity mask."""
+
+    values, valid, metadata = _read_single_band(path)
+    return TerrainGrid(values=values, valid=valid, metadata=metadata)
+
+
+def require_projected_metre_grid(metadata: TerrainRasterMetadata) -> None:
+    """Require the native-grid slope/flow contract for a terrain raster."""
+
+    _require_projected_metre_grid(metadata)
 
 
 def derive_slope_percent(
@@ -625,7 +647,7 @@ def _read_single_band(
         raise TerrainProcessingError(
             f"Unable to read raster {resolved}: {exc}"
         ) from exc
-    values = np.asarray(masked.filled(np.nan), dtype=np.float64)
+    values = np.asarray(masked.filled(0), dtype=np.float64)
     mask = np.ma.getmaskarray(masked)
     valid = ~mask & np.isfinite(values)
     return values, valid, metadata

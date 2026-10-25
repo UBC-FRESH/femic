@@ -15214,3 +15214,34 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   LiDAR modules.
+
+## 2026-10-25 - P79.4 terrain-derived stream candidates (#215)
+
+- Added `femic.lidar.hydrography` with priority-flood depression filling, D8
+  flow routing, upstream-cell accumulation, and thresholded candidate streams.
+- Added optional comparison with aligned public hydrography:
+  - raster references must share the exact DEM grid and CRS;
+  - vector references must already be in the DEM CRS;
+  - metrics cover candidate/reference/TP/FP/FN cells, precision, recall, F1,
+    Jaccard, and hectares.
+- Added `femic.lidar.stream_candidates.v1` review manifests and a Markdown
+  caveat/review report with an explicit screening-only checklist.
+- Recorded hard caveats: candidates are not authoritative streams and require
+  field or public-hydrography review before operational, riparian, or legal use.
+- Added `read_terrain_grid` and `require_projected_metre_grid` to the terrain
+  API, and made the terrain reader handle integer mask rasters used as
+  hydrography references.
+- Added the stream-candidate guide, technical contract page, curated API page,
+  and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_lidar_hydrography.py` passed (17 tests).
+  - 100% branch coverage for `femic.lidar.hydrography` (measured with the
+    preloaded-numpy/rasterio coverage bootstrap used for the terrain module).
+  - All 158 LiDAR tests passed.
+  - Targeted `ruff check` passed for new LiDAR modules/tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR modules.

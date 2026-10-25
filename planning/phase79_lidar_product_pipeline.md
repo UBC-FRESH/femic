@@ -126,6 +126,24 @@ Dependency decision: use the existing core `numpy` and `rasterio` stack. No
 PDAL or laspy dependency is required for the raster/terrain slice. Point-cloud
 file reading and canopy compilation remain later lanes.
 
+## P79.4 implementation
+
+Add `femic.lidar.hydrography` with:
+
+- Priority-flood depression filling and an isolated-cell warning.
+- D8 flow routing and upstream-cell accumulation.
+- Accumulation-threshold stream candidates.
+- Optional comparison with aligned public hydrography as a raster or vector.
+- `femic.lidar.stream_candidates.v1` review manifest and Markdown caveat
+  report.
+- Explicit screening-only caveats: no authoritative stream, riparian,
+  fish-habitat, or legal determination.
+
+The workflow rejects DEM/reference reprojection or resampling. Reference
+vectors must already match the DEM CRS; reference rasters must share the exact
+grid and transform. This is a candidate/review product, not a provincial
+hydrography replacement.
+
 ## P79.8 implementation
 
 Add `femic.lidar.products` with:
@@ -164,9 +182,10 @@ materialization.
 1. P79.1 source/tile-index contract and tests (complete).
 2. P79.2 resumable materialization and status surfaces (complete).
 3. P79.3 terrain raster, slope, zonal statistics, and QA (complete).
-4. P79.8 product manifest, bundle, CLI, and fixture (complete).
-5. P79.4/P79.7 stream candidates, canopy, and precision products.
-6. P79.9 cross-repo validation with WS4/FHOPS.
+4. P79.4 terrain-derived stream candidates and review manifests (complete).
+5. P79.8 product manifest, bundle, CLI, and fixture (complete).
+6. P79.5/P79.7 CLI/docs, canopy, and precision products.
+7. P79.9 cross-repo validation with WS4/FHOPS.
 
 Do not start consumer integration in WS4/FHOPS until a real shared bundle
 passes both consumer contracts.

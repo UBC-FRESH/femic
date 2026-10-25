@@ -59,6 +59,10 @@ Key Entry Surfaces
 - :func:`inspect_terrain_raster`
   Read normalized CRS, transform, resolution, nodata, bounds, dtype, and band
   metadata.
+- :func:`read_terrain_grid`
+  Load a single-band grid with its validity mask and metadata.
+- :func:`require_projected_metre_grid`
+  Enforce the projected-metre, north-up, unrotated terrain contract.
 - :func:`derive_slope_percent`
   Derive Horn 3x3 percent slope on the native grid.
 - :func:`rasterize_point_cloud`

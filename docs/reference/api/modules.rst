@@ -47,6 +47,7 @@ Current curated pages in this section include ``femic.instance_context``,
 ``femic.bcdc_fetch``,
 ``femic.bcdc_dwds``,
 ``femic.lidar.catalog``,
+``femic.lidar.hydrography``,
 ``femic.lidar.materialization``,
 ``femic.lidar.terrain``,
 ``femic.lidar.products``,
@@ -67,6 +68,7 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-bcdc-fetch
    femic-bcdc-dwds
    femic-lidar
+   femic-lidar-hydrography
    femic-lidar-materialization
    femic-lidar-terrain
    femic-lidar-products

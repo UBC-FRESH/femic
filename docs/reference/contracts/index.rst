@@ -36,4 +36,5 @@ Contract Pages
    lidar-source-and-tile-index
    lidar-materialization
    lidar-terrain-products
+   lidar-stream-candidates
    lidar-product-bundle

@@ -67,6 +67,7 @@ GUIDE_PAGES = [
     "lidar-data-products",
     "lidar-materialization",
     "lidar-terrain-products",
+    "lidar-stream-candidates",
     "lidar-product-bundles",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
@@ -101,6 +102,7 @@ CONTRACT_PAGES = [
     "lidar-source-and-tile-index",
     "lidar-materialization",
     "lidar-terrain-products",
+    "lidar-stream-candidates",
     "lidar-product-bundle",
 ]
 
@@ -342,6 +344,50 @@ def test_lidar_terrain_guide_and_api_page_keep_required_contract() -> None:
         assert snippet in api_text
     modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
     assert "femic-lidar-terrain" in modules_text
+
+
+def test_lidar_stream_candidate_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-stream-candidates.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Workflow",
+        "Inputs",
+        "Parameters",
+        "Outputs",
+        "Comparison Metrics",
+        "Review Manifest And Caveats",
+        "Limitations",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.lidar.stream_candidates.v1",
+        "D8",
+        "stream_candidates.tif",
+        "stream_candidates_manifest.json",
+        "precision",
+        "recall",
+        "Jaccard",
+        "No reprojection",
+        "not an authoritative",
+        "P79.4",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-lidar-hydrography.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.lidar.hydrography",
+        "derive_stream_candidates",
+        "compare_stream_candidates",
+        "fill_dem_depressions",
+        "generated/femic.lidar.hydrography",
+        "lidar-stream-candidates",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-lidar-hydrography" in modules_text
 
 
 def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
@@ -1987,6 +2033,16 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "No-Resampling Rule",
             "See Also",
         ],
+        "lidar-stream-candidates": [
+            "Purpose",
+            "Quick Contract",
+            "Candidate Workflow",
+            "Comparison Contract",
+            "Review Manifest",
+            "Caveats",
+            "No-Resampling Rule",
+            "See Also",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -2065,6 +2121,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "terrain_qa.json",
             "No reprojection",
             "P79.7",
+        ],
+        "lidar-stream-candidates": [
+            "femic.lidar.stream_candidates.v1",
+            "D8",
+            "stream_candidates.tif",
+            "stream_candidates_manifest.json",
+            "precision",
+            "recall",
+            "Jaccard",
+            "No reprojection",
+            "not an authoritative",
         ],
     }
 
