@@ -2154,22 +2154,25 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P78.6c Post issue progress comments and update the changelog at each
     implementation milestone.
 
-## Phase 79: Open LiDAR Acquisition And Terrain Analysis (`#211`)
+## Phase 79: Native LidarBC Data-Product Pipeline For WS4 And FHOPS (`#211`)
 
-Status: planned.
+Status: active (2026-10-25). Branch: `feature/p79-lidar-pipeline`.
 
-Goal: add first-class FEMIC package support for automated open LiDAR
-point-cloud acquisition and derived terrain/hydrography analysis, so instance
-repositories can build public-data proxies for steep slopes, stream
-location/classification, and related THLB/riparian workflows without one-off
-scripts.
+Goal: make FEMIC the authoritative upstream producer of native LidarBC data
+products for WS4 and FHOPS. FEMIC discovers and resolves LidarBC projects and
+tiles, materializes them reproducibly, preserves native resolution and
+provenance, compiles terrain/canopy/precision-forestry products, and delivers
+versioned consumer-ready bundles. WS4 P43 (`UBC-FRESH/ws4#317`) and FHOPS P13
+(`UBC-FRESH/fhops#188`) consume those bundles; they do not duplicate discovery
+or materialization. The packaged product manifest/bundle is the delivery
+boundary. A full provincial mirror remains out of scope.
 
-- [ ] P79.1 Define open LiDAR source and tile-index contract (`#212`).
-  - [ ] P79.1a Survey supported public source families such as LidarBC/open
+- [x] P79.1 Define open LiDAR source and tile-index contract (`#212`).
+  - [x] P79.1a Survey supported public source families such as LidarBC/open
     LiDAR.
-  - [ ] P79.1b Define tile-index records, AOI intersection behaviour,
+  - [x] P79.1b Define tile-index records, AOI intersection behaviour,
     metadata fields, and provenance requirements.
-  - [ ] P79.1c Define dependency, storage, and generated-artifact boundaries.
+  - [x] P79.1c Define dependency, storage, and generated-artifact boundaries.
 - [ ] P79.2 Implement resumable LiDAR and DEM materialization manifests
   (`#213`).
   - [ ] P79.2a Define manifest schema for source URLs, checksums, local paths,
@@ -2198,6 +2201,29 @@ scripts.
   - [ ] P79.6c Build terrain/slope candidate products.
   - [ ] P79.6d Compare outputs against TFL 6 instance needs.
   - [ ] P79.6e Write pilot closeout and package follow-up list.
+- [ ] P79.7 Add native LidarBC canopy and precision-forestry products
+  (`#348`).
+  - [ ] P79.7a Define the canopy and precision-forestry product contract,
+    including derived CHM provenance and native-resolution rules.
+  - [ ] P79.7b Implement canopy/structure product compilation from LidarBC
+    point cloud, DEM, and DSM inputs without silent resampling.
+  - [ ] P79.7c Consume LidarBC individual-tree products where suitable instead
+    of inventing a new segmentation algorithm.
+  - [ ] P79.7d Add QA, tests, and docs for native canopy products.
+- [ ] P79.8 Package and deliver versioned LidarBC products to WS4 and FHOPS
+  (`#349`).
+  - [ ] P79.8a Define the versioned product manifest and bundle layout.
+  - [ ] P79.8b Record source project/tile/product, CRS, resolution, vertical
+    datum, accuracy, licence, checksum, retrieval date, and lineage.
+  - [ ] P79.8c Add build/inspect CLI and Python entry points plus consumer
+    contract docs for WS4 P43 and FHOPS P13.
+  - [ ] P79.8d Add a bounded AOI product fixture and reproducibility test.
+- [ ] P79.9 Validate the packaged product with WS4/FHOPS and close out P79
+  (`#350`).
+  - [ ] P79.9a Run a shared-AOI parity check against WS4 P43 and FHOPS P13
+    consumer contracts.
+  - [ ] P79.9b Record storage, performance, licence, and provenance evidence.
+  - [ ] P79.9c Write the P79 close-out report and next-phase recommendation.
 
 ## Phase 80: FreshForge Provider Integration For FEMIC Model-Build Workflows (`#220`)
 
@@ -3328,6 +3354,7 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase79_lidar_product_pipeline.md`
   - `planning/phase106_mkrf_executable_model_build.md`
   - `planning/phase105_tfl6_executable_model_build.md`
   - `planning/phase104_freshforge_workflow_discovery.md`
@@ -3476,11 +3503,16 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     FreshForge workflow contract at
     `workflows/freshforge/mkrf_model_build_workflow.yaml`; the next evolution is
     P84 executable orchestration.
-  - `P79` / `#211` is planned: FEMIC will grow reusable open LiDAR
-    acquisition, terrain-raster, slope, and terrain-derived hydrography
-    workflows. The immediate TFL 6 instance uses a public DEM steep-slope
-    repair lane first; this parent package phase is the reusable long-term
-    implementation path.
+  - `P79` / `#211` is active on `feature/p79-lidar-pipeline`: FEMIC is now the
+    authoritative producer of native LidarBC products for WS4 P43 (`#317`) and
+    FHOPS P13 (`#188`). P79.1 (`#212`) is complete: `femic.lidar.catalog`
+    defines the OGL-BC source contract, direct point-cloud/DEM/DSM layers,
+    positive-area AOI selection, provenance-carrying tile records, and the
+    `femic.lidar.selection.v1` manifest. Next is P79.8 (`#349`), which turns
+    that selection into a versioned product manifest/bundle. Consumers must
+    not reimplement discovery or materialization. The immediate TFL 6 instance
+    keeps its public DEM steep-slope repair lane until P79.6/P79.9 validate the
+    shared product path.
   - `P78.6` / `#209` is complete: the optional document-figure recovery
     workflow is documented in `docs/guides/document-figure-recovery.rst`, the
     CLI reference includes `femic doc figures` commands, and
@@ -3618,7 +3650,7 @@ As of the completion of Phase 106, the FEMIC roadmap has been refined to address
 
 The roadmap now follows a more consistent structure that should be easier for automated tools to parse while maintaining all the detailed implementation information that developers need. Future phases will follow these established patterns for better consistency and maintainability.
 
-## Phase 107 Closeout Status
+### Phase 107 Closeout Status
 
 ### Tasks Completed for Phase 107
 1. Created standardized roadmap structure templates in planning directory

@@ -18,6 +18,7 @@ export modules.
    author-instance-rebuild-spec
    interpret-rebuild-reports
    data-access-inventory
+   lidar-data-products
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery

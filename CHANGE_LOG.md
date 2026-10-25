@@ -15102,3 +15102,29 @@
 - P36.2: add the `femic.ws4_quality` FreshForge node contract and command builder. It runs
   `ws4 quality` with `--sidecar`, optional `--targets`, and `--check`; the provider metadata and
   exact command are covered by tests.
+
+## 2026-10-25 - P79.1 LidarBC source and tile-index contract (#212)
+
+- Activated P79 (`#211`) on `feature/p79-lidar-pipeline` and extended the
+  roadmap with P79.7-P79.9 for native canopy products, versioned delivery, and
+  WS4/FHOPS validation.
+- Added `femic.lidar.catalog` with the LidarBC source descriptor, direct
+  point-cloud/DEM/DSM layer map, positive-area AOI selection, provenance-rich
+  tile records, paginated discovery, and the `femic.lidar.selection.v1`
+  manifest writer.
+- Recorded the source boundary explicitly: OGL-BC product licence, BC Albers
+  (`EPSG:3005`) native CRS, BC Data Catalogue `Access Only` wrapper caveat,
+  metadata-only discovery, and no provincial mirror.
+- Added the LiDAR guide, technical contract page, curated API page, and
+  roadmap/planning notes.
+- Verification:
+  - `pytest tests/test_lidar_catalog.py tests/test_lidar_catalog_helpers.py`
+    passed (42 tests, 99% branch coverage for `femic.lidar.catalog`).
+  - `ruff check src/femic/lidar tests/test_lidar_catalog*.py` passed.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Selected docs-contract tests passed after the new pages were tracked.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR module.

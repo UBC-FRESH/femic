@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import csv
 import json
-from pathlib import Path
 import re
 import subprocess
 import zipfile
+from pathlib import Path
 
 import pandas as pd
 import pytest
-from typer.testing import CliRunner
 import yaml
+from typer.testing import CliRunner
 
 from femic.cli.main import app
 
@@ -64,6 +64,7 @@ GUIDE_PAGES = [
     "author-instance-rebuild-spec",
     "interpret-rebuild-reports",
     "data-access-inventory",
+    "lidar-data-products",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -94,6 +95,7 @@ CONTRACT_PAGES = [
     "instance-and-data-roots",
     "stage-boundaries-and-canonical-artifacts",
     "recovery-and-external-runtime-boundaries",
+    "lidar-source-and-tile-index",
 ]
 
 NOTEBOOKS = [
@@ -165,6 +167,47 @@ def test_release_runbook_and_workflows_exist() -> None:
 
     assert Path(".github/workflows/publish-testpypi.yml").exists()
     assert Path(".github/workflows/publish-pypi.yml").exists()
+
+
+def test_lidar_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-data-products.rst").read_text(encoding="utf-8")
+    for heading in (
+        "Purpose",
+        "Ownership Boundary",
+        "Source Catalog",
+        "Direct Tile Layers",
+        "AOI Selection Contract",
+        "Python Usage",
+        "Storage and Dependency Boundaries",
+        "Unsupported Sources",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "LidarBC",
+        "OGL-BC",
+        "EPSG:3005",
+        "point_cloud",
+        "dem",
+        "dsm",
+        "femic.lidar.selection.v1",
+        "discover_lidarbc_tiles",
+        "write_lidar_selection_manifest",
+        "WS4 P43",
+        "FHOPS P13",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-lidar.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.lidar.catalog",
+        "discover_lidarbc_tiles",
+        "write_lidar_selection_manifest",
+        "generated/femic.lidar.catalog",
+        "lidar-source-and-tile-index",
+    ):
+        assert snippet in api_text
+    assert "femic-lidar" in (API_ROOT / "modules.rst").read_text(encoding="utf-8")
 
 
 def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
@@ -1752,6 +1795,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Host Assumptions",
             "If Something Looks Wrong",
         ],
+        "lidar-source-and-tile-index": [
+            "Purpose",
+            "Quick Contract",
+            "Source Families",
+            "Tile Index Contract",
+            "AOI Selection",
+            "Manifest and Provenance",
+            "Storage and Dependencies",
+            "Unsupported Sources",
+            "See Also",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1783,6 +1837,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "$PWD\\external\\femic-public-data\\data",
             "Patchworks",
             "BatchTIPSY",
+        ],
+        "lidar-source-and-tile-index": [
+            "LidarBC",
+            "OGL-BC",
+            "EPSG:3005",
+            "point_cloud",
+            "femic.lidar.selection.v1",
+            "positive-area intersection",
+            "WS4 P43",
+            "FHOPS P13",
+            "No tile bytes",
         ],
     }
 
