@@ -84,6 +84,21 @@ The selection manifest records:
   projection token, spacing, point density, vertical datum, point classes,
   storage path, grid scale, and geometry bounds.
 
+CLI Usage
+---------
+
+.. code-block:: bash
+
+   femic lidar discover \
+     --bbox 1148000,391900,1149900,393500 \
+     --product point_cloud \
+     --product dem \
+     --product dsm \
+     --manifest-path metadata/lidar/lidarbc_selection.json
+
+Use ``--instance-root PATH`` to resolve the default manifest path under an
+instance root. Discovery is metadata-only and does not download tile bytes.
+
 Python Usage
 ------------
 

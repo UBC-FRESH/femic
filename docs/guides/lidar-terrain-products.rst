@@ -40,6 +40,15 @@ rasters are rejected rather than reprojected silently.
 Slope
 -----
 
+.. code-block:: bash
+
+   femic lidar terrain \
+     --dem data/lidar/lidarbc/dem/layer_5/2023/dem.tif \
+     --output-dir data/lidar/terrain
+
+Use ``--instance-root PATH`` to resolve the default
+``data/lidar/terrain`` output under an instance root.
+
 .. code-block:: python
 
    from pathlib import Path

@@ -144,6 +144,31 @@ vectors must already match the DEM CRS; reference rasters must share the exact
 grid and transform. This is a candidate/review product, not a provincial
 hydrography replacement.
 
+## P79.5 implementation
+
+Add the operator-facing LiDAR CLI surface:
+
+- `femic lidar discover` for AOI tile discovery and selection manifests.
+- `femic lidar materialize` and `materialization-status` for resumable tile
+  materialization.
+- `femic lidar terrain` for native slope products and QA reports.
+- `femic lidar streams` for D8 stream candidates, comparison metrics, review
+  manifests, and caveat reports.
+- `femic lidar bundle` and `inspect` for versioned product delivery.
+
+Add `--instance-root` defaults for discover, materialize, terrain, streams, and
+bundle:
+
+- `metadata/lidar/lidarbc_selection.json`
+- `data/lidar` materialization root
+- `data/lidar/terrain`
+- `data/lidar/streams`
+- `data/lidar/products`
+
+Document the instance layout, DataLad/Arbutus boundary, handoff checklist, and
+end-to-end command sequence. Tests cover command outputs, manifests, instance
+defaults, and error exits.
+
 ## P79.8 implementation
 
 Add `femic.lidar.products` with:
@@ -184,8 +209,9 @@ materialization.
 3. P79.3 terrain raster, slope, zonal statistics, and QA (complete).
 4. P79.4 terrain-derived stream candidates and review manifests (complete).
 5. P79.8 product manifest, bundle, CLI, and fixture (complete).
-6. P79.5/P79.7 CLI/docs, canopy, and precision products.
-7. P79.9 cross-repo validation with WS4/FHOPS.
+6. P79.5 CLI/docs/tests and instance hooks (complete).
+7. P79.6 TFL 6 pilot and P79.7 canopy/precision products.
+8. P79.9 cross-repo validation with WS4/FHOPS.
 
 Do not start consumer integration in WS4/FHOPS until a real shared bundle
 passes both consumer contracts.

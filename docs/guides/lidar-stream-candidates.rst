@@ -23,6 +23,17 @@ Workflow
    vector.
 6. Write candidate/accumulation rasters and a review manifest.
 
+.. code-block:: bash
+
+   femic lidar streams \
+     --dem data/lidar/lidarbc/dem/layer_5/2023/dem.tif \
+     --output-dir data/lidar/streams \
+     --accumulation-threshold 100 \
+     --reference data/public/fwa_streams.geojson
+
+Use ``--instance-root PATH`` to resolve the default
+``data/lidar/streams`` output under an instance root.
+
 .. code-block:: python
 
    from pathlib import Path

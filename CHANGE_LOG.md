@@ -15245,3 +15245,36 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   LiDAR modules.
+
+## 2026-10-25 - P79.5 LiDAR CLI, docs, and instance hooks (#216)
+
+- Completed the `femic lidar` operator surface:
+  - `discover` for AOI tile discovery and selection manifests;
+  - `materialize` and `materialization-status` for resumable downloads;
+  - `terrain` for native slope products and QA;
+  - `streams` for D8 stream candidates, comparison metrics, and review reports;
+  - `bundle` and `inspect` for versioned product delivery.
+- Added `--instance-root` defaults for discover, materialize, terrain, streams,
+  and bundle:
+  - `metadata/lidar/lidarbc_selection.json`
+  - `data/lidar` materialization root
+  - `data/lidar/terrain`
+  - `data/lidar/streams`
+  - `data/lidar/products`
+- Documented the instance layout, DataLad/Arbutus boundary, end-to-end command
+  sequence, and handoff checklist in
+  `docs/guides/lidar-instance-integration.rst`.
+- Updated the CLI reference and added CLI examples to the discovery,
+  materialization, terrain, and stream-candidate guides.
+- Verification:
+  - 12 LiDAR CLI tests passed.
+  - All 170 LiDAR tests passed.
+  - Targeted `ruff check` passed for new LiDAR modules/tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - `femic lidar --help` lists discover, materialize, terrain, streams, bundle,
+    and inspect.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR modules.

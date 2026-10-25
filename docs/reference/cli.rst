@@ -386,27 +386,63 @@ LiDAR
 
 Subcommands
 
-- ``bundle``: ``python -m femic lidar bundle [OPTIONS]``
-- ``inspect``: ``python -m femic lidar inspect [OPTIONS] BUNDLE_DIR``
+- ``discover``: ``python -m femic lidar discover [OPTIONS]``
 - ``materialize``: ``python -m femic lidar materialize [OPTIONS]``
 - ``materialization-status``: ``python -m femic lidar materialization-status [OPTIONS] MATERIALIZATION_PATH``
+- ``terrain``: ``python -m femic lidar terrain [OPTIONS]``
+- ``streams``: ``python -m femic lidar streams [OPTIONS]``
+- ``bundle``: ``python -m femic lidar bundle [OPTIONS]``
+- ``inspect``: ``python -m femic lidar inspect [OPTIONS] BUNDLE_DIR``
+
+``lidar discover`` options
+
+- ``--bbox minx,miny,maxx,maxy`` (required; AOI in ``EPSG:3005``)
+- ``--product TEXT`` (repeatable direct product; defaults to point cloud, DEM, and DSM)
+- ``--manifest-path PATH`` (optional; defaults to ``metadata/lidar/lidarbc_selection.json``)
+- ``--page-size INTEGER`` (default: ``2000``)
+- ``--max-pages INTEGER`` (default: ``100``)
+- ``--timeout-sec FLOAT`` (default: ``60.0``)
+- ``--generated-utc TEXT`` (optional fixed selection timestamp)
+- ``--instance-root PATH`` (resolve the default manifest path under the instance)
 
 ``lidar materialize`` options
 
 - ``--selection-manifest PATH`` (required; P79.1 LidarBC selection manifest)
-- ``--output-root PATH`` (required; explicit managed data root)
+- ``--output-root PATH`` (default: ``data/lidar``)
 - ``--manifest-path PATH`` (optional; defaults to ``materialization.json`` under the output root)
 - ``--plan-only / --no-plan-only`` (write or refresh the manifest without downloading)
 - ``--max-tiles INTEGER`` (optional bounded number of tiles in this run)
 - ``--timeout-sec FLOAT`` (per-tile network timeout; default: ``60.0``)
 - ``--fail-fast / --no-fail-fast`` (stop after the first failed tile)
 - ``--generated-utc TEXT`` (optional fixed ``generated_utc`` for preflight fixtures)
+- ``--instance-root PATH`` (resolve the default output root under the instance)
 
 ``lidar materialization-status`` options
 
 - ``MATERIALIZATION_PATH`` argument (required; manifest path or managed output root)
 - ``--json`` (print the validation report as JSON)
 - ``--require-complete / --no-require-complete`` (exit non-zero when valid but incomplete)
+
+``lidar terrain`` options
+
+- ``--dem PATH`` (required; single-band native DEM/DTM)
+- ``--output-dir PATH`` (default: ``data/lidar/terrain``)
+- ``--product TEXT`` (repeatable; currently ``slope_percent``)
+- ``--nodata FLOAT`` (optional output nodata override)
+- ``--qa-json PATH`` / ``--qa-csv PATH`` (optional QA output overrides)
+- ``--generated-utc TEXT``
+- ``--instance-root PATH`` (resolve the default output directory under the instance)
+
+``lidar streams`` options
+
+- ``--dem PATH`` (required; single-band native DEM/DTM)
+- ``--output-dir PATH`` (default: ``data/lidar/streams``)
+- ``--accumulation-threshold INTEGER`` (default: ``100``)
+- ``--fill-depressions / --no-fill-depressions`` (default: fill)
+- ``--reference PATH`` (optional aligned public-hydrography raster or vector)
+- ``--reference-all-touched / --no-reference-all-touched`` (vector rasterization mode)
+- ``--generated-utc TEXT``
+- ``--instance-root PATH`` (resolve the default output directory under the instance)
 
 ``femic lidar materialize`` downloads selected tiles into
 ``<output-root>/lidarbc/<product>/layer_<id>/<year>/<filename>`` and records
@@ -420,9 +456,10 @@ through DataLad. See ``docs/guides/lidar-materialization.rst`` and
 
 - ``--selection-manifest PATH`` (required; P79.1 LidarBC selection manifest)
 - ``--product-plan PATH`` (required; ``femic.lidar.product_plan.v1`` JSON plan)
-- ``--output-dir PATH`` (required; destination bundle directory)
+- ``--output-dir PATH`` (default: ``data/lidar/products``)
 - ``--overwrite / --no-overwrite`` (default: ``--no-overwrite``; replace an existing FEMIC LiDAR bundle only)
 - ``--generated-utc TEXT`` (optional fixed ``created_utc`` for reproducible fixture builds)
+- ``--instance-root PATH`` (resolve the default output directory under the instance)
 
 ``lidar inspect`` options
 

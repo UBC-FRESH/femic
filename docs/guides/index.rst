@@ -23,6 +23,7 @@ export modules.
    lidar-terrain-products
    lidar-stream-candidates
    lidar-product-bundles
+   lidar-instance-integration
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery

@@ -117,6 +117,16 @@ from femic.instance_context import (
     InstanceContext,
     resolve_instance_context,
 )
+from femic.lidar.catalog import (
+    LidarCatalogError,
+    discover_lidarbc_tiles,
+    normalize_bbox_epsg3005,
+    write_lidar_selection_manifest,
+)
+from femic.lidar.hydrography import (
+    StreamCandidateError,
+    derive_stream_candidates,
+)
 from femic.lidar.materialization import (
     LidarMaterializationError,
     materialize_lidar_selection,
@@ -126,6 +136,10 @@ from femic.lidar.products import (
     LidarProductError,
     build_lidar_product_bundle,
     validate_lidar_product_bundle,
+)
+from femic.lidar.terrain import (
+    TerrainProcessingError,
+    build_terrain_products,
 )
 from femic.named_pipelines import (
     NamedPipelineError,
@@ -384,7 +398,7 @@ data_app = typer.Typer(
 lidar_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
-    help="Build and inspect versioned LidarBC product bundles.",
+    help="Discover, materialize, derive, and package LidarBC products.",
 )
 doc_app = typer.Typer(
     add_completion=False,
@@ -504,9 +518,10 @@ LIDAR_PRODUCT_PLAN_OPTION = typer.Option(
     help="JSON product plan with artifact paths, metadata, and lineage.",
 )
 LIDAR_BUNDLE_OUTPUT_OPTION = typer.Option(
-    ...,
+    None,
     "--output-dir",
-    help="Destination directory for the versioned product bundle.",
+    help="Destination directory; defaults to `data/lidar/products`.",
+    show_default=False,
 )
 LIDAR_BUNDLE_OVERWRITE_OPTION = typer.Option(
     False,
@@ -532,9 +547,10 @@ LIDAR_BUNDLE_DIR_ARGUMENT = typer.Argument(
     help="Existing FEMIC LiDAR product bundle directory.",
 )
 LIDAR_OUTPUT_ROOT_OPTION = typer.Option(
-    ...,
+    None,
     "--output-root",
-    help="Explicit managed data root for materialized LiDAR tiles.",
+    help="Managed data root; defaults to `data/lidar`.",
+    show_default=False,
 )
 LIDAR_MATERIALIZATION_MANIFEST_OPTION = typer.Option(
     None,
@@ -576,6 +592,101 @@ LIDAR_MATERIALIZATION_PATH_ARGUMENT = typer.Argument(
     exists=True,
     readable=True,
     help="Materialization manifest path or managed output root.",
+)
+LIDAR_BBOX_OPTION = typer.Option(
+    ...,
+    "--bbox",
+    help="AOI bbox in EPSG:3005 as `minx,miny,maxx,maxy`.",
+)
+LIDAR_PRODUCT_OPTION = typer.Option(
+    None,
+    "--product",
+    help="Direct product to discover; repeat for multiple products.",
+    show_default=False,
+)
+LIDAR_SELECTION_OUTPUT_OPTION = typer.Option(
+    None,
+    "--manifest-path",
+    help="Selection manifest path; defaults to `metadata/lidar/lidarbc_selection.json`.",
+    show_default=False,
+)
+LIDAR_PAGE_SIZE_OPTION = typer.Option(
+    2000,
+    "--page-size",
+    min=1,
+    help="Tile-index query page size.",
+)
+LIDAR_MAX_PAGES_OPTION = typer.Option(
+    100,
+    "--max-pages",
+    min=1,
+    help="Maximum pages per source layer.",
+)
+LIDAR_DEM_PATH_OPTION = typer.Option(
+    ...,
+    "--dem",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="Single-band native DEM/DTM raster.",
+)
+LIDAR_TERRAIN_OUTPUT_OPTION = typer.Option(
+    None,
+    "--output-dir",
+    help="Terrain output directory; defaults to `data/lidar/terrain`.",
+    show_default=False,
+)
+LIDAR_TERRAIN_PRODUCT_OPTION = typer.Option(
+    None,
+    "--product",
+    help="Terrain product to build; repeat for multiple products.",
+    show_default=False,
+)
+LIDAR_TERRAIN_NODATA_OPTION = typer.Option(
+    None,
+    "--nodata",
+    help="Optional output nodata value for slope.",
+    show_default=False,
+)
+LIDAR_QA_JSON_OPTION = typer.Option(
+    None,
+    "--qa-json",
+    help="Optional QA JSON path; defaults beside the terrain products.",
+    show_default=False,
+)
+LIDAR_QA_CSV_OPTION = typer.Option(
+    None,
+    "--qa-csv",
+    help="Optional QA CSV path; defaults beside the terrain products.",
+    show_default=False,
+)
+LIDAR_STREAM_OUTPUT_OPTION = typer.Option(
+    None,
+    "--output-dir",
+    help="Stream output directory; defaults to `data/lidar/streams`.",
+    show_default=False,
+)
+LIDAR_ACCUMULATION_THRESHOLD_OPTION = typer.Option(
+    100,
+    "--accumulation-threshold",
+    min=1,
+    help="Minimum upstream cell count for a stream candidate.",
+)
+LIDAR_FILL_DEPRESSIONS_OPTION = typer.Option(
+    True,
+    "--fill-depressions/--no-fill-depressions",
+    help="Fill depressions before D8 flow routing.",
+)
+LIDAR_REFERENCE_HYDROGRAPHY_OPTION = typer.Option(
+    None,
+    "--reference",
+    help="Optional public-hydrography raster or vector for comparison.",
+    show_default=False,
+)
+LIDAR_REFERENCE_ALL_TOUCHED_OPTION = typer.Option(
+    False,
+    "--reference-all-touched/--no-reference-all-touched",
+    help="Rasterize vector reference cells touched by a feature.",
 )
 BCDC_BBOX_OPTION = typer.Option(
     None,
@@ -3246,6 +3357,23 @@ def _resolve_cli_output_path(
     return value.expanduser().resolve()
 
 
+def _parse_lidar_bbox(value: str) -> tuple[float, float, float, float]:
+    """Parse a LiDAR CLI bbox string into an EPSG:3005 tuple."""
+
+    pieces = [piece.strip() for piece in value.split(",")]
+    if len(pieces) != 4:
+        raise LidarCatalogError(
+            "Invalid `--bbox` value. Use `minx,miny,maxx,maxy` in EPSG:3005."
+        )
+    try:
+        coordinates = [float(piece) for piece in pieces]
+    except ValueError as exc:
+        raise LidarCatalogError(
+            "Invalid `--bbox` value. Use numeric `minx,miny,maxx,maxy` in EPSG:3005."
+        ) from exc
+    return normalize_bbox_epsg3005(coordinates)
+
+
 def _resolve_explicit_cli_path(value: Path) -> Path:
     """Resolve an explicit user-supplied path relative to the current shell CWD."""
     return value.expanduser().resolve()
@@ -4142,21 +4270,188 @@ def instance_config_show() -> None:
     console.print(f"default_user_instance_root: {defaults.user_instance_root}")
 
 
+@lidar_app.command("discover")
+def lidar_discover(
+    bbox: str = LIDAR_BBOX_OPTION,
+    products: list[str] | None = LIDAR_PRODUCT_OPTION,
+    manifest_path: Path | None = LIDAR_SELECTION_OUTPUT_OPTION,
+    page_size: int = LIDAR_PAGE_SIZE_OPTION,
+    max_pages: int = LIDAR_MAX_PAGES_OPTION,
+    timeout_sec: float = LIDAR_TIMEOUT_OPTION,
+    generated_utc: str | None = LIDAR_GENERATED_UTC_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Discover LidarBC tiles for an AOI and write a selection manifest."""
+
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+    resolved_manifest = _resolve_cli_output_path(
+        manifest_path or Path("metadata/lidar/lidarbc_selection.json"),
+        instance_context=instance_context,
+    )
+    requested_products = tuple(products or ("point_cloud", "dem", "dsm"))
+    try:
+        selection = discover_lidarbc_tiles(
+            _parse_lidar_bbox(bbox),
+            requested_products,
+            page_size=page_size,
+            max_pages_per_layer=max_pages,
+            timeout_sec=timeout_sec,
+            generated_utc=generated_utc,
+        )
+        written = write_lidar_selection_manifest(selection, resolved_manifest)
+    except (LidarCatalogError, OSError) as exc:
+        console.print(f"[red]LiDAR discovery error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    counts: dict[str, int] = {}
+    for tile in selection.tiles:
+        counts[tile.product] = counts.get(tile.product, 0) + 1
+    console.print("[green]LidarBC selection manifest written[/green]")
+    console.print(f"manifest: {written}")
+    console.print(f"tiles: {selection.tile_count}")
+    for product in requested_products:
+        console.print(f"{product}: {counts.get(product, 0)}")
+    for warning in selection.warnings:
+        console.print(f"[yellow]warning:[/yellow] {warning}")
+
+
+@lidar_app.command("terrain")
+def lidar_terrain(
+    dem: Path = LIDAR_DEM_PATH_OPTION,
+    output_dir: Path | None = LIDAR_TERRAIN_OUTPUT_OPTION,
+    products: list[str] | None = LIDAR_TERRAIN_PRODUCT_OPTION,
+    nodata: float | None = LIDAR_TERRAIN_NODATA_OPTION,
+    qa_json: Path | None = LIDAR_QA_JSON_OPTION,
+    qa_csv: Path | None = LIDAR_QA_CSV_OPTION,
+    generated_utc: str | None = LIDAR_GENERATED_UTC_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Build native-grid terrain products and QA reports from a DEM."""
+
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+    resolved_output = _resolve_cli_output_path(
+        output_dir or Path("data/lidar/terrain"),
+        instance_context=instance_context,
+    )
+    resolved_qa_json = (
+        _resolve_cli_output_path(qa_json, instance_context=instance_context)
+        if qa_json is not None
+        else None
+    )
+    resolved_qa_csv = (
+        _resolve_cli_output_path(qa_csv, instance_context=instance_context)
+        if qa_csv is not None
+        else None
+    )
+    requested_products = tuple(products or ("slope_percent",))
+    try:
+        report = build_terrain_products(
+            dem,
+            resolved_output,
+            products=requested_products,
+            qa_json_path=resolved_qa_json,
+            qa_csv_path=resolved_qa_csv,
+            nodata=nodata,
+            generated_utc=generated_utc,
+        )
+    except (TerrainProcessingError, OSError) as exc:
+        console.print(f"[red]LiDAR terrain error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]LiDAR terrain products built[/green]")
+    console.print(f"output_dir: {resolved_output}")
+    console.print(f"products: {report.product_count}")
+    for product in report.products:
+        console.print(f"{product.product}: {product.path}")
+    console.print(f"qa_json: {resolved_qa_json or resolved_output / 'terrain_qa.json'}")
+    console.print(f"qa_csv: {resolved_qa_csv or resolved_output / 'terrain_qa.csv'}")
+
+
+@lidar_app.command("streams")
+def lidar_streams(
+    dem: Path = LIDAR_DEM_PATH_OPTION,
+    output_dir: Path | None = LIDAR_STREAM_OUTPUT_OPTION,
+    accumulation_threshold: int = LIDAR_ACCUMULATION_THRESHOLD_OPTION,
+    fill_depressions: bool = LIDAR_FILL_DEPRESSIONS_OPTION,
+    reference: Path | None = LIDAR_REFERENCE_HYDROGRAPHY_OPTION,
+    reference_all_touched: bool = LIDAR_REFERENCE_ALL_TOUCHED_OPTION,
+    generated_utc: str | None = LIDAR_GENERATED_UTC_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Derive screening stream candidates from a native DEM."""
+
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+    resolved_output = _resolve_cli_output_path(
+        output_dir or Path("data/lidar/streams"),
+        instance_context=instance_context,
+    )
+    try:
+        result = derive_stream_candidates(
+            dem,
+            resolved_output,
+            accumulation_threshold=accumulation_threshold,
+            fill_depressions=fill_depressions,
+            reference_path=reference,
+            reference_all_touched=reference_all_touched,
+            generated_utc=generated_utc,
+        )
+    except (StreamCandidateError, TerrainProcessingError, OSError) as exc:
+        console.print(f"[red]LiDAR stream-candidate error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]LiDAR stream candidates built[/green]")
+    console.print(f"output_dir: {resolved_output}")
+    console.print(f"stream_candidates: {result.stream_path}")
+    console.print(f"flow_accumulation: {result.accumulation_path}")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(f"review: {result.review_path}")
+    console.print(f"candidate_cells: {result.manifest.qa['candidate_cells']}")
+    if result.manifest.comparison is not None:
+        comparison = result.manifest.comparison
+        console.print(f"precision: {comparison.precision}")
+        console.print(f"recall: {comparison.recall}")
+        console.print(f"f1: {comparison.f1}")
+    for warning in result.manifest.warnings:
+        console.print(f"[yellow]warning:[/yellow] {warning}")
+
+
 @lidar_app.command("bundle")
 def lidar_bundle(
     selection_manifest: Path = LIDAR_SELECTION_MANIFEST_OPTION,
     product_plan: Path = LIDAR_PRODUCT_PLAN_OPTION,
-    output_dir: Path = LIDAR_BUNDLE_OUTPUT_OPTION,
+    output_dir: Path | None = LIDAR_BUNDLE_OUTPUT_OPTION,
     overwrite: bool = LIDAR_BUNDLE_OVERWRITE_OPTION,
     generated_utc: str | None = LIDAR_GENERATED_UTC_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Package compiled LiDAR products as a versioned consumer bundle."""
 
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+    resolved_output = _resolve_cli_output_path(
+        output_dir or Path("data/lidar/products"),
+        instance_context=instance_context,
+    )
     try:
         result = build_lidar_product_bundle(
             selection_manifest_path=selection_manifest,
             product_plan_path=product_plan,
-            output_dir=output_dir,
+            output_dir=resolved_output,
             overwrite=overwrite,
             generated_utc=generated_utc,
         )
@@ -4176,21 +4471,36 @@ def lidar_bundle(
 @lidar_app.command("materialize")
 def lidar_materialize(
     selection_manifest: Path = LIDAR_SELECTION_MANIFEST_OPTION,
-    output_root: Path = LIDAR_OUTPUT_ROOT_OPTION,
+    output_root: Path | None = LIDAR_OUTPUT_ROOT_OPTION,
     manifest_path: Path | None = LIDAR_MATERIALIZATION_MANIFEST_OPTION,
     plan_only: bool = LIDAR_MATERIALIZATION_PLAN_ONLY_OPTION,
     max_tiles: int | None = LIDAR_MAX_TILES_OPTION,
     timeout_sec: float = LIDAR_TIMEOUT_OPTION,
     fail_fast: bool = LIDAR_FAIL_FAST_OPTION,
     generated_utc: str | None = LIDAR_GENERATED_UTC_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
 ) -> None:
     """Download selected LiDAR tiles into a resumable managed data root."""
 
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+    resolved_output = _resolve_cli_output_path(
+        output_root or Path("data/lidar"),
+        instance_context=instance_context,
+    )
+    resolved_manifest = (
+        _resolve_cli_output_path(manifest_path, instance_context=instance_context)
+        if manifest_path is not None
+        else None
+    )
     try:
         result = materialize_lidar_selection(
             selection_manifest_path=selection_manifest,
-            output_root=output_root,
-            manifest_path=manifest_path,
+            output_root=resolved_output,
+            manifest_path=resolved_manifest,
             plan_only=plan_only,
             max_tiles=max_tiles,
             timeout_sec=timeout_sec,

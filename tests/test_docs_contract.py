@@ -68,6 +68,7 @@ GUIDE_PAGES = [
     "lidar-materialization",
     "lidar-terrain-products",
     "lidar-stream-candidates",
+    "lidar-instance-integration",
     "lidar-product-bundles",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
@@ -390,6 +391,37 @@ def test_lidar_stream_candidate_guide_and_api_page_keep_required_contract() -> N
     assert "femic-lidar-hydrography" in modules_text
 
 
+def test_lidar_instance_integration_guide_keeps_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-instance-integration.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Instance Layout",
+        "Instance Root Resolution",
+        "Recommended Workflow",
+        "DataLad Boundary",
+        "Instance Handoff Checklist",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic lidar discover",
+        "femic lidar materialize",
+        "femic lidar terrain",
+        "femic lidar streams",
+        "femic lidar bundle",
+        "metadata/lidar/lidarbc_selection.json",
+        "data/lidar/",
+        "FEMIC_INSTANCE_ROOT",
+        "--instance-root",
+        "bundle_id",
+        "sha256",
+        "DataLad",
+    ):
+        assert snippet in guide_text
+
+
 def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
     guide_text = (GUIDES_ROOT / "bc-data-catalogue-discovery.rst").read_text(
         encoding="utf-8"
@@ -459,8 +491,16 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "python -m femic data bcdc-order",
         "python -m femic lidar bundle",
         "python -m femic lidar inspect",
+        "python -m femic lidar discover",
         "python -m femic lidar materialize",
         "python -m femic lidar materialization-status",
+        "python -m femic lidar terrain",
+        "python -m femic lidar streams",
+        "--dem PATH",
+        "--accumulation-threshold INTEGER",
+        "--fill-depressions / --no-fill-depressions",
+        "--reference PATH",
+        "--instance-root PATH",
         "--output-root PATH",
         "--plan-only / --no-plan-only",
         "--max-tiles INTEGER",

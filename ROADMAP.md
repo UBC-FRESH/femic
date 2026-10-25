@@ -2189,12 +2189,12 @@ boundary. A full provincial mirror remains out of scope.
   - [x] P79.4a Define terrain-derived hydrography product contract.
   - [x] P79.4b Add comparison metrics against existing public hydrography.
   - [x] P79.4c Emit review manifests and caveat reports.
-- [ ] P79.5 Add CLI docs tests and instance hooks for LiDAR workflows (`#216`).
-  - [ ] P79.5a Add CLI commands for tile discovery/materialization and terrain
+- [x] P79.5 Add CLI docs tests and instance hooks for LiDAR workflows (`#216`).
+  - [x] P79.5a Add CLI commands for tile discovery/materialization and terrain
     products.
-  - [ ] P79.5b Add docs and examples.
-  - [ ] P79.5c Add tests for manifests and command behaviour.
-  - [ ] P79.5d Add instance integration notes.
+  - [x] P79.5b Add docs and examples.
+  - [x] P79.5c Add tests for manifests and command behaviour.
+  - [x] P79.5d Add instance integration notes.
 - [ ] P79.6 Pilot open LiDAR terrain workflow against TFL 6 needs (`#217`).
   - [ ] P79.6a Select a bounded TFL 6 AOI/test area.
   - [ ] P79.6b Run tile discovery/materialization.
@@ -3506,20 +3506,22 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
   - `P79` / `#211` is active on `feature/p79-lidar-pipeline`: FEMIC is now the
     authoritative producer of native LidarBC products for WS4 P43 (`#317`) and
     FHOPS P13 (`#188`). P79.1 (`#212`), P79.2 (`#213`), P79.3 (`#214`),
-    P79.4 (`#215`), and P79.8 (`#349`) are complete: `femic.lidar.catalog` owns
-    discovery/AOI selection, `femic.lidar.materialization` owns resumable Range
-    downloads and the `femic.lidar.materialization.v1` manifest,
-    `femic.lidar.terrain` owns Horn percent slope, point-cloud cell aggregation,
-    aligned zonal statistics, and `femic.lidar.terrain_qa.v1` reports,
-    `femic.lidar.hydrography` owns D8 stream candidates, public-hydrography
-    comparison, and `femic.lidar.stream_candidates.v1` review manifests, and
-    `femic.lidar.products` owns the `femic.lidar.product.v1` bundle, checksum
-    validation, `femic lidar bundle`, and `femic lidar inspect`. Next is P79.5
-    (`#216`) LiDAR CLI/docs/tests and instance hooks, followed by P79.6/P79.7
-    pilot and canopy work, then P79.9 cross-repo validation. Consumers must not
-    reimplement discovery or materialization. The immediate TFL 6 instance
-    keeps its public DEM steep-slope repair lane until P79.6/P79.9 validate the
-    shared product path.
+    P79.4 (`#215`), P79.5 (`#216`), and P79.8 (`#349`) are complete:
+    `femic.lidar.catalog` owns discovery/AOI selection,
+    `femic.lidar.materialization` owns resumable Range downloads and the
+    `femic.lidar.materialization.v1` manifest, `femic.lidar.terrain` owns Horn
+    percent slope, point-cloud cell aggregation, aligned zonal statistics, and
+    `femic.lidar.terrain_qa.v1` reports, `femic.lidar.hydrography` owns D8
+    stream candidates, public-hydrography comparison, and
+    `femic.lidar.stream_candidates.v1` review manifests, and
+    `femic.lidar.products` owns the `femic.lidar.product.v1` bundle and
+    checksum validation. The full workflow is exposed through
+    `femic lidar discover|materialize|terrain|streams|bundle|inspect`, with
+    instance-root defaults and integration docs. Next is P79.6 (`#217`) TFL 6
+    pilot and P79.7 (`#348`) canopy/precision products, then P79.9 cross-repo
+    validation. Consumers must not reimplement discovery or materialization.
+    The immediate TFL 6 instance keeps its public DEM steep-slope repair lane
+    until P79.6/P79.9 validate the shared product path.
   - `P78.6` / `#209` is complete: the optional document-figure recovery
     workflow is documented in `docs/guides/document-figure-recovery.rst`, the
     CLI reference includes `femic doc figures` commands, and
