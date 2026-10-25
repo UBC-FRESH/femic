@@ -15319,3 +15319,46 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   hydrology modules.
+
+## 2026-10-25 - P114.8 response and flood-risk bundles (#359)
+
+- Added `femic.hydrology.response_bundle` with the
+  `femic.hydrology.response.v1`, `femic.hydrology.flood_risk.v1`, and
+  `femic.hydrology.response_plan.v1` contracts.
+- Added deterministic `bundle_id` derivation, relative artifact paths,
+  SHA-256/size checksums, provenance, applicability-domain and uncertainty
+  metadata, caveats, and the WS4/FHOPS consumer contract.
+- Added required artifact roles (response surface, flood-risk table, domain,
+  disturbance ledger) plus optional surrogate, validation, frequency, pairing,
+  screening, and benchmark roles with role-specific schema checks.
+- Added flood-risk row/table build, write, read, and validation, including
+  ratio, duplicate receptor/return-period, exceedance-probability, and
+  expected-annual-damage checks.
+- Added build, manifest validation, and local audit entry points. Audit verifies
+  manifest structure, required roles, consumer pinning, artifact existence,
+  sizes, checksums, response-surface identity/return periods, and flood-risk
+  table identity/row count.
+- Added `python -m femic hydrology bundle` and
+  `python -m femic hydrology inspect`, with deterministic JSON audit output.
+- Added a bounded synthetic response fixture with public/synthetic-only domain,
+  ledger, surface, risk, surrogate, and validation artifacts.
+- Added the response-bundle guide, technical contract page, curated and
+  generated API pages, CLI reference, consumer read order for WS4 P49 and FHOPS
+  P14, and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_response_bundle.py` passed (24 tests).
+  - 81% branch coverage for `femic.hydrology.response_bundle`.
+  - All 112 hydrology domain/bundle/disturbance/screening/flood/process/
+    surrogate/response-bundle tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 62 passed; 3 pre-existing submodule/data failures.
+- No real public-gauge calibration, process-model ensemble, or provincial
+  hydrography integration was run; those remain P114.9 work. The WS4 P49 and
+  FHOPS P14 implementation issues remain intentionally uncreated until P114.9
+  declares the response contract stable.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.

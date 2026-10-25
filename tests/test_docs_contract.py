@@ -71,6 +71,7 @@ GUIDE_PAGES = [
     "hydrology-flood-frequency",
     "hydrology-process-models",
     "hydrology-surrogate-models",
+    "hydrology-response-bundles",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -108,6 +109,7 @@ CONTRACT_PAGES = [
     "hydrology-flood-frequency",
     "hydrology-process-models",
     "hydrology-surrogate-models",
+    "hydrology-response-bundles",
 ]
 
 NOTEBOOKS = [
@@ -1840,6 +1842,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Limits",
             "Cross-References",
         ],
+        "hydrology-response-bundles": [
+            "Purpose",
+            "Quick Contract",
+            "Plan Contract",
+            "Manifest Contract",
+            "Artifact and Path Rules",
+            "Flood-Risk Table Contract",
+            "Applicability And Uncertainty",
+            "Consumer Handshake",
+            "Cross-References",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1956,6 +1969,20 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "refuse",
             "No silent extrapolation",
         ],
+        "hydrology-response-bundles": [
+            "femic.hydrology.response.v1",
+            "femic.hydrology.flood_risk.v1",
+            "femic.hydrology.response_plan.v1",
+            "manifest.json",
+            "SHA-256",
+            "bundle_id",
+            "WS4 P49",
+            "FHOPS P14",
+            "applicability",
+            "refuse",
+            "not a regulatory flood map",
+            "No private",
+        ],
     }
 
     for slug in CONTRACT_PAGES:
@@ -2008,6 +2035,54 @@ def test_hydrology_surrogate_guide_and_api_page_keep_required_contract() -> None
         assert snippet in api_text
     modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
     assert "femic-hydrology-surrogate" in modules_text
+
+
+def test_hydrology_response_bundle_guide_and_api_page_keep_required_contract() -> (
+    None
+):
+    guide_text = (GUIDES_ROOT / "hydrology-response-bundles.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Bundle Layout",
+        "Build A Bundle",
+        "Flood-Risk Table",
+        "Pinning And Consumer Read Order",
+        "Determinism And Audit",
+        "Limits",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.hydrology.response.v1",
+        "femic.hydrology.flood_risk.v1",
+        "femic.hydrology.response_plan.v1",
+        "manifest.json",
+        "bundle_id",
+        "bundle_version",
+        "SHA-256",
+        "applicability_domain",
+        "WS4 P49",
+        "FHOPS P14",
+        "not a regulatory flood map",
+    ):
+        assert snippet in guide_text
+
+    api_text = (
+        API_ROOT / "femic-hydrology-response-bundle.rst"
+    ).read_text(encoding="utf-8")
+    for snippet in (
+        "femic.hydrology.response_bundle",
+        "build_hydrology_response_bundle",
+        "audit_hydrology_response_bundle",
+        "build_flood_risk_table",
+        "generated/femic.hydrology.response_bundle",
+        "hydrology-response-bundles",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-hydrology-response-bundle" in modules_text
 
 
 def test_hydrology_process_model_guide_and_api_page_keep_required_contract() -> None:

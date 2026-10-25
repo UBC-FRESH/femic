@@ -3372,9 +3372,15 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     runtime/licensing boundary. P114.7 (`#358`) is complete:
     `femic.hydrology.surrogate` provides Latin-hypercube design, linear and
     Gaussian-process surrogates, held-out/k-fold validation, applicability
-    domains, and default extrapolation refusal. Next is P114.8 (`#359`)
-    hydrologic response and flood-risk bundles. WS4 P49 and FHOPS P14 stay
-    uncreated until the response contract is stable.
+    domains, and default extrapolation refusal. P114.8 (`#359`) is complete:
+    `femic.hydrology.response_bundle` defines the
+    `femic.hydrology.response.v1`, `femic.hydrology.flood_risk.v1`, and
+    `femic.hydrology.response_plan.v1` contracts, deterministic bundle
+    identity, SHA-256 artifact checksums, applicability/uncertainty metadata,
+    consumer pinning, build/audit/CLI entry points, and the bounded response
+    fixture. Next is P114.9 (`#360`) benchmark, pilot, and phase closeout. WS4
+    P49 and FHOPS P14 stay uncreated until the response contract is declared
+    stable.
   - `P106` / `#288` is complete and merged: parent PR `#289`, parent issue
     `#288`, MKRF PR `UBC-FRESH/femic-mkrf-instance#51`, and MKRF issue
     `UBC-FRESH/femic-mkrf-instance#50` are closed. MKRF is the second
@@ -3939,7 +3945,12 @@ Tasks:
 - [x] P114.6 Add process-model adapters and scenario manifests (`#357`).
 - [x] P114.7 Add surrogate training, validation, and applicability domains
   (`#358`).
-- [ ] P114.8 Package hydrologic response and flood-risk bundles (`#359`).
+- [x] P114.8 Package hydrologic response and flood-risk bundles (`#359`).
+  - Response, flood-risk, and plan schemas, deterministic identity, checksums,
+    provenance, applicability/uncertainty metadata, audit, CLI, docs, and the
+    bounded fixture are complete. Consumer pinning is documented for WS4 P49
+    and FHOPS P14; those implementation phases remain intentionally uncreated.
+
 - [ ] P114.9 Benchmark, pilot, and close out P114 (`#360`).
 
 Detailed plan: `planning/phase114_forest_hydrology_flood_risk.md`.

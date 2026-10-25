@@ -1,0 +1,54 @@
+{
+  "schema_version": "femic.hydrology.flood_response.v1",
+  "surface_id": "fixture-surface",
+  "generated_utc": "2026-10-25T00:00:00+00:00",
+  "station_id": "fixture-station",
+  "method": "nonstationary_gev",
+  "baseline_name": "baseline",
+  "return_periods": [
+    2.0,
+    100.0
+  ],
+  "scenarios": [
+    {
+      "name": "baseline",
+      "covariates": {
+        "harvest_fraction": 0.0
+      }
+    },
+    {
+      "name": "high_harvest",
+      "covariates": {
+        "harvest_fraction": 0.4
+      }
+    }
+  ],
+  "summary": {
+    "row_count": 2
+  },
+  "rows": [
+    {
+      "scenario_name": "high_harvest",
+      "return_period": 2.0,
+      "quantile": 52.5,
+      "baseline_quantile": 50.0,
+      "ratio": 1.05,
+      "difference": 2.5
+    },
+    {
+      "scenario_name": "high_harvest",
+      "return_period": 100.0,
+      "quantile": 150.0,
+      "baseline_quantile": 120.0,
+      "ratio": 1.25,
+      "difference": 30.0
+    }
+  ],
+  "diagnostics": {
+    "note": "Synthetic fixture; not a calibrated response surface."
+  },
+  "warnings": [],
+  "caveats": [
+    "Synthetic fixture for bundle contract tests only."
+  ]
+}

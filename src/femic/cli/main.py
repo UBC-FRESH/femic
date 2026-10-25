@@ -401,6 +401,11 @@ tsr_app = typer.Typer(
     no_args_is_help=True,
     help="Index BC TSR TSA document surfaces and canonical discovery metadata.",
 )
+hydrology_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Build and inspect versioned forest-hydrology response bundles.",
+)
 console = Console()
 
 WINDOWS_ARBUTUS_ENV_FILE_RELATIVE = Path(".config") / "femic" / "arbutus.env"
@@ -10514,6 +10519,97 @@ def freshforge_workflows_commands(
         typer.echo(command)
 
 
+@hydrology_app.command("bundle")
+def hydrology_bundle(
+    plan_path: Path = typer.Option(
+        ...,
+        "--plan",
+        help="Response-bundle plan JSON.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    output_dir: Path = typer.Option(
+        ...,
+        "--output-dir",
+        help="Destination response-bundle directory.",
+    ),
+    overwrite: bool = typer.Option(
+        False,
+        "--overwrite",
+        help="Replace an existing FEMIC response bundle.",
+    ),
+    generated_utc: str | None = typer.Option(
+        None,
+        "--generated-utc",
+        help="Override the manifest timestamp for reproducible fixtures.",
+    ),
+) -> None:
+    """Build a versioned hydrology response bundle from a plan."""
+
+    from femic.hydrology.response_bundle import (
+        HydrologyResponseError,
+        build_hydrology_response_bundle,
+    )
+
+    try:
+        result = build_hydrology_response_bundle(
+            plan_path,
+            output_dir,
+            overwrite=overwrite,
+            generated_utc=generated_utc,
+        )
+    except HydrologyResponseError as exc:
+        console.print(f"[red]Hydrology bundle build failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"bundle_dir: {result.bundle_dir}")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(f"bundle_id: {result.manifest.bundle_id}")
+    console.print(f"bundle_version: {result.manifest.bundle_version}")
+    console.print(f"artifacts: {len(result.manifest.artifacts)}")
+
+
+@hydrology_app.command("inspect")
+def hydrology_inspect(
+    bundle_path: Path = typer.Argument(
+        ...,
+        help="Response-bundle directory or manifest path.",
+        exists=True,
+        readable=True,
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit deterministic JSON instead of a text summary.",
+    ),
+    checked_utc: str | None = typer.Option(
+        None,
+        "--checked-utc",
+        help="Override the audit timestamp for reproducible checks.",
+    ),
+) -> None:
+    """Validate a hydrology response bundle and its artifact checksums."""
+
+    from femic.hydrology.response_bundle import audit_hydrology_response_bundle
+
+    audit = audit_hydrology_response_bundle(bundle_path, checked_utc=checked_utc)
+    if json_output:
+        typer.echo(json.dumps(audit.to_dict(), indent=2, sort_keys=True))
+    else:
+        console.print(f"bundle_id: {audit.bundle_id or '(unknown)'}")
+        console.print(f"valid: {audit.is_valid}")
+        console.print(f"complete: {audit.is_complete}")
+        console.print(f"artifacts: {len(audit.artifacts)}")
+        for error in audit.errors:
+            console.print(f"[red]error:[/red] {error}")
+        for warning in audit.warnings:
+            console.print(f"[yellow]warning:[/yellow] {warning}")
+    if not audit.is_valid:
+        raise typer.Exit(code=1)
+
+
+app.add_typer(hydrology_app, name="hydrology")
 app.add_typer(prep_app, name="prep")
 app.add_typer(vdyp_app, name="vdyp")
 app.add_typer(tsa_app, name="tsa")

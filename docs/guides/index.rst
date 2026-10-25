@@ -25,6 +25,7 @@ export modules.
    hydrology-flood-frequency
    hydrology-process-models
    hydrology-surrogate-models
+   hydrology-response-bundles
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery

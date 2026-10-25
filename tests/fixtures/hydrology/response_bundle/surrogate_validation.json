@@ -1,0 +1,14 @@
+{
+  "model_family": "linear",
+  "evaluation_size": 24,
+  "accepted_count": 22,
+  "refused_count": 2,
+  "rmse": 0.04,
+  "mae": 0.03,
+  "r2": 0.91,
+  "coverage_95": 0.93,
+  "mean_interval_width": 0.12,
+  "fold_count": 5,
+  "is_valid": true,
+  "warnings": []
+}

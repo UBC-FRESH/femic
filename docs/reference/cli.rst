@@ -1632,3 +1632,30 @@ next-check steps.
 - ``--builtin-model-smoke / --no-builtin-model-smoke`` (default: ``--builtin-model-smoke``)
 - ``--ws3-bridge-dir PATH`` (optional output directory for generated ws3 section files)
 - ``--instance-root PATH``
+
+``hydrology`` commands
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: text
+
+   python -m femic hydrology [OPTIONS] COMMAND [ARGS]...
+
+Build and inspect versioned forest-hydrology response bundles.
+
+``hydrology bundle`` options
+
+- ``--plan PATH`` (required response-bundle plan JSON)
+- ``--output-dir PATH`` (required destination bundle directory)
+- ``--overwrite`` (replace an existing FEMIC response bundle)
+- ``--generated-utc TEXT`` (override the manifest timestamp)
+
+``hydrology inspect`` arguments and options
+
+- ``BUNDLE_PATH`` (response-bundle directory or manifest path)
+- ``--json`` (emit deterministic audit JSON)
+- ``--checked-utc TEXT`` (override the audit timestamp)
+
+``hydrology bundle`` verifies required artifact roles and schemas, copies
+artifacts without rewriting them, writes relative paths and SHA-256 checksums,
+and emits ``manifest.json``. ``hydrology inspect`` validates the manifest and
+verifies local artifact sizes and checksums; it exits non-zero on failure.

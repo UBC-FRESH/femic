@@ -246,8 +246,8 @@ Solution strategy:
 5. P114.5 Stochastic flood-frequency response layer (`#356`).
 6. P114.6 Process-model adapters and scenario manifests (`#357`).
 7. P114.7 Surrogate training, validation, and applicability domain (`#358`).
-8. P114.8 Versioned hydrologic response and flood-risk bundles (`#359`).
-9. P114.9 Benchmark and pilot validation (`#360`).
+8. P114.8 Versioned hydrologic response and flood-risk bundles (`#359`). Complete.
+9. P114.9 Benchmark, bounded pilot, and phase closeout (`#360`).
 
 ### WS4 P49: Flood-risk-aware spatial scheduling
 
@@ -305,11 +305,14 @@ rain/rain-on-snow coastal watershed before any provincial generalization.
 
 ## Current Edge
 
-FEMIC P114 is active. P114.1 (`#352`) through P114.7 (`#358`) are complete: the
+FEMIC P114 is active. P114.1 (`#352`) through P114.8 (`#359`) are complete: the
 domain/receptor contract, public source registry, bundle manifest,
 licence/checksum validation, annual disturbance ledger, Tier 0 screening,
 stochastic flood-frequency/response surfaces, DHSVM/SUMMA process-model
-adapters, and bounded surrogates are in place. Next is P114.8 (`#359`):
-hydrologic response and flood-risk bundles. The bounded public pilot
-acquisition remains optional in P114.9. Do not create the WS4 P49 or FHOPS P14
-implementation issues until the FEMIC response contract is stable.
+adapters, bounded surrogates, and versioned response/flood-risk bundles are in
+place. The response bundle records deterministic identity, artifact SHA-256
+checksums, provenance, applicability and uncertainty metadata, and the
+WS4/FHOPS consumer read order. Next is P114.9 (`#360`): benchmark, bounded
+public pilot, and phase closeout. Do not create the WS4 P49 or FHOPS P14
+implementation issues until P114.9 declares the FEMIC response contract
+stable.
