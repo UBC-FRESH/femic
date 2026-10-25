@@ -59,8 +59,8 @@ Current curated pages in this section include ``femic.instance_context``,
 ``femic.tsr_catalog``,
 ``femic.geospatial_preflight``,
 ``femic.pipeline.bundle``, ``femic.pipeline.legacy_runtime``,
-``femic.pipeline.manifest``, ``femic.contracts.climate``, and
-``femic.contracts.disturbance``.
+``femic.pipeline.manifest``, ``femic.contracts.climate``,
+``femic.contracts.disturbance``, and ``femic.contracts.efi``.
 
 .. toctree::
    :maxdepth: 1
@@ -87,6 +87,7 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-pipeline-manifest
    femic-contracts-climate
    femic-contracts-disturbance
+   femic-contracts-efi
 
 Curated rebuild and release modules
 -----------------------------------

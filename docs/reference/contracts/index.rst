@@ -41,3 +41,4 @@ Contract Pages
    lidar-product-bundle
    climate-contract
    disturbance-contract
+   efi-model-card

@@ -3952,6 +3952,11 @@ Tasks:
     consumer rows, and docs.
   - [ ] Add the actual ws4 loader and a scenario report.
 - [ ] P116.3 Add `efi.model.v1` model cards (`#372`).
+  - [x] Add the `femic.contracts.efi` schema, validator, nested metadata,
+    applicability check, row annotation, synthetic cards, and docs.
+  - [ ] Replace or augment the synthetic cards with two real project or
+    published model cards.
+  - [ ] Wire the card metadata through the FEMIC attribute pipeline.
 
 Acceptance: each schema has a validator, an example, and a failure test; each
 contract has one downstream consumer reading real data; provenance survives the

@@ -1,6 +1,11 @@
 # Change Log
 
 ## 2026-10-25
+- P116.3: added `femic.contracts.efi` with the `femic.efi.model.v1` model-card
+  schema, nested training/validation/applicability metadata, applicability
+  checks, attribute-row annotation, two public-safe synthetic cards, and
+  contract/API pages. 22 focused tests pass; `sphinx-build -W` passes. Real
+  project/published cards and the attribute-pipeline wiring remain open.
 - P116.2: added `femic.contracts.disturbance` with the
   `femic.disturbance.v1` event schema, validator, JSON reader/writer,
   provenance summary, ws4-facing consumer rows, fire and NSR examples, and
