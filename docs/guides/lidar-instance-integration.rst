@@ -110,6 +110,22 @@ Recommended Workflow
 
       femic lidar inspect data/lidar/products/lidarbc-2026.10.0 --json
 
+TFL 6 Pilot Evidence
+--------------------
+
+A bounded TFL 6 pilot ran the full discovery, materialization, slope, and
+stream-candidate workflow on a 1 km AOI:
+
+- 3 LidarBC DEM tiles, 60.0 MiB, all checksum-verified in 7.18 s;
+- LidarBC median slope 19.46% versus 15.03% on the same-AOI CDED comparison
+  grid;
+- 2.88 ha of LidarBC `>=70%` slope that CDED did not resolve;
+- D8 stream-candidate agreement with FWA was too low for riparian use.
+
+The pilot did not change the TFL 6 locked CDED Step 220 proxy. Fragment-level
+comparison is the next TFL 6 decision gate. Full evidence is in
+``planning/phase79_p79_6_tfl6_pilot.md`` in the parent FEMIC repository.
+
 DataLad Boundary
 ----------------
 

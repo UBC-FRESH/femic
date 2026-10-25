@@ -400,6 +400,7 @@ def test_lidar_instance_integration_guide_keeps_required_contract() -> None:
         "Instance Layout",
         "Instance Root Resolution",
         "Recommended Workflow",
+        "TFL 6 Pilot Evidence",
         "DataLad Boundary",
         "Instance Handoff Checklist",
         "See Also",

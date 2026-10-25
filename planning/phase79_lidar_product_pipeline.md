@@ -169,6 +169,30 @@ Document the instance layout, DataLad/Arbutus boundary, handoff checklist, and
 end-to-end command sequence. Tests cover command outputs, manifests, instance
 defaults, and error exits.
 
+## P79.6 TFL 6 pilot
+
+Run a bounded 1 km AOI inside TFL 6 using real LidarBC DEM tiles and the public
+CDED tile used by TFL 6 Phase 9D. Compare 1 m LidarBC slope with a 25 m CDED
+comparison grid and run D8 stream candidates against clipped FWA streams.
+
+Evidence: `planning/phase79_p79_6_tfl6_pilot.md`, with metrics in
+`planning/phase79_p79_6_tfl6_pilot_metrics.json`,
+`planning/phase79_p79_6_tfl6_slope_thresholds.csv`, and
+`planning/phase79_p79_6_tfl6_stream_thresholds.csv`.
+
+Key findings:
+
+- LidarBC materialization: 3 DEM tiles, 60.0 MiB, all verified, 7.18 s.
+- LidarBC median slope 19.46% versus CDED 15.03%; mean 23.95% versus 15.77%.
+- LidarBC has 2.88 ha of >=70% slope in the AOI; CDED has zero.
+- D8/FWA stream agreement is very low (F1 0.47-1.20% across thresholds), so
+  stream candidates remain review-only.
+- Full TFL 6 DEM coverage is roughly 13 GiB before point clouds; bounded
+  materialization and annex storage are mandatory.
+
+The pilot does not change the TFL 6 locked CDED Step 220 proxy. Fragment-level
+comparison is the next TFL 6 decision gate.
+
 ## P79.8 implementation
 
 Add `femic.lidar.products` with:
@@ -210,8 +234,9 @@ materialization.
 4. P79.4 terrain-derived stream candidates and review manifests (complete).
 5. P79.8 product manifest, bundle, CLI, and fixture (complete).
 6. P79.5 CLI/docs/tests and instance hooks (complete).
-7. P79.6 TFL 6 pilot and P79.7 canopy/precision products.
-8. P79.9 cross-repo validation with WS4/FHOPS.
+7. P79.6 TFL 6 pilot (complete).
+8. P79.7 canopy/precision products.
+9. P79.9 cross-repo validation with WS4/FHOPS.
 
 Do not start consumer integration in WS4/FHOPS until a real shared bundle
 passes both consumer contracts.

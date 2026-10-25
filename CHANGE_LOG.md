@@ -15278,3 +15278,35 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   LiDAR modules.
+
+## 2026-10-25 - P79.6 TFL 6 LidarBC pilot (#217)
+
+- Selected a 1 km land AOI inside TFL 6 that is fully covered by LidarBC
+  1:2,500 DEM tiles and the public CDED tile used by TFL 6 Phase 9D.
+- Ran real `femic lidar discover` and `femic lidar materialize`:
+  - 3 DEM tiles, 60.0 MiB, all checksum-verified;
+  - materialization completed in 7.18 s with about 187 MB peak RSS.
+- Compared 1 m LidarBC slope with a same-AOI 25 m CDED comparison grid:
+  - LidarBC median 19.46% versus CDED 15.03%;
+  - LidarBC mean 23.95% versus CDED 15.77%;
+  - LidarBC has 2.88 ha of `>=70%` slope; CDED has zero.
+- Ran D8 stream candidates against TFL 6-clipped FWA streams. Agreement was
+  too low for riparian use (F1 0.47-1.20% across accumulation thresholds), so
+  candidates remain review-only.
+- Recorded a full-TFL6 DEM storage estimate of roughly 13 GiB before point
+  clouds, reinforcing bounded materialization and DataLad/Arbutus annexing.
+- Evidence:
+  - `planning/phase79_p79_6_tfl6_pilot.md`
+  - `planning/phase79_p79_6_tfl6_pilot_metrics.json`
+  - `planning/phase79_p79_6_tfl6_slope_thresholds.csv`
+  - `planning/phase79_p79_6_tfl6_stream_thresholds.csv`
+- No TFL 6 model-input promotion or Step 220 rule change was made; the locked
+  CDED proxy remains pending a fragment-level LidarBC comparison.
+- Verification:
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Selected docs-contract tests passed; full-repo docs-contract baseline still
+    has the three pre-existing K3Z/TSA29 submodule failures.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the
+  P79.6 pilot.

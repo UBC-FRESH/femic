@@ -2195,12 +2195,12 @@ boundary. A full provincial mirror remains out of scope.
   - [x] P79.5b Add docs and examples.
   - [x] P79.5c Add tests for manifests and command behaviour.
   - [x] P79.5d Add instance integration notes.
-- [ ] P79.6 Pilot open LiDAR terrain workflow against TFL 6 needs (`#217`).
-  - [ ] P79.6a Select a bounded TFL 6 AOI/test area.
-  - [ ] P79.6b Run tile discovery/materialization.
-  - [ ] P79.6c Build terrain/slope candidate products.
-  - [ ] P79.6d Compare outputs against TFL 6 instance needs.
-  - [ ] P79.6e Write pilot closeout and package follow-up list.
+- [x] P79.6 Pilot open LiDAR terrain workflow against TFL 6 needs (`#217`).
+  - [x] P79.6a Select a bounded TFL 6 AOI/test area.
+  - [x] P79.6b Run tile discovery/materialization.
+  - [x] P79.6c Build terrain/slope candidate products.
+  - [x] P79.6d Compare outputs against TFL 6 instance needs.
+  - [x] P79.6e Write pilot closeout and package follow-up list.
 - [ ] P79.7 Add native LidarBC canopy and precision-forestry products
   (`#348`).
   - [ ] P79.7a Define the canopy and precision-forestry product contract,
@@ -3517,11 +3517,15 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     `femic.lidar.products` owns the `femic.lidar.product.v1` bundle and
     checksum validation. The full workflow is exposed through
     `femic lidar discover|materialize|terrain|streams|bundle|inspect`, with
-    instance-root defaults and integration docs. Next is P79.6 (`#217`) TFL 6
-    pilot and P79.7 (`#348`) canopy/precision products, then P79.9 cross-repo
-    validation. Consumers must not reimplement discovery or materialization.
-    The immediate TFL 6 instance keeps its public DEM steep-slope repair lane
-    until P79.6/P79.9 validate the shared product path.
+    instance-root defaults and integration docs. P79.6 (`#217`) is complete:
+    a 1 km TFL 6 pilot verified 3 LidarBC DEM tiles (60 MiB), showed LidarBC
+    median slope 4.43 points above same-AOI CDED and 2.88 ha of >=70% slope
+    CDED misses, and found D8/FWA stream agreement too low for riparian use.
+    Evidence is in `planning/phase79_p79_6_tfl6_pilot.md`. Next is P79.7
+    (`#348`) canopy/precision products, then P79.9 cross-repo validation.
+    Consumers must not reimplement discovery or materialization. The TFL 6
+    instance keeps its locked CDED Step 220 proxy until a fragment-level
+    LidarBC comparison is reviewed.
   - `P78.6` / `#209` is complete: the optional document-figure recovery
     workflow is documented in `docs/guides/document-figure-recovery.rst`, the
     CLI reference includes `femic doc figures` commands, and
