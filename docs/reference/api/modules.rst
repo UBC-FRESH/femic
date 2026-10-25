@@ -46,8 +46,10 @@ Current curated pages in this section include ``femic.instance_context``,
 ``femic.instance_bootstrap``, ``femic.bcdc_catalog``,
 ``femic.bcdc_fetch``,
 ``femic.bcdc_dwds``,
+``femic.lidar.canopy``,
 ``femic.lidar.catalog``,
 ``femic.lidar.hydrography``,
+``femic.lidar.trees``,
 ``femic.lidar.materialization``,
 ``femic.lidar.terrain``,
 ``femic.lidar.products``,
@@ -68,7 +70,9 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-bcdc-fetch
    femic-bcdc-dwds
    femic-lidar
+   femic-lidar-canopy
    femic-lidar-hydrography
+   femic-lidar-trees
    femic-lidar-materialization
    femic-lidar-terrain
    femic-lidar-products

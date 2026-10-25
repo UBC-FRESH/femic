@@ -15310,3 +15310,38 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the
   P79.6 pilot.
+
+## 2026-10-25 - P79.7 native canopy and tree products (#348)
+
+- Added `femic.lidar.canopy` with native CHM = DSM - DEM on exactly aligned
+  grids, negative-height clamping/counting, canopy height percentiles, and
+  cover at 2/5/10/20 m.
+- Added VRI uncertainty comparison using CHM p95 height and CHM >=2 m cover,
+  with per-polygon rows, bias, MAE, and RMSE. No field-accuracy claim is made.
+- Added `femic.lidar.trees` for optional point-product ingestion, duplicate and
+  missing-field checks, height/crown/species summaries, and block summaries.
+  No new tree-segmentation algorithm was added.
+- Added `femic lidar canopy` and `femic lidar trees`, with instance-root
+  defaults for `data/lidar/canopy` and `data/lidar/trees`.
+- TFL 6 canopy pilot on the P79.6 AOI using 1 m LidarBC DSM/DEM:
+  - CHM mean 8.62 m, median 7.71 m, p95 21.78 m, max 55.42 m;
+  - cover 70.94% at >=2 m, 60.09% at >=5 m, 41.03% at >=10 m, 7.84% at >=20 m;
+  - 95 negative pixels clamped;
+  - VRI comparison across 7 polygons: height bias -2.93 m, MAE 4.08 m, RMSE
+    6.16 m; cover bias +23.87 points, MAE 39.47 points.
+  - LidarBC currently exposes no CHM/canopy or individual-tree layer.
+- Evidence:
+  - `planning/phase79_p79_7_tfl6_canopy_pilot.md`
+  - `planning/phase79_p79_7_tfl6_canopy_pilot_metrics.json`
+  - `planning/phase79_p79_7_tfl6_vri_comparison.csv`
+- Verification:
+  - `pytest tests/test_lidar_canopy.py` passed (21 tests).
+  - 100% branch coverage for `femic.lidar.canopy`; 99% for
+    `femic.lidar.trees`.
+  - All 191 LiDAR tests passed.
+  - Targeted `ruff check` passed for new LiDAR modules/tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference P79.7.

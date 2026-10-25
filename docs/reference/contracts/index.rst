@@ -37,4 +37,5 @@ Contract Pages
    lidar-materialization
    lidar-terrain-products
    lidar-stream-candidates
+   lidar-canopy-products
    lidar-product-bundle

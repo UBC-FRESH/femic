@@ -100,6 +100,7 @@ For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/lidar-materialization.rst`
 - `docs/reference/contracts/lidar-terrain-products.rst`
 - `docs/reference/contracts/lidar-stream-candidates.rst`
+- `docs/reference/contracts/lidar-canopy-products.rst`
 - `docs/reference/contracts/lidar-product-bundle.rst`
 
 ## Patchworks Model Semantics Guardrails

@@ -29,6 +29,15 @@ The default layout under an instance root is:
          flow_accumulation.tif
          stream_candidates_manifest.json
          stream_candidates_review.md
+       canopy/
+         chm.tif
+         canopy_structure.json
+         canopy_qa.json
+         canopy_qa.csv
+         vri_canopy_comparison.csv
+       trees/
+         tree_product_summary.json
+         tree_block_summary.csv
        products/
          <bundle>/
            manifest.json
@@ -99,7 +108,25 @@ Recommended Workflow
         --output-dir data/lidar/streams \
         --reference data/public/fwa_streams.geojson
 
-5. **Package** the reviewed products for WS4/FHOPS.
+5. **Build canopy** products and VRI uncertainty evidence.
+
+   .. code-block:: bash
+
+      femic lidar canopy \
+        --dem data/lidar/lidarbc/dem/layer_5/2023/dem.tif \
+        --dsm data/lidar/lidarbc/dsm/layer_1/2023/dsm.tif \
+        --output-dir data/lidar/canopy \
+        --vri data/input/tfl_6/vri_2025_r1_poly_tfl6.gpkg
+
+6. **Inspect** an optional individual-tree product.
+
+   .. code-block:: bash
+
+      femic lidar trees \
+        --product data/lidar/trees/lidarbc_trees.gpkg \
+        --output-dir data/lidar/trees
+
+7. **Package** the reviewed products for WS4/FHOPS.
 
    .. code-block:: bash
 

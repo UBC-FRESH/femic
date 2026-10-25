@@ -68,6 +68,7 @@ GUIDE_PAGES = [
     "lidar-materialization",
     "lidar-terrain-products",
     "lidar-stream-candidates",
+    "lidar-canopy-products",
     "lidar-instance-integration",
     "lidar-product-bundles",
     "bc-data-catalogue-discovery",
@@ -104,6 +105,7 @@ CONTRACT_PAGES = [
     "lidar-materialization",
     "lidar-terrain-products",
     "lidar-stream-candidates",
+    "lidar-canopy-products",
     "lidar-product-bundle",
 ]
 
@@ -391,6 +393,45 @@ def test_lidar_stream_candidate_guide_and_api_page_keep_required_contract() -> N
     assert "femic-lidar-hydrography" in modules_text
 
 
+def test_lidar_canopy_guide_and_api_pages_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-canopy-products.rst").read_text(encoding="utf-8")
+    for heading in (
+        "Purpose",
+        "CHM From DSM And DEM",
+        "Canopy Structure",
+        "VRI Comparison And Uncertainty",
+        "Individual Tree Products",
+        "TFL 6 Pilot Evidence",
+        "Limitations",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.lidar.canopy_qa.v1",
+        "femic.lidar.individual_tree.v1",
+        "femic lidar canopy",
+        "femic lidar trees",
+        "DSM - DEM",
+        "CHM p95",
+        "tree_id",
+        "height_m",
+        "No reprojection",
+        "field-accuracy",
+    ):
+        assert snippet in guide_text
+
+    for page, module, generated in (
+        ("femic-lidar-canopy.rst", "femic.lidar.canopy", "femic.lidar.canopy"),
+        ("femic-lidar-trees.rst", "femic.lidar.trees", "femic.lidar.trees"),
+    ):
+        api_text = (API_ROOT / page).read_text(encoding="utf-8")
+        assert module in api_text
+        assert f"generated/{generated}" in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-lidar-canopy" in modules_text
+    assert "femic-lidar-trees" in modules_text
+
+
 def test_lidar_instance_integration_guide_keeps_required_contract() -> None:
     guide_text = (GUIDES_ROOT / "lidar-instance-integration.rst").read_text(
         encoding="utf-8"
@@ -411,9 +452,13 @@ def test_lidar_instance_integration_guide_keeps_required_contract() -> None:
         "femic lidar materialize",
         "femic lidar terrain",
         "femic lidar streams",
+        "femic lidar canopy",
+        "femic lidar trees",
         "femic lidar bundle",
         "metadata/lidar/lidarbc_selection.json",
         "data/lidar/",
+        "data/lidar/canopy",
+        "data/lidar/trees",
         "FEMIC_INSTANCE_ROOT",
         "--instance-root",
         "bundle_id",
@@ -497,7 +542,12 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "python -m femic lidar materialization-status",
         "python -m femic lidar terrain",
         "python -m femic lidar streams",
+        "python -m femic lidar canopy",
+        "python -m femic lidar trees",
         "--dem PATH",
+        "--dsm PATH",
+        "--vri PATH",
+        "--blocks PATH",
         "--accumulation-threshold INTEGER",
         "--fill-depressions / --no-fill-depressions",
         "--reference PATH",
@@ -2084,6 +2134,16 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "No-Resampling Rule",
             "See Also",
         ],
+        "lidar-canopy-products": [
+            "Purpose",
+            "Quick Contract",
+            "CHM Contract",
+            "Canopy Structure Contract",
+            "VRI Comparison Contract",
+            "Individual Tree Contract",
+            "No-Resampling Rule",
+            "See Also",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -2173,6 +2233,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Jaccard",
             "No reprojection",
             "not an authoritative",
+        ],
+        "lidar-canopy-products": [
+            "femic.lidar.canopy_qa.v1",
+            "femic.lidar.individual_tree.v1",
+            "DSM - DEM",
+            "CHM p95",
+            ">=2 m",
+            "tree_id",
+            "height_m",
+            "No reprojection",
+            "field-accuracy",
         ],
     }
 

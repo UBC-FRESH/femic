@@ -391,6 +391,8 @@ Subcommands
 - ``materialization-status``: ``python -m femic lidar materialization-status [OPTIONS] MATERIALIZATION_PATH``
 - ``terrain``: ``python -m femic lidar terrain [OPTIONS]``
 - ``streams``: ``python -m femic lidar streams [OPTIONS]``
+- ``canopy``: ``python -m femic lidar canopy [OPTIONS]``
+- ``trees``: ``python -m femic lidar trees [OPTIONS]``
 - ``bundle``: ``python -m femic lidar bundle [OPTIONS]``
 - ``inspect``: ``python -m femic lidar inspect [OPTIONS] BUNDLE_DIR``
 
@@ -443,6 +445,38 @@ Subcommands
 - ``--reference-all-touched / --no-reference-all-touched`` (vector rasterization mode)
 - ``--generated-utc TEXT``
 - ``--instance-root PATH`` (resolve the default output directory under the instance)
+
+``lidar canopy`` options
+
+- ``--dem PATH`` (required; single-band native DEM/DTM)
+- ``--dsm PATH`` (required; single-band native DSM aligned to the DEM)
+- ``--output-dir PATH`` (default: ``data/lidar/canopy``)
+- ``--vertical-datum TEXT`` (recorded in QA)
+- ``--vri PATH`` (optional VRI polygon layer for uncertainty comparison)
+- ``--vri-height-field TEXT`` (default: ``proj_height_1``)
+- ``--vri-cover-field TEXT`` (default: ``crown_closure``)
+- ``--vri-id-field TEXT`` (default: ``feature_id``)
+- ``--generated-utc TEXT``
+- ``--instance-root PATH``
+
+``lidar trees`` options
+
+- ``--product PATH`` (required; existing point-based individual-tree product)
+- ``--output-dir PATH`` (default: ``data/lidar/trees``)
+- ``--blocks PATH`` (optional block polygons for block summaries)
+- ``--block-id-field TEXT`` (default: ``block_id``)
+- ``--tree-id-field TEXT`` (default: ``tree_id``)
+- ``--tree-height-field TEXT`` (default: ``height_m``)
+- ``--tree-crown-field TEXT`` (default: ``crown_radius_m``)
+- ``--tree-species-field TEXT`` (default: ``species``)
+- ``--generated-utc TEXT``
+- ``--instance-root PATH``
+
+``femic lidar canopy`` derives ``DSM - DEM`` on exactly aligned native grids,
+writes ``chm.tif``, ``canopy_structure.json``, and QA reports, and optionally
+compares CHM p95/cover with VRI height/closure. ``femic lidar trees`` inspects
+an existing tree product and optionally summarizes tree counts/heights by
+block. Neither command segments individual trees.
 
 ``femic lidar materialize`` downloads selected tiles into
 ``<output-root>/lidarbc/<product>/layer_<id>/<year>/<filename>`` and records

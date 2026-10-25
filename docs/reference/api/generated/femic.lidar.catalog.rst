@@ -2,6 +2,7 @@ femic.lidar\_catalog
 ====================
 
 .. automodule:: femic.lidar.catalog
+   :no-index:
 
 .. rubric:: Functions
 

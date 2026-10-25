@@ -117,6 +117,10 @@ from femic.instance_context import (
     InstanceContext,
     resolve_instance_context,
 )
+from femic.lidar.canopy import (
+    CanopyProcessingError,
+    build_canopy_products,
+)
 from femic.lidar.catalog import (
     LidarCatalogError,
     discover_lidarbc_tiles,
@@ -140,6 +144,13 @@ from femic.lidar.products import (
 from femic.lidar.terrain import (
     TerrainProcessingError,
     build_terrain_products,
+)
+from femic.lidar.trees import (
+    TreeProductError,
+    inspect_individual_tree_product,
+    summarize_individual_trees_by_block,
+    write_individual_tree_summary,
+    write_tree_block_summary_csv,
 )
 from femic.named_pipelines import (
     NamedPipelineError,
@@ -687,6 +698,92 @@ LIDAR_REFERENCE_ALL_TOUCHED_OPTION = typer.Option(
     False,
     "--reference-all-touched/--no-reference-all-touched",
     help="Rasterize vector reference cells touched by a feature.",
+)
+LIDAR_DSM_PATH_OPTION = typer.Option(
+    ...,
+    "--dsm",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="Single-band native DSM raster aligned to the DEM.",
+)
+LIDAR_CANOPY_OUTPUT_OPTION = typer.Option(
+    None,
+    "--output-dir",
+    help="Canopy output directory; defaults to `data/lidar/canopy`.",
+    show_default=False,
+)
+LIDAR_VERTICAL_DATUM_OPTION = typer.Option(
+    None,
+    "--vertical-datum",
+    help="Source vertical datum recorded in the canopy QA report.",
+    show_default=False,
+)
+LIDAR_VRI_PATH_OPTION = typer.Option(
+    None,
+    "--vri",
+    help="Optional VRI polygon layer for CHM uncertainty comparison.",
+    show_default=False,
+)
+LIDAR_VRI_HEIGHT_FIELD_OPTION = typer.Option(
+    "proj_height_1",
+    "--vri-height-field",
+    help="VRI height field for comparison.",
+)
+LIDAR_VRI_COVER_FIELD_OPTION = typer.Option(
+    "crown_closure",
+    "--vri-cover-field",
+    help="VRI cover field for comparison.",
+)
+LIDAR_VRI_ID_FIELD_OPTION = typer.Option(
+    "feature_id",
+    "--vri-id-field",
+    help="VRI polygon identifier field.",
+)
+LIDAR_TREE_PRODUCT_OPTION = typer.Option(
+    ...,
+    "--product",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="Existing individual-tree point product (GPKG/GeoJSON).",
+)
+LIDAR_TREE_OUTPUT_OPTION = typer.Option(
+    None,
+    "--output-dir",
+    help="Tree summary output directory; defaults to `data/lidar/trees`.",
+    show_default=False,
+)
+LIDAR_TREE_BLOCKS_OPTION = typer.Option(
+    None,
+    "--blocks",
+    help="Optional block polygon layer for tree block summaries.",
+    show_default=False,
+)
+LIDAR_TREE_BLOCK_ID_FIELD_OPTION = typer.Option(
+    "block_id",
+    "--block-id-field",
+    help="Block identifier field.",
+)
+LIDAR_TREE_ID_FIELD_OPTION = typer.Option(
+    "tree_id",
+    "--tree-id-field",
+    help="Tree identifier field.",
+)
+LIDAR_TREE_HEIGHT_FIELD_OPTION = typer.Option(
+    "height_m",
+    "--tree-height-field",
+    help="Tree height field in metres.",
+)
+LIDAR_TREE_CROWN_FIELD_OPTION = typer.Option(
+    "crown_radius_m",
+    "--tree-crown-field",
+    help="Optional tree crown-radius field.",
+)
+LIDAR_TREE_SPECIES_FIELD_OPTION = typer.Option(
+    "species",
+    "--tree-species-field",
+    help="Optional tree species field.",
 )
 BCDC_BBOX_OPTION = typer.Option(
     None,
@@ -4425,6 +4522,124 @@ def lidar_streams(
         console.print(f"f1: {comparison.f1}")
     for warning in result.manifest.warnings:
         console.print(f"[yellow]warning:[/yellow] {warning}")
+
+
+@lidar_app.command("canopy")
+def lidar_canopy(
+    dem: Path = LIDAR_DEM_PATH_OPTION,
+    dsm: Path = LIDAR_DSM_PATH_OPTION,
+    output_dir: Path | None = LIDAR_CANOPY_OUTPUT_OPTION,
+    vertical_datum: str | None = LIDAR_VERTICAL_DATUM_OPTION,
+    vri: Path | None = LIDAR_VRI_PATH_OPTION,
+    vri_height_field: str = LIDAR_VRI_HEIGHT_FIELD_OPTION,
+    vri_cover_field: str = LIDAR_VRI_COVER_FIELD_OPTION,
+    vri_id_field: str = LIDAR_VRI_ID_FIELD_OPTION,
+    generated_utc: str | None = LIDAR_GENERATED_UTC_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Build native-resolution CHM and canopy structure products."""
+
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+    resolved_output = _resolve_cli_output_path(
+        output_dir or Path("data/lidar/canopy"),
+        instance_context=instance_context,
+    )
+    try:
+        report = build_canopy_products(
+            dsm,
+            dem,
+            resolved_output,
+            vertical_datum=vertical_datum,
+            vri_path=vri,
+            vri_height_field=vri_height_field,
+            vri_cover_field=vri_cover_field,
+            vri_id_field=vri_id_field,
+            generated_utc=generated_utc,
+        )
+    except (CanopyProcessingError, OSError) as exc:
+        console.print(f"[red]LiDAR canopy error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]LiDAR canopy products built[/green]")
+    console.print(f"output_dir: {resolved_output}")
+    console.print(f"chm: {report.chm.path}")
+    console.print(f"valid_pixels: {report.chm.valid_pixels}")
+    console.print(f"mean_height_m: {report.chm.height_metrics.get('mean_m')}")
+    console.print(f"p95_height_m: {report.chm.height_metrics.get('p95_m')}")
+    if report.vri_comparison is not None:
+        comparison = report.vri_comparison
+        console.print(f"vri_matched: {comparison.matched_count}")
+        console.print(f"vri_height_bias_m: {comparison.height_bias_m}")
+        console.print(f"vri_cover_bias_pct: {comparison.cover_bias_pct}")
+
+
+@lidar_app.command("trees")
+def lidar_trees(
+    product: Path = LIDAR_TREE_PRODUCT_OPTION,
+    output_dir: Path | None = LIDAR_TREE_OUTPUT_OPTION,
+    blocks: Path | None = LIDAR_TREE_BLOCKS_OPTION,
+    block_id_field: str = LIDAR_TREE_BLOCK_ID_FIELD_OPTION,
+    tree_id_field: str = LIDAR_TREE_ID_FIELD_OPTION,
+    tree_height_field: str = LIDAR_TREE_HEIGHT_FIELD_OPTION,
+    tree_crown_field: str = LIDAR_TREE_CROWN_FIELD_OPTION,
+    tree_species_field: str = LIDAR_TREE_SPECIES_FIELD_OPTION,
+    generated_utc: str | None = LIDAR_GENERATED_UTC_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Inspect an optional individual-tree product and summarize blocks."""
+
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+    resolved_output = _resolve_cli_output_path(
+        output_dir or Path("data/lidar/trees"),
+        instance_context=instance_context,
+    )
+    resolved_output.mkdir(parents=True, exist_ok=True)
+    try:
+        if blocks is not None:
+            block_summary = summarize_individual_trees_by_block(
+                product,
+                blocks,
+                block_id_field=block_id_field,
+                id_field=tree_id_field,
+                height_field=tree_height_field,
+                species_field=tree_species_field,
+                generated_utc=generated_utc,
+            )
+            summary_path = write_tree_block_summary_csv(
+                block_summary,
+                resolved_output / "tree_block_summary.csv",
+            )
+            console.print("[green]LiDAR tree block summary written[/green]")
+            console.print(f"summary: {summary_path}")
+            console.print(f"blocks: {len(block_summary.rows)}")
+        else:
+            tree_summary = inspect_individual_tree_product(
+                product,
+                id_field=tree_id_field,
+                height_field=tree_height_field,
+                crown_field=tree_crown_field,
+                species_field=tree_species_field,
+                generated_utc=generated_utc,
+            )
+            summary_path = write_individual_tree_summary(
+                tree_summary,
+                resolved_output / "tree_product_summary.json",
+            )
+            console.print("[green]LiDAR tree product summary written[/green]")
+            console.print(f"summary: {summary_path}")
+            console.print(f"trees: {tree_summary.feature_count}")
+            console.print(f"duplicate_tree_ids: {tree_summary.duplicate_tree_count}")
+    except (TreeProductError, OSError) as exc:
+        console.print(f"[red]LiDAR tree-product error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
 
 
 @lidar_app.command("bundle")

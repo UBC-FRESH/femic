@@ -22,6 +22,7 @@ export modules.
    lidar-materialization
    lidar-terrain-products
    lidar-stream-candidates
+   lidar-canopy-products
    lidar-product-bundles
    lidar-instance-integration
    bc-data-catalogue-discovery

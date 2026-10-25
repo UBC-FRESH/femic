@@ -193,6 +193,32 @@ Key findings:
 The pilot does not change the TFL 6 locked CDED Step 220 proxy. Fragment-level
 comparison is the next TFL 6 decision gate.
 
+## P79.7 implementation
+
+Add `femic.lidar.canopy` and `femic.lidar.trees`:
+
+- Native CHM = DSM - DEM on exactly aligned grids, with negative-pixel
+  clamping/counting and QA.
+- Canopy height percentiles and cover at 2/5/10/20 m.
+- VRI polygon comparison using CHM p95 height and CHM >=2 m cover, with bias,
+  MAE, RMSE, and per-polygon rows.
+- Optional individual-tree point-product ingestion with duplicate/missing-field
+  checks and block summaries.
+- No new tree-segmentation algorithm and no field-accuracy claim.
+- `femic lidar canopy` and `femic lidar trees` CLI commands.
+
+TFL 6 canopy pilot (same 1 km AOI as P79.6):
+
+- CHM mean 8.62 m, median 7.71 m, p95 21.78 m, max 55.42 m.
+- Cover: 70.94% at >=2 m, 60.09% at >=5 m, 41.03% at >=10 m, 7.84% at >=20 m.
+- VRI: 7 polygons, height bias -2.93 m, MAE 4.08 m, RMSE 6.16 m; cover bias
+  +23.87 points, MAE 39.47 points.
+- LidarBC index has no CHM/canopy or individual-tree layer; CHM is derived and
+  tree ingestion remains optional.
+
+Evidence: `planning/phase79_p79_7_tfl6_canopy_pilot.md` and
+`planning/phase79_p79_7_tfl6_canopy_pilot_metrics.json`.
+
 ## P79.8 implementation
 
 Add `femic.lidar.products` with:
@@ -235,8 +261,8 @@ materialization.
 5. P79.8 product manifest, bundle, CLI, and fixture (complete).
 6. P79.5 CLI/docs/tests and instance hooks (complete).
 7. P79.6 TFL 6 pilot (complete).
-8. P79.7 canopy/precision products.
-9. P79.9 cross-repo validation with WS4/FHOPS.
+8. P79.7 canopy/precision products and TFL 6 canopy pilot (complete).
+9. P79.9 cross-repo validation with WS4/FHOPS and P79 close-out.
 
 Do not start consumer integration in WS4/FHOPS until a real shared bundle
 passes both consumer contracts.

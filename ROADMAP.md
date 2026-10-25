@@ -2201,15 +2201,15 @@ boundary. A full provincial mirror remains out of scope.
   - [x] P79.6c Build terrain/slope candidate products.
   - [x] P79.6d Compare outputs against TFL 6 instance needs.
   - [x] P79.6e Write pilot closeout and package follow-up list.
-- [ ] P79.7 Add native LidarBC canopy and precision-forestry products
+- [x] P79.7 Add native LidarBC canopy and precision-forestry products
   (`#348`).
-  - [ ] P79.7a Define the canopy and precision-forestry product contract,
+  - [x] P79.7a Define the canopy and precision-forestry product contract,
     including derived CHM provenance and native-resolution rules.
-  - [ ] P79.7b Implement canopy/structure product compilation from LidarBC
+  - [x] P79.7b Implement canopy/structure product compilation from LidarBC
     point cloud, DEM, and DSM inputs without silent resampling.
-  - [ ] P79.7c Consume LidarBC individual-tree products where suitable instead
+  - [x] P79.7c Consume LidarBC individual-tree products where suitable instead
     of inventing a new segmentation algorithm.
-  - [ ] P79.7d Add QA, tests, and docs for native canopy products.
+  - [x] P79.7d Add QA, tests, and docs for native canopy products.
 - [x] P79.8 Package and deliver versioned LidarBC products to WS4 and FHOPS
   (`#349`).
   - [x] P79.8a Define the versioned product manifest and bundle layout.
@@ -3515,17 +3515,22 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     stream candidates, public-hydrography comparison, and
     `femic.lidar.stream_candidates.v1` review manifests, and
     `femic.lidar.products` owns the `femic.lidar.product.v1` bundle and
-    checksum validation. The full workflow is exposed through
-    `femic lidar discover|materialize|terrain|streams|bundle|inspect`, with
-    instance-root defaults and integration docs. P79.6 (`#217`) is complete:
-    a 1 km TFL 6 pilot verified 3 LidarBC DEM tiles (60 MiB), showed LidarBC
-    median slope 4.43 points above same-AOI CDED and 2.88 ha of >=70% slope
-    CDED misses, and found D8/FWA stream agreement too low for riparian use.
-    Evidence is in `planning/phase79_p79_6_tfl6_pilot.md`. Next is P79.7
-    (`#348`) canopy/precision products, then P79.9 cross-repo validation.
-    Consumers must not reimplement discovery or materialization. The TFL 6
-    instance keeps its locked CDED Step 220 proxy until a fragment-level
-    LidarBC comparison is reviewed.
+    checksum validation. P79.6 (`#217`) is complete: a 1 km TFL 6 pilot
+    verified 3 LidarBC DEM tiles (60 MiB), showed LidarBC median slope 4.43
+    points above same-AOI CDED and 2.88 ha of >=70% slope CDED misses, and
+    found D8/FWA stream agreement too low for riparian use. P79.7 (`#348`) is
+    complete: CHM/canopy products, optional individual-tree ingestion, and a
+    TFL 6 canopy pilot are documented. The 1 m CHM had mean 8.62 m and p95
+    21.78 m; VRI height bias was -2.93 m with 4.08 m MAE, while CHM >=2 m cover
+    was 23.87 points above VRI closure. Evidence is in
+    `planning/phase79_p79_6_tfl6_pilot.md` and
+    `planning/phase79_p79_7_tfl6_canopy_pilot.md`. The full workflow is exposed
+    through `femic lidar discover|materialize|terrain|streams|canopy|trees|
+    bundle|inspect`, with instance-root defaults and integration docs. Next is
+    P79.9 (`#350`) cross-repo validation and P79 close-out. Consumers must not
+    reimplement discovery or materialization. The TFL 6 instance keeps its
+    locked CDED Step 220 proxy until a fragment-level LidarBC comparison is
+    reviewed, and no canopy product is promoted to model input.
   - `P78.6` / `#209` is complete: the optional document-figure recovery
     workflow is documented in `docs/guides/document-figure-recovery.rst`, the
     CLI reference includes `femic doc figures` commands, and
