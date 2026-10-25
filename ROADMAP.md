@@ -3944,6 +3944,9 @@ stack. A separate `fresh-contracts` repository remains the long-term option.
 Tasks:
 
 - [ ] P116.1 Add `climate.v1` and a ClimateNA/SilvR21 adapter (`#370`).
+  - [x] Add the `femic.contracts.climate` schema, validator, reader/writer,
+    provenance summary, sample fixture, and docs.
+  - [ ] Add the ClimateNA/SilvR21 adapter and wire the first consumer.
 - [ ] P116.2 Add `disturbance.v1` and a ws4 consumer (`#371`).
 - [ ] P116.3 Add `efi.model.v1` model cards (`#372`).
 

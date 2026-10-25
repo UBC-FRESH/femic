@@ -16,6 +16,14 @@ plus one real consumer each; they are not a new modelling stack.
 stack so the other repos can import it without pulling the full dependency
 tree. A separate `fresh-contracts` repository remains the long-term option.
 
+## Implemented (2026-10-25)
+
+- `femic.contracts.climate`: `femic.climate.v1` schema, validator, CSV/JSON
+  reader and writer, provenance summary, and a public-safe sample table.
+- Contract page `docs/reference/contracts/climate-contract.rst` and API page
+  `docs/reference/api/femic-contracts-climate.rst`.
+- The ClimateNA/SilvR21 adapter and first consumer remain open in `#370`.
+
 ## Children
 
 - `P116.1` (`#370`): `climate.v1` and a ClimateNA/SilvR21 adapter.

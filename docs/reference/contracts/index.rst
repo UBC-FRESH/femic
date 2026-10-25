@@ -39,3 +39,4 @@ Contract Pages
    lidar-stream-candidates
    lidar-canopy-products
    lidar-product-bundle
+   climate-contract

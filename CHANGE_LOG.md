@@ -1,6 +1,10 @@
 # Change Log
 
 ## 2026-10-25
+- P116.1: added `femic.contracts.climate` with the `femic.climate.v1` record
+  schema, validator, CSV/JSON reader and writer, provenance summary, and a
+  public-safe sample table. Added the contract and API pages. 16 focused tests
+  pass; `sphinx-build -W` passes. The ClimateNA/SilvR21 adapter remains open.
 - Added the Phase 116 roadmap entry and planning note for the shared
   environmental contracts (parent `#369`; children `#370`-`#372`). Contract home
   is `femic/contracts`, kept free of the modelling stack. No implementation yet;
