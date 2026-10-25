@@ -70,6 +70,7 @@ GUIDE_PAGES = [
     "hydrology-tier0-screening",
     "hydrology-flood-frequency",
     "hydrology-process-models",
+    "hydrology-surrogate-models",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -106,6 +107,7 @@ CONTRACT_PAGES = [
     "hydrology-tier0-screening",
     "hydrology-flood-frequency",
     "hydrology-process-models",
+    "hydrology-surrogate-models",
 ]
 
 NOTEBOOKS = [
@@ -1827,6 +1829,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Licensing And Data",
             "Cross-References",
         ],
+        "hydrology-surrogate-models": [
+            "Purpose",
+            "Quick Contract",
+            "Design And Dataset",
+            "Surrogate Families",
+            "Applicability And Refusal",
+            "Validation Metrics",
+            "Persistence",
+            "Limits",
+            "Cross-References",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1931,6 +1944,18 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "receptor_metrics.csv",
             "user-supplied",
         ],
+        "hydrology-surrogate-models": [
+            "femic.hydrology.surrogate_design.v1",
+            "femic.hydrology.surrogate_model.v1",
+            "linear",
+            "gp",
+            "Latin hypercube",
+            "RMSE",
+            "coverage",
+            "applicability",
+            "refuse",
+            "No silent extrapolation",
+        ],
     }
 
     for slug in CONTRACT_PAGES:
@@ -1939,6 +1964,50 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             assert section in text, f"{slug}.rst missing required section: {section}"
         for marker in required_markers[slug]:
             assert marker in text, f"{slug}.rst missing required marker: {marker}"
+
+
+def test_hydrology_surrogate_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "hydrology-surrogate-models.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Design Of Experiments",
+        "Surrogate Families",
+        "Training And Validation",
+        "Applicability Domain And Refusal",
+        "Persistence",
+        "Limits",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.hydrology.surrogate_design.v1",
+        "femic.hydrology.surrogate_model.v1",
+        "linear",
+        "gp",
+        "Latin-hypercube",
+        "RMSE",
+        "coverage",
+        "applicability domain",
+        "allow_extrapolation",
+        "No silent extrapolation",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-hydrology-surrogate.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.hydrology.surrogate",
+        "build_latin_hypercube_design",
+        "fit_surrogate",
+        "evaluate_surrogate",
+        "cross_validate_surrogate",
+        "generated/femic.hydrology.surrogate",
+        "hydrology-surrogate-models",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-hydrology-surrogate" in modules_text
 
 
 def test_hydrology_process_model_guide_and_api_page_keep_required_contract() -> None:

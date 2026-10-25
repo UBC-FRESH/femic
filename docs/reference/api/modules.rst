@@ -49,6 +49,7 @@ Current curated pages in this section include ``femic.instance_context``,
 ``femic.hydrology.screening``,
 ``femic.hydrology.flood``,
 ``femic.hydrology.process_models``,
+``femic.hydrology.surrogate``,
 ``femic.bcdc_catalog``,
 ``femic.bcdc_fetch``,
 ``femic.bcdc_dwds``,
@@ -71,6 +72,7 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-hydrology-screening
    femic-hydrology-flood
    femic-hydrology-process-models
+   femic-hydrology-surrogate
    femic-bcdc-catalog
    femic-bcdc-fetch
    femic-bcdc-dwds

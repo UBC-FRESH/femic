@@ -15287,3 +15287,35 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   hydrology modules.
+
+## 2026-10-25 - P114.7 surrogate models and applicability domains (#358)
+
+- Added `femic.hydrology.surrogate` with the
+  `femic.hydrology.surrogate_design.v1` design and
+  `femic.hydrology.surrogate_model.v1` model schemas.
+- Added Latin-hypercube design, target attachment, and deterministic
+  train/validation splitting.
+- Implemented dependency-free ridge-linear and RBF Gaussian-process
+  surrogates.
+- Added applicability domains with feature-range and standardized-distance
+  guards, default out-of-domain refusal, and explicit extrapolation override.
+- Added held-out and k-fold validation with RMSE, MAE, R2, 95% interval
+  coverage, interval width, and accepted/refused counts.
+- Added model JSON persistence/load.
+- Added the surrogate guide, technical contract page, curated API page, and
+  roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_surrogate.py` passed (10 tests).
+  - 91% branch coverage for `femic.hydrology.surrogate`.
+  - All 88 hydrology domain/bundle/disturbance/screening/flood/process/surrogate
+    tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 61 passed; 3 pre-existing submodule/data failures.
+- No real process-model scenario ensemble was trained; tests use synthetic
+  data. Public-gauge and process-model benchmark validation remain P114.9.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.

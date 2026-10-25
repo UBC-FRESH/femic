@@ -24,6 +24,7 @@ export modules.
    hydrology-tier0-screening
    hydrology-flood-frequency
    hydrology-process-models
+   hydrology-surrogate-models
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery

@@ -305,11 +305,11 @@ rain/rain-on-snow coastal watershed before any provincial generalization.
 
 ## Current Edge
 
-FEMIC P114 is active. P114.1 (`#352`) through P114.6 (`#357`) are complete: the
+FEMIC P114 is active. P114.1 (`#352`) through P114.7 (`#358`) are complete: the
 domain/receptor contract, public source registry, bundle manifest,
 licence/checksum validation, annual disturbance ledger, Tier 0 screening,
-stochastic flood-frequency/response surfaces, and DHSVM/SUMMA process-model
-adapters are in place. Next is P114.7 (`#358`): surrogate training and
-applicability domains. The bounded public pilot acquisition remains optional in
-P114.9. Do not create the WS4 P49 or FHOPS P14 implementation issues until the
-FEMIC response contract is stable.
+stochastic flood-frequency/response surfaces, DHSVM/SUMMA process-model
+adapters, and bounded surrogates are in place. Next is P114.8 (`#359`):
+hydrologic response and flood-risk bundles. The bounded public pilot
+acquisition remains optional in P114.9. Do not create the WS4 P49 or FHOPS P14
+implementation issues until the FEMIC response contract is stable.

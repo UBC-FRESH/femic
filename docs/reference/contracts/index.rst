@@ -39,3 +39,4 @@ Contract Pages
    hydrology-tier0-screening
    hydrology-flood-frequency
    hydrology-process-models
+   hydrology-surrogate-models
