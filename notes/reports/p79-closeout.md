@@ -2,7 +2,7 @@
 
 Phase: P79 / `#211`
 Branch: `feature/p79-lidar-pipeline`
-Status: close-out approved; PR and merge in progress
+Status: complete; merged in PR #368 as `65b9057`
 Consumers: WS4 P52 (`UBC-FRESH/ws4#317`), FHOPS P14 (`UBC-FRESH/fhops#188`)
 
 ## Outcome
@@ -163,6 +163,11 @@ polygons. Slope/CHM mean and p95 matched exactly:
   phases.
 - No TFL 6 model-input promotion, production data switch, release, or tag was
   made.
+
+## Merge Record
+
+- PR: #368
+- Squash merge: `65b9057`
 
 ## Recommendation
 
