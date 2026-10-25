@@ -65,6 +65,7 @@ GUIDE_PAGES = [
     "interpret-rebuild-reports",
     "data-access-inventory",
     "hydrology-domain-contract",
+    "hydrology-data-bundle",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -96,6 +97,7 @@ CONTRACT_PAGES = [
     "stage-boundaries-and-canonical-artifacts",
     "recovery-and-external-runtime-boundaries",
     "hydrology-domain",
+    "hydrology-data-bundle",
 ]
 
 NOTEBOOKS = [
@@ -1762,6 +1764,18 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Audit Rules",
             "Cross-References",
         ],
+        "hydrology-data-bundle": [
+            "Purpose",
+            "Quick Contract",
+            "Bundle Layout",
+            "Manifest Schema",
+            "Versioning And Pinning",
+            "Audit Rules",
+            "Gap Policy",
+            "DataLad Boundary",
+            "Pilot Boundary",
+            "Cross-References",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1806,6 +1820,19 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "gauge",
             "No private",
         ],
+        "hydrology-data-bundle": [
+            "femic.hydrology.bundle.v1",
+            "bundle.json",
+            "layers/<layer_id>/<filename>",
+            "checksum_sha256",
+            "bundle_id",
+            "DataLad",
+            "No private",
+            "watershed",
+            "stream",
+            "road",
+            "dem",
+        ],
     }
 
     for slug in CONTRACT_PAGES:
@@ -1814,6 +1841,49 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             assert section in text, f"{slug}.rst missing required section: {section}"
         for marker in required_markers[slug]:
             assert marker in text, f"{slug}.rst missing required marker: {marker}"
+
+
+def test_hydrology_bundle_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "hydrology-data-bundle.rst").read_text(encoding="utf-8")
+    for heading in (
+        "Purpose",
+        "Bundle Layout",
+        "Build From A Domain",
+        "Plan And Gaps",
+        "Audit",
+        "Public Acquisition",
+        "Pilot Data Audit",
+        "DataLad And Arbutus",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.hydrology.bundle.v1",
+        "bundle.json",
+        "layers/<layer_id>/<filename>",
+        "checksum_sha256",
+        "bundle_id",
+        "DataLad",
+        "No private",
+        "watershed",
+        "stream",
+        "road",
+        "dem",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-hydrology-bundle.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.hydrology.bundle",
+        "plan_hydrology_bundle",
+        "build_hydrology_bundle",
+        "audit_hydrology_bundle",
+        "generated/femic.hydrology.bundle",
+        "hydrology-data-bundle",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-hydrology-bundle" in modules_text
 
 
 def test_hydrology_domain_guide_and_api_page_keep_required_contract() -> None:

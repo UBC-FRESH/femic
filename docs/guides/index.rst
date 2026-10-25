@@ -19,6 +19,7 @@ export modules.
    interpret-rebuild-reports
    data-access-inventory
    hydrology-domain-contract
+   hydrology-data-bundle
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery

@@ -15132,3 +15132,35 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   hydrology module.
+
+## 2026-10-25 - P114.2 hydrology data bundles (#353)
+
+- Added `femic.hydrology.bundle` with the `femic.hydrology.bundle.v1`
+  manifest and layout `layers/<layer_id>/<filename>`.
+- Added deterministic `bundle_id` from domain digest, AOI, bundle version, and
+  layer metadata/checksums.
+- Added plan/build/load/write/audit entry points:
+  - `plan_hydrology_bundle` reports gaps without copying files;
+  - `build_hydrology_bundle` atomically copies complete local sources and
+    refuses incomplete bundles;
+  - `audit_hydrology_bundle` checks licence, size, SHA-256, path containment,
+    required roles, and completeness.
+- Added licence/checksum enforcement, gap reporting, safe overwrite handling,
+  and DataLad annex-boundary documentation.
+- Added the hydrology data-bundle guide, technical contract page, and curated
+  API page.
+- Verification:
+  - `pytest tests/test_hydrology_bundle.py` passed (20 tests).
+  - 100% branch coverage for `femic.hydrology.bundle`.
+  - All 38 hydrology domain/bundle tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 56 passed; 3 pre-existing submodule/data failures.
+- No public layer download was executed. The fixture bundle covers all six
+  domain layers; the bounded public pilot acquisition remains optional in
+  P114.9.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.

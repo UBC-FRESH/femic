@@ -3346,14 +3346,17 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
   - `planning/roadmap_notes_archive.md`
 - Current edge:
   - `P114` / `#351` is active on `feature/p114-forest-hydrology-flood-risk`:
-    P114.1 (`#352`) is complete. `femic.hydrology.domain` defines the
-    `femic.hydrology.domain.v1` domain/receptor contract, the
-    `femic.hydrology.sources.v1` public source registry, structural
-    cross-reference validation, and a local layer audit with size/SHA-256
-    checks. Next is P114.2 (`#353`) public hydrology data bundle assembly,
-    starting with the snow-transient and rain/rain-on-snow pilot watershed
-    data audit. WS4 P49 and FHOPS P14 stay uncreated until the response
-    contract is stable.
+    P114.1 (`#352`) and P114.2 (`#353`) are complete.
+    `femic.hydrology.domain` defines the `femic.hydrology.domain.v1`
+    domain/receptor contract, the `femic.hydrology.sources.v1` public source
+    registry, structural cross-reference validation, and a local layer audit
+    with size/SHA-256 checks. `femic.hydrology.bundle` defines the
+    `femic.hydrology.bundle.v1` manifest, deterministic bundle identity,
+    licence/checksum validation, gap planning, and local layer audit. The
+    fixture bundle covers all six domain layers; the bounded public pilot
+    acquisition remains optional in P114.9. Next is P114.3 (`#354`) harvest/
+    road/retention disturbance ledger. WS4 P49 and FHOPS P14 stay uncreated
+    until the response contract is stable.
   - `P106` / `#288` is complete and merged: parent PR `#289`, parent issue
     `#288`, MKRF PR `UBC-FRESH/femic-mkrf-instance#51`, and MKRF issue
     `UBC-FRESH/femic-mkrf-instance#50` are closed. MKRF is the second
@@ -3908,7 +3911,10 @@ Tasks:
     climate, soils, and land cover.
   - [x] P114.1c Implement domain manifest build/load/validate and local audit.
   - [x] P114.1d Add tests and the domain contract page.
-- [ ] P114.2 Assemble the public hydrology data bundle (`#353`).
+- [x] P114.2 Assemble the public hydrology data bundle (`#353`).
+  - Fixture bundle, licence/checksum audit, and gap plan are complete. The
+    bounded public pilot acquisition remains an optional integration run in
+    P114.9.
 - [ ] P114.3 Build the harvest/road/retention disturbance ledger (`#354`).
 - [ ] P114.4 Add Tier 0 screening metrics and caveats (`#355`).
 - [ ] P114.5 Add stochastic flood-frequency response surfaces (`#356`).

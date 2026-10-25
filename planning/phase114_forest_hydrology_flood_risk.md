@@ -305,10 +305,10 @@ rain/rain-on-snow coastal watershed before any provincial generalization.
 
 ## Current Edge
 
-FEMIC P114 is active. P114.1 (`#352`) is complete: the
-`femic.hydrology.domain.v1` domain/receptor contract, public source registry,
-structural cross-reference validation, and local size/SHA-256 audit are in
-place. Next is P114.2 (`#353`): assemble the public hydrology data bundle and
-run the snow-transient / rain-on-snow pilot data audit. Do not create the WS4
-P49 or FHOPS P14 implementation issues until the FEMIC response contract is
-stable.
+FEMIC P114 is active. P114.1 (`#352`) and P114.2 (`#353`) are complete: the
+domain/receptor contract, public source registry, bundle manifest, deterministic
+bundle identity, licence/checksum validation, gap planning, and local audits
+are in place. Next is P114.3 (`#354`): the harvest/road/retention disturbance
+ledger. The bounded public pilot acquisition remains optional in P114.9. Do not
+create the WS4 P49 or FHOPS P14 implementation issues until the FEMIC response
+contract is stable.
