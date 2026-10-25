@@ -33,3 +33,9 @@ Contract Pages
    instance-extension-boundaries
    stage-boundaries-and-canonical-artifacts
    recovery-and-external-runtime-boundaries
+   lidar-source-and-tile-index
+   lidar-materialization
+   lidar-terrain-products
+   lidar-stream-candidates
+   lidar-canopy-products
+   lidar-product-bundle

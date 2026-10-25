@@ -2154,50 +2154,82 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P78.6c Post issue progress comments and update the changelog at each
     implementation milestone.
 
-## Phase 79: Open LiDAR Acquisition And Terrain Analysis (`#211`)
+## Phase 79: Native LidarBC Data-Product Pipeline For WS4 And FHOPS (`#211`)
 
-Status: planned.
+Status: pr-open (2026-10-25). Branch: `feature/p79-lidar-pipeline`.
 
-Goal: add first-class FEMIC package support for automated open LiDAR
-point-cloud acquisition and derived terrain/hydrography analysis, so instance
-repositories can build public-data proxies for steep slopes, stream
-location/classification, and related THLB/riparian workflows without one-off
-scripts.
+Goal: make FEMIC the authoritative upstream producer of native LidarBC data
+products for WS4 and FHOPS. FEMIC discovers and resolves LidarBC projects and
+tiles, materializes them reproducibly, preserves native resolution and
+provenance, compiles terrain/canopy/precision-forestry products, and delivers
+versioned consumer-ready bundles. WS4 P52 (`UBC-FRESH/ws4#317`) and FHOPS P14
+(`UBC-FRESH/fhops#188`) consume those bundles; they do not duplicate discovery
+or materialization. The packaged product manifest/bundle is the delivery
+boundary. A full provincial mirror remains out of scope.
 
-- [ ] P79.1 Define open LiDAR source and tile-index contract (`#212`).
-  - [ ] P79.1a Survey supported public source families such as LidarBC/open
+- [x] P79.1 Define open LiDAR source and tile-index contract (`#212`).
+  - [x] P79.1a Survey supported public source families such as LidarBC/open
     LiDAR.
-  - [ ] P79.1b Define tile-index records, AOI intersection behaviour,
+  - [x] P79.1b Define tile-index records, AOI intersection behaviour,
     metadata fields, and provenance requirements.
-  - [ ] P79.1c Define dependency, storage, and generated-artifact boundaries.
-- [ ] P79.2 Implement resumable LiDAR and DEM materialization manifests
+  - [x] P79.1c Define dependency, storage, and generated-artifact boundaries.
+- [x] P79.2 Implement resumable LiDAR and DEM materialization manifests
   (`#213`).
-  - [ ] P79.2a Define manifest schema for source URLs, checksums, local paths,
+  - [x] P79.2a Define manifest schema for source URLs, checksums, local paths,
     status, and retry state.
-  - [ ] P79.2b Implement resumable acquisition helpers.
-  - [ ] P79.2c Add checksum and completeness validation.
-  - [ ] P79.2d Add CLI/API preflight surfaces.
-- [ ] P79.3 Add terrain raster and slope-product pipeline APIs (`#214`).
-  - [ ] P79.3a Select optional dependency stack for point-cloud/raster work.
-  - [ ] P79.3b Implement terrain raster derivation interfaces.
-  - [ ] P79.3c Implement percent-slope and zonal-stat helpers.
-  - [ ] P79.3d Add QA report outputs.
-- [ ] P79.4 Add terrain-derived stream candidate workflows (`#215`).
-  - [ ] P79.4a Define terrain-derived hydrography product contract.
-  - [ ] P79.4b Add comparison metrics against existing public hydrography.
-  - [ ] P79.4c Emit review manifests and caveat reports.
-- [ ] P79.5 Add CLI docs tests and instance hooks for LiDAR workflows (`#216`).
-  - [ ] P79.5a Add CLI commands for tile discovery/materialization and terrain
+  - [x] P79.2b Implement resumable acquisition helpers.
+  - [x] P79.2c Add checksum and completeness validation.
+  - [x] P79.2d Add CLI/API preflight surfaces.
+- [x] P79.3 Add terrain raster and slope-product pipeline APIs (`#214`).
+  - [x] P79.3a Select optional dependency stack for point-cloud/raster work.
+  - [x] P79.3b Implement terrain raster derivation interfaces.
+  - [x] P79.3c Implement percent-slope and zonal-stat helpers.
+  - [x] P79.3d Add QA report outputs.
+- [x] P79.4 Add terrain-derived stream candidate workflows (`#215`).
+  - [x] P79.4a Define terrain-derived hydrography product contract.
+  - [x] P79.4b Add comparison metrics against existing public hydrography.
+  - [x] P79.4c Emit review manifests and caveat reports.
+- [x] P79.5 Add CLI docs tests and instance hooks for LiDAR workflows (`#216`).
+  - [x] P79.5a Add CLI commands for tile discovery/materialization and terrain
     products.
-  - [ ] P79.5b Add docs and examples.
-  - [ ] P79.5c Add tests for manifests and command behaviour.
-  - [ ] P79.5d Add instance integration notes.
-- [ ] P79.6 Pilot open LiDAR terrain workflow against TFL 6 needs (`#217`).
-  - [ ] P79.6a Select a bounded TFL 6 AOI/test area.
-  - [ ] P79.6b Run tile discovery/materialization.
-  - [ ] P79.6c Build terrain/slope candidate products.
-  - [ ] P79.6d Compare outputs against TFL 6 instance needs.
-  - [ ] P79.6e Write pilot closeout and package follow-up list.
+  - [x] P79.5b Add docs and examples.
+  - [x] P79.5c Add tests for manifests and command behaviour.
+  - [x] P79.5d Add instance integration notes.
+- [x] P79.6 Pilot open LiDAR terrain workflow against TFL 6 needs (`#217`).
+  - [x] P79.6a Select a bounded TFL 6 AOI/test area.
+  - [x] P79.6b Run tile discovery/materialization.
+  - [x] P79.6c Build terrain/slope candidate products.
+  - [x] P79.6d Compare outputs against TFL 6 instance needs.
+  - [x] P79.6e Write pilot closeout and package follow-up list.
+- [x] P79.7 Add native LidarBC canopy and precision-forestry products
+  (`#348`).
+  - [x] P79.7a Define the canopy and precision-forestry product contract,
+    including derived CHM provenance and native-resolution rules.
+  - [x] P79.7b Implement canopy/structure product compilation from LidarBC
+    point cloud, DEM, and DSM inputs without silent resampling.
+  - [x] P79.7c Consume LidarBC individual-tree products where suitable instead
+    of inventing a new segmentation algorithm.
+  - [x] P79.7d Add QA, tests, and docs for native canopy products.
+- [x] P79.8 Package and deliver versioned LidarBC products to WS4 and FHOPS
+  (`#349`).
+  - [x] P79.8a Define the versioned product manifest and bundle layout.
+  - [x] P79.8b Record source project/tile/product, CRS, resolution, vertical
+    datum, accuracy, licence, checksum, retrieval date, and lineage.
+  - [x] P79.8c Add build/inspect CLI and Python entry points plus consumer
+    contract docs for WS4 P43 and FHOPS P13.
+  - [x] P79.8d Add a bounded AOI product fixture and reproducibility test.
+- [x] P79.9 Validate the packaged product with WS4/FHOPS and close out P79
+  (`#350`). Consumer parity passed; P79 close-out queued.
+  - [x] P79.9a Run the bounded AOI catalog-to-product build and validate the
+    shared bundle contract.
+  - [x] P79.9b Compare terrain/canopy values with actual WS4 P52 and FHOPS P14
+    consumer implementations. WS4 commit `8f4feb0`, FHOPS commit `8b6adb6c`,
+    maximum difference `0.0`.
+  - [x] P79.9c Record native-resolution, CRS, vertical-datum, licence,
+    checksum, storage, and performance evidence.
+  - [x] P79.9d Write the shared-bundle validation report and reference
+    aggregation fixture.
+  - [x] P79.9e Post the P79 validation close-out for maintainer approval.
 
 ## Phase 80: FreshForge Provider Integration For FEMIC Model-Build Workflows (`#220`)
 
@@ -3328,6 +3360,7 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase79_lidar_product_pipeline.md`
   - `planning/phase106_mkrf_executable_model_build.md`
   - `planning/phase105_tfl6_executable_model_build.md`
   - `planning/phase104_freshforge_workflow_discovery.md`
@@ -3476,11 +3509,40 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     FreshForge workflow contract at
     `workflows/freshforge/mkrf_model_build_workflow.yaml`; the next evolution is
     P84 executable orchestration.
-  - `P79` / `#211` is planned: FEMIC will grow reusable open LiDAR
-    acquisition, terrain-raster, slope, and terrain-derived hydrography
-    workflows. The immediate TFL 6 instance uses a public DEM steep-slope
-    repair lane first; this parent package phase is the reusable long-term
-    implementation path.
+  - `P79` / `#211` is active on `feature/p79-lidar-pipeline`: FEMIC is now the
+    authoritative producer of native LidarBC products for WS4 P43 (`#317`) and
+    FHOPS P13 (`#188`). P79.1 (`#212`), P79.2 (`#213`), P79.3 (`#214`),
+    P79.4 (`#215`), P79.5 (`#216`), and P79.8 (`#349`) are complete:
+    `femic.lidar.catalog` owns discovery/AOI selection,
+    `femic.lidar.materialization` owns resumable Range downloads and the
+    `femic.lidar.materialization.v1` manifest, `femic.lidar.terrain` owns Horn
+    percent slope, point-cloud cell aggregation, aligned zonal statistics, and
+    `femic.lidar.terrain_qa.v1` reports, `femic.lidar.hydrography` owns D8
+    stream candidates, public-hydrography comparison, and
+    `femic.lidar.stream_candidates.v1` review manifests, and
+    `femic.lidar.products` owns the `femic.lidar.product.v1` bundle and
+    checksum validation. P79.6 (`#217`) is complete: a 1 km TFL 6 pilot
+    verified 3 LidarBC DEM tiles (60 MiB), showed LidarBC median slope 4.43
+    points above same-AOI CDED and 2.88 ha of >=70% slope CDED misses, and
+    found D8/FWA stream agreement too low for riparian use. P79.7 (`#348`) is
+    complete: CHM/canopy products, optional individual-tree ingestion, and a
+    TFL 6 canopy pilot are documented. The 1 m CHM had mean 8.62 m and p95
+    21.78 m; VRI height bias was -2.93 m with 4.08 m MAE, while CHM >=2 m cover
+    was 23.87 points above VRI closure. Evidence is in
+    `planning/phase79_p79_6_tfl6_pilot.md` and
+    `planning/phase79_p79_7_tfl6_canopy_pilot.md`. The full workflow is exposed
+    through `femic lidar discover|materialize|terrain|streams|canopy|trees|
+    bundle|inspect`, with instance-root defaults and integration docs. P79.9
+    (`#350`) is complete: shared bundle `lidarbc-995fb1f771f4d7fe`
+    (`2026.10.0-tfl6-pilot`) passed native-resolution, licence, checksum, and
+    source-tile checks, and actual WS4 P52.1 (`8f4feb0`) / FHOPS P14.1
+    (`8b6adb6c`) consumer contracts matched slope/CHM values exactly over seven
+    shared AOI polygons (maximum difference `0.0`). P79 close-out is queued for
+    maintainer approval. Next consumer work is WS4 P52.2/P52.3 and FHOPS
+    P14.2/P14.3. Consumers must not reimplement discovery or materialization.
+    The TFL 6 instance keeps its locked CDED Step 220 proxy until a
+    fragment-level LidarBC comparison is reviewed, and no canopy product is
+    promoted to model input.
   - `P78.6` / `#209` is complete: the optional document-figure recovery
     workflow is documented in `docs/guides/document-figure-recovery.rst`, the
     CLI reference includes `femic doc figures` commands, and
@@ -3618,7 +3680,7 @@ As of the completion of Phase 106, the FEMIC roadmap has been refined to address
 
 The roadmap now follows a more consistent structure that should be easier for automated tools to parse while maintaining all the detailed implementation information that developers need. Future phases will follow these established patterns for better consistency and maintainability.
 
-## Phase 107 Closeout Status
+### Phase 107 Closeout Status
 
 ### Tasks Completed for Phase 107
 1. Created standardized roadmap structure templates in planning directory

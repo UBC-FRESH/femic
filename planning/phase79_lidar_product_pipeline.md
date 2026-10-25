@@ -1,0 +1,301 @@
+# Phase 79 LidarBC Product Pipeline Notes
+
+Phase: P79 / `#211`
+Branch: `feature/p79-lidar-pipeline`
+Status: active
+Owner: FEMIC (producer); WS4 P43 (`#317`) and FHOPS P13 (`#188`) are consumers.
+
+## Ownership boundary
+
+FEMIC owns:
+
+- LidarBC project and tile discovery.
+- AOI selection and selection manifests.
+- Reproducible DataLad/Arbutus materialization and partial fetch.
+- Native-resolution terrain, canopy, and precision-forestry compilation.
+- Versioned product manifests and delivery bundles.
+
+WS4 and FHOPS own only consumer-side schema, spatial, scenario, and cost
+integration. They must pin a FEMIC product version instead of re-running
+discovery or materialization.
+
+## Source contract (P79.1)
+
+Public source surfaces:
+
+- Portal: <https://lidar.gov.bc.ca/pages/download-discovery>
+- Catalogue record:
+  <https://catalogue.data.gov.bc.ca/dataset/lidarbc-open-lidar-data-portal>
+- Licence: OGL-BC,
+  <https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc>
+- Index item:
+  <https://www.arcgis.com/home/item.html?id=5f6a1f31212a4cb2826743d2e52ef02a>
+- Feature service:
+  <https://services6.arcgis.com/ubm4tcTYICKBpist/arcgis/rest/services/LiDAR_BC_S3_Public/FeatureServer>
+
+The catalogue record's package metadata uses an `Access Only` wrapper because
+the dataset record fronts an ArcGIS application. The portal, the index item,
+and the province's open-data listing identify the data products themselves as
+OGL-BC. FEMIC records `OGL-BC` as the product licence and keeps the catalogue
+metadata caveat in the source contract.
+
+Observed service layers:
+
+| Layer | Name | FEMIC product |
+| --- | --- | --- |
+| 0 | LiDAR project data extent | `project_extent` metadata |
+| 1 | LiDAR DSM index 1:2,500 | `dsm` |
+| 2 | LiDAR DSM index 1:10,000 | `dsm` |
+| 3 | LiDAR DSM index 1:20,000 | `dsm` |
+| 4 | LiDAR point cloud index | `point_cloud` |
+| 5 | LiDAR DEM index 1:2,500 | `dem` |
+| 6 | LiDAR DEM index 1:20,000 | `dem` |
+
+Tile records carry, where populated: filename, BCGS map tile, storage path,
+grid scale, acquisition year, projection token, spacing, contract, operator,
+point density, vertical datum, point format/classes, S3 download URL, accuracy
+report URL, and geometry in BC Albers (`EPSG:3005`).
+
+CHM, canopy structure metrics, and individual-tree products are not separate
+layers in this feature service. CHM and canopy metrics are FEMIC-derived
+products (P79.7); individual-tree products are consumed from LidarBC where a
+suitable public product exists.
+
+Not supported by this phase:
+
+- Private or restricted LiDAR.
+- A full provincial download mirror.
+- Silent reprojection, resampling, or vertical-datum transformation.
+- Treating the catalogue wrapper licence field as the product licence.
+
+## P79.1 implementation
+
+Add `femic.lidar.catalog` with:
+
+- A frozen source-family descriptor.
+- Product-to-layer mapping for point cloud, DEM, and DSM.
+- Frozen tile, AOI, and selection-manifest records.
+- Pure parsing and bbox-intersection helpers.
+- A paginated discovery helper over the public feature service.
+- A JSON selection-manifest writer.
+
+Storage boundary for P79.1: discovery metadata only. Tile bytes are not
+downloaded. P79.2 adds resumable materialization under an explicit instance or
+external-data root.
+
+Dependency boundary: discovery uses the Python standard library. Terrain and
+canopy processing dependencies are selected in P79.3/P79.7.
+
+## P79.2 implementation
+
+Add `femic.lidar.materialization` with:
+
+- `femic.lidar.materialization.v1` manifests under an explicit output root.
+- Managed layout:
+  `<root>/lidarbc/<product>/layer_<id>/<year>/<filename>`.
+- `.part` files and HTTP Range resume; a ranged `200` response restarts the
+  tile from zero.
+- Per-tile status (`pending`, `downloading`, `partial`, `verified`, `failed`),
+  attempts, last attempt time, last error, resumed byte offset, expected size,
+  observed ETag, local size, and SHA-256.
+- Manifest writes before a download and after every tile, so interrupted runs
+  resume from the last successful state.
+- `femic lidar materialize` and `femic lidar materialization-status`, including
+  `--plan-only`, `--max-tiles`, `--timeout-sec`, `--fail-fast`, and
+  `--require-complete`.
+- Selection digest and tile-set pinning so one manifest cannot mix AOIs or
+  catalog snapshots.
+
+P79.2 downloads selected public tiles only. It does not compile terrain or
+canopy products and does not create a provincial mirror.
+
+## P79.3 implementation
+
+Add `femic.lidar.terrain` with:
+
+- Native-grid percent slope using Horn 3x3 weights.
+- Strict projected-metre, north-up, single-band input checks.
+- Point-cloud cell aggregation (`min`, `max`, `mean`, `count`) for in-memory
+  sample points.
+- Zonal statistics over exactly aligned zones and values rasters.
+- `femic.lidar.terrain_qa.v1` JSON and CSV QA reports.
+- No reprojection, resampling, smoothing, ground classification, LAZ/COPC
+  reading, or instance-specific thresholds.
+
+Dependency decision: use the existing core `numpy` and `rasterio` stack. No
+PDAL or laspy dependency is required for the raster/terrain slice. Point-cloud
+file reading and canopy compilation remain later lanes.
+
+## P79.4 implementation
+
+Add `femic.lidar.hydrography` with:
+
+- Priority-flood depression filling and an isolated-cell warning.
+- D8 flow routing and upstream-cell accumulation.
+- Accumulation-threshold stream candidates.
+- Optional comparison with aligned public hydrography as a raster or vector.
+- `femic.lidar.stream_candidates.v1` review manifest and Markdown caveat
+  report.
+- Explicit screening-only caveats: no authoritative stream, riparian,
+  fish-habitat, or legal determination.
+
+The workflow rejects DEM/reference reprojection or resampling. Reference
+vectors must already match the DEM CRS; reference rasters must share the exact
+grid and transform. This is a candidate/review product, not a provincial
+hydrography replacement.
+
+## P79.5 implementation
+
+Add the operator-facing LiDAR CLI surface:
+
+- `femic lidar discover` for AOI tile discovery and selection manifests.
+- `femic lidar materialize` and `materialization-status` for resumable tile
+  materialization.
+- `femic lidar terrain` for native slope products and QA reports.
+- `femic lidar streams` for D8 stream candidates, comparison metrics, review
+  manifests, and caveat reports.
+- `femic lidar bundle` and `inspect` for versioned product delivery.
+
+Add `--instance-root` defaults for discover, materialize, terrain, streams, and
+bundle:
+
+- `metadata/lidar/lidarbc_selection.json`
+- `data/lidar` materialization root
+- `data/lidar/terrain`
+- `data/lidar/streams`
+- `data/lidar/products`
+
+Document the instance layout, DataLad/Arbutus boundary, handoff checklist, and
+end-to-end command sequence. Tests cover command outputs, manifests, instance
+defaults, and error exits.
+
+## P79.6 TFL 6 pilot
+
+Run a bounded 1 km AOI inside TFL 6 using real LidarBC DEM tiles and the public
+CDED tile used by TFL 6 Phase 9D. Compare 1 m LidarBC slope with a 25 m CDED
+comparison grid and run D8 stream candidates against clipped FWA streams.
+
+Evidence: `planning/phase79_p79_6_tfl6_pilot.md`, with metrics in
+`planning/phase79_p79_6_tfl6_pilot_metrics.json`,
+`planning/phase79_p79_6_tfl6_slope_thresholds.csv`, and
+`planning/phase79_p79_6_tfl6_stream_thresholds.csv`.
+
+Key findings:
+
+- LidarBC materialization: 3 DEM tiles, 60.0 MiB, all verified, 7.18 s.
+- LidarBC median slope 19.46% versus CDED 15.03%; mean 23.95% versus 15.77%.
+- LidarBC has 2.88 ha of >=70% slope in the AOI; CDED has zero.
+- D8/FWA stream agreement is very low (F1 0.47-1.20% across thresholds), so
+  stream candidates remain review-only.
+- Full TFL 6 DEM coverage is roughly 13 GiB before point clouds; bounded
+  materialization and annex storage are mandatory.
+
+The pilot does not change the TFL 6 locked CDED Step 220 proxy. Fragment-level
+comparison is the next TFL 6 decision gate.
+
+## P79.7 implementation
+
+Add `femic.lidar.canopy` and `femic.lidar.trees`:
+
+- Native CHM = DSM - DEM on exactly aligned grids, with negative-pixel
+  clamping/counting and QA.
+- Canopy height percentiles and cover at 2/5/10/20 m.
+- VRI polygon comparison using CHM p95 height and CHM >=2 m cover, with bias,
+  MAE, RMSE, and per-polygon rows.
+- Optional individual-tree point-product ingestion with duplicate/missing-field
+  checks and block summaries.
+- No new tree-segmentation algorithm and no field-accuracy claim.
+- `femic lidar canopy` and `femic lidar trees` CLI commands.
+
+TFL 6 canopy pilot (same 1 km AOI as P79.6):
+
+- CHM mean 8.62 m, median 7.71 m, p95 21.78 m, max 55.42 m.
+- Cover: 70.94% at >=2 m, 60.09% at >=5 m, 41.03% at >=10 m, 7.84% at >=20 m.
+- VRI: 7 polygons, height bias -2.93 m, MAE 4.08 m, RMSE 6.16 m; cover bias
+  +23.87 points, MAE 39.47 points.
+- LidarBC index has no CHM/canopy or individual-tree layer; CHM is derived and
+  tree ingestion remains optional.
+
+Evidence: `planning/phase79_p79_7_tfl6_canopy_pilot.md` and
+`planning/phase79_p79_7_tfl6_canopy_pilot_metrics.json`.
+
+## P79.9 shared bundle validation
+
+Build a five-product TFL 6 bundle (`dem`, `dsm`, `slope`, `chm`, `canopy`) from
+the P79.6/P79.7 AOI and validate its native contract. Added `slope` as a
+supported derived raster product kind and added a schema version to the canopy
+structure report.
+
+Shared bundle:
+
+- `bundle_id`: `lidarbc-995fb1f771f4d7fe`
+- `bundle_version`: `2026.10.0-tfl6-pilot`
+- 5 products, 13,390,216 bytes.
+- Build runtime 3.24 s; bundle inspect valid with no errors/warnings.
+- All checksums, sizes, CRS (`EPSG:3005`), 1 m resolution, CGVD2013, OGL-BC,
+  source-tile membership, and canopy schema checks passed.
+- Slope/CHM bundle values matched pre-bundle source rasters exactly over seven
+  shared-AOI VRI polygons.
+
+Consumer parity:
+
+- WS4 P52.1 (`#318`, commit `8f4feb0`) and FHOPS P14.1 (`#189`, commit
+  `8b6adb6c`) implement independent consumer contracts.
+- Both pinned `lidarbc-995fb1f771f4d7fe`, validated checksums, OGL-BC licence,
+  CRS, 1 m resolution, CGVD2013, and source tiles, and summarized seven AOI
+  polygons.
+- WS4/FHOPS slope/CHM mean and p95 matched exactly: maximum absolute
+  difference `0.0` (tolerance `1e-9`).
+- Evidence: `planning/phase79_p79_9_consumer_parity.json`.
+
+P79.9 is complete. P79 close-out is queued for maintainer approval.
+
+## P79.8 implementation
+
+Add `femic.lidar.products` with:
+
+- `femic.lidar.product_plan.v1` input plans.
+- `femic.lidar.product.v1` manifests and `femic.lidar.bundle.v1` layout.
+- Deterministic `bundle_id` from selection digest, bundle/processing versions,
+  and packaged product metadata/checksums.
+- Per-product SHA-256, size, CRS, native resolution, vertical datum, licence,
+  source tiles/layers, derived flag, and lineage.
+- `femic lidar bundle` and `femic lidar inspect` CLI surfaces.
+- `validate_lidar_product_bundle` with checksum, licence, CRS, resolution,
+  derived-labelling, provenance, and source-tile checks.
+- A public-safe bounded AOI fixture with DEM, DSM, CHM, and canopy artifacts.
+
+Bundle layout:
+
+```text
+<bundle>/
+  manifest.json
+  provenance/selection.json
+  products/<product>__<index>__<filename>
+```
+
+P79.8 packages compiled products only. It does not download tiles or compile
+rasters. P79.2 and P79.3/P79.7 remain the materialization and compilation
+phases.
+
+The consumer pin rule is: pin `bundle_id` and `bundle_version`, then verify
+each product `sha256`. WS4 P43 and FHOPS P13 must honor the recorded CRS,
+resolution, and vertical datum and must not re-run discovery or
+materialization.
+
+## Current edge
+
+1. P79.1 source/tile-index contract and tests (complete).
+2. P79.2 resumable materialization and status surfaces (complete).
+3. P79.3 terrain raster, slope, zonal statistics, and QA (complete).
+4. P79.4 terrain-derived stream candidates and review manifests (complete).
+5. P79.8 product manifest, bundle, CLI, and fixture (complete).
+6. P79.5 CLI/docs/tests and instance hooks (complete).
+7. P79.6 TFL 6 pilot (complete).
+8. P79.7 canopy/precision products and TFL 6 canopy pilot (complete).
+9. P79.9 producer validation and WS4 P52.1/FHOPS P14.1 consumer parity
+   (complete).
+10. P79 close-out queued for maintainer approval.
+
+Do not start consumer integration in WS4/FHOPS until a real shared bundle
+passes both consumer contracts.

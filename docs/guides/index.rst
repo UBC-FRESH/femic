@@ -18,6 +18,13 @@ export modules.
    author-instance-rebuild-spec
    interpret-rebuild-reports
    data-access-inventory
+   lidar-data-products
+   lidar-materialization
+   lidar-terrain-products
+   lidar-stream-candidates
+   lidar-canopy-products
+   lidar-product-bundles
+   lidar-instance-integration
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery
