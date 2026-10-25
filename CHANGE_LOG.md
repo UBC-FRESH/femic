@@ -1,5 +1,11 @@
 # Change Log
 
+## 2026-10-25
+- Added the Phase 116 roadmap entry and planning note for the shared
+  environmental contracts (parent `#369`; children `#370`-`#372`). Contract home
+  is `femic/contracts`, kept free of the modelling stack. No implementation yet;
+  branch `feature/p116-shared-contracts`.
+
 ## 2026-10-20
 - Retired the `ria_` filename prefix throughout the engine (#329). It is leftover Western
   Boreal Initiative nomenclature with no meaning in FEMIC, and it kept being reintroduced.

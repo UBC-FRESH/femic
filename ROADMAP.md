@@ -3927,3 +3927,32 @@ Tasks:
       `external/femic-tsa24-instance/evidence/p113_4_smoke_2026-10-12.md`.
 
 Detailed plan: `planning/phase113_wbi_aoi_model_build.md`.
+
+## Phase 116: Shared Environmental Contracts (`#369`)
+
+Status: **planned** (2026-10-25).
+
+Branch: `feature/p116-shared-contracts`
+
+Goal: add three dependency-light contracts so FEMIC, ws3, ws4, FHOPS, and
+Nemora share one climate vocabulary, one disturbance event record, and one EFI
+model card. Each contract needs one real consumer before the phase closes.
+
+Contract home: `femic/contracts` for this wave, kept free of the modelling
+stack. A separate `fresh-contracts` repository remains the long-term option.
+
+Tasks:
+
+- [ ] P116.1 Add `climate.v1` and a ClimateNA/SilvR21 adapter (`#370`).
+- [ ] P116.2 Add `disturbance.v1` and a ws4 consumer (`#371`).
+- [ ] P116.3 Add `efi.model.v1` model cards (`#372`).
+
+Acceptance: each schema has a validator, an example, and a failure test; each
+contract has one downstream consumer reading real data; provenance survives the
+round-trip; no parallel LiDAR, hydrology, or fire-simulation lane is introduced.
+
+Tracking: issue `#369`; the issue bodies carry scope, out-of-scope, acceptance,
+verification, artifacts, and risks. Phase 115 (carbon) is tracked separately
+under `#361`; this phase does not duplicate it.
+
+Detailed plan: `planning/phase116_shared_contracts.md`.
