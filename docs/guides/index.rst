@@ -20,6 +20,7 @@ export modules.
    data-access-inventory
    hydrology-domain-contract
    hydrology-data-bundle
+   hydrology-disturbance-ledger
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery

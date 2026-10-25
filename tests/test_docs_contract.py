@@ -66,6 +66,7 @@ GUIDE_PAGES = [
     "data-access-inventory",
     "hydrology-domain-contract",
     "hydrology-data-bundle",
+    "hydrology-disturbance-ledger",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -98,6 +99,7 @@ CONTRACT_PAGES = [
     "recovery-and-external-runtime-boundaries",
     "hydrology-domain",
     "hydrology-data-bundle",
+    "hydrology-disturbance-ledger",
 ]
 
 NOTEBOOKS = [
@@ -1776,6 +1778,16 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Pilot Boundary",
             "Cross-References",
         ],
+        "hydrology-disturbance-ledger": [
+            "Purpose",
+            "Quick Contract",
+            "Manifest Fields",
+            "Road State Rules",
+            "Conservation Rules",
+            "CSV Handoff",
+            "Recovery Semantics",
+            "Cross-References",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1833,6 +1845,18 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "road",
             "dem",
         ],
+        "hydrology-disturbance-ledger": [
+            "femic.hydrology.disturbance.v1",
+            "one row per spatial unit per year",
+            "harvest_area_ha",
+            "retention_area_ha",
+            "road_active_length_m",
+            "road_connected_length_m",
+            "source_event_ids",
+            "build",
+            "decommission",
+            "No private",
+        ],
     }
 
     for slug in CONTRACT_PAGES:
@@ -1841,6 +1865,50 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             assert section in text, f"{slug}.rst missing required section: {section}"
         for marker in required_markers[slug]:
             assert marker in text, f"{slug}.rst missing required marker: {marker}"
+
+
+def test_hydrology_disturbance_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "hydrology-disturbance-ledger.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Ledger Contract",
+        "Inputs",
+        "CSV Handoff",
+        "Road State",
+        "Conservation",
+        "Recovery Semantics",
+        "Limits",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.hydrology.disturbance.v1",
+        "harvest_area_ha",
+        "retention_area_ha",
+        "road_active_length_m",
+        "road_connected_length_m",
+        "source_event_ids",
+        "build",
+        "decommission",
+        "No private",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-hydrology-disturbance.rst").read_text(
+        encoding="utf-8"
+    )
+    for snippet in (
+        "femic.hydrology.disturbance",
+        "build_disturbance_ledger",
+        "validate_disturbance_ledger",
+        "generated/femic.hydrology.disturbance",
+        "hydrology-disturbance-ledger",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-hydrology-disturbance" in modules_text
 
 
 def test_hydrology_bundle_guide_and_api_page_keep_required_contract() -> None:

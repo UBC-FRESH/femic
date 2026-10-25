@@ -3354,8 +3354,12 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     `femic.hydrology.bundle.v1` manifest, deterministic bundle identity,
     licence/checksum validation, gap planning, and local layer audit. The
     fixture bundle covers all six domain layers; the bounded public pilot
-    acquisition remains optional in P114.9. Next is P114.3 (`#354`) harvest/
-    road/retention disturbance ledger. WS4 P49 and FHOPS P14 stay uncreated
+    acquisition remains optional in P114.9. P114.3 (`#354`) is complete:
+    `femic.hydrology.disturbance` defines the
+    `femic.hydrology.disturbance.v1` annual unit/year ledger, harvest/retention
+    accounting, road build/use/maintain/decommission state, conservation
+    checks, CSV handoff, and deterministic ledger identity. Next is P114.4
+    (`#355`) Tier 0 screening metrics. WS4 P49 and FHOPS P14 stay uncreated
     until the response contract is stable.
   - `P106` / `#288` is complete and merged: parent PR `#289`, parent issue
     `#288`, MKRF PR `UBC-FRESH/femic-mkrf-instance#51`, and MKRF issue
@@ -3915,7 +3919,7 @@ Tasks:
   - Fixture bundle, licence/checksum audit, and gap plan are complete. The
     bounded public pilot acquisition remains an optional integration run in
     P114.9.
-- [ ] P114.3 Build the harvest/road/retention disturbance ledger (`#354`).
+- [x] P114.3 Build the harvest/road/retention disturbance ledger (`#354`).
 - [ ] P114.4 Add Tier 0 screening metrics and caveats (`#355`).
 - [ ] P114.5 Add stochastic flood-frequency response surfaces (`#356`).
 - [ ] P114.6 Add process-model adapters and scenario manifests (`#357`).

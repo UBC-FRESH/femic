@@ -305,10 +305,10 @@ rain/rain-on-snow coastal watershed before any provincial generalization.
 
 ## Current Edge
 
-FEMIC P114 is active. P114.1 (`#352`) and P114.2 (`#353`) are complete: the
-domain/receptor contract, public source registry, bundle manifest, deterministic
-bundle identity, licence/checksum validation, gap planning, and local audits
-are in place. Next is P114.3 (`#354`): the harvest/road/retention disturbance
-ledger. The bounded public pilot acquisition remains optional in P114.9. Do not
-create the WS4 P49 or FHOPS P14 implementation issues until the FEMIC response
-contract is stable.
+FEMIC P114 is active. P114.1 (`#352`), P114.2 (`#353`), and P114.3 (`#354`)
+are complete: the domain/receptor contract, public source registry, bundle
+manifest, deterministic bundle identity, licence/checksum validation, gap
+planning, local audits, and annual disturbance ledger are in place. Next is
+P114.4 (`#355`): Tier 0 screening metrics. The bounded public pilot acquisition
+remains optional in P114.9. Do not create the WS4 P49 or FHOPS P14
+implementation issues until the FEMIC response contract is stable.

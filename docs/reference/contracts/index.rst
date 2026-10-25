@@ -35,3 +35,4 @@ Contract Pages
    recovery-and-external-runtime-boundaries
    hydrology-domain
    hydrology-data-bundle
+   hydrology-disturbance-ledger

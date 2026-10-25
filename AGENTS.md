@@ -98,6 +98,7 @@ For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
 - `docs/reference/contracts/hydrology-domain.rst`
 - `docs/reference/contracts/hydrology-data-bundle.rst`
+- `docs/reference/contracts/hydrology-disturbance-ledger.rst`
 
 ## Patchworks Model Semantics Guardrails
 

@@ -45,6 +45,7 @@ stubs.
 Current curated pages in this section include ``femic.instance_context``,
 ``femic.instance_bootstrap``, ``femic.hydrology.domain``,
 ``femic.hydrology.bundle``,
+``femic.hydrology.disturbance``,
 ``femic.bcdc_catalog``,
 ``femic.bcdc_fetch``,
 ``femic.bcdc_dwds``,
@@ -63,6 +64,7 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-instance-bootstrap
    femic-hydrology-domain
    femic-hydrology-bundle
+   femic-hydrology-disturbance
    femic-bcdc-catalog
    femic-bcdc-fetch
    femic-bcdc-dwds

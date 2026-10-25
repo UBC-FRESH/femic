@@ -15164,3 +15164,34 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   hydrology modules.
+
+## 2026-10-25 - P114.3 harvest/road/retention disturbance ledger (#354)
+
+- Added `femic.hydrology.disturbance` with the
+  `femic.hydrology.disturbance.v1` annual unit/year ledger.
+- Added units, harvest events, road events, annual rows, validation, and
+  deterministic ledger identity.
+- Added gross harvest/retention/effective-area accounting, active/connected/
+  built/decommissioned road length, active crossings, years since harvest/road
+  build, and source event lineage.
+- Added road state rules: build/use/maintain/decommission, no double-active
+  builds, no decommission beyond active/connected length or crossings, and no
+  road spanning units.
+- Added conservation checks for duplicate IDs, unknown units, event-year
+  bounds, area/retention limits, road actions, and negative values.
+- Added CSV handoff for units, harvest, and road schedules, plus JSON/CSV
+  ledger writers.
+- Added the disturbance-ledger guide, technical contract page, curated API
+  page, and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_disturbance.py` passed (12 tests).
+  - 99% branch coverage for `femic.hydrology.disturbance`.
+  - All 50 hydrology domain/bundle/disturbance tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 57 passed; 3 pre-existing submodule/data failures.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
