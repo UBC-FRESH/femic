@@ -15224,3 +15224,36 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   hydrology modules.
+
+## 2026-10-25 - P114.5 stochastic flood-frequency response surfaces (#356)
+
+- Added `femic.hydrology.flood` with:
+  - annual-maximum and declustered peaks-over-threshold samples;
+  - stationary GEV and LP3 fits with bootstrap percentile intervals;
+  - Poisson-GPD peaks-over-threshold fits;
+  - paired baseline/treatment return-level response ratios and bootstrap
+    ratio intervals;
+  - nonstationary GEV with a linear location model in covariates;
+  - return-period response surfaces;
+  - benchmark-envelope checks.
+- Added schemas `femic.hydrology.flood_frequency.v1` and
+  `femic.hydrology.flood_response.v1`.
+- Added deterministic response-surface identity, JSON writers, diagnostics, and
+  explicit caveats about short records, nonstationarity, bootstrap intervals,
+  and the need for hydrologist review.
+- Added the flood-frequency guide, technical contract page, curated API page,
+  and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_flood.py` passed (10 tests).
+  - 93% branch coverage for `femic.hydrology.flood`.
+  - All 68 hydrology domain/bundle/disturbance/screening/flood tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 59 passed; 3 pre-existing submodule/data failures.
+- No public-gauge calibration or published paired-watershed benchmark run was
+  executed; those remain P114.9 work.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.

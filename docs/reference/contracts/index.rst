@@ -37,3 +37,4 @@ Contract Pages
    hydrology-data-bundle
    hydrology-disturbance-ledger
    hydrology-tier0-screening
+   hydrology-flood-frequency

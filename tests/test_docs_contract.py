@@ -68,6 +68,7 @@ GUIDE_PAGES = [
     "hydrology-data-bundle",
     "hydrology-disturbance-ledger",
     "hydrology-tier0-screening",
+    "hydrology-flood-frequency",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -102,6 +103,7 @@ CONTRACT_PAGES = [
     "hydrology-data-bundle",
     "hydrology-disturbance-ledger",
     "hydrology-tier0-screening",
+    "hydrology-flood-frequency",
 ]
 
 NOTEBOOKS = [
@@ -1801,6 +1803,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Caveats",
             "Cross-References",
         ],
+        "hydrology-flood-frequency": [
+            "Purpose",
+            "Quick Contract",
+            "Sample Contract",
+            "Distribution Contract",
+            "Paired Response",
+            "Nonstationary Response Surface",
+            "Benchmark",
+            "Uncertainty And Caveats",
+            "Cross-References",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1881,6 +1894,18 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "high_elevation_effective_harvest_ha",
             "not a hydrologic response",
         ],
+        "hydrology-flood-frequency": [
+            "femic.hydrology.flood_frequency.v1",
+            "femic.hydrology.flood_response.v1",
+            "GEV",
+            "LP3",
+            "Poisson-GPD",
+            "1 - 1/T",
+            "baseline",
+            "treatment",
+            "bootstrap",
+            "not a regulatory flood map",
+        ],
     }
 
     for slug in CONTRACT_PAGES:
@@ -1889,6 +1914,53 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             assert section in text, f"{slug}.rst missing required section: {section}"
         for marker in required_markers[slug]:
             assert marker in text, f"{slug}.rst missing required marker: {marker}"
+
+
+def test_hydrology_flood_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "hydrology-flood-frequency.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Frequency Models",
+        "Annual Maxima And POT",
+        "Stationary Fits",
+        "Paired Response",
+        "Nonstationary Response Surface",
+        "Uncertainty",
+        "Calibration And Validation",
+        "Limits",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.hydrology.flood_frequency.v1",
+        "femic.hydrology.flood_response.v1",
+        "GEV",
+        "LP3",
+        "Poisson-GPD",
+        "1 - 1/T",
+        "baseline",
+        "treatment",
+        "bootstrap",
+        "not a regulatory flood map",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-hydrology-flood.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.hydrology.flood",
+        "fit_flood_frequency",
+        "fit_pot_frequency",
+        "paired_frequency_response",
+        "fit_nonstationary_gev",
+        "build_response_surface",
+        "generated/femic.hydrology.flood",
+        "hydrology-flood-frequency",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-hydrology-flood" in modules_text
 
 
 def test_hydrology_tier0_guide_and_api_page_keep_required_contract() -> None:
