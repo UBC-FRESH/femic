@@ -2156,7 +2156,7 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
 
 ## Phase 79: Native LidarBC Data-Product Pipeline For WS4 And FHOPS (`#211`)
 
-Status: pr-open (2026-10-25). Branch: `feature/p79-lidar-pipeline`.
+Status: complete (2026-10-25). Branch: `feature/p79-lidar-pipeline`.
 
 Goal: make FEMIC the authoritative upstream producer of native LidarBC data
 products for WS4 and FHOPS. FEMIC discovers and resolves LidarBC projects and

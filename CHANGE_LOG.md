@@ -15407,3 +15407,9 @@
     ruff/mypy passed.
   - FEMIC selected docs-contract tests passed; full-repo baseline remains
     non-green only on pre-existing unrelated surfaces.
+
+## 2026-10-25 - P79 merged and closed (#211)
+
+- P79 squash-merged as `65b9057` via PR #368.
+- Parent #211 and P79 child issues closed.
+- Consumer phases continue as WS4 P52 and FHOPS P14.
