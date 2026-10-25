@@ -15195,3 +15195,32 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   hydrology modules.
+
+## 2026-10-25 - P114.4 Tier 0 screening metrics (#355)
+
+- Added `femic.hydrology.screening` with the `femic.hydrology.screening.v1`
+  watershed/year report.
+- Added harvest, retention, effective-area, harvest-fraction, ECA, road density,
+  connected-road density, crossing density, and connected-road fraction
+  metrics.
+- Added optional linear ECA recovery discounting and an explicit warning when
+  ECA is undiscounted.
+- Added watershed regime metadata (`rain`, `rain_on_snow`, `snowmelt`,
+  `snow_transient`, `unknown`) and context-weighted riparian, snow-transient,
+  and high-elevation exposure from reviewed per-unit fractions.
+- Added deterministic screening identity, JSON report writing, caveats, and
+  warnings.
+- Added the Tier 0 guide, technical contract page, curated API page, and
+  roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_screening.py` passed (8 tests).
+  - 100% branch coverage for `femic.hydrology.screening`.
+  - All 58 hydrology domain/bundle/disturbance/screening tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 58 passed; 3 pre-existing submodule/data failures.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.

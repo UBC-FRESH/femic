@@ -21,6 +21,7 @@ export modules.
    hydrology-domain-contract
    hydrology-data-bundle
    hydrology-disturbance-ledger
+   hydrology-tier0-screening
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery

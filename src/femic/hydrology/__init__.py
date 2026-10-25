@@ -66,6 +66,17 @@ from femic.hydrology.domain import (
     validate_hydrology_domain,
     write_hydrology_domain_manifest,
 )
+from femic.hydrology.screening import (
+    HYDROLOGY_SCREENING_REGIMES,
+    HYDROLOGY_SCREENING_SCHEMA_VERSION,
+    HydrologyScreeningError,
+    Tier0ScreeningReport,
+    Tier0ScreeningRow,
+    UnitExposureContext,
+    WatershedRegime,
+    compute_tier0_screening,
+    write_tier0_screening_report,
+)
 
 __all__ = [
     "DEFAULT_HYDROLOGY_BUNDLE_VERSION",
@@ -81,6 +92,8 @@ __all__ = [
     "HYDROLOGY_LAYER_ROLES",
     "HYDROLOGY_RECEPTOR_TYPES",
     "HYDROLOGY_REQUIRED_LAYER_ROLES",
+    "HYDROLOGY_SCREENING_REGIMES",
+    "HYDROLOGY_SCREENING_SCHEMA_VERSION",
     "HYDROLOGY_SOURCE_REGISTRY",
     "HYDROLOGY_SOURCE_REGISTRY_VERSION",
     "DisturbanceLedger",
@@ -104,14 +117,20 @@ __all__ = [
     "HydrologyLayerAudit",
     "HydrologyLayerSpec",
     "HydrologyReceptor",
+    "HydrologyScreeningError",
     "HydrologySourceSpec",
     "HydrologyWatershed",
     "RoadEvent",
+    "Tier0ScreeningReport",
+    "Tier0ScreeningRow",
+    "UnitExposureContext",
+    "WatershedRegime",
     "audit_hydrology_bundle",
     "audit_hydrology_domain",
     "build_disturbance_ledger",
     "build_hydrology_bundle",
     "build_hydrology_domain",
+    "compute_tier0_screening",
     "find_hydrology_source",
     "hydrology_source_registry",
     "load_disturbance_ledger",
@@ -128,4 +147,5 @@ __all__ = [
     "write_disturbance_ledger_csv",
     "write_hydrology_bundle_manifest",
     "write_hydrology_domain_manifest",
+    "write_tier0_screening_report",
 ]

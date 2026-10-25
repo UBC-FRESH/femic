@@ -3358,9 +3358,13 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     `femic.hydrology.disturbance` defines the
     `femic.hydrology.disturbance.v1` annual unit/year ledger, harvest/retention
     accounting, road build/use/maintain/decommission state, conservation
-    checks, CSV handoff, and deterministic ledger identity. Next is P114.4
-    (`#355`) Tier 0 screening metrics. WS4 P49 and FHOPS P14 stay uncreated
-    until the response contract is stable.
+    checks, CSV handoff, and deterministic ledger identity. P114.4 (`#355`) is
+    complete: `femic.hydrology.screening` defines the
+    `femic.hydrology.screening.v1` watershed/year diagnostics for harvest,
+    ECA, road/crossing density, regime flags, and context-weighted riparian,
+    snow-transient, and high-elevation exposure. Next is P114.5 (`#356`)
+    stochastic flood-frequency response surfaces. WS4 P49 and FHOPS P14 stay
+    uncreated until the response contract is stable.
   - `P106` / `#288` is complete and merged: parent PR `#289`, parent issue
     `#288`, MKRF PR `UBC-FRESH/femic-mkrf-instance#51`, and MKRF issue
     `UBC-FRESH/femic-mkrf-instance#50` are closed. MKRF is the second
@@ -3920,7 +3924,7 @@ Tasks:
     bounded public pilot acquisition remains an optional integration run in
     P114.9.
 - [x] P114.3 Build the harvest/road/retention disturbance ledger (`#354`).
-- [ ] P114.4 Add Tier 0 screening metrics and caveats (`#355`).
+- [x] P114.4 Add Tier 0 screening metrics and caveats (`#355`).
 - [ ] P114.5 Add stochastic flood-frequency response surfaces (`#356`).
 - [ ] P114.6 Add process-model adapters and scenario manifests (`#357`).
 - [ ] P114.7 Add surrogate training, validation, and applicability domains

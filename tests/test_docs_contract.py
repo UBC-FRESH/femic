@@ -67,6 +67,7 @@ GUIDE_PAGES = [
     "hydrology-domain-contract",
     "hydrology-data-bundle",
     "hydrology-disturbance-ledger",
+    "hydrology-tier0-screening",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -100,6 +101,7 @@ CONTRACT_PAGES = [
     "hydrology-domain",
     "hydrology-data-bundle",
     "hydrology-disturbance-ledger",
+    "hydrology-tier0-screening",
 ]
 
 NOTEBOOKS = [
@@ -1788,6 +1790,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Recovery Semantics",
             "Cross-References",
         ],
+        "hydrology-tier0-screening": [
+            "Purpose",
+            "Quick Contract",
+            "Metric Definitions",
+            "ECA Semantics",
+            "Road And Crossing Metrics",
+            "Exposure Context",
+            "Regimes",
+            "Caveats",
+            "Cross-References",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1857,6 +1870,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "decommission",
             "No private",
         ],
+        "hydrology-tier0-screening": [
+            "femic.hydrology.screening.v1",
+            "one row per watershed per year",
+            "eca_area_ha",
+            "road_density_km_per_km2",
+            "crossing_density_per_km2",
+            "riparian_effective_harvest_ha",
+            "snow_transient_effective_harvest_ha",
+            "high_elevation_effective_harvest_ha",
+            "not a hydrologic response",
+        ],
     }
 
     for slug in CONTRACT_PAGES:
@@ -1865,6 +1889,49 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             assert section in text, f"{slug}.rst missing required section: {section}"
         for marker in required_markers[slug]:
             assert marker in text, f"{slug}.rst missing required marker: {marker}"
+
+
+def test_hydrology_tier0_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "hydrology-tier0-screening.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Metrics",
+        "ECA Semantics",
+        "Road Metrics",
+        "Exposure Context",
+        "Regimes",
+        "Example",
+        "Outputs",
+        "Limits",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.hydrology.screening.v1",
+        "eca_area_ha",
+        "road_density_km_per_km2",
+        "crossing_density_per_km2",
+        "riparian_effective_harvest_ha",
+        "snow_transient_effective_harvest_ha",
+        "high_elevation_effective_harvest_ha",
+        "not a hydrologic response",
+        "No instance-specific threshold",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-hydrology-screening.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.hydrology.screening",
+        "compute_tier0_screening",
+        "write_tier0_screening_report",
+        "generated/femic.hydrology.screening",
+        "hydrology-tier0-screening",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-hydrology-screening" in modules_text
 
 
 def test_hydrology_disturbance_guide_and_api_page_keep_required_contract() -> None:
