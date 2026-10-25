@@ -117,6 +117,11 @@ from femic.instance_context import (
     InstanceContext,
     resolve_instance_context,
 )
+from femic.lidar.materialization import (
+    LidarMaterializationError,
+    materialize_lidar_selection,
+    validate_lidar_materialization,
+)
 from femic.lidar.products import (
     LidarProductError,
     build_lidar_product_bundle,
@@ -525,6 +530,52 @@ LIDAR_BUNDLE_DIR_ARGUMENT = typer.Argument(
     file_okay=False,
     readable=True,
     help="Existing FEMIC LiDAR product bundle directory.",
+)
+LIDAR_OUTPUT_ROOT_OPTION = typer.Option(
+    ...,
+    "--output-root",
+    help="Explicit managed data root for materialized LiDAR tiles.",
+)
+LIDAR_MATERIALIZATION_MANIFEST_OPTION = typer.Option(
+    None,
+    "--manifest-path",
+    help=(
+        "Optional materialization manifest path. Defaults to "
+        "`materialization.json` under the output root."
+    ),
+    show_default=False,
+)
+LIDAR_MATERIALIZATION_PLAN_ONLY_OPTION = typer.Option(
+    False,
+    "--plan-only/--no-plan-only",
+    help="Write or refresh the materialization manifest without downloading.",
+)
+LIDAR_MAX_TILES_OPTION = typer.Option(
+    None,
+    "--max-tiles",
+    min=1,
+    help="Optional bounded number of tiles to process in this run.",
+)
+LIDAR_TIMEOUT_OPTION = typer.Option(
+    60.0,
+    "--timeout-sec",
+    help="Per-tile network timeout in seconds.",
+)
+LIDAR_FAIL_FAST_OPTION = typer.Option(
+    False,
+    "--fail-fast/--no-fail-fast",
+    help="Stop after the first failed tile.",
+)
+LIDAR_REQUIRE_COMPLETE_OPTION = typer.Option(
+    False,
+    "--require-complete/--no-require-complete",
+    help="Exit non-zero when the materialization is valid but incomplete.",
+)
+LIDAR_MATERIALIZATION_PATH_ARGUMENT = typer.Argument(
+    ...,
+    exists=True,
+    readable=True,
+    help="Materialization manifest path or managed output root.",
 )
 BCDC_BBOX_OPTION = typer.Option(
     None,
@@ -4120,6 +4171,79 @@ def lidar_bundle(
     console.print(f"bundle_version: {result.manifest.bundle_version}")
     console.print(f"products: {result.manifest.product_count}")
     console.print(f"total_size: {_format_binary_size(result.manifest.total_bytes)}")
+
+
+@lidar_app.command("materialize")
+def lidar_materialize(
+    selection_manifest: Path = LIDAR_SELECTION_MANIFEST_OPTION,
+    output_root: Path = LIDAR_OUTPUT_ROOT_OPTION,
+    manifest_path: Path | None = LIDAR_MATERIALIZATION_MANIFEST_OPTION,
+    plan_only: bool = LIDAR_MATERIALIZATION_PLAN_ONLY_OPTION,
+    max_tiles: int | None = LIDAR_MAX_TILES_OPTION,
+    timeout_sec: float = LIDAR_TIMEOUT_OPTION,
+    fail_fast: bool = LIDAR_FAIL_FAST_OPTION,
+    generated_utc: str | None = LIDAR_GENERATED_UTC_OPTION,
+) -> None:
+    """Download selected LiDAR tiles into a resumable managed data root."""
+
+    try:
+        result = materialize_lidar_selection(
+            selection_manifest_path=selection_manifest,
+            output_root=output_root,
+            manifest_path=manifest_path,
+            plan_only=plan_only,
+            max_tiles=max_tiles,
+            timeout_sec=timeout_sec,
+            fail_fast=fail_fast,
+            generated_utc=generated_utc,
+        )
+    except (LidarMaterializationError, OSError) as exc:
+        console.print(f"[red]LiDAR materialization error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    manifest = result.manifest
+    console.print("[green]LiDAR materialization manifest[/green]")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(f"output_root: {result.output_root}")
+    console.print(f"tiles: {manifest.tile_count}")
+    console.print(f"verified: {manifest.verified_count}")
+    console.print(f"downloaded: {result.downloaded_count}")
+    console.print(f"resumed: {result.resumed_count}")
+    console.print(f"skipped: {result.skipped_count}")
+    console.print(f"pending: {manifest.pending_count}")
+    console.print(f"partial: {manifest.partial_count}")
+    console.print(f"failed: {manifest.failed_count}")
+    console.print(f"total_size: {_format_binary_size(manifest.total_bytes)}")
+    console.print(f"complete: {manifest.is_complete}")
+    if result.failed_count:
+        raise typer.Exit(code=1)
+
+
+@lidar_app.command("materialization-status")
+def lidar_materialization_status(
+    materialization_path: Path = LIDAR_MATERIALIZATION_PATH_ARGUMENT,
+    json_output: bool = LIDAR_INSPECT_JSON_OPTION,
+    require_complete: bool = LIDAR_REQUIRE_COMPLETE_OPTION,
+) -> None:
+    """Validate a materialization manifest and print integrity counts."""
+
+    validation = validate_lidar_materialization(materialization_path)
+    if json_output:
+        typer.echo(json.dumps(validation.to_dict(), indent=2, sort_keys=True))
+    else:
+        console.print("[bold]LiDAR materialization status[/bold]")
+        console.print(f"manifest: {validation.manifest_path}")
+        console.print(f"valid: {validation.is_valid}")
+        console.print(f"complete: {validation.is_complete}")
+        console.print(f"tiles: {validation.tile_count}")
+        console.print(f"verified: {validation.verified_count}")
+        console.print(f"total_size: {_format_binary_size(validation.total_bytes)}")
+        for warning in validation.warnings:
+            console.print(f"[yellow]warning:[/yellow] {warning}")
+        for error in validation.errors:
+            console.print(f"[red]error:[/red] {error}")
+    if not validation.is_valid or (require_complete and not validation.is_complete):
+        raise typer.Exit(code=1)
 
 
 @lidar_app.command("inspect")

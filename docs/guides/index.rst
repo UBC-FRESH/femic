@@ -19,6 +19,7 @@ export modules.
    interpret-rebuild-reports
    data-access-inventory
    lidar-data-products
+   lidar-materialization
    lidar-product-bundles
    bc-data-catalogue-discovery
    tsr-intelligence-workflow

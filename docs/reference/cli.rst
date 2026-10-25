@@ -388,6 +388,33 @@ Subcommands
 
 - ``bundle``: ``python -m femic lidar bundle [OPTIONS]``
 - ``inspect``: ``python -m femic lidar inspect [OPTIONS] BUNDLE_DIR``
+- ``materialize``: ``python -m femic lidar materialize [OPTIONS]``
+- ``materialization-status``: ``python -m femic lidar materialization-status [OPTIONS] MATERIALIZATION_PATH``
+
+``lidar materialize`` options
+
+- ``--selection-manifest PATH`` (required; P79.1 LidarBC selection manifest)
+- ``--output-root PATH`` (required; explicit managed data root)
+- ``--manifest-path PATH`` (optional; defaults to ``materialization.json`` under the output root)
+- ``--plan-only / --no-plan-only`` (write or refresh the manifest without downloading)
+- ``--max-tiles INTEGER`` (optional bounded number of tiles in this run)
+- ``--timeout-sec FLOAT`` (per-tile network timeout; default: ``60.0``)
+- ``--fail-fast / --no-fail-fast`` (stop after the first failed tile)
+- ``--generated-utc TEXT`` (optional fixed ``generated_utc`` for preflight fixtures)
+
+``lidar materialization-status`` options
+
+- ``MATERIALIZATION_PATH`` argument (required; manifest path or managed output root)
+- ``--json`` (print the validation report as JSON)
+- ``--require-complete / --no-require-complete`` (exit non-zero when valid but incomplete)
+
+``femic lidar materialize`` downloads selected tiles into
+``<output-root>/lidarbc/<product>/layer_<id>/<year>/<filename>`` and records
+``materialization.json`` with source URLs, relative paths, status, attempts,
+retry state, size, and SHA-256. Partial files use a ``.part`` suffix and resume
+with HTTP Range requests. Large payloads stay out of git and can be annexed
+through DataLad. See ``docs/guides/lidar-materialization.rst`` and
+``docs/reference/contracts/lidar-materialization.rst``.
 
 ``lidar bundle`` options
 

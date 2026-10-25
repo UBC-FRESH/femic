@@ -65,6 +65,7 @@ GUIDE_PAGES = [
     "interpret-rebuild-reports",
     "data-access-inventory",
     "lidar-data-products",
+    "lidar-materialization",
     "lidar-product-bundles",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
@@ -97,6 +98,7 @@ CONTRACT_PAGES = [
     "stage-boundaries-and-canonical-artifacts",
     "recovery-and-external-runtime-boundaries",
     "lidar-source-and-tile-index",
+    "lidar-materialization",
     "lidar-product-bundle",
 ]
 
@@ -253,6 +255,50 @@ def test_lidar_product_bundle_guide_and_api_page_keep_required_contract() -> Non
     assert "femic-lidar-products" in modules_text
 
 
+def test_lidar_materialization_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-materialization.rst").read_text(encoding="utf-8")
+    for heading in (
+        "Purpose",
+        "Managed Layout",
+        "Plan Or Preflight",
+        "Materialize",
+        "Resume Rules",
+        "Integrity And Completeness",
+        "Failure And Retry",
+        "Manifest Changes And Selection Pinning",
+        "DataLad And Arbutus",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.lidar.materialization.v1",
+        "materialization.json",
+        ".part",
+        "206 Partial Content",
+        "femic lidar materialize",
+        "femic lidar materialization-status",
+        "--plan-only",
+        "--max-tiles",
+        "--require-complete",
+        "sha256",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-lidar-materialization.rst").read_text(
+        encoding="utf-8"
+    )
+    for snippet in (
+        "femic.lidar.materialization",
+        "materialize_lidar_selection",
+        "validate_lidar_materialization",
+        "generated/femic.lidar.materialization",
+        "lidar-materialization",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-lidar-materialization" in modules_text
+
+
 def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
     guide_text = (GUIDES_ROOT / "bc-data-catalogue-discovery.rst").read_text(
         encoding="utf-8"
@@ -322,6 +368,14 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "python -m femic data bcdc-order",
         "python -m femic lidar bundle",
         "python -m femic lidar inspect",
+        "python -m femic lidar materialize",
+        "python -m femic lidar materialization-status",
+        "--output-root PATH",
+        "--plan-only / --no-plan-only",
+        "--max-tiles INTEGER",
+        "--timeout-sec FLOAT",
+        "--fail-fast / --no-fail-fast",
+        "--require-complete / --no-require-complete",
         "--selection-manifest PATH",
         "--product-plan PATH",
         "--overwrite / --no-overwrite",
@@ -1866,6 +1920,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Storage And Delivery",
             "See Also",
         ],
+        "lidar-materialization": [
+            "Purpose",
+            "Quick Contract",
+            "Managed Layout",
+            "Manifest Schema",
+            "Resume Rules",
+            "Integrity And Completeness",
+            "Failure And Retry",
+            "Storage Boundary",
+            "See Also",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1920,6 +1985,19 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "OGL-BC",
             "WS4 P43",
             "FHOPS P13",
+        ],
+        "lidar-materialization": [
+            "femic.lidar.materialization.v1",
+            "materialization.json",
+            ".part",
+            "206 Partial Content",
+            "sha256",
+            "pending",
+            "partial",
+            "verified",
+            "failed",
+            "OGL-BC",
+            "EPSG:3005",
         ],
     }
 

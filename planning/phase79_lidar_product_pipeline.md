@@ -86,6 +86,29 @@ external-data root.
 Dependency boundary: discovery uses the Python standard library. Terrain and
 canopy processing dependencies are selected in P79.3/P79.7.
 
+## P79.2 implementation
+
+Add `femic.lidar.materialization` with:
+
+- `femic.lidar.materialization.v1` manifests under an explicit output root.
+- Managed layout:
+  `<root>/lidarbc/<product>/layer_<id>/<year>/<filename>`.
+- `.part` files and HTTP Range resume; a ranged `200` response restarts the
+  tile from zero.
+- Per-tile status (`pending`, `downloading`, `partial`, `verified`, `failed`),
+  attempts, last attempt time, last error, resumed byte offset, expected size,
+  observed ETag, local size, and SHA-256.
+- Manifest writes before a download and after every tile, so interrupted runs
+  resume from the last successful state.
+- `femic lidar materialize` and `femic lidar materialization-status`, including
+  `--plan-only`, `--max-tiles`, `--timeout-sec`, `--fail-fast`, and
+  `--require-complete`.
+- Selection digest and tile-set pinning so one manifest cannot mix AOIs or
+  catalog snapshots.
+
+P79.2 downloads selected public tiles only. It does not compile terrain or
+canopy products and does not create a provincial mirror.
+
 ## P79.8 implementation
 
 Add `femic.lidar.products` with:
@@ -122,8 +145,8 @@ materialization.
 ## Current edge
 
 1. P79.1 source/tile-index contract and tests (complete).
-2. P79.8 product manifest, bundle, CLI, and fixture (complete).
-3. P79.2 materialization.
+2. P79.2 resumable materialization and status surfaces (complete).
+3. P79.8 product manifest, bundle, CLI, and fixture (complete).
 4. P79.3/P79.7 terrain and canopy products.
 5. P79.9 cross-repo validation with WS4/FHOPS.
 

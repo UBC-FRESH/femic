@@ -2173,13 +2173,13 @@ boundary. A full provincial mirror remains out of scope.
   - [x] P79.1b Define tile-index records, AOI intersection behaviour,
     metadata fields, and provenance requirements.
   - [x] P79.1c Define dependency, storage, and generated-artifact boundaries.
-- [ ] P79.2 Implement resumable LiDAR and DEM materialization manifests
+- [x] P79.2 Implement resumable LiDAR and DEM materialization manifests
   (`#213`).
-  - [ ] P79.2a Define manifest schema for source URLs, checksums, local paths,
+  - [x] P79.2a Define manifest schema for source URLs, checksums, local paths,
     status, and retry state.
-  - [ ] P79.2b Implement resumable acquisition helpers.
-  - [ ] P79.2c Add checksum and completeness validation.
-  - [ ] P79.2d Add CLI/API preflight surfaces.
+  - [x] P79.2b Implement resumable acquisition helpers.
+  - [x] P79.2c Add checksum and completeness validation.
+  - [x] P79.2d Add CLI/API preflight surfaces.
 - [ ] P79.3 Add terrain raster and slope-product pipeline APIs (`#214`).
   - [ ] P79.3a Select optional dependency stack for point-cloud/raster work.
   - [ ] P79.3b Implement terrain raster derivation interfaces.
@@ -3505,13 +3505,15 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     P84 executable orchestration.
   - `P79` / `#211` is active on `feature/p79-lidar-pipeline`: FEMIC is now the
     authoritative producer of native LidarBC products for WS4 P43 (`#317`) and
-    FHOPS P13 (`#188`). P79.1 (`#212`) and P79.8 (`#349`) are complete:
-    `femic.lidar.catalog` owns discovery/AOI selection and
-    `femic.lidar.products` owns the `femic.lidar.product.v1` bundle, checksum
-    validation, `femic lidar bundle`, and `femic lidar inspect`. Next is P79.2
-    (`#213`) resumable materialization, followed by P79.3/P79.7 compilation
-    and P79.9 cross-repo validation. Consumers must not reimplement discovery
-    or materialization. The immediate TFL 6 instance keeps its public DEM
+    FHOPS P13 (`#188`). P79.1 (`#212`), P79.2 (`#213`), and P79.8 (`#349`) are
+    complete: `femic.lidar.catalog` owns discovery/AOI selection,
+    `femic.lidar.materialization` owns resumable Range downloads and the
+    `femic.lidar.materialization.v1` manifest, and `femic.lidar.products` owns
+    the `femic.lidar.product.v1` bundle, checksum validation,
+    `femic lidar bundle`, and `femic lidar inspect`. Next is P79.3 (`#214`)
+    terrain raster/slope APIs, followed by P79.4/P79.7 compilation and P79.9
+    cross-repo validation. Consumers must not reimplement discovery or
+    materialization. The immediate TFL 6 instance keeps its public DEM
     steep-slope repair lane until P79.6/P79.9 validate the shared product path.
   - `P78.6` / `#209` is complete: the optional document-figure recovery
     workflow is documented in `docs/guides/document-figure-recovery.rst`, the

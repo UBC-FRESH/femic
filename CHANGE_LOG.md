@@ -15158,3 +15158,33 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   LiDAR modules.
+
+## 2026-10-25 - P79.2 resumable LiDAR materialization (#213)
+
+- Added `femic.lidar.materialization` with the
+  `femic.lidar.materialization.v1` manifest and managed layout
+  `<root>/lidarbc/<product>/layer_<id>/<year>/<filename>`.
+- Implemented resumable Range downloads with `.part` files, ranged-`200`
+  restart, per-tile status/attempt/error state, and manifest writes before and
+  after each tile.
+- Added SHA-256 and size verification on completion, completeness reporting,
+  selection digest/tile-set pinning, path-escape checks, and missing/checksum
+  validation.
+- Added `femic lidar materialize` with `--plan-only`, `--max-tiles`,
+  `--timeout-sec`, `--fail-fast`, and `--manifest-path`, plus
+  `femic lidar materialization-status` with `--json` and `--require-complete`.
+- Added the materialization guide, technical contract page, curated API page,
+  CLI reference section, and roadmap/changelog updates.
+- Verification:
+  - `pytest tests/test_lidar_materialization.py
+    tests/test_lidar_materialization_helpers.py` passed (36 tests; 100% branch
+    coverage for `femic.lidar.materialization`).
+  - All 127 LiDAR tests passed; combined LiDAR branch coverage is 99%.
+  - Targeted `ruff check` passed for the new LiDAR modules and tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - `femic lidar --help` lists `materialize` and `materialization-status`.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR modules.
