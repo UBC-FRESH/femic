@@ -181,6 +181,23 @@ def test_provider_metadata_serializes_deterministically() -> None:
                     "Declare the FEMIC Woodstock CSV -> ws3 section-file bridge."
                 ),
             },
+            {
+                "id": "ws4_quality",
+                "inputs": ["dataset"],
+                "outputs": ["quality_report"],
+                "parameters": [
+                    "instance_root",
+                    "dataset",
+                    "sidecar",
+                    "targets",
+                    "check",
+                ],
+                "artifacts": ["quality_report"],
+                "name": "Apply and check ws4 provenance",
+                "description": (
+                    "Declare the instance provenance sidecar install and ws4 quality gate."
+                ),
+            },
         ],
         "name": "FEMIC model-build provider",
         "description": (
@@ -493,6 +510,51 @@ def test_provider_run_preserves_json_safe_non_string_artifact_metadata(
     assert result.artifacts["count"] == 3
     assert result.artifacts["metadata"] == {"kind": "declared"}
     json.dumps(result.to_dict())
+
+
+def test_ws4_quality_provider_builds_the_install_and_check_command() -> None:
+    from freshforge.execution import RunContext
+    from freshforge.records import RunStatus, WorkflowNode
+
+    commands: list[tuple[str, ...]] = []
+    provider = FemicFreshForgeProvider(command_runner=_successful_runner(commands))
+    node_type = next(
+        item for item in provider.metadata().node_types if item.id == "ws4_quality"
+    )
+    node = WorkflowNode(
+        id="quality",
+        provider="femic.ws4_quality",
+        parameters={
+            "instance_root": ".",
+            "dataset": "runtime/tsa46_full/matrix",
+            "sidecar": "config/dataset_quality.yaml",
+            "targets": "config/targets.tsa46_full.yaml",
+            "check": True,
+        },
+    )
+
+    result = provider.run_node(
+        node,
+        node_type,
+        context=RunContext(workflow_id="wf", workdir=Path(".")),
+    )
+
+    assert result.status is RunStatus.SUCCESS
+    assert commands == [
+        (
+            sys.executable,
+            "-m",
+            "ws4.cli",
+            "quality",
+            "--dataset",
+            "runtime/tsa46_full/matrix",
+            "--sidecar",
+            "config/dataset_quality.yaml",
+            "--targets",
+            "config/targets.tsa46_full.yaml",
+            "--check",
+        )
+    ]
 
 
 def test_legacy_execute_node_shim_delegates_to_run_node() -> None:

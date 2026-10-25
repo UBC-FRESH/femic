@@ -15098,3 +15098,7 @@
   conversion (ws3 Woodstock time-unit contract); engine runner honors
   `spec.harvest_acodes`.
 - Evidence record: `external/femic-tsa24-instance/evidence/p113_4_smoke_2026-10-12.md`.
+
+- P36.2: add the `femic.ws4_quality` FreshForge node contract and command builder. It runs
+  `ws4 quality` with `--sidecar`, optional `--targets`, and `--check`; the provider metadata and
+  exact command are covered by tests.
