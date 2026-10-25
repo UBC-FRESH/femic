@@ -40,3 +40,4 @@ Contract Pages
    lidar-canopy-products
    lidar-product-bundle
    climate-contract
+   disturbance-contract

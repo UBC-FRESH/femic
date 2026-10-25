@@ -3948,6 +3948,9 @@ Tasks:
     provenance summary, sample fixture, and docs.
   - [ ] Add the ClimateNA/SilvR21 adapter and wire the first consumer.
 - [ ] P116.2 Add `disturbance.v1` and a ws4 consumer (`#371`).
+  - [x] Add the `femic.contracts.disturbance` schema, validator, examples,
+    consumer rows, and docs.
+  - [ ] Add the actual ws4 loader and a scenario report.
 - [ ] P116.3 Add `efi.model.v1` model cards (`#372`).
 
 Acceptance: each schema has a validator, an example, and a failure test; each

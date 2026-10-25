@@ -1,6 +1,11 @@
 # Change Log
 
 ## 2026-10-25
+- P116.2: added `femic.contracts.disturbance` with the
+  `femic.disturbance.v1` event schema, validator, JSON reader/writer,
+  provenance summary, ws4-facing consumer rows, fire and NSR examples, and
+  contract/API pages. 18 focused tests pass; `sphinx-build -W` passes. The
+  actual ws4 loader and scenario report remain open.
 - P116.1: added `femic.contracts.climate` with the `femic.climate.v1` record
   schema, validator, CSV/JSON reader and writer, provenance summary, and a
   public-safe sample table. Added the contract and API pages. 16 focused tests

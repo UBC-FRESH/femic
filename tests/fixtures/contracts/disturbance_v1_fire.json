@@ -1,0 +1,31 @@
+{
+  "schema_version": "femic.disturbance.v1",
+  "event_id": "fire-2023-001",
+  "event_type": "fire",
+  "year": 2023,
+  "severity_class": "high",
+  "severity_value": 0.82,
+  "severity_basis": "dNBR",
+  "confidence": 0.95,
+  "attribution": "wildfire",
+  "attribution_method": "NBAC",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [-123.5, 54.0],
+        [-123.4, 54.0],
+        [-123.4, 54.1],
+        [-123.5, 54.1],
+        [-123.5, 54.0]
+      ]
+    ]
+  },
+  "fragment_ids": [1001, 1002],
+  "block_ids": [101],
+  "area_ha": 1200.0,
+  "source_id": "nbac",
+  "source_version": "2023.1",
+  "retrieved_utc": "2026-10-25T00:00:00+00:00",
+  "notes": "Synthetic contract fixture; not an observed fire."
+}
