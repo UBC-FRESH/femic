@@ -69,6 +69,7 @@ GUIDE_PAGES = [
     "hydrology-disturbance-ledger",
     "hydrology-tier0-screening",
     "hydrology-flood-frequency",
+    "hydrology-process-models",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -104,6 +105,7 @@ CONTRACT_PAGES = [
     "hydrology-disturbance-ledger",
     "hydrology-tier0-screening",
     "hydrology-flood-frequency",
+    "hydrology-process-models",
 ]
 
 NOTEBOOKS = [
@@ -1814,6 +1816,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Uncertainty And Caveats",
             "Cross-References",
         ],
+        "hydrology-process-models": [
+            "Purpose",
+            "Quick Contract",
+            "Scenario Manifest",
+            "Runtime Probing",
+            "Implemented Adapters",
+            "Output Contract",
+            "Execution",
+            "Licensing And Data",
+            "Cross-References",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1906,6 +1919,18 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "bootstrap",
             "not a regulatory flood map",
         ],
+        "hydrology-process-models": [
+            "femic.hydrology.process_scenario.v1",
+            "femic.hydrology.process_result.v1",
+            "DHSVM",
+            "RHESSys",
+            "CRHM",
+            "SUMMA",
+            "HEC-HMS",
+            "peak_flows.csv",
+            "receptor_metrics.csv",
+            "user-supplied",
+        ],
     }
 
     for slug in CONTRACT_PAGES:
@@ -1914,6 +1939,53 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             assert section in text, f"{slug}.rst missing required section: {section}"
         for marker in required_markers[slug]:
             assert marker in text, f"{slug}.rst missing required marker: {marker}"
+
+
+def test_hydrology_process_model_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "hydrology-process-models.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Model Boundaries",
+        "Scenario Manifest",
+        "Runtime Probing",
+        "Implemented Adapters",
+        "Running A Model",
+        "Normalized Outputs",
+        "External Runtime And Licensing",
+        "Limits",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.hydrology.process_scenario.v1",
+        "femic.hydrology.process_result.v1",
+        "DHSVM",
+        "RHESSys",
+        "CRHM",
+        "SUMMA",
+        "HEC-HMS",
+        "peak_flows.csv",
+        "receptor_metrics.csv",
+        "user-supplied",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-hydrology-process-models.rst").read_text(
+        encoding="utf-8"
+    )
+    for snippet in (
+        "femic.hydrology.process_models",
+        "build_scenario_manifest",
+        "plan_process_model_run",
+        "run_process_model",
+        "generated/femic.hydrology.process_models",
+        "hydrology-process-models",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-hydrology-process-models" in modules_text
 
 
 def test_hydrology_flood_guide_and_api_page_keep_required_contract() -> None:

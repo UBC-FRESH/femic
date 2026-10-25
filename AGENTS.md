@@ -101,6 +101,7 @@ For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/hydrology-disturbance-ledger.rst`
 - `docs/reference/contracts/hydrology-tier0-screening.rst`
 - `docs/reference/contracts/hydrology-flood-frequency.rst`
+- `docs/reference/contracts/hydrology-process-models.rst`
 
 ## Patchworks Model Semantics Guardrails
 

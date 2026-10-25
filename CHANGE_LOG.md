@@ -15257,3 +15257,33 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   hydrology modules.
+
+## 2026-10-25 - P114.6 process-model adapters (#357)
+
+- Added `femic.hydrology.process_models` with the
+  `femic.hydrology.process_scenario.v1` scenario manifest and
+  `femic.hydrology.process_result.v1` result contract.
+- Registered DHSVM, RHESSys, CRHM, SUMMA, and HEC-HMS boundaries.
+- Implemented executable adapters for DHSVM and SUMMA with explicit/env/PATH
+  runtime probing and no binary bundling.
+- Added scenario build/validate/load/write, run planning, execution, timeout,
+  stdout/stderr capture, and normalized peak-flow/receptor output parsing.
+- Added normalized `peak_flows.csv` and `receptor_metrics.csv` writers/readers.
+- Added the process-model guide, technical contract page, curated API page,
+  and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_process_models.py` passed (10 tests).
+  - 93% branch coverage for `femic.hydrology.process_models`.
+  - All 78 hydrology domain/bundle/disturbance/screening/flood/process tests
+    passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 60 passed; 3 pre-existing submodule/data failures.
+- No real DHSVM/SUMMA/RHESSys/CRHM/HEC-HMS binary was executed. Tests use a
+  fake executable and the normalized output fixture; real model integration is
+  optional P114.9 work.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.

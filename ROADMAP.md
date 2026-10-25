@@ -3366,8 +3366,12 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     `femic.hydrology.flood` provides GEV/LP3 and Poisson-GPD fits, paired
     baseline/treatment response ratios, nonstationary GEV location models,
     return-period response surfaces, bootstrap intervals, and benchmark
-    envelopes. Next is P114.6 (`#357`) process-model adapters. WS4 P49 and
-    FHOPS P14 stay uncreated until the response contract is stable.
+    envelopes. P114.6 (`#357`) is complete: `femic.hydrology.process_models`
+    defines the process-scenario manifest, DHSVM/SUMMA executable adapters,
+    runtime probing, normalized peak-flow/receptor outputs, and the external
+    runtime/licensing boundary. Next is P114.7 (`#358`) surrogate training and
+    applicability domains. WS4 P49 and FHOPS P14 stay uncreated until the
+    response contract is stable.
   - `P106` / `#288` is complete and merged: parent PR `#289`, parent issue
     `#288`, MKRF PR `UBC-FRESH/femic-mkrf-instance#51`, and MKRF issue
     `UBC-FRESH/femic-mkrf-instance#50` are closed. MKRF is the second
@@ -3929,7 +3933,7 @@ Tasks:
 - [x] P114.3 Build the harvest/road/retention disturbance ledger (`#354`).
 - [x] P114.4 Add Tier 0 screening metrics and caveats (`#355`).
 - [x] P114.5 Add stochastic flood-frequency response surfaces (`#356`).
-- [ ] P114.6 Add process-model adapters and scenario manifests (`#357`).
+- [x] P114.6 Add process-model adapters and scenario manifests (`#357`).
 - [ ] P114.7 Add surrogate training, validation, and applicability domains
   (`#358`).
 - [ ] P114.8 Package hydrologic response and flood-risk bundles (`#359`).

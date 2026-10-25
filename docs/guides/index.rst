@@ -23,6 +23,7 @@ export modules.
    hydrology-disturbance-ledger
    hydrology-tier0-screening
    hydrology-flood-frequency
+   hydrology-process-models
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery
