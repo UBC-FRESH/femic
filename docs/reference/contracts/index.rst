@@ -34,3 +34,4 @@ Contract Pages
    stage-boundaries-and-canonical-artifacts
    recovery-and-external-runtime-boundaries
    lidar-source-and-tile-index
+   lidar-product-bundle

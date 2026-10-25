@@ -86,14 +86,46 @@ external-data root.
 Dependency boundary: discovery uses the Python standard library. Terrain and
 canopy processing dependencies are selected in P79.3/P79.7.
 
+## P79.8 implementation
+
+Add `femic.lidar.products` with:
+
+- `femic.lidar.product_plan.v1` input plans.
+- `femic.lidar.product.v1` manifests and `femic.lidar.bundle.v1` layout.
+- Deterministic `bundle_id` from selection digest, bundle/processing versions,
+  and packaged product metadata/checksums.
+- Per-product SHA-256, size, CRS, native resolution, vertical datum, licence,
+  source tiles/layers, derived flag, and lineage.
+- `femic lidar bundle` and `femic lidar inspect` CLI surfaces.
+- `validate_lidar_product_bundle` with checksum, licence, CRS, resolution,
+  derived-labelling, provenance, and source-tile checks.
+- A public-safe bounded AOI fixture with DEM, DSM, CHM, and canopy artifacts.
+
+Bundle layout:
+
+```text
+<bundle>/
+  manifest.json
+  provenance/selection.json
+  products/<product>__<index>__<filename>
+```
+
+P79.8 packages compiled products only. It does not download tiles or compile
+rasters. P79.2 and P79.3/P79.7 remain the materialization and compilation
+phases.
+
+The consumer pin rule is: pin `bundle_id` and `bundle_version`, then verify
+each product `sha256`. WS4 P43 and FHOPS P13 must honor the recorded CRS,
+resolution, and vertical datum and must not re-run discovery or
+materialization.
+
 ## Current edge
 
-1. P79.1 source/tile-index contract and tests.
-2. P79.8 product manifest and bundle layout against the P79.1 selection
-   manifest.
+1. P79.1 source/tile-index contract and tests (complete).
+2. P79.8 product manifest, bundle, CLI, and fixture (complete).
 3. P79.2 materialization.
 4. P79.3/P79.7 terrain and canopy products.
 5. P79.9 cross-repo validation with WS4/FHOPS.
 
-Do not start consumer integration in WS4/FHOPS until the P79.8 manifest is
-stable.
+Do not start consumer integration in WS4/FHOPS until a real shared bundle
+passes both consumer contracts.

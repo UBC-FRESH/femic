@@ -15128,3 +15128,33 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   LiDAR module.
+
+## 2026-10-25 - P79.8 versioned LiDAR product bundles (#349)
+
+- Added `femic.lidar.products` with the `femic.lidar.product.v1` manifest,
+  `femic.lidar.bundle.v1` layout, and `femic.lidar.product_plan.v1` input plan.
+- Bundles now carry selection provenance, source descriptors, processing
+  lineage, per-product SHA-256/size, CRS, native resolution, vertical datum,
+  retrieval date, licence, source tiles/layers, and derived-product lineage.
+- Added deterministic bundle identity from the selection digest, bundle and
+  processing versions, and packaged product metadata/checksums.
+- Added `femic lidar bundle` and `femic lidar inspect`, plus
+  `build_lidar_product_bundle` and `validate_lidar_product_bundle`.
+- Added safe overwrite handling, path-escape checks, source-tile membership
+  checks, licence/CRS enforcement, and consumer pinning docs for WS4 P43 and
+  FHOPS P13.
+- Added a public-safe bounded AOI fixture under `tests/fixtures/lidar` with DEM,
+  DSM, CHM, and canopy artifacts and a deterministic reproducibility test.
+- Verification:
+  - `pytest tests/test_lidar_products.py tests/test_lidar_products_helpers.py
+    tests/test_lidar_catalog.py tests/test_lidar_catalog_helpers.py` passed
+    (91 tests; 100% branch coverage for `femic.lidar.products`).
+  - Targeted `ruff check` passed for the new LiDAR modules and tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - CLI smoke: `femic lidar bundle` built the fixture bundle and
+    `femic lidar inspect --json` returned a valid four-product report.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR modules.

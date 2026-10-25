@@ -377,6 +377,38 @@ Subcommands
 - ``--report-preset TEXT`` (default: ``tsr-unattended-default``)
 - ``--instance-root PATH``
 
+LiDAR
+-----
+
+.. code-block:: text
+
+   python -m femic lidar [OPTIONS] COMMAND [ARGS]...
+
+Subcommands
+
+- ``bundle``: ``python -m femic lidar bundle [OPTIONS]``
+- ``inspect``: ``python -m femic lidar inspect [OPTIONS] BUNDLE_DIR``
+
+``lidar bundle`` options
+
+- ``--selection-manifest PATH`` (required; P79.1 LidarBC selection manifest)
+- ``--product-plan PATH`` (required; ``femic.lidar.product_plan.v1`` JSON plan)
+- ``--output-dir PATH`` (required; destination bundle directory)
+- ``--overwrite / --no-overwrite`` (default: ``--no-overwrite``; replace an existing FEMIC LiDAR bundle only)
+- ``--generated-utc TEXT`` (optional fixed ``created_utc`` for reproducible fixture builds)
+
+``lidar inspect`` options
+
+- ``BUNDLE_DIR`` argument (required; existing FEMIC LiDAR product bundle)
+- ``--json`` (print the validation report as JSON; exits non-zero when invalid)
+
+``femic lidar bundle`` packages already-compiled terrain, canopy, or point-cloud
+artifacts against a P79.1 selection. It writes ``manifest.json``, copies the
+canonical selection to ``provenance/selection.json``, and records a SHA-256 for
+every file under ``products/``. It does not download tiles or compile rasters.
+See ``docs/guides/lidar-product-bundles.rst`` and
+``docs/reference/contracts/lidar-product-bundle.rst``.
+
 TIPSY
 -----
 

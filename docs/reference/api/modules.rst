@@ -47,6 +47,7 @@ Current curated pages in this section include ``femic.instance_context``,
 ``femic.bcdc_fetch``,
 ``femic.bcdc_dwds``,
 ``femic.lidar.catalog``,
+``femic.lidar.products``,
 ``femic.document_figures``,
 ``femic.freshforge``,
 ``femic.freshforge_materialization``,
@@ -64,6 +65,7 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-bcdc-fetch
    femic-bcdc-dwds
    femic-lidar
+   femic-lidar-products
    femic-document-figures
    femic-freshforge
    femic-freshforge-materialization

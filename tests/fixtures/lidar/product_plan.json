@@ -1,0 +1,95 @@
+{
+  "schema_version": "femic.lidar.product_plan.v1",
+  "bundle_version": "2026.10.0-fixture",
+  "processing_version": "femic-p79.8-fixture-v1",
+  "processing_lineage": [
+    "femic.lidar.selection.v1",
+    "femic-p79.8-fixture"
+  ],
+  "parameters": {
+    "resampling": "none",
+    "vertical_datum": "CGVD2013"
+  },
+  "products": [
+    {
+      "product": "dem",
+      "path": "products/dem.asc",
+      "media_type": "text/plain",
+      "crs": "EPSG:3005",
+      "resolution_m": 1.0,
+      "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+      "source_tile_ids": [
+        "lidarbc:5:1"
+      ],
+      "source_layer_ids": [
+        5
+      ],
+      "derived": false,
+      "lineage": [
+        "LidarBC DEM 1:2,500"
+      ],
+      "retrieved_utc": "2026-10-24T00:00:00+00:00"
+    },
+    {
+      "product": "dsm",
+      "path": "products/dsm.asc",
+      "media_type": "text/plain",
+      "crs": "EPSG:3005",
+      "resolution_m": 1.0,
+      "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+      "source_tile_ids": [
+        "lidarbc:1:1"
+      ],
+      "source_layer_ids": [
+        1
+      ],
+      "derived": false,
+      "lineage": [
+        "LidarBC DSM 1:2,500"
+      ],
+      "retrieved_utc": "2026-10-24T00:00:00+00:00"
+    },
+    {
+      "product": "chm",
+      "path": "products/chm.asc",
+      "media_type": "text/plain",
+      "crs": "EPSG:3005",
+      "resolution_m": 1.0,
+      "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+      "source_tile_ids": [
+        "lidarbc:1:1",
+        "lidarbc:5:1"
+      ],
+      "source_layer_ids": [
+        1,
+        5
+      ],
+      "derived": true,
+      "lineage": [
+        "DSM minus DEM"
+      ],
+      "retrieved_utc": "2026-10-24T00:00:00+00:00"
+    },
+    {
+      "product": "canopy",
+      "path": "products/canopy.csv",
+      "media_type": "text/csv",
+      "crs": "EPSG:3005",
+      "resolution_m": 1.0,
+      "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+      "source_tile_ids": [
+        "lidarbc:1:1",
+        "lidarbc:5:1"
+      ],
+      "source_layer_ids": [
+        1,
+        5
+      ],
+      "derived": true,
+      "lineage": [
+        "Fixture canopy metrics derived from CHM"
+      ],
+      "retrieved_utc": "2026-10-24T00:00:00+00:00"
+    }
+  ]
+}

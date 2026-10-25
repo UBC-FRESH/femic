@@ -117,6 +117,11 @@ from femic.instance_context import (
     InstanceContext,
     resolve_instance_context,
 )
+from femic.lidar.products import (
+    LidarProductError,
+    build_lidar_product_bundle,
+    validate_lidar_product_bundle,
+)
 from femic.named_pipelines import (
     NamedPipelineError,
     NamedPipelineExecutionResult,
@@ -371,6 +376,11 @@ data_app = typer.Typer(
     no_args_is_help=True,
     help="Resolve and collect BC Data Catalogue source-data candidates.",
 )
+lidar_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Build and inspect versioned LidarBC product bundles.",
+)
 doc_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
@@ -471,6 +481,50 @@ BCDC_LIMIT_OPTION = typer.Option(
     "--limit",
     min=1,
     help="Maximum ranked package matches to keep per query.",
+)
+LIDAR_SELECTION_MANIFEST_OPTION = typer.Option(
+    ...,
+    "--selection-manifest",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="P79.1 LidarBC selection manifest to package.",
+)
+LIDAR_PRODUCT_PLAN_OPTION = typer.Option(
+    ...,
+    "--product-plan",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="JSON product plan with artifact paths, metadata, and lineage.",
+)
+LIDAR_BUNDLE_OUTPUT_OPTION = typer.Option(
+    ...,
+    "--output-dir",
+    help="Destination directory for the versioned product bundle.",
+)
+LIDAR_BUNDLE_OVERWRITE_OPTION = typer.Option(
+    False,
+    "--overwrite/--no-overwrite",
+    help="Replace an existing FEMIC LiDAR product bundle at the output path.",
+)
+LIDAR_GENERATED_UTC_OPTION = typer.Option(
+    None,
+    "--generated-utc",
+    help="Optional fixed created_utc timestamp for reproducible fixture builds.",
+    show_default=False,
+)
+LIDAR_INSPECT_JSON_OPTION = typer.Option(
+    False,
+    "--json",
+    help="Print the validation report as JSON.",
+)
+LIDAR_BUNDLE_DIR_ARGUMENT = typer.Argument(
+    ...,
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="Existing FEMIC LiDAR product bundle directory.",
 )
 BCDC_BBOX_OPTION = typer.Option(
     None,
@@ -4035,6 +4089,69 @@ def instance_config_show() -> None:
     console.print(f"user_instance_root: {config.paths.user_instance_root}")
     console.print(f"default_managed_external_root: {defaults.managed_external_root}")
     console.print(f"default_user_instance_root: {defaults.user_instance_root}")
+
+
+@lidar_app.command("bundle")
+def lidar_bundle(
+    selection_manifest: Path = LIDAR_SELECTION_MANIFEST_OPTION,
+    product_plan: Path = LIDAR_PRODUCT_PLAN_OPTION,
+    output_dir: Path = LIDAR_BUNDLE_OUTPUT_OPTION,
+    overwrite: bool = LIDAR_BUNDLE_OVERWRITE_OPTION,
+    generated_utc: str | None = LIDAR_GENERATED_UTC_OPTION,
+) -> None:
+    """Package compiled LiDAR products as a versioned consumer bundle."""
+
+    try:
+        result = build_lidar_product_bundle(
+            selection_manifest_path=selection_manifest,
+            product_plan_path=product_plan,
+            output_dir=output_dir,
+            overwrite=overwrite,
+            generated_utc=generated_utc,
+        )
+    except (LidarProductError, OSError) as exc:
+        console.print(f"[red]LiDAR bundle error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]LiDAR product bundle built[/green]")
+    console.print(f"bundle_dir: {result.bundle_dir}")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(f"bundle_id: {result.manifest.bundle_id}")
+    console.print(f"bundle_version: {result.manifest.bundle_version}")
+    console.print(f"products: {result.manifest.product_count}")
+    console.print(f"total_size: {_format_binary_size(result.manifest.total_bytes)}")
+
+
+@lidar_app.command("inspect")
+def lidar_inspect(
+    bundle_dir: Path = LIDAR_BUNDLE_DIR_ARGUMENT,
+    json_output: bool = LIDAR_INSPECT_JSON_OPTION,
+) -> None:
+    """Validate a LiDAR product bundle and print its checksum report."""
+
+    validation = validate_lidar_product_bundle(bundle_dir)
+    if json_output:
+        typer.echo(json.dumps(validation.to_dict(), indent=2, sort_keys=True))
+    else:
+        console.print("[bold]LiDAR product bundle inspection[/bold]")
+        console.print(f"bundle_dir: {validation.bundle_dir}")
+        console.print(f"bundle_id: {validation.bundle_id}")
+        console.print(f"bundle_version: {validation.bundle_version}")
+        console.print(f"products: {validation.product_count}")
+        console.print(f"total_size: {_format_binary_size(validation.total_bytes)}")
+        if validation.warnings:
+            for warning in validation.warnings:
+                console.print(f"[yellow]warning:[/yellow] {warning}")
+        if validation.errors:
+            for error in validation.errors:
+                console.print(f"[red]error:[/red] {error}")
+        console.print(
+            "[green]LiDAR product bundle is valid[/green]"
+            if validation.is_valid
+            else "[red]LiDAR product bundle is invalid[/red]"
+        )
+    if not validation.is_valid:
+        raise typer.Exit(code=1)
 
 
 @data_app.command("bcdc-resolve")
@@ -10520,6 +10637,7 @@ app.add_typer(tsa_app, name="tsa")
 app.add_typer(tipsy_app, name="tipsy")
 app.add_typer(fansier_app, name="fansier")
 app.add_typer(data_app, name="data")
+app.add_typer(lidar_app, name="lidar")
 doc_app.add_typer(doc_figures_app, name="figures")
 app.add_typer(doc_app, name="doc")
 app.add_typer(pipelines_app, name="pipelines")

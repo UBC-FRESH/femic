@@ -65,6 +65,7 @@ GUIDE_PAGES = [
     "interpret-rebuild-reports",
     "data-access-inventory",
     "lidar-data-products",
+    "lidar-product-bundles",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -96,6 +97,7 @@ CONTRACT_PAGES = [
     "stage-boundaries-and-canonical-artifacts",
     "recovery-and-external-runtime-boundaries",
     "lidar-source-and-tile-index",
+    "lidar-product-bundle",
 ]
 
 NOTEBOOKS = [
@@ -210,6 +212,47 @@ def test_lidar_guide_and_api_page_keep_required_contract() -> None:
     assert "femic-lidar" in (API_ROOT / "modules.rst").read_text(encoding="utf-8")
 
 
+def test_lidar_product_bundle_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-product-bundles.rst").read_text(encoding="utf-8")
+    for heading in (
+        "Purpose",
+        "Bundle Layout",
+        "Build From A Selection",
+        "Manifest Contract",
+        "Reproducibility And Pinning",
+        "Validation",
+        "WS4 P43 And FHOPS P13 Consumer Contract",
+        "Storage And Delivery",
+        "Bounded AOI Fixture",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.lidar.product.v1",
+        "femic.lidar.bundle.v1",
+        "femic.lidar.product_plan.v1",
+        "femic lidar bundle",
+        "femic lidar inspect",
+        "provenance/selection.json",
+        "sha256",
+        "WS4 P43",
+        "FHOPS P13",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-lidar-products.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.lidar.products",
+        "build_lidar_product_bundle",
+        "validate_lidar_product_bundle",
+        "generated/femic.lidar.products",
+        "lidar-product-bundle",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-lidar-products" in modules_text
+
+
 def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
     guide_text = (GUIDES_ROOT / "bc-data-catalogue-discovery.rst").read_text(
         encoding="utf-8"
@@ -277,6 +320,12 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "python -m femic data bcdc-resolve",
         "python -m femic data bcdc-fetch",
         "python -m femic data bcdc-order",
+        "python -m femic lidar bundle",
+        "python -m femic lidar inspect",
+        "--selection-manifest PATH",
+        "--product-plan PATH",
+        "--overwrite / --no-overwrite",
+        "femic.lidar.product_plan.v1",
         "python -m femic tsr index",
         "python -m femic tsr fetch",
         "python -m femic tsr extract",
@@ -1806,6 +1855,17 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Unsupported Sources",
             "See Also",
         ],
+        "lidar-product-bundle": [
+            "Purpose",
+            "Quick Contract",
+            "Bundle Layout",
+            "Manifest Schema",
+            "Versioning And Pinning",
+            "Validation Rules",
+            "Consumer Contract",
+            "Storage And Delivery",
+            "See Also",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1848,6 +1908,18 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "WS4 P43",
             "FHOPS P13",
             "No tile bytes",
+        ],
+        "lidar-product-bundle": [
+            "femic.lidar.product.v1",
+            "femic.lidar.bundle.v1",
+            "femic.lidar.product_plan.v1",
+            "bundle_id",
+            "sha256",
+            "retrieved_utc",
+            "provenance/selection.json",
+            "OGL-BC",
+            "WS4 P43",
+            "FHOPS P13",
         ],
     }
 
