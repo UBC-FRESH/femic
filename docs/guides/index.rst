@@ -33,6 +33,7 @@ export modules.
    btc-fansier-runtime-and-extraction
    model-input-bundle-and-export
    carbon-export
+   gcbm-export
    patchworks-variant-and-scenario-management
    diagnostics-playbook
    troubleshooting

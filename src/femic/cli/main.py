@@ -117,6 +117,12 @@ from femic.fmg import (
     export_patchworks_package,
     export_woodstock_package,
 )
+from femic.gcbm import (
+    GcbmExportConfig,
+    GcbmExportError,
+    export_gcbm_project,
+    validate_gcbm_project,
+)
 from femic.geospatial_preflight import run_geospatial_preflight
 from femic.glb import build_tsa_raw_glb
 from femic.instance_bootstrap import bootstrap_instance_workspace
@@ -1402,6 +1408,116 @@ CARBON_VOLUME_FEATURE_LABEL_OPTION = typer.Option(
     "feature.Volume",
     "--volume-feature-label",
     help="WS4 feature label that carries merchantable volume.",
+)
+GCBM_CARBON_PACKAGE_OPTION = typer.Option(
+    Path("output/carbon/tsa24"),
+    "--carbon-package",
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="FEMIC carbon package used for the yield table.",
+)
+GCBM_OUTPUT_DIR_OPTION = typer.Option(
+    Path("output/gcbm"),
+    "--output-dir",
+    help="Destination directory for the walltowall project.",
+)
+GCBM_AIDB_OPTION = typer.Option(
+    None,
+    "--aidb",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="CBM defaults SQLite AIDB; detected from libcbm when omitted.",
+    show_default=False,
+)
+GCBM_START_YEAR_OPTION = typer.Option(
+    2020,
+    "--start-year",
+    help="First GCBM simulation year.",
+)
+GCBM_END_YEAR_OPTION = typer.Option(
+    2030,
+    "--end-year",
+    help="Last GCBM simulation year.",
+)
+GCBM_RESOLUTION_OPTION = typer.Option(
+    0.001,
+    "--resolution",
+    help="Output cell size in degrees.",
+)
+GCBM_EPSG_OPTION = typer.Option(
+    4326,
+    "--epsg",
+    help="Output CRS EPSG code.",
+)
+GCBM_CHECKPOINT_CRS_OPTION = typer.Option(
+    "EPSG:3005",
+    "--checkpoint-crs",
+    help="CRS assigned to the checkpoint when it has none.",
+)
+GCBM_MEAN_ANNUAL_TEMPERATURE_OPTION = typer.Option(
+    3.0,
+    "--mean-annual-temperature",
+    help="Fallback mean annual temperature when the checkpoint has no MAT column.",
+)
+GCBM_INITIAL_AGE_CAP_OPTION = typer.Option(
+    None,
+    "--initial-age-cap",
+    help="Clamp initial ages; defaults to the package maximum yield age.",
+    show_default=False,
+)
+GCBM_PROJECT_NAME_OPTION = typer.Option(
+    None,
+    "--project-name",
+    help="walltowall project name; derived from the package id when omitted.",
+    show_default=False,
+)
+GCBM_AU_OPTION = typer.Option(
+    None,
+    "--au",
+    help="Limit the export to one or more AU ids; repeat the option.",
+    show_default=False,
+)
+GCBM_MAX_FRAGMENTS_OPTION = typer.Option(
+    None,
+    "--max-fragments",
+    help="Cap inventory polygons for a bounded smoke export.",
+    show_default=False,
+)
+GCBM_DISTURBANCE_OPTION = typer.Option(
+    None,
+    "--disturbance",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="Optional vector with year, disturbance_type, and geometry columns.",
+    show_default=False,
+)
+GCBM_TEMPLATES_OPTION = typer.Option(
+    None,
+    "--gcbm-templates",
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="Optional walltowall GCBM config template directory.",
+    show_default=False,
+)
+GCBM_EXE_OPTION = typer.Option(
+    None,
+    "--gcbm-exe",
+    help="Optional GCBM executable recorded in the walltowall configuration.",
+    show_default=False,
+)
+GCBM_ALLOW_AIDB_MISMATCH_OPTION = typer.Option(
+    False,
+    "--allow-aidb-mismatch",
+    help="Allow an AIDB hash that differs from the carbon package.",
+)
+GCBM_NO_COPY_AIDB_OPTION = typer.Option(
+    False,
+    "--no-copy-aidb",
+    help="Reference the AIDB in place instead of copying it into the project.",
 )
 EXPORT_INITIAL_AGE_CAP_OPTION = typer.Option(
     None,
@@ -8520,6 +8636,93 @@ def carbon_export_package(
     console.print(f"package_dir: {result.package_dir}")
     console.print(f"manifest: {result.manifest_path}")
     console.print(f"fingerprint: {result.fingerprint}")
+
+
+@export_app.command("gcbm")
+def export_gcbm(
+    checkpoint: Path = EXPORT_CHECKPOINT_OPTION,
+    carbon_package: Path = GCBM_CARBON_PACKAGE_OPTION,
+    output_dir: Path = GCBM_OUTPUT_DIR_OPTION,
+    aidb: Path | None = GCBM_AIDB_OPTION,
+    start_year: int = GCBM_START_YEAR_OPTION,
+    end_year: int = GCBM_END_YEAR_OPTION,
+    resolution: float = GCBM_RESOLUTION_OPTION,
+    epsg: int = GCBM_EPSG_OPTION,
+    checkpoint_crs: str = GCBM_CHECKPOINT_CRS_OPTION,
+    mean_annual_temperature: float = GCBM_MEAN_ANNUAL_TEMPERATURE_OPTION,
+    initial_age_cap: int | None = GCBM_INITIAL_AGE_CAP_OPTION,
+    project_name: str | None = GCBM_PROJECT_NAME_OPTION,
+    au: list[int] | None = GCBM_AU_OPTION,
+    max_fragments: int | None = GCBM_MAX_FRAGMENTS_OPTION,
+    disturbance: Path | None = GCBM_DISTURBANCE_OPTION,
+    gcbm_templates: Path | None = GCBM_TEMPLATES_OPTION,
+    gcbm_exe: Path | None = GCBM_EXE_OPTION,
+    allow_aidb_mismatch: bool = GCBM_ALLOW_AIDB_MISMATCH_OPTION,
+    no_copy_aidb: bool = GCBM_NO_COPY_AIDB_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Export a GCBM walltowall project from a checkpoint and carbon package."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_checkpoint = instance_context.resolve_path(checkpoint)
+    resolved_package = instance_context.resolve_path(carbon_package)
+    resolved_output = instance_context.resolve_path(output_dir)
+    resolved_aidb = instance_context.resolve_path(aidb) if aidb is not None else None
+    resolved_disturbance = (
+        instance_context.resolve_path(disturbance) if disturbance is not None else None
+    )
+    resolved_templates = (
+        instance_context.resolve_path(gcbm_templates)
+        if gcbm_templates is not None
+        else None
+    )
+    resolved_exe = (
+        instance_context.resolve_path(gcbm_exe) if gcbm_exe is not None else None
+    )
+    try:
+        result = export_gcbm_project(
+            GcbmExportConfig(
+                checkpoint_path=resolved_checkpoint,
+                carbon_package_dir=resolved_package,
+                output_dir=resolved_output,
+                aidb_path=resolved_aidb,
+                start_year=start_year,
+                end_year=end_year,
+                resolution=resolution,
+                epsg=epsg,
+                checkpoint_crs=checkpoint_crs,
+                mean_annual_temperature=mean_annual_temperature,
+                initial_age_cap=initial_age_cap,
+                project_name=project_name,
+                au_filter=tuple(au or ()),
+                max_fragments=max_fragments,
+                disturbance_path=resolved_disturbance,
+                gcbm_templates=resolved_templates,
+                gcbm_exe=resolved_exe,
+                allow_aidb_mismatch=allow_aidb_mismatch,
+                copy_aidb=not no_copy_aidb,
+            )
+        )
+        issues = validate_gcbm_project(result.project_dir)
+        if issues:
+            raise GcbmExportError("project validation failed: " + "; ".join(issues))
+    except (FileNotFoundError, GcbmExportError, ValueError) as exc:
+        console.print(f"[red]GCBM export failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(
+        "[green]GCBM export prepared[/green] "
+        f"fragments={result.fragments} tracks={result.tracks} "
+        f"area_ha={result.area_ha:.1f}"
+    )
+    console.print(f"project: {result.project_dir}")
+    console.print(f"config: {result.config_path}")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(f"aidb: {result.aidb_path}")
+    if not result.aidb_matches_package:
+        console.print(
+            "[yellow]warning:[/yellow] AIDB hash does not match the carbon package"
+        )
+    for warning in result.warnings:
+        console.print(f"[yellow]warning:[/yellow] {warning}")
 
 
 @export_app.command("ws3-sections")

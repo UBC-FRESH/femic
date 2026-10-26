@@ -15176,3 +15176,25 @@
   the carbon modules are clean under `mypy` and targeted `ruff`. The full suite still has
   unrelated environment/data failures in K3Z/TSR/patchworks/annex tests.
 - P115.1 crosswalk science review remains open; the config records `review.status: draft`.
+
+## 2026-10-26 - P115.4 GCBM walltowall export
+
+- Added `femic/gcbm/export.py` and `femic export gcbm`: a walltowall JSON,
+  `inventory.gpkg`, wide `yield.csv`, optional `disturbances.gpkg`, copied SQLite AIDB,
+  and a hashed manifest.
+- Selects one baseline package track per AU/IFM and emits dense small classifier codes
+  (`Classifier1` 1..N, `Classifier2` 1/0). Raw AU ids were found to become
+  `2.401005e+6` in the Float32 raster and break GCBM growth-curve lookup.
+- Reprojects EPSG:3005 checkpoints to EPSG:4326, clamps initial ages to the package yield
+  grid, records a constant MAT fallback, verifies the AIDB hash against the carbon package,
+  and clips optional disturbances to the simulation window.
+- Added `validate_gcbm_project`, six exporter tests, and `docs/guides/gcbm-export.rst`.
+- Real TSA24 smoke: 500 fragments of AU 2401005, 2 tracks, 4,789.8 ha at 0.005 degrees.
+  The bundled walltowall/GCBM stack was installed under Wine; `walltowall prepare` produced
+  `gcbm_input.db` and `gcbm_project` (with an external serial-pool workaround for Wine's
+  multiprocessing handle limit). GCBM ran 2020-2030 with 276 processed land units, 196 result
+  locations, 0 errors in 107 s; WS4 read 12 steps, 1,489,453.2 -> 1,504,436.7 tC.
+- Verification: six GCBM tests pass; the GCBM module is clean under `mypy` and targeted
+  `ruff`; `sphinx-build -W` passes. Report: `notes/reports/p1154-gcbm-export.md`.
+- Caveat: MAT is a constant placeholder, one baseline species/curve per AU/IFM, and the
+  Wine pool workaround is external to FEMIC.
