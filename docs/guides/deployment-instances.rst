@@ -251,6 +251,33 @@ Refresh the TSA29 example submodule to latest upstream commit:
 
    git submodule update --remote external/femic-tsa29-instance
 
+AFRF Block Instance Repositories
+--------------------------------
+
+FEMIC links two standalone ws4 model instances for the UBC Alex Fraser Research
+Forest:
+
+- ``https://github.com/UBC-FRESH/femic-afrf-gavinlake-instance``
+- ``https://github.com/UBC-FRESH/femic-afrf-knifecreek-instance``
+
+The same repositories are linked back into FEMIC via git submodules:
+
+- ``external/femic-afrf-gavinlake-instance``
+- ``external/femic-afrf-knifecreek-instance``
+
+These are block-level ws4 instances, not canonical FEMIC rebuilds. Gavin Lake
+uses a legacy Patchworks matrix and the ws4 ingest path. Knife Creek uses FVS-BC
+through ``fresh-fvsbc`` and a state-transition library because it is an
+uneven-aged continuous-cover problem. The blocks stay separate until a later
+merged model is scoped.
+
+Refresh either submodule to its latest upstream commit:
+
+.. code-block:: bash
+
+   git submodule update --remote external/femic-afrf-gavinlake-instance
+   git submodule update --remote external/femic-afrf-knifecreek-instance
+
 Working With Bundled Example Instances Under ``external/``
 ----------------------------------------------------------
 
