@@ -1,7 +1,7 @@
 # Phase 115: Forest carbon domain, CBM packages, and GCBM export
 
-Status: active
-Branch: `feature/p115-forest-carbon`
+Status: complete (merged in PR #394 as `30b1444`)
+Branch: `feature/p115-forest-carbon` (merged and deleted)
 Parent issue: #361
 Related: `UBC-FRESH/ws4` Phase 51; `UBC-FRESH/ws3` libcbm reference lane
 
