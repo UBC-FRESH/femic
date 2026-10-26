@@ -1,6 +1,16 @@
 # Change Log
 
 ## 2026-10-26
+- P119.1: added `femic.site_index` and the
+  `femic.site-index.reconciliation.v1` report. It loads the public SIBEC 2013
+  approximation, reads VRI `SITE_INDEX`/`EST_SITE_INDEX`, reads VDYP
+  primary-layer site index, maps BEC units and species, and reports source
+  coverage, pairwise deltas, SIBEC-range exceedance, conflict flags, and a
+  documented reference value. The TSA46 pilot covers 171,826 VRI features;
+  136,807 match SIBEC, 3,384 have a VDYP primary-layer SI, 2,285 have complete
+  triple coverage, and 25,643 are flagged at the 2.0 m threshold. The 2014
+  SIBEC addendum and AU-level TSA SI reconciliation remain follow-ups. Added
+  contract, guide, API, roadmap, and focused tests; no curve or AAC changes.
 - P117.1: added `femic.efi.application` with the
   `femic.efi.coefficients.v1` contract, linear prediction, applicability
   checks, domain flagging/dropping, and a bias/RMSE/MAE/R-squared backtest.
