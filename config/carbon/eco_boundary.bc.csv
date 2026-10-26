@@ -1,11 +1,11 @@
 tsa_code,tsa_name,admin_boundary,eco_boundary,confidence,source,notes
-08,Okanagan,British Columbia,Montane Cordillera,medium,BC TSA list; CBM eco-boundary names,Confirm against the instance BEC metadata.
-16,Kamloops,British Columbia,Montane Cordillera,medium,BC TSA list; CBM eco-boundary names,Confirm against the instance BEC metadata.
-24,Quesnel,British Columbia,Montane Cordillera,high,BC TSA list; CBM eco-boundary names,TSA24 parity fixture.
-29,Williams Lake,British Columbia,Montane Cordillera,high,BC TSA list; CBM eco-boundary names,
-40,Kootenay Lake,British Columbia,Montane Cordillera,medium,BC TSA list; CBM eco-boundary names,Confirm against the instance BEC metadata.
-41,Boundary,British Columbia,Montane Cordillera,medium,BC TSA list; CBM eco-boundary names,Confirm against the instance BEC metadata.
-46,Sunshine Coast,British Columbia,Pacific Maritime,medium,BC TSA list; CBM eco-boundary names,Confirm against the instance BEC metadata.
-47,Arrowsmith,British Columbia,Pacific Maritime,medium,BC TSA list; CBM eco-boundary names,Confirm against the instance BEC metadata.
-48,North Island,British Columbia,Pacific Maritime,high,BC TSA list; CBM eco-boundary names,
-mkrf,Mackenzie Forest District,British Columbia,Pacific Maritime,medium,Instance metadata; CBM eco-boundary names,Legacy FMU-style instance; confirm the BEC boundary.
+08,Fort Nelson,British Columbia,Taiga Plains,low,BCGW FADM_TSA + AAFC Terrestrial Ecozones (2026-10-26),Dominant 54.9%; Boreal Cordillera 45.1%; split required.
+16,MacKenzie,British Columbia,Boreal Cordillera,low,BCGW FADM_TSA + AAFC Terrestrial Ecozones (2026-10-26),Boreal Cordillera 55.6%; Montane Cordillera 44.4%; split required.
+24,Prince George,British Columbia,Montane Cordillera,medium,BCGW FADM_TSA + AAFC Terrestrial Ecozones (2026-10-26),Montane Cordillera 98.33%; Boreal Cordillera 1.67%.
+29,Williams Lake,British Columbia,Montane Cordillera,medium,BCGW FADM_TSA + AAFC Terrestrial Ecozones (2026-10-26),Montane Cordillera 96.84%; Pacific Maritime 3.16%.
+40,Fort St. John,British Columbia,Boreal Plains,low,BCGW FADM_TSA + AAFC Terrestrial Ecozones (2026-10-26),Boreal Plains 53.5%; Taiga Plains 29.1%; Boreal Cordillera 10.0%; Montane Cordillera 7.3%; split required.
+41,Dawson Creek,British Columbia,Montane Cordillera,low,BCGW FADM_TSA + AAFC Terrestrial Ecozones (2026-10-26),Montane Cordillera 52.0%; Boreal Plains 48.0%; split required.
+46,GBR North,British Columbia,Pacific Maritime,medium,BCGW FADM_TSA + AAFC Terrestrial Ecozones (2026-10-26),Pacific Maritime 93.0%; Montane Cordillera 7.0%.
+47,GBR South,British Columbia,Pacific Maritime,medium,BCGW FADM_TSA + AAFC Terrestrial Ecozones (2026-10-26),Pacific Maritime 98.2%; Montane Cordillera 1.8%.
+48,North Island,British Columbia,Pacific Maritime,high,BCGW FADM_TSA + AAFC Terrestrial Ecozones (2026-10-26),Pacific Maritime 100%.
+mkrf,Malcolm Knapp Research Forest,British Columbia,Pacific Maritime,high,UBC research forest location; AAFC Terrestrial Ecozones,Custom research-forest boundary near Maple Ridge; not a TSA.

@@ -21,6 +21,6 @@ carbon:
     hardwood_species: "Unspecified hardwood species"
     wood_type: softwood
   review:
-    status: draft
-    reviewer: ""
-    reviewed_utc: ""
+    status: reviewed
+    reviewer: "FEMIC maintainer direction (VRI/CBM/GIS sources)"
+    reviewed_utc: "2026-10-26"

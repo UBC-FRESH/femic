@@ -97,11 +97,16 @@ Model choices in the first version
   ``AU(<id>)+IFM(<ifm>)+treatment()`` form matches the simple matrix builder. A
   model with additional themes should pass ``--dataset-dir`` or supply an
   explicit track-name map in code.
-- **Managed and unmanaged land class both default to 0.** This matches the WS3
-  reference. Land class 16 is available as an opt-in.
+- **Land class follows the CBM-CFS3 definitions.** Managed forest land is class
+  ``0`` (Forest Land remaining Forest Land); unmanaged forest land is class ``16``
+  (Unmanaged Forest Land). This deliberately differs from the WS3 parity fixture,
+  which used ``0`` for both. An IFM state with no mapping is an error rather than a
+  silent class-0 fallback.
 - **A missing species code falls back explicitly.** The fallback is
   ``Unspecified softwood species`` or ``Unspecified hardwood species`` and is
-  recorded in the package; it is not a silent zero.
+  recorded in the package; it is not a silent zero. Species keys follow the public
+  BC VRI data dictionary (for example ``Bl`` subalpine fir, ``Sb`` black spruce,
+  ``Ep`` paper birch), with clearly marked legacy aliases.
 
 Validation
 ----------

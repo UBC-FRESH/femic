@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from femic.carbon import (
     CarbonExportConfig,
@@ -159,3 +160,24 @@ def test_config_loads_the_repo_crosswalks() -> None:
     assert config.species_map["SW"].cbm_species == "White spruce"
     assert isinstance(config.disturbance_map["cc"], DisturbanceMapping)
     assert config.land_class_by_ifm["managed"] == 0
+    assert config.land_class_by_ifm["unmanaged"] == 16
+    assert config.species_map["BL"].cbm_species == "Subalpine fir (or alpine fir)"
+    assert config.species_map["SB"].cbm_species == "Black spruce"
+    assert config.species_map["EP"].cbm_species == "White birch"
+    assert config.species_map["DR"].cbm_species == "Red alder"
+
+
+def test_build_tables_rejects_unmapped_land_class() -> None:
+    """An IFM state without a land-class mapping is a hard error."""
+    inventory = pd.DataFrame(
+        {
+            "au_id": [1],
+            "ifm": ["nonforest"],
+            "age": [10],
+            "area_ha": [1.0],
+        }
+    )
+    with pytest.raises(ValueError, match="land-class mapping"):
+        build_carbon_package_tables(
+            context=_context(), inventory=inventory, config=_config()
+        )

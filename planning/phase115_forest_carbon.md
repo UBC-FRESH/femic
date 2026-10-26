@@ -130,7 +130,7 @@ the external dependencies are documented. CaMP/peatlands are out of scope for th
 
 | Task | Issue | Deliverable |
 | --- | --- | --- |
-| P115.1 | #362 | Carbon domain contract and crosswalks |
+| P115.1 | #362 | Carbon domain contract and crosswalks (complete) |
 | P115.2 | #363 | Static CBM input package exporter |
 | P115.3 | #364 | Carbon config, validation, fixtures (complete) |
 | P115.4 | #365 | GCBM walltowall export (complete) |

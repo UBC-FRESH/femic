@@ -10,14 +10,14 @@ Issue: #366
 
 The real TSA24 carbon package is in the shared workspace at
 `/tmp/opencode/tsa24_carbon_package_ds` and in the deterministic handoff archive
-`/srv/shared-data/gep/ws4/carbon-handoff/femic-carbon-24-tsa24.tar.gz`.
+`/srv/shared-data/gep/ws4/carbon-handoff/femic-carbon-24-tsa24-v2.tar.gz`.
 
 | Item | Value |
 | --- | --- |
-| Package id | `femic-carbon-24-fc431f827c66` |
-| WS4 fingerprint | `cd33653608119121c11256628aabe3bbf8111d53fcf05e6383c97db948dfd8a3` |
-| `manifest.json` SHA-256 | `0dca089d63e67e05aa60c36a9dd06677e012ff56b70353917142bd9982d613db` |
-| Archive SHA-256 | `74f858eed4a7381c5c7e1e710edd5d2f8b310a6b0d144184b2ef350619c062cc` |
+| Package id (crosswalk-corrected v2) | `femic-carbon-24-d7a5dc27910f` |
+| WS4 fingerprint | `153f006011eb3aafd577ccf1049048d0cf4fcb14ffeedcaedada73373213e28f` |
+| `manifest.json` SHA-256 | `98b7bad26c8afc1d18096fa0662102f0806e3ec680ae4b752d9100f9721fcfc9` |
+| Archive SHA-256 | `111feaeb668b255992939c2e6d29f5d12b39650353c1cc375ac0b581ef781f08` |
 | Inventory area | 6,016,466.4 ha |
 | Tracks / yield rows | 108 / 3,348 |
 | CBM defaults | `1.2.9300.391`, SHA-256 `4bd722d8825abeda3c9cf77247bbd4903824259e2fcc046d9a335336c8842155` |
@@ -70,8 +70,8 @@ This is exact on the clipped fixture because both paths use the same SIT tables 
 The real TSA24 package/AU 2401005 WS4 run (five years, no schedule events) is:
 
 - Ecosystem carbon: **21,774,124.4 -> 21,949,881.3 tC**.
-- package id `femic-carbon-24-fc431f827c66`; fingerprint
-  `cd33653608119121c11256628aabe3bbf8111d53fcf05e6383c97db948dfd8a3`.
+- package id `femic-carbon-24-d7a5dc27910f`; fingerprint
+  `153f006011eb3aafd577ccf1049048d0cf4fcb14ffeedcaedada73373213e28f`.
 - Run manifest: `/tmp/opencode/tsa24_subset_carbon/carbon_manifest.json`.
 
 This is a production-package run, not a direct WS3 comparison: WS3's clipped fixture

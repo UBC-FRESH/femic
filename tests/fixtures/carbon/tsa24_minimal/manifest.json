@@ -8,14 +8,14 @@
     "source": "libcbm",
     "version": "1.2.9300.391"
   },
-  "created_utc": "2026-10-26T01:42:34Z",
+  "created_utc": "2026-10-26T05:21:27Z",
   "event_source": "ws4.schedule",
   "mapping": {
     "disturbance_classifier": "user_dist_type",
     "species_classifier": "species",
     "track_key": "track_name"
   },
-  "package_id": "femic-carbon-24fixture-b65cd5ae61ee",
+  "package_id": "femic-carbon-24fixture-46b8de48453a",
   "producer": {
     "name": "femic",
     "version": "0.2.0a1"
@@ -28,19 +28,19 @@
     },
     {
       "path": "config/carbon/species_map.bc.csv",
-      "sha256": "7377e7adab8f1c913aa1ba433e8a74cdbc5d4a4a28ae039d36b8e48359781314"
+      "sha256": "086ead3ee9af0f90bca2068ad07b3691d9ce4fb99f2bf489e3753f024e9746cb"
     },
     {
       "path": "config/carbon/eco_boundary.bc.csv",
-      "sha256": "bf33bf79390eb7fb37990a92eefb2c0553c247ad393f7eddf6f738552c347b86"
+      "sha256": "1628fb78bdc3930c907d0671e09aaafb630d89d5e072ad9d2391afa182c618e6"
     },
     {
       "path": "config/carbon/disturbance_map.bc.csv",
-      "sha256": "62388a4db17836b33abbbf00c966bc6f670ed0ad4149b6672c4a1ce5959a5af9"
+      "sha256": "fea8f74fb8b52cf826117de9477179fe40680a74eac0b590a1b667d64a5d71b2"
     },
     {
       "path": "config/carbon/land_class.bc.csv",
-      "sha256": "8f356374d5534b0bdd969ded188c0855f8ce5c943a4991c9eb6e2058125af137"
+      "sha256": "0ddb5d62dbfb41886d6958427576e72d72ae8d43cd2ed36cd854f4dc7a7860f3"
     }
   ],
   "table_files": {
@@ -59,9 +59,9 @@
     "boundaries": "584f8bec014eb95b357d0dc9128d8730c0b85144420ada5ae7b3a485145117c9",
     "classifiers": "ed170b94e854fc189038ff70baa443428d3524cf9a767d16b458b3ab2ebadc3f",
     "curve_carbon_map": "37b2353c6b751dfebbc75675e76859bb78644cdf9df3a17dfc25ff2c10d3c174",
-    "disturbance_types": "1d8c6c9171fc1bd4fb2cb9f95f6bcff7ddad64da7f8549d8af39ef7deb2f088c",
+    "disturbance_types": "c7a1ec5a7032bf9524d94b01ad8c6de56cc37606dd2b85ef74875fb50e39ddc0",
     "inventory": "bd7d516c81c184b6fb9a49de127f540fa7c2b8696716cd7060404f721e6e1083",
-    "species_map": "7377e7adab8f1c913aa1ba433e8a74cdbc5d4a4a28ae039d36b8e48359781314",
+    "species_map": "afaca4ad9439d79e0864f3706be1c7cce7ead6862047684e3d88f6dd831e0f92",
     "track_carbon_map": "ab17f38304a58d9513df90bda4cf8d63b9235a1551372f25d8472a3e4ae52534",
     "yield": "ea48e30607909b79d253aa136a1cd88d04fa2689e87988aa1338f1a5bc52fcf6"
   },

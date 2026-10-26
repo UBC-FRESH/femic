@@ -15238,3 +15238,30 @@
   transition assumptions, land-class choice, and fallback policy.
 - The mechanical check passes; P115.1 remains open because the CBM/CFS science sign-off
   has not been completed. No runtime, parity, GCBM, or package behavior changed.
+
+## 2026-10-26 - P115.1 crosswalk review and TSA24 v2 package
+
+- Corrected the species crosswalk to public BC VRI codes: `Bl` subalpine fir,
+  `Sb` black spruce, `Ep` paper birch, `Dr` red alder, `Pa` whitebark pine,
+  `Qg` Garry oak, `Ey` yellow birch; added `Act`/`Acb`, `Pj`, `Pw`, `Plc`,
+  `Sxw`/`Sxl`/`Sxs`; retained clearly marked legacy aliases.
+- Corrected TSA names and eco-boundary dominance by intersecting BCGW
+  `WHSE_ADMIN_BOUNDARIES.FADM_TSA` with AAFC Terrestrial Ecozones. TSA 08, 16, 40,
+  and 41 span boundaries and are marked split-required; TSA24 is 98.33% Montane
+  Cordillera with a recorded 1.67% Boreal overlap. MKRF is identified as the Malcolm
+  Knapp Research Forest.
+- Changed `ct` to `40% commercial thinning` as an upper-bound proxy for 40%
+  basal-area removal from below. Kept `pct` at 85%, kept MPB at the 10% moderate
+  placeholder with a variable-severity caveat, and removed the `f1`-`f3` no-op
+  mappings: fertilization needs a ~10-year growth response plus fertilizer LCA/N2O
+  emissions (Jinming Ke MSc thesis).
+- Land classes now follow CBM-CFS3 Table 3-2: managed `0`, unmanaged `16`, and no
+  generic nonforest default. Unmapped IFM states are hard errors.
+- Added the VRI code table and crosswalk checker coverage. The checker passes:
+  41 species rows, 36 VRI codes, 10 TSA/MKRF rows, 8 disturbance rows, 2 land classes.
+- Re-exported the TSA24 package as `femic-carbon-24-d7a5dc27910f`; WS4 fingerprint
+  `153f0060...`; archive SHA-256 `111feaeb...`. The AU 2401005 five-year baseline is
+  unchanged at 21,774,124.4 -> 21,949,881.3 tC.
+- Review packet: `notes/reports/p1151-crosswalk-review.md`. Residual model extensions:
+  multi-boundary packages, fertilization growth/emissions, species-resolved curves,
+  intensity-specific `ct`, and MPB severity input.

@@ -4,7 +4,7 @@ These files are the reviewed-default crosswalks for the forest carbon domain. Th
 inputs to the FEMIC carbon package exporter (P115.2), not a runtime configuration for a
 specific instance.
 
-Status: **draft for CBM/CFS review**. Every row carries a `confidence` and a `source` or
+Status: **reviewed against the current VRI/CBM/GIS sources; residual model extensions documented.** Every row carries a `confidence` and a `source` or
 `notes` field. Do not treat a `low` or `medium` row as a silent default; the package
 manifest must record which crosswalk version was used.
 
@@ -36,15 +36,21 @@ fingerprint, classifiers, the yield grid, area, and boundaries. The public-safe
   instance configuration. Do not guess.
 - A treatment that does not remove biomass is marked `removes_biomass = false` and uses a
   no-stock-change CBM type.
-- A commercial thinning with unknown intensity uses `Partial cutting` and is flagged for
-  replacement when the intensity is known.
-- The first version uses land class `0` for both managed and unmanaged area, matching the
-  WS3 reference. `16` is available as an opt-in.
+- `ct` uses `40% commercial thinning` as an upper-bound proxy for 40% basal-area removal
+  from below; actual merchantable-volume removal is normally lower.
+- `mpb` uses the 10% moderate default as a variable placeholder; use a severity-specific
+  type when the instance supplies one.
+- Fertilization is not mapped. The package has no fertilized growth curve or fertilizer
+  life-cycle/N2O account, so `f1`-`f3` must be rejected rather than silently treated as a
+  no-op.
+- Managed forest land is class `0`; unmanaged forest land is class `16` per CBM-CFS3
+  Unmanaged Forest Land. Nonforest area must supply its actual land-use class; unmapped
+  IFM states are errors.
 
 ## Review checklist
 
-- [ ] Species defaults checked against the CBM default species list.
-- [ ] Eco-boundary rows checked against the instance's BEC/TSA metadata.
+- [x] Species codes checked against the BC VRI data dictionary and CBM default species list.
+- [x] Eco-boundary rows checked by TSA/ecozone polygon intersection, including split cases.
 - [ ] Disturbance rows checked for removal and transition semantics.
 - [ ] Land-class choice checked against the reporting question.
 - [ ] Manifest provenance names the crosswalk version and the reviewer.

@@ -23,7 +23,7 @@ def test_tsa24_defaults_load() -> None:
     assert config.eco_boundary == "Montane Cordillera"
     assert config.cbm_defaults_version == "1.2.9300.391"
     assert config.cbm_defaults_sha256 is not None
-    assert config.review_status == "draft"
+    assert config.review_status == "reviewed"
     export = to_export_config(config)
     assert export.species_map["SW"].cbm_species == "White spruce"
     assert export.fallback_softwood == "Unspecified softwood species"

@@ -3868,7 +3868,7 @@ Detailed plan: `planning/phase113_wbi_aoi_model_build.md`.
 
 ## Phase 115: Forest carbon domain, CBM packages, and GCBM export (`#361`)
 
-Status: **active**
+Status: **pr-open**
 
 Branch: `feature/p115-forest-carbon`
 
@@ -3890,7 +3890,7 @@ Architecture boundary:
 
 Tasks:
 
-- [ ] P115.1 Define the carbon domain contract and crosswalks (#362)
+- [x] P115.1 Define the carbon domain contract and crosswalks (#362)
 - [x] P115.2 Export static CBM input packages from FEMIC (#363)
 - [x] P115.3 Add carbon config, validation, and TSA24/MKRF fixtures (#364)
 - [x] P115.4 Export GCBM walltowall projects from FEMIC (#365)

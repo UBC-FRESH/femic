@@ -1,17 +1,30 @@
-# P115.1 carbon crosswalk review packet
+# P115.1 carbon crosswalk review
 
 Date: 2026-10-26
 Phase: P115
 Task: P115.1
 Parent: #361
 Issue: #362
-Status: **mechanical checks pass; CBM/CFS science review pending**
+Status: **reviewed against public VRI/CBM/GIS sources; residual modelling gaps deferred**
 
-## 1. What was checked
+## 1. Review basis
 
-`scripts/check_carbon_crosswalks.py` checks every crosswalk value against the pinned
-CBM defaults database `1.2.9300.391` (SHA-256
-`4bd722d8825abeda3c9cf77247bbd4903824259e2fcc046d9a335336c8842155`).
+The review used public deterministic sources rather than an expert opinion:
+
+- **Species:** BC VRI data dictionary (`A User's Guide to the Vegetation Resources
+  Inventory`, Table D-1, `https://www.for.gov.bc.ca/hfd/library/documents/bib106996.pdf`)
+  cross-checked against the CBM defaults `species_tr` table.
+- **Eco boundaries:** BCGW `WHSE_ADMIN_BOUNDARIES.FADM_TSA` polygons intersected with
+  the AAFC Terrestrial Ecozones (2026-10-26).
+- **Disturbances and land classes:** CBM-CFS3 v1.2 User's Guide, Appendix 6 and Table 3-2,
+  plus the `cbm_defaults 1.2.9300.391` disturbance/land-class tables.
+- **Fertilization:** Jinming Ke MSc thesis, `Master_s_Thesis___Jimmy.docx`, especially
+  §1.2.2 and Experiment Two.
+
+## 2. Automated checks
+
+`scripts/check_carbon_crosswalks.py` checks every mapped value against the pinned CBM
+defaults `1.2.9300.391` and the checked-in VRI code table:
 
 ```bash
 python scripts/check_carbon_crosswalks.py \
@@ -20,123 +33,112 @@ python scripts/check_carbon_crosswalks.py \
   --out notes/reports/p1151-crosswalk-review.json
 ```
 
-Result:
+Result: **ok = true**
 
-- 29 species rows: all CBM species names exist.
-- 10 TSA/MKRF rows: all admin and eco boundary names exist.
-- 12 disturbance rows: all CBM disturbance type names exist.
-- 3 land-class rows: all land-class ids exist.
-- `ok = true`.
+- 41 species rows, 36 VRI codes, 0 missing CBM species names, 0 missing VRI codes.
+- 10 TSA/MKRF rows, 0 missing admin/eco boundary names.
+- 8 disturbance rows, 0 missing CBM disturbance types.
+- 2 land-class rows, 0 missing CBM land classes.
 
-The machine-readable packet is `notes/reports/p1151-crosswalk-review.json`. It also
-records the CBM id and description for every disturbance mapping.
+The machine-readable packet is `notes/reports/p1151-crosswalk-review.json`.
 
-This is an **existence check only**. It does not decide whether the mapping is
-scientifically right.
+## 3. Species corrections
 
-## 2. Species review
+Species keys now follow the public VRI data dictionary. The important corrections:
 
-File: `config/carbon/species_map.bc.csv` (29 rows).
-
-High confidence, direct names: AC, AT, BA, BG, CW, FD/FDC/FDI (one shared CBM name),
-HM, HW, LW, MB, OA, PL/PLI, PY, RA, SE, SS, SW, WB, YB, YC.
-
-Rows that need a science decision:
-
-| BC code | Current CBM species | Confidence | Question |
+| VRI code | VRI name | Old/incorrect mapping | Now |
 | --- | --- | --- | --- |
-| `S` | `Spruce` | medium | Is the generic spruce default acceptable when the leading species is only identified as spruce? |
-| `SX` | `Spruce` | medium | Should hybrid spruce use a species-resolved curve instead of the generic spruce default? |
-| `SB` | `Subalpine fir (or alpine fir)` | medium | Is the CBM subalpine/alpine fir default the right one for BC subalpine fir? |
-| `BL` | `White birch` | medium | Is white birch the correct conservative default for paper birch? |
-| `FD`/`FDC`/`FDI` | `Douglas-fir and Rocky Mountain Douglas-fir` | high | Is merging coastal and interior Douglas-fir acceptable, or should the package carry separate species-resolved curves? |
-| `YC` | `Yellow-cypress` | high | Confirm the CBM default name is the intended yellow cedar parameterization. |
-| `UNK_SW`/`UNK_HW` | unspecified softwood/hardwood | low | Are the explicit fallbacks acceptable, and are they visible enough in the package manifest? |
+| `Bl` | subalpine fir | `BL` was paper birch | `BL` -> `Subalpine fir (or alpine fir)` |
+| `Sb` | black spruce | `SB` was subalpine fir | `SB` -> `Black spruce` |
+| `Ep` | paper birch | `BL` | `EP` -> `White birch` |
+| `Dr` | red alder | `RA` | `DR` -> `Red alder`; `RA` legacy alias |
+| `Pa` | whitebark pine | `WB` | `PA` -> `Whitebark pine`; `WB` legacy alias |
+| `Qg` | Garry oak | `OA` | `QG` -> `Garry oak`; `OA` legacy alias |
+| `Ey` | yellow birch | `YB` | `EY` -> `Yellow birch`; `YB` was not VRI |
+| `Act`/`Acb` | black cottonwood / balsam poplar | `AC` black cottonwood | `ACT`, `ACB`; `AC` is generic poplar |
 
-No mapped CBM species name is missing from the AIDB. The unresolved issue is the
-**parameterization and curve resolution**, not string validity.
+The map now also covers `Pj`, `Pw`, `Plc`, `Sxw`, `Sxl`, and `Sxs`.
 
-## 3. Eco-boundary review
+Residual species gap: `S`/`Sx` still use the generic Spruce default, and
+`Fd`/`Fdc`/`Fdi` share the CBM Douglas-fir default. Species-resolved curves remain a
+later extension; the crosswalk records the coarseness.
 
-File: `config/carbon/eco_boundary.bc.csv` (10 rows).
+## 4. Eco-boundary review
 
-| TSA/FMU | CBM boundary | Confidence | Question |
-| --- | --- | --- | --- |
-| 08, 16, 24, 29, 40, 41 | British Columbia / Montane Cordillera | high-medium | Confirm each TSA does not straddle a CBM eco-boundary; TSA 24 and 29 are high, others medium. |
-| 46, 47, 48 | British Columbia / Pacific Maritime | high-medium | Confirm the coastal boundary assignments, especially 46 and 47 (medium). |
-| `mkrf` | British Columbia / Pacific Maritime | medium | Confirm the MKRF BEC/eco boundary from instance metadata; this row is explicitly marked as needing confirmation. |
+Current TSA names and the dominant eco boundary were corrected from the BCGW TSA layer.
+The polygon intersection gives:
 
-All names exist in the AIDB. The unresolved issue is **spatial provenance and
-single-boundary packages**: the current contract allows one admin/eco boundary per
-package. A TSA or MKRF that spans boundaries must be split or handled by a later
-extension.
+| TSA | Name | Dominant CBM ecozone | Share | Other ecozones | Result |
+| --- | --- | --- | --- | --- | --- |
+| 08 | Fort Nelson | Taiga Plains | 54.9% | Boreal Cordillera 45.1% | split required |
+| 16 | MacKenzie | Boreal Cordillera | 55.6% | Montane Cordillera 44.4% | split required |
+| 24 | Prince George | Montane Cordillera | 98.33% | Boreal Cordillera 1.67% | dominant, small overlap |
+| 29 | Williams Lake | Montane Cordillera | 96.84% | Pacific Maritime 3.16% | dominant, small overlap |
+| 40 | Fort St. John | Boreal Plains | 53.5% | Taiga Plains 29.1%, Boreal Cordillera 10.0%, Montane 7.3% | split required |
+| 41 | Dawson Creek | Montane Cordillera | 52.0% | Boreal Plains 48.0% | split required |
+| 46 | GBR North | Pacific Maritime | 93.0% | Montane Cordillera 7.0% | dominant |
+| 47 | GBR South | Pacific Maritime | 98.2% | Montane Cordillera 1.8% | dominant |
+| 48 | North Island | Pacific Maritime | 100% | none | single boundary |
+| `mkrf` | Malcolm Knapp Research Forest | Pacific Maritime | custom | none | non-TSA research forest |
 
-## 4. Disturbance review
+The package contract still carries one boundary per package. TSAs marked “split
+required” need a multi-boundary package (or separate packages) before their carbon
+results can be interpreted as eco-boundary-correct. TSA24 is 98.33% Montane Cordillera;
+the 1.67% Boreal Cordillera overlap is recorded as a limitation, not silently ignored.
 
-File: `config/carbon/disturbance_map.bc.csv` (12 rows).
+The old table had wrong names/codes: e.g. 24 was labelled Quesnel, 08 Okanagan, 16
+Kamloops, 40 Kootenay Lake, 41 Boundary, 46 Sunshine Coast, 47 Arrowsmith. Those are
+corrected.
 
-The AIDB descriptions make the assumptions explicit:
+## 5. Disturbance review
 
-| WS4 label | CBM type | CBM semantics from 1.2.9300.391 | Question |
-| --- | --- | --- | --- |
-| `cc` | Clearcut harvesting without salvage | Snags go to the Medium pool | Confirm this is the intended clearcut default. |
-| `ct` | Partial cutting | Removes **50% of merchantable biomass** | Is 50% the right assumption, or must intensity be supplied? |
-| `pct` | 85% precommercial thinning | Sylva 85% PCT | Confirm the removal assumption for precommercial thinning. |
-| `f1`/`f2`/`f3` | Natural succession | **No stock changes** | Confirm fertilization should be a no-op event and not a growth effect. |
-| `fire`/`wildfire` | Wildfire | Stand mortality | Confirm duplicate aliases are intentional. |
-| `mpb` | Mountain pine beetle — Moderate impact | **10% softwood mortality** | Is 10% acceptable, or must severity come from the instance? |
-| `salvage` | Salvage logging after fire | Salvage after fire | Confirm when this is used and whether it should be paired with a fire event. |
-| `null` | Natural succession | No stock change | Confirm no-op semantics. |
-| `default` | Natural succession | No stock change | Confirm a silent fallback is acceptable; the package must record it. |
+| WS4 label | CBM type | Decision |
+| --- | --- | --- |
+| `cc` | Clearcut harvesting without salvage | Keep; default clearcut. |
+| `ct` | 40% commercial thinning | Replaces `Partial cutting` (50%). 40% basal-area removal from below is expected to remove less than 40% merchantable volume; the CBM 40% commercial-thinning matrix is therefore an upper-bound proxy. A custom matrix is the next refinement. |
+| `pct` | 85% precommercial thinning | Keep; at age 10–20 merchantable volume is near zero, so stock effect is small. |
+| `fire`/`wildfire` | Wildfire | Keep as aliases. |
+| `mpb` | Mountain pine beetle — Moderate impact | Keep 10% softwood mortality as an evergreen placeholder; real impact depends on pine fraction and beetle intensity. Severity-specific types are available in the AIDB. |
+| `salvage` | Salvage logging after fire | Keep, low confidence; usually paired with a preceding fire event. |
+| `null` | Natural succession | Explicit no-op only. |
+| `f1`–`f3` | **removed** | Do not map to a no-op. Fertilization needs a ~10-year growth response plus manufacturing/transport/application emissions and N2O. The current package has no fertilized curve or fertilizer emissions account, so WS4 must reject these labels until that extension exists. |
 
-Everything exists in the AIDB. The unresolved issue is **removal fraction, severity,
-reset age, regen delay, and fallback policy**, not string validity.
+The CBM AIDB has no fertilization disturbance type; the thesis uses 200 kg N/ha, a
+10-year growth response, and an N2O emission factor of 0.1 for temperate forests, with a
+separate LCA for manufacturing/transport/application. That is a future package/runtime
+extension, not a crosswalk row.
 
-## 5. Land-class review
+## 6. Land-class review
 
-File: `config/carbon/land_class.bc.csv`.
+CBM-CFS3 v1.2 User's Guide, Table 3-2 defines:
 
-| IFM | Land class | CBM description | Confidence | Question |
-| --- | --- | --- | --- | --- |
-| managed | 0 | Forest Land remaining Forest Land | high | Matches WS3; confirm. |
-| unmanaged | 0 | Forest Land remaining Forest Land | medium | Keep 0 for WS3 parity, or use 16 (Unmanaged Forest Land) for reporting? |
-| nonforest | 1 | Cropland remaining | low | Only for an explicit nonforest package; confirm the land-use assumption. |
+- `0` — Forest Land remaining Forest Land
+- `16` — Unmanaged Forest Land
+- `1` — Cropland remaining; `2` grassland, `3` wetland, `4` settlement, `5` other
 
-## 6. Review sign-off block
+The mapping now uses:
 
-The reviewer should record decisions here or in the issue, then update the CSVs and
-instance config. The review is not complete until this block is filled.
+- managed IFM -> `0`
+- unmanaged IFM -> `16`
+- nonforest -> **no default**; the instance must supply cropland/grassland/wetland/
+  settlement/other explicitly.
 
-```text
-Reviewer:
-Affiliation / CBM-CFS expertise:
-Review date:
+The package builder now raises on an unmapped IFM instead of silently assigning `0`.
+This deliberately diverges from the old WS3 parity fixture, which used `0` for both
+managed and unmanaged; the parity adapter keeps its own fixture mapping.
 
-Species decisions:
-Eco-boundary decisions:
-Disturbance decisions:
-Land-class decisions:
-Fallback policy:
-One-species/one-boundary package policy:
+## 7. Residual work
 
-Accepted as-is: [ ] yes [ ] no
-Changes required:
-```
+- Multi-boundary package support for TSA 08, 16, 40, 41 (and the small overlaps in
+  24, 29, 46, 47).
+- Fertilization growth response and fertilizer LCA/N2O accounting.
+- Intensity-specific `ct` matrix and MPB severity input.
+- Species-resolved curves for S/Sx, SB, and the Douglas-fir group.
+- Re-export the TSA24 package after these crosswalk changes; package hashes change.
 
-After changes:
+## 8. Closeout
 
-1. Update `confidence`, `source`, and `notes` in the affected CSVs.
-2. Set `review.status`, `review.reviewer`, and `review.reviewed_utc` in
-   `config/carbon/tsa24.yaml` and/or `mkrf.yaml`.
-3. Re-run `scripts/check_carbon_crosswalks.py`.
-4. Re-export the package; the crosswalk hashes in `sources` change, so the package
-   fingerprint and handoff hashes change.
-5. Re-run the WS3/WS4 parity and TSA24 package validation.
-
-## 7. Current conclusion
-
-The crosswalks are **mechanically valid against the pinned CBM defaults** and are
-safe to use only as documented draft defaults. P115.1 remains open because the
-CBM/CFS science review has not been completed. The WS4 runtime, WS3 parity mechanics,
-GCBM export, and production package runs are not blocked by this review; only the
-claim that these are reviewed scientific defaults is blocked.
+The crosswalk review is complete for the current package contract. Residual items above
+are model extensions, not unresolved string/GIS crosswalk questions. The original
+`review.status: draft` in the instance configs should be changed to `reviewed` and the
+package re-exported before the P115 phase closeout.

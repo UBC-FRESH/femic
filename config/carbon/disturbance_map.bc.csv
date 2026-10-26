@@ -1,13 +1,9 @@
 treatment_pattern,default_dist_type,removes_biomass,transition_reset_age,regen_delay,confidence,notes
 cc,Clearcut harvesting without salvage,true,0,0,high,Default clearcut.
-ct,Partial cutting,true,0,0,medium,CBM partial cutting removes 50% of merchantable biomass; replace with an intensity-specific commercial-thinning type when known.
-pct,85% precommercial thinning,true,0,0,medium,Precommercial thinning; confirm the CBM removal assumption.
-f1,Natural succession,false,0,0,low,Fertilization is represented through the growth curve; this event carries no stock change.
-f2,Natural succession,false,0,0,low,Fertilization is represented through the growth curve; this event carries no stock change.
-f3,Natural succession,false,0,0,low,Fertilization is represented through the growth curve; this event carries no stock change.
+ct,40% commercial thinning,true,0,0,medium,"Proxy for 40% basal-area removal from below; CBM 40% commercial thinning removes 40% biomass carbon, so this is an upper bound on merchantable-volume removal. Replace with a custom matrix when cruise/intensity data are available."
+pct,85% precommercial thinning,true,0,0,medium,"Sylva 85% precommercial thinning; merchantable volume is near zero at the usual age 10-20, so the stock effect is small."
 fire,Wildfire,true,0,0,high,Stand-replacing wildfire.
-wildfire,Wildfire,true,0,0,high,Stand-replacing wildfire.
-mpb,Mountain pine beetle — Moderate impact,true,0,0,medium,Severity must be supplied by the instance; moderate is a placeholder.
-salvage,Salvage logging after fire,true,0,0,low,Use only when the salvage type is known.
-null,Natural succession,false,0,0,high,No-op event.
-default,Natural succession,false,0,0,low,Fallback for an unrecognized treatment; the package must record it.
+wildfire,Wildfire,true,0,0,high,Stand-replacing wildfire alias.
+mpb,Mountain pine beetle — Moderate impact,true,0,0,medium,Evergreen placeholder: 10% softwood mortality depends on pine fraction and beetle intensity; use a severity-specific type when the instance supplies one.
+salvage,Salvage logging after fire,true,0,0,low,Use only when the salvage type is known; usually paired with a preceding fire event.
+null,Natural succession,false,0,0,high,Explicit no-op event.

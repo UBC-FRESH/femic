@@ -1,30 +1,42 @@
-bc_species,common_name,cbm_species,wood_type,confidence,source,notes
-AC,black cottonwood,Black cottonwood,hardwood,high,BC species code convention; CBM default species list,Coastal cottonwood may be a balsam poplar/black cottonwood complex.
-AT,trembling aspen,Trembling aspen,hardwood,high,BC species code convention; CBM default species list,
-BA,amabilis fir,Amabilis fir,softwood,high,BC species code convention; CBM default species list,
-BG,grand fir,Grand fir,softwood,high,BC species code convention; CBM default species list,
-BL,paper birch,White birch,hardwood,medium,BC species code convention; CBM default species list,CBM also has Alaska paper birch and mountain paper birch; this is a conservative default.
-CW,western redcedar,Western redcedar,softwood,high,BC species code convention; CBM default species list,
-FD,Douglas-fir,Douglas-fir and Rocky Mountain Douglas-fir,softwood,high,BC species code convention; CBM default species list,
-FDC,coastal Douglas-fir,Douglas-fir and Rocky Mountain Douglas-fir,softwood,high,BC species code convention; CBM default species list,
-FDI,interior Douglas-fir,Douglas-fir and Rocky Mountain Douglas-fir,softwood,high,BC species code convention; CBM default species list,
-HM,mountain hemlock,Mountain hemlock,softwood,high,BC species code convention; CBM default species list,
-HW,western hemlock,Western hemlock,softwood,high,BC species code convention; CBM default species list,
-LW,western larch,Western larch,softwood,high,BC species code convention; CBM default species list,
-MB,bigleaf maple,Bigleaf maple,hardwood,high,BC species code convention; CBM default species list,
-OA,Garry oak,Garry oak,hardwood,high,BC species code convention; CBM default species list,
-PL,lodgepole pine,Lodgepole pine,softwood,high,BC species code convention; CBM default species list,
-PLI,lodgepole pine,Lodgepole pine,softwood,high,BC species code convention; CBM default species list,
-PY,ponderosa pine,Ponderosa pine,softwood,high,BC species code convention; CBM default species list,
-RA,red alder,Red alder,hardwood,high,BC species code convention; CBM default species list,
-S,spruce,Spruce,softwood,medium,BC species code convention; CBM default species list,Use a species-resolved curve when the bundle carries one.
-SB,subalpine fir,Subalpine fir (or alpine fir),softwood,medium,BC species code convention; CBM default species list,BC SB is subalpine fir; CBM balsam fir is the eastern default.
-SE,Engelmann spruce,Engelmann spruce,softwood,high,BC species code convention; CBM default species list,
-SS,Sitka spruce,Sitka spruce,softwood,high,BC species code convention; CBM default species list,
-SW,white spruce,White spruce,softwood,high,BC species code convention; CBM default species list,
-SX,spruce hybrid,Spruce,softwood,medium,BC species code convention; CBM default species list,Hybrid spruce complex; use a species-resolved curve when available.
-WB,whitebark pine,Whitebark pine,softwood,high,BC species code convention; CBM default species list,
-YB,yellow birch,Yellow birch,hardwood,high,BC species code convention; CBM default species list,
-YC,yellow cedar,Yellow-cypress,softwood,high,BC species code convention; CBM default species list,
-UNK_SW,unmapped conifer,Unspecified softwood species,softwood,low,Explicit fallback,Use only when the BC code is unknown and the stand is conifer-leading.
-UNK_HW,unmapped broadleaf,Unspecified hardwood species,hardwood,low,Explicit fallback,Use only when the BC code is unknown and the stand is broadleaf-leading.
+bc_species,vri_code,common_name,cbm_species,wood_type,confidence,source,notes
+AC,Ac,poplar (VRI Ac),Balsam poplar and black cottonwood,hardwood,medium,VRI Table D-1 (Ac); CBM default species list,Generic VRI Ac; use ACT/ACB when the species is known.
+ACT,Act,black cottonwood,Black cottonwood,hardwood,high,VRI Table D-1 (Act); CBM default species list,
+ACB,Acb,balsam poplar,Balsam poplar,hardwood,high,VRI Table D-1 (Acb); CBM default species list,
+AT,At,trembling aspen,Trembling aspen,hardwood,high,VRI Table D-1 (At); CBM default species list,
+BA,Ba,amabilis fir,Amabilis fir,softwood,high,VRI Table D-1 (Ba); CBM default species list,
+BG,Bg,grand fir,Grand fir,softwood,high,VRI Table D-1 (Bg); CBM default species list,
+BL,Bl,subalpine fir,Subalpine fir (or alpine fir),softwood,high,VRI Table D-1 (Bl); CBM default species list,"VRI Bl, not paper birch."
+EP,Ep,paper birch,White birch,hardwood,medium,VRI Table D-1 (Ep); CBM default species list,CBM also has Alaska paper birch and mountain paper birch; conservative default.
+EA,Ea,Alaska paper birch,Alaska paper birch,hardwood,high,VRI Table D-1 (Ea); CBM default species list,
+EY,Ey,yellow birch,Yellow birch,hardwood,high,VRI Table D-1 (Ey); CBM default species list,
+DR,Dr,red alder,Red alder,hardwood,high,VRI Table D-1 (Dr); CBM default species list,
+RA,Dr,red alder (legacy alias),Red alder,hardwood,low,Legacy FEMIC alias; VRI code is Dr,Prefer DR; retained for older inputs.
+FD,Fd,Douglas-fir,Douglas-fir and Rocky Mountain Douglas-fir,softwood,high,VRI Table D-1 (Fd); CBM default species list,
+FDC,Fdc,coastal Douglas-fir,Douglas-fir and Rocky Mountain Douglas-fir,softwood,high,VRI Table D-1 (Fdc); CBM default species list,
+FDI,Fdi,interior Douglas-fir,Douglas-fir and Rocky Mountain Douglas-fir,softwood,high,VRI Table D-1 (Fdi); CBM default species list,
+HM,Hm,mountain hemlock,Mountain hemlock,softwood,high,VRI Table D-1 (Hm); CBM default species list,
+HW,Hw,western hemlock,Western hemlock,softwood,high,VRI Table D-1 (Hw); CBM default species list,
+LW,Lw,western larch,Western larch,softwood,high,VRI Table D-1 (Lw); CBM default species list,
+MB,Mb,bigleaf maple,Bigleaf maple,hardwood,high,VRI Table D-1 (Mb); CBM default species list,
+PL,Pl,lodgepole pine,Lodgepole pine,softwood,high,VRI Table D-1 (Pl); CBM default species list,
+PLI,Pli,lodgepole pine,Lodgepole pine,softwood,high,VRI Table D-1 (Pli); CBM default species list,Interior lodgepole variety.
+PJ,Pj,jack pine,Jack pine,softwood,high,VRI Table D-1 (Pj); CBM default species list,
+PW,Pw,western white pine,Western white pine,softwood,high,VRI Table D-1 (Pw); CBM default species list,
+PLC,Plc,shore pine,Shore pine,softwood,high,VRI Table D-1 (Plc); CBM default species list,
+PY,Py,ponderosa pine,Ponderosa pine,softwood,high,VRI Table D-1 (Py); CBM default species list,
+PA,Pa,whitebark pine,Whitebark pine,softwood,high,VRI Table D-1 (Pa); CBM default species list,
+WB,Pa,whitebark pine (legacy alias),Whitebark pine,softwood,low,Legacy FEMIC alias; VRI code is Pa,Prefer PA; retained for older inputs.
+S,S,spruce,Spruce,softwood,medium,VRI Table D-1 (S); CBM default species list,Use a species-resolved curve when the bundle carries one.
+SB,Sb,black spruce,Black spruce,softwood,high,VRI Table D-1 (Sb); CBM default species list,"VRI Sb, not subalpine fir."
+SE,Se,Engelmann spruce,Engelmann spruce,softwood,high,VRI Table D-1 (Se); CBM default species list,
+SS,Ss,Sitka spruce,Sitka spruce,softwood,high,VRI Table D-1 (Ss); CBM default species list,
+SW,Sw,white spruce,White spruce,softwood,high,VRI Table D-1 (Sw); CBM default species list,
+SX,Sx,spruce hybrid,Spruce,softwood,medium,VRI Table D-1 (Sx); CBM default species list,Use a species-resolved curve when available.
+SXW,Sxw,Engelmann x white spruce,Spruce,softwood,medium,VRI Table D-1 (Sxw); CBM default species list,Hybrid; generic spruce default.
+SXL,Sxl,Sitka x white spruce,Spruce,softwood,medium,VRI Table D-1 (Sxl); CBM default species list,Hybrid; generic spruce default.
+SXS,Sxs,Sitka x unknown spruce,Spruce,softwood,medium,VRI Table D-1 (Sxs); CBM default species list,Hybrid; generic spruce default.
+YC,Yc,yellow cedar,Yellow-cypress,softwood,high,VRI Table D-1 (Yc); CBM default species list,
+QG,Qg,Garry oak,Garry oak,hardwood,high,VRI Table D-1 (Qg); CBM default species list,
+OA,Qg,Garry oak (legacy alias),Garry oak,hardwood,low,Legacy FEMIC alias; VRI code is Qg,Prefer QG; retained for older inputs.
+UNK_SW,,unmapped conifer,Unspecified softwood species,softwood,low,Explicit fallback,Use only when the BC code is unknown and the stand is conifer-leading.
+UNK_HW,,unmapped broadleaf,Unspecified hardwood species,hardwood,low,Explicit fallback,Use only when the BC code is unknown and the stand is broadleaf-leading.

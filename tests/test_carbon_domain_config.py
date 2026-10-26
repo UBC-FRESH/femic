@@ -87,3 +87,27 @@ def test_example_config_parses() -> None:
     assert carbon["schema_version"] == "0.1"
     assert carbon["admin_boundary"] == "British Columbia"
     assert carbon["fallback"]["softwood_species"] == "Unspecified softwood species"
+
+
+def test_species_map_uses_vri_codes() -> None:
+    """Every non-fallback species key has a public VRI code."""
+    vri = {row["vri_code"] for row in _rows("vri_species_codes.csv")}
+    species = _rows("species_map.bc.csv")
+    for row in species:
+        code = row["vri_code"]
+        if code:
+            assert code in vri, (row["bc_species"], code)
+    by_code = {row["bc_species"]: row for row in species}
+    assert by_code["BL"]["cbm_species"] == "Subalpine fir (or alpine fir)"
+    assert by_code["SB"]["cbm_species"] == "Black spruce"
+    assert by_code["EP"]["cbm_species"] == "White birch"
+    assert by_code["DR"]["cbm_species"] == "Red alder"
+    assert by_code["PA"]["cbm_species"] == "Whitebark pine"
+    assert by_code["QG"]["cbm_species"] == "Garry oak"
+
+
+def test_unmanaged_land_class_is_sixteen() -> None:
+    """CBM land class 16 is Unmanaged Forest Land; managed remains 0."""
+    rows = {row["ifm"]: row for row in _rows("land_class.bc.csv")}
+    assert rows["managed"]["landclass"] == "0"
+    assert rows["unmanaged"]["landclass"] == "16"

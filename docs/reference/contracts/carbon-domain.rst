@@ -1,7 +1,7 @@
 Forest Carbon Domain and CBM Package Contract
 =============================================
 
-Status: draft for CBM/CFS review
+Status: reviewed against public VRI/CBM/GIS sources; residual model extensions documented
 Phase: P115 (forest carbon domain and CBM packages)
 
 Purpose
@@ -187,9 +187,9 @@ are deliberately conservative.
 Species
 ~~~~~~~
 
-``config/carbon/species_map.bc.csv`` maps BC species codes to CBM default
-species names. Where a CBM default is broader than the BC code, the mapping uses
-the broader default and lowers the confidence. Two explicit fallbacks exist:
+``config/carbon/species_map.bc.csv`` maps public BC VRI species codes to CBM
+default species names. Where a CBM default is broader than the VRI code, the mapping
+uses the broader default and lowers the confidence. Two explicit fallbacks exist:
 
 - ``Unspecified softwood species`` for an unmapped conifer.
 - ``Unspecified hardwood species`` for an unmapped broadleaf.
@@ -200,12 +200,13 @@ Eco boundary
 ~~~~~~~~~~~~
 
 ``config/carbon/eco_boundary.bc.csv`` maps known TSA codes to CBM eco
-boundaries. The first version supports one boundary per package. A multi-boundary
-instance is split into packages or handled by a later extension.
-
-An unknown TSA or a boundary that spans more than one CBM eco boundary is a
-configuration error, not a guess. MKRF is represented by the ``mkrf`` FMU code
-in ``config/carbon/mkrf.yaml`` with the Pacific Maritime boundary.
+boundaries. The current table was checked by intersecting the public BCGW
+``WHSE_ADMIN_BOUNDARIES.FADM_TSA`` polygons with the AAFC Terrestrial Ecozones
+(2026-10-26). It records the dominant boundary and the overlap share in the notes.
+The contract still allows one boundary per package, so a TSA that straddles a
+boundary must be split or handled by a later multi-boundary extension; the table
+marks those cases as ``split required``. MKRF is represented by the ``mkrf`` FMU
+code in ``config/carbon/mkrf.yaml`` with the Pacific Maritime boundary.
 
 Disturbance
 ~~~~~~~~~~~
@@ -213,16 +214,25 @@ Disturbance
 ``config/carbon/disturbance_map.bc.csv`` maps normalized WS4 treatment labels to
 CBM default disturbance types. Matching is case-insensitive. Treatments that do
 not remove biomass are marked ``removes_biomass = false`` and use a no-stock-change
-CBM type. A commercial thinning whose intensity is unknown uses ``Partial
-cutting`` and is flagged for replacement when the intensity is known.
+CBM type. ``ct`` uses ``40% commercial thinning`` as an upper-bound proxy for a
+40% basal-area removal from below; the actual merchantable-volume removal is
+normally lower. ``mpb`` uses the 10% moderate default as an evergreen placeholder
+and must be replaced with a severity-specific type when the instance supplies
+one. Fertilization is deliberately **not** mapped: the current package has no
+fertilized growth curve and no fertilizer life-cycle/N2O account, so mapping
+``f1``-``f3`` to a no-op would be wrong. WS4 rejects those treatment labels until
+that extension exists.
 
 Land class
 ~~~~~~~~~~
 
-``config/carbon/land_class.bc.csv`` declares the default land class. The first
-version uses ``0`` (Forest Land remaining Forest Land) for both managed and
-unmanaged area, matching the WS3 reference. ``16`` (Unmanaged Forest Land) is
-available as an opt-in when the reporting question needs it.
+``config/carbon/land_class.bc.csv`` declares the CBM-CFS3 UNFCCC land class by IFM
+state: managed forest land is ``0`` (Forest Land remaining Forest Land) and
+unmanaged forest land is ``16`` (Unmanaged Forest Land), following the definitions
+in the CBM-CFS3 v1.2 User's Guide, Table 3-2. Nonforest area must be mapped
+explicitly to its actual land-use class (cropland, grassland, wetland, settlement,
+or other); there is no generic nonforest default. An unmapped IFM state is a hard
+error.
 
 Provenance and reproducibility
 ------------------------------
@@ -347,7 +357,8 @@ Open questions
 1. Which CBM species default is acceptable for the BC interior hybrid spruce
    complex, and when should the package use a species-resolved curve instead of
    a softwood/hardwood share?
-2. Does MKRF span one CBM eco boundary or more than one?
+2. MKRF is a custom research-forest boundary near Maple Ridge; confirm its
+   Pacific Maritime assignment before treating it as a TSA row.
 3. Which retention and partial-harvest cases must the first version represent
    exactly rather than reject?
 4. When CBM4 is public, does it accept this SIT-compatible package directly or

@@ -960,6 +960,14 @@ def _curve_value(points: Sequence[CurvePoint], age: int) -> float:
     return ordered[-1][1]
 
 
+def _land_class_for_ifm(config: CarbonExportConfig, ifm: str) -> int:
+    """Return the configured land class, failing on an unmapped IFM state."""
+    try:
+        return config.land_class_by_ifm[ifm]
+    except KeyError as exc:
+        raise ValueError(f"no carbon land-class mapping for IFM state {ifm!r}") from exc
+
+
 def _classifier_table(
     inventory: pd.DataFrame,
     track_species: Mapping[str, SpeciesMapping],
@@ -1010,7 +1018,7 @@ def _track_map(
                 "leading_species": mapping.cbm_species,
                 "softwood_share": softwood,
                 "hardwood_share": hardwood,
-                "landclass": config.land_class_by_ifm.get(str(first["ifm"]).lower(), 0),
+                "landclass": _land_class_for_ifm(config, str(first["ifm"]).lower()),
                 "last_disturbance": "CC"
                 if str(first["ifm"]).lower() == "managed"
                 else "fire",
@@ -1084,7 +1092,7 @@ def _inventory_table(
                 "age": int(str(row.age)),
                 "area_ha": float(str(row.area_ha)),
                 "delay": 0,
-                "landclass": config.land_class_by_ifm.get(ifm, 0),
+                "landclass": _land_class_for_ifm(config, ifm),
                 "historic_disturbance": DEFAULT_HISTORIC_DISTURBANCE,
                 "last_pass_disturbance": "cc" if ifm == "managed" else "fire",
             }

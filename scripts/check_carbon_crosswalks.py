@@ -38,6 +38,12 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--aidb", type=Path, required=True)
     parser.add_argument("--config-dir", type=Path, default=Path("config/carbon"))
+    parser.add_argument(
+        "--vri-codes",
+        type=Path,
+        default=None,
+        help="VRI species-code table; defaults to <config-dir>/vri_species_codes.csv.",
+    )
     parser.add_argument("--out", type=Path, required=True)
     return parser.parse_args()
 
@@ -59,7 +65,24 @@ def main() -> int:
                 "SELECT land_class_id, description FROM land_class_tr"
             )
         }
-        species_map = pd.read_csv(args.config_dir / "species_map.bc.csv", dtype=str)
+        species_map = pd.read_csv(
+            args.config_dir / "species_map.bc.csv", dtype=str, keep_default_na=False
+        )
+        vri_path = args.vri_codes or (args.config_dir / "vri_species_codes.csv")
+        vri_codes: set[str] = set()
+        vri_missing: list[dict[str, str]] = []
+        if vri_path.is_file():
+            vri_table = pd.read_csv(vri_path, dtype=str)
+            vri_codes = set(vri_table["vri_code"])
+            for row in species_map.itertuples(index=False):
+                vri_code = str(getattr(row, "vri_code", "")).strip()
+                if vri_code and vri_code not in vri_codes:
+                    vri_missing.append(
+                        {
+                            "bc_species": str(row.bc_species),
+                            "vri_code": vri_code,
+                        }
+                    )
         eco_map = pd.read_csv(args.config_dir / "eco_boundary.bc.csv", dtype=str)
         disturbance_map = pd.read_csv(
             args.config_dir / "disturbance_map.bc.csv", dtype=str
@@ -136,8 +159,10 @@ def main() -> int:
                 "disturbance_rows": len(disturbance_map),
                 "land_class_rows": len(land_map),
             },
+            "vri_codes_path": str(vri_path),
             "missing": {
                 "species": species_missing,
+                "vri_codes": vri_missing,
                 "boundaries": boundary_missing,
                 "disturbances": disturbance_missing,
                 "land_classes": land_missing,
@@ -145,7 +170,13 @@ def main() -> int:
             "disturbances": disturbance_details,
             "land_classes": land_details,
             "ok": not any(
-                (species_missing, boundary_missing, disturbance_missing, land_missing)
+                (
+                    species_missing,
+                    vri_missing,
+                    boundary_missing,
+                    disturbance_missing,
+                    land_missing,
+                )
             ),
             "note": (
                 "Mechanical existence check only; CBM/CFS science review, species "
@@ -160,6 +191,7 @@ def main() -> int:
     print(
         f"crosswalk existence check: ok={packet['ok']} "
         f"species={packet['counts']['species_rows']} "
+        f"vri={len(vri_codes)} "
         f"tsa={packet['counts']['tsa_rows']} "
         f"disturbance={packet['counts']['disturbance_rows']}"
     )
