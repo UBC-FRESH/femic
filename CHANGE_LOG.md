@@ -11,7 +11,8 @@
   TSA46 pilot: 148 addendum-selected polygon rows; 21 AUs and 462 AU/species
   rows; the polygon and AU reports remain separate. Added addendum,
   source-selection, AU-reader, and CLI tests; contract/guide/API/roadmap docs.
-  No curve, AAC, THLB, or schedule changes.
+  No curve, AAC, THLB, or schedule changes. Merged #415 (`b664025`);
+  parent #392 closed.
 
 ```bash
 PYTHONPATH=src python -m pytest tests/test_site_index.py -q
