@@ -132,6 +132,24 @@
       "status": "acquired; dissolve and reproject pending"
     }
   },
+  "native_terrain_audit": {
+    "caveat": "Full mixed-mosaic terrain attempt exceeded 10 minutes; audit used a bounded AOI.",
+    "cgvd2013_only_area_ha": 1620.6182,
+    "cgvd2013_only_slope_max_percent": 838.8087158203125,
+    "cgvd2013_only_slope_mean_percent": 31.31485366821289,
+    "decision": "FEMIC-native terrain/stream stack is correct; Chapman DEM data remain unusable for flood work.",
+    "functions": [
+      "femic.lidar.terrain.build_terrain_products",
+      "femic.lidar.terrain.derive_slope_percent",
+      "femic.lidar.hydrography.derive_stream_candidates"
+    ],
+    "fwa_precision": 0.0005525801241179971,
+    "fwa_recall": 0.002904883680512451,
+    "fwa_reference_overlap_ha": 0.0117,
+    "mixed_aoi_slope_max_percent": 45466.8046875,
+    "mixed_aoi_slope_mean_percent": 39.079559326171875,
+    "stream_candidate_area_ha": 21.1734
+  },
   "next_actions": [
     "Resolve the 9-tile vertical metadata or replace them with a consistent CGVD2013 DEM.",
     "Close or explicitly bound the 1,931.2 ha coverage gap.",
