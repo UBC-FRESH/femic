@@ -4198,7 +4198,7 @@ Detailed plan: `planning/phase118_chapman_flood_pilot.md`.
 
 ## Phase 119: Site-Index Provenance and Reconciliation (`#392`)
 
-Status: **complete** (P119.1 merged #396 as `2a02fac`; P119.2 in PR).
+Status: **complete** (P119.1 merged #396 as `2a02fac`; P119.2 merged #415 as `b664025`).
 
 Branch: `feature/p119.2-sibec-au`; P119.1 branch
 `feature/p119-si-reconciliation` is merged.
