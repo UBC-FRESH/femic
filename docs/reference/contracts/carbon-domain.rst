@@ -138,7 +138,10 @@ Tables
 
 ``inventory.csv``
    ``track_name``, ``age``, ``area_ha``, ``delay``, ``landclass``,
-   ``historic_disturbance``, ``last_pass_disturbance``. The consumer checks
+   ``historic_disturbance``, ``last_pass_disturbance``, and optional
+   ``eco_boundary``. When the optional boundary is present, it is the
+   area-weighted source for splitting a track that spans more than one eco
+   boundary. The consumer checks
    area, age, delay, land class, and that each disturbance is declared. An
    optional ``stand_id`` may be added later for fragment-level mapping.
 
@@ -208,11 +211,13 @@ boundaries. The current table was checked by intersecting the public BCGW
 ``config/carbon/ecozone_map.bc.csv`` maps the public VRI ``CFS_ECOZONE`` code to
 the CBM eco-boundary name. The exporter uses that field when the checkpoint
 carries it, assigns the area-dominant boundary to each package track, and writes
-every observed pair to ``boundaries.csv``. A TSA that straddles a boundary still
-needs its WS4 tracks split by boundary before the runtime can be fully
-eco-boundary-correct; the table marks those cases as ``split required``. MKRF is
-represented by the ``mkrf`` FMU code in ``config/carbon/mkrf.yaml`` with the
-Pacific Maritime boundary.
+every observed pair to ``boundaries.csv``. The inventory keeps the per-row
+``eco_boundary`` so the WS4 compiler can split a track by its boundary area
+shares. A TSA that straddles a boundary still needs a boundary-aware inventory
+export (or separate packages) before the result is a spatial boundary product;
+the table marks those cases as ``split required``. MKRF is represented by the
+``mkrf`` FMU code in ``config/carbon/mkrf.yaml`` with the Pacific Maritime
+boundary.
 
 Disturbance
 ~~~~~~~~~~~
