@@ -24,6 +24,8 @@ DEFAULT_RETURN_PERIODS: tuple[float, ...] = (2.0, 5.0, 10.0, 25.0, 50.0, 100.0)
 DEFAULT_BOOTSTRAP_SAMPLES = 200
 MIN_FIT_SAMPLES = 5
 MIN_RECOMMENDED_SAMPLES = 10
+GEV_SHAPE_BOUNDS: tuple[float, float] = (-0.5, 0.5)
+GEV_MIN_SCALE = 1e-9
 
 
 class HydrologyFloodError(RuntimeError):
@@ -461,6 +463,11 @@ def fit_flood_frequency(
         method=method,
         return_periods=periods,
     )
+    if parameters.get("fit_strategy") == "constrained":
+        warnings.append(
+            "GEV shape was constrained to the screening bounds "
+            f"{GEV_SHAPE_BOUNDS}; inspect the fit before tail use."
+        )
     lower, upper, effective_bootstrap = _bootstrap_bounds(
         sample.values,
         method=method,
@@ -877,6 +884,73 @@ def write_response_surface(surface: FloodResponseSurface, path: Path) -> Path:
     return _write_json(surface.to_dict(), path)
 
 
+def _fit_gev(
+    values: np.ndarray,
+) -> tuple[float, float, float, str]:
+    """Fit a GEV, falling back to bounded shape when MLE leaves the screen."""
+    try:
+        shape, loc, scale = stats.genextreme.fit(values)
+        if (
+            math.isfinite(float(shape))
+            and math.isfinite(float(loc))
+            and math.isfinite(float(scale))
+            and float(scale) > 0
+            and GEV_SHAPE_BOUNDS[0] <= float(shape) <= GEV_SHAPE_BOUNDS[1]
+        ):
+            return float(shape), float(loc), float(scale), "mle"
+    except (FloatingPointError, RuntimeError, ValueError):
+        shape = 0.1
+        loc = float(np.mean(values))
+        scale = float(np.std(values, ddof=1))
+    initial_shape = min(max(float(shape), GEV_SHAPE_BOUNDS[0]), GEV_SHAPE_BOUNDS[1])
+    initial_loc = float(loc) if math.isfinite(float(loc)) else float(np.mean(values))
+    initial_scale = (
+        float(scale)
+        if math.isfinite(float(scale)) and float(scale) > 0
+        else max(float(np.std(values, ddof=1)), GEV_MIN_SCALE)
+    )
+
+    def negative_log_likelihood(params: np.ndarray) -> float:
+        candidate_shape = float(params[0])
+        candidate_loc = float(params[1])
+        candidate_scale = math.exp(float(params[2]))
+        if candidate_scale <= 0 or not math.isfinite(candidate_scale):
+            return 1e100
+        log_pdf = stats.genextreme.logpdf(
+            values,
+            candidate_shape,
+            loc=candidate_loc,
+            scale=candidate_scale,
+        )
+        if not np.all(np.isfinite(log_pdf)):
+            return 1e100
+        return float(-np.sum(log_pdf))
+
+    result = optimize.minimize(
+        negative_log_likelihood,
+        np.asarray(
+            [initial_shape, initial_loc, math.log(initial_scale)],
+            dtype=float,
+        ),
+        method="L-BFGS-B",
+        bounds=[
+            GEV_SHAPE_BOUNDS,
+            (None, None),
+            (math.log(GEV_MIN_SCALE), None),
+        ],
+    )
+    if not result.success or not np.all(np.isfinite(result.x)):
+        raise HydrologyFloodError(
+            "GEV fit failed even with shape bounds; review the sample."
+        )
+    constrained_shape = float(result.x[0])
+    constrained_loc = float(result.x[1])
+    constrained_scale = math.exp(float(result.x[2]))
+    if not GEV_SHAPE_BOUNDS[0] <= constrained_shape <= GEV_SHAPE_BOUNDS[1]:
+        raise HydrologyFloodError("Constrained GEV shape escaped its bounds.")
+    return constrained_shape, constrained_loc, constrained_scale, "constrained"
+
+
 def _fit_stationary(
     values: Sequence[float] | np.ndarray,
     *,
@@ -886,7 +960,7 @@ def _fit_stationary(
     array = np.asarray(values, dtype=float)
     probabilities = np.asarray([1.0 - 1.0 / period for period in return_periods])
     if method == "gev":
-        shape, loc, scale = stats.genextreme.fit(array)
+        shape, loc, scale, strategy = _fit_gev(array)
         quantiles = tuple(
             float(stats.genextreme.ppf(probability, shape, loc=loc, scale=scale))
             for probability in probabilities
@@ -898,6 +972,8 @@ def _fit_stationary(
             "shape_scipy": float(shape),
             "loc": float(loc),
             "scale": float(scale),
+            "fit_strategy": strategy,
+            "shape_bounds": list(GEV_SHAPE_BOUNDS),
         }
         return parameters, quantiles, log_likelihood
     log_values = np.log10(array)

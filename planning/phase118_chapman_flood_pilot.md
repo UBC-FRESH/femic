@@ -127,6 +127,17 @@ DRA, receptor, and gauge layers and review the domain with a hydrologist.
 The P114 producer and WS4 P57 consumer are merged; the missing piece is the
 pilot data and review, not more model code.
 
+## P118.2 tail remediation
+
+The P114.9 validation finding was addressed before any pilot response surface:
+the stationary GEV now uses a shape-bounded fallback when the unconstrained MLE
+falls outside `[-0.5, 0.5]`, records `fit_strategy`, and warns. The Squamish
+validation GEV is usable again under the same tail screen, with LP3 retained as
+a comparison.
+
+This does not remove the Chapman data gaps. The pilot still needs the public
+FWA/DRA/receptor/gauge layers, a reviewed crosswalk, and hydrologist review.
+
 ## P118.3 public-layer acquisition
 
 The acquisition script `scripts/acquire_chapman_public.py` writes bulk public
