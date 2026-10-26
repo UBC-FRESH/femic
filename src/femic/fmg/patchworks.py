@@ -5438,6 +5438,8 @@ def build_fragments_geodataframe(
     )
     for column_name in required_live_source_columns:
         out[column_name] = scoped[column_name]
+    if "CFS_ECOZONE" in scoped.columns:
+        out["CFS_ECOZONE"] = scoped["CFS_ECOZONE"].to_numpy()
     used_fragment_field_names = {
         str(column_name).casefold() for column_name in out.columns
     }

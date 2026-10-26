@@ -261,14 +261,16 @@ def _check_tables(
     if set(tables) != set(TABLE_FILES):
         return
     boundaries = tables["boundaries"]
-    if len(boundaries) != 1:
-        issues.append("boundaries.csv must contain exactly one row")
+    if boundaries.empty:
+        issues.append("boundaries.csv must contain at least one row")
     admin = str(manifest["boundaries"].get("admin", ""))
     eco = str(manifest["boundaries"].get("eco", ""))
-    if len(boundaries) == 1:
-        row = boundaries.iloc[0]
-        if row["admin_boundary"] != admin or row["eco_boundary"] != eco:
-            issues.append("boundaries.csv does not match manifest boundaries")
+    declared_boundaries = {
+        (str(row["admin_boundary"]).strip(), str(row["eco_boundary"]).strip())
+        for row in boundaries.to_dict("records")
+    }
+    if (admin, eco) not in declared_boundaries:
+        issues.append("boundaries.csv does not declare the manifest boundary")
 
     age_classes = _integers(tables["age_classes"], "class_size", issues)
     grid: list[int] = []
@@ -321,8 +323,10 @@ def _check_tables(
         else:
             if abs(shares - 1.0) > 1e-6:
                 issues.append(f"track {track!r} species shares sum to {shares}")
-        if track_row["eco_boundary"] != eco:
-            issues.append(f"track {track!r} eco boundary does not match manifest")
+        if str(track_row["eco_boundary"]).strip() not in {
+            eco for _admin, eco in declared_boundaries
+        }:
+            issues.append(f"track {track!r} eco boundary is not declared in boundaries.csv")
         if not str(track_row["volume_feature_label"]).strip():
             issues.append(f"track {track!r} has an empty volume feature label")
 
