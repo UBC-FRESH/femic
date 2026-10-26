@@ -15227,3 +15227,14 @@
 - Recorded migration triggers, what changes/does not change, the version-pin policy, and
   the platform watchlist. No unreleased CBM4 dependency or code was added.
 - P115.1 crosswalk science review remains the only open P115 task.
+
+## 2026-10-26 - P115.1 crosswalk review packet
+
+- Added `scripts/check_carbon_crosswalks.py` and
+  `notes/reports/p1151-crosswalk-review.json`; every mapped CBM species, admin/eco
+  boundary, disturbance type, and land class exists in CBM defaults `1.2.9300.391`.
+- Added `notes/reports/p1151-crosswalk-review.md` with the semantic decisions still
+  needed for species resolution, TSA/MKRF boundary provenance, disturbance removal and
+  transition assumptions, land-class choice, and fallback policy.
+- The mechanical check passes; P115.1 remains open because the CBM/CFS science sign-off
+  has not been completed. No runtime, parity, GCBM, or package behavior changed.

@@ -1,0 +1,153 @@
+{
+  "created_utc": "2026-10-26T04:48:22Z",
+  "aidb": "/tmp/opencode/libcbm-venv/lib/python3.12/site-packages/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.9300.391.db",
+  "aidb_sha256": "4bd722d8825abeda3c9cf77247bbd4903824259e2fcc046d9a335336c8842155",
+  "config_dir": "config/carbon",
+  "counts": {
+    "species_rows": 29,
+    "tsa_rows": 10,
+    "disturbance_rows": 12,
+    "land_class_rows": 3
+  },
+  "missing": {
+    "species": [],
+    "boundaries": [],
+    "disturbances": [],
+    "land_classes": []
+  },
+  "disturbances": [
+    {
+      "treatment_pattern": "cc",
+      "default_dist_type": "Clearcut harvesting without salvage",
+      "cbm_id": 204,
+      "cbm_description": "Same as the default Clearcut harvesting disturbance type, except all snags are transferred to the Medium pool",
+      "removes_biomass": "true",
+      "confidence": "high",
+      "notes": "Default clearcut."
+    },
+    {
+      "treatment_pattern": "ct",
+      "default_dist_type": "Partial cutting",
+      "cbm_id": 10,
+      "cbm_description": "Partial cutting removes 50% of the merchantable biomass from a stand.",
+      "removes_biomass": "true",
+      "confidence": "medium",
+      "notes": "CBM partial cutting removes 50% of merchantable biomass; replace with an intensity-specific commercial-thinning type when known."
+    },
+    {
+      "treatment_pattern": "pct",
+      "default_dist_type": "85% precommercial thinning",
+      "cbm_id": 197,
+      "cbm_description": "Sylva 85% precommercial thinning (\u00c9claircie pr\u00e9commerciale)",
+      "removes_biomass": "true",
+      "confidence": "medium",
+      "notes": "Precommercial thinning; confirm the CBM removal assumption."
+    },
+    {
+      "treatment_pattern": "f1",
+      "default_dist_type": "Natural succession",
+      "cbm_id": 11,
+      "cbm_description": "For users who explicitly model natural succession in stands as events. No stock changes are associatied with this disturbance type.",
+      "removes_biomass": "false",
+      "confidence": "low",
+      "notes": "Fertilization is represented through the growth curve; this event carries no stock change."
+    },
+    {
+      "treatment_pattern": "f2",
+      "default_dist_type": "Natural succession",
+      "cbm_id": 11,
+      "cbm_description": "For users who explicitly model natural succession in stands as events. No stock changes are associatied with this disturbance type.",
+      "removes_biomass": "false",
+      "confidence": "low",
+      "notes": "Fertilization is represented through the growth curve; this event carries no stock change."
+    },
+    {
+      "treatment_pattern": "f3",
+      "default_dist_type": "Natural succession",
+      "cbm_id": 11,
+      "cbm_description": "For users who explicitly model natural succession in stands as events. No stock changes are associatied with this disturbance type.",
+      "removes_biomass": "false",
+      "confidence": "low",
+      "notes": "Fertilization is represented through the growth curve; this event carries no stock change."
+    },
+    {
+      "treatment_pattern": "fire",
+      "default_dist_type": "Wildfire",
+      "cbm_id": 1,
+      "cbm_description": "Wildfire causing stand mortality.",
+      "removes_biomass": "true",
+      "confidence": "high",
+      "notes": "Stand-replacing wildfire."
+    },
+    {
+      "treatment_pattern": "wildfire",
+      "default_dist_type": "Wildfire",
+      "cbm_id": 1,
+      "cbm_description": "Wildfire causing stand mortality.",
+      "removes_biomass": "true",
+      "confidence": "high",
+      "notes": "Stand-replacing wildfire."
+    },
+    {
+      "treatment_pattern": "mpb",
+      "default_dist_type": "Mountain pine beetle \u2014 Moderate impact",
+      "cbm_id": 137,
+      "cbm_description": "Moderate impact (10% softwood mortality)",
+      "removes_biomass": "true",
+      "confidence": "medium",
+      "notes": "Severity must be supplied by the instance; moderate is a placeholder."
+    },
+    {
+      "treatment_pattern": "salvage",
+      "default_dist_type": "Salvage logging after fire",
+      "cbm_id": 130,
+      "cbm_description": "Salvage logging on areas burned by fire.",
+      "removes_biomass": "true",
+      "confidence": "low",
+      "notes": "Use only when the salvage type is known."
+    },
+    {
+      "treatment_pattern": NaN,
+      "default_dist_type": "Natural succession",
+      "cbm_id": 11,
+      "cbm_description": "For users who explicitly model natural succession in stands as events. No stock changes are associatied with this disturbance type.",
+      "removes_biomass": "false",
+      "confidence": "high",
+      "notes": "No-op event."
+    },
+    {
+      "treatment_pattern": "default",
+      "default_dist_type": "Natural succession",
+      "cbm_id": 11,
+      "cbm_description": "For users who explicitly model natural succession in stands as events. No stock changes are associatied with this disturbance type.",
+      "removes_biomass": "false",
+      "confidence": "low",
+      "notes": "Fallback for an unrecognized treatment; the package must record it."
+    }
+  ],
+  "land_classes": [
+    {
+      "ifm": "managed",
+      "landclass": 0,
+      "cbm_description": "suelo forestal mantenido suelo forestal",
+      "confidence": "high",
+      "notes": "Matches the WS3 reference default."
+    },
+    {
+      "ifm": "unmanaged",
+      "landclass": 0,
+      "cbm_description": "suelo forestal mantenido suelo forestal",
+      "confidence": "medium",
+      "notes": "Use 16 (Unmanaged Forest Land) only when the reporting question requires it."
+    },
+    {
+      "ifm": "nonforest",
+      "landclass": 1,
+      "cbm_description": "Suelo de cultivo mantenido",
+      "confidence": "low",
+      "notes": "Only for an explicitly nonforest package."
+    }
+  ],
+  "ok": true,
+  "note": "Mechanical existence check only; CBM/CFS science review, species resolution, boundary provenance, removal fractions, and transition semantics remain reviewer decisions."
+}

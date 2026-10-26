@@ -18,6 +18,10 @@ manifest must record which crosswalk version was used.
 - `tsa24.yaml` — TSA24 defaults (Montane Cordillera, TSA `24`).
 - `mkrf.yaml` — MKRF defaults (Pacific Maritime, FMU code `mkrf`).
 
+Review packet: `notes/reports/p1151-crosswalk-review.md` (mechanical checks pass;
+CBM/CFS science review pending). The checker is
+`scripts/check_carbon_crosswalks.py`.
+
 Run `femic carbon validate <package>` (or `--config config/carbon/tsa24.yaml`)
 before a cross-repo handoff. The validator checks table hashes, the package
 fingerprint, classifiers, the yield grid, area, and boundaries. The public-safe

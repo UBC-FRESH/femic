@@ -155,3 +155,11 @@ package, the exact `track_name` join, the `carbon.*` account names, and the TSA2
 tolerance. No unreleased CBM4 code or dependency is added. GCBM remains the external
 spatial bridge; `gcbmwalltowall convert` is a watchlist path, not a FEMIC runtime
 dependency.
+
+### P115.1 review packet status
+
+`scripts/check_carbon_crosswalks.py` verifies all 29 species, 10 boundary rows, 12
+disturbance rows, and 3 land-class rows against CBM defaults `1.2.9300.391`; the
+existence check passes. The science decisions and sign-off block are in
+`notes/reports/p1151-crosswalk-review.md`. P115.1 stays open until a CBM/CFS reviewer
+records the species, boundary, disturbance, and land-class decisions.
