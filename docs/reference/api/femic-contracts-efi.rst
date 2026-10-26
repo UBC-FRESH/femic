@@ -68,6 +68,7 @@ Cross-References
 ----------------
 
 - :doc:`../contracts/efi-model-card`
+- :doc:`femic-efi-pipeline`
 - :doc:`../contracts/index`
 
 .. automodule:: femic.contracts.efi

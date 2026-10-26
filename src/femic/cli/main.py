@@ -86,6 +86,8 @@ from femic.document_figures import (
     current_document_figure_review_timestamp,
     write_document_figure_provenance_json,
 )
+from femic.efi import annotate_attribute_table
+from femic.efi.application import EFIApplicationError
 from femic.fansier_reporting import (
     DEFAULT_FANSIER_PARSED_OUTPUT_DIR,
     FansierReportParseError,
@@ -470,6 +472,11 @@ hydrology_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
     help="Build and inspect versioned forest-hydrology response bundles.",
+)
+efi_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Attach EFI model-card provenance to attribute tables.",
 )
 console = Console()
 
@@ -12086,7 +12093,98 @@ def hydrology_pilot(
     console.print(f"data_gaps: {len(result.validation_report.readiness.gaps)}")
 
 
+EFI_ANNOTATE_INPUT_ARGUMENT = typer.Argument(
+    ...,
+    exists=True,
+    file_okay=True,
+    dir_okay=False,
+    readable=True,
+    help="Attribute table (CSV, Parquet, or Feather).",
+)
+EFI_ANNOTATE_CARD_OPTION = typer.Option(
+    ...,
+    "--card",
+    exists=True,
+    file_okay=True,
+    dir_okay=False,
+    readable=True,
+    help="femic.efi.model.v1 JSON model card.",
+)
+EFI_ANNOTATE_OUTPUT_OPTION = typer.Option(
+    ...,
+    "--output",
+    "-o",
+    help="Annotated table path; suffix selects CSV, Parquet, or Feather.",
+)
+EFI_ANNOTATE_SUMMARY_OPTION = typer.Option(
+    None,
+    "--summary",
+    help="Optional JSON summary path.",
+    show_default=False,
+)
+EFI_ANNOTATE_POLICY_OPTION = typer.Option(
+    "flag",
+    "--domain-policy",
+    help="Out-of-domain policy: flag, drop, or require.",
+    show_default=True,
+)
+EFI_ANNOTATE_REGION_COLUMN_OPTION = typer.Option(
+    "region", "--region-column", show_default=True
+)
+EFI_ANNOTATE_SPECIES_COLUMN_OPTION = typer.Option(
+    "species", "--species-column", show_default=True
+)
+EFI_ANNOTATE_AGE_COLUMN_OPTION = typer.Option("age", "--age-column", show_default=True)
+EFI_ANNOTATE_HEIGHT_COLUMN_OPTION = typer.Option(
+    "height", "--height-column", show_default=True
+)
+
+
+@efi_app.command("annotate")
+def efi_annotate(
+    input_path: Path = EFI_ANNOTATE_INPUT_ARGUMENT,
+    card: Path = EFI_ANNOTATE_CARD_OPTION,
+    output: Path = EFI_ANNOTATE_OUTPUT_OPTION,
+    summary: Path | None = EFI_ANNOTATE_SUMMARY_OPTION,
+    domain_policy: str = EFI_ANNOTATE_POLICY_OPTION,
+    region_column: str = EFI_ANNOTATE_REGION_COLUMN_OPTION,
+    species_column: str = EFI_ANNOTATE_SPECIES_COLUMN_OPTION,
+    age_column: str = EFI_ANNOTATE_AGE_COLUMN_OPTION,
+    height_column: str = EFI_ANNOTATE_HEIGHT_COLUMN_OPTION,
+) -> None:
+    """Attach model provenance and applicability flags to an attribute table."""
+
+    def _optional_column(value: str) -> str | None:
+        return value.strip() or None
+
+    try:
+        result = annotate_attribute_table(
+            input_path,
+            card,
+            output,
+            summary_path=summary,
+            domain_policy=domain_policy,
+            region_column=_optional_column(region_column),
+            species_column=_optional_column(species_column),
+            age_column=_optional_column(age_column),
+            height_column=_optional_column(height_column),
+        )
+    except EFIApplicationError as exc:
+        console.print(f"[red]EFI annotation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(
+        f"[green]Annotated[/green] {result.rows_written}/{result.row_count} rows "
+        f"with {result.model_id} -> {result.output_path}"
+    )
+    if result.out_of_domain_count:
+        console.print(
+            f"[yellow]Out of domain:[/yellow] {result.out_of_domain_count} "
+            f"({result.domain_policy})"
+        )
+
+
 app.add_typer(hydrology_app, name="hydrology")
+app.add_typer(efi_app, name="efi")
 app.add_typer(prep_app, name="prep")
 app.add_typer(vdyp_app, name="vdyp")
 app.add_typer(tsa_app, name="tsa")

@@ -1,0 +1,38 @@
+{
+  "schema_version": "femic.efi.model.v1",
+  "model_id": "published-als-site-index-loblolly-seus-2019",
+  "model_version": "2019.1",
+  "attribute": "site_index",
+  "unit": "m",
+  "predictors": ["als_canopy_height", "landsat_stand_age"],
+  "training": {
+    "source_id": "gopalakrishnan-et-al-2019-forests-10-234",
+    "source_version": "2019",
+    "region": "southeastern USA",
+    "plot_count": 211,
+    "species": ["Pinus taeda"],
+    "period": null,
+    "notes": "211 FIA plots spanning 38 ALS projects across the southeastern USA; the published method combines an ALS canopy-height model with Landsat-derived stand age. Source: Gopalakrishnan et al. (2019), Forests 10:234, https://doi.org/10.3390/f10030234."
+  },
+  "validation": {
+    "design": "independent FIA plot set",
+    "n": 75,
+    "rmse": 3.8,
+    "bias": -0.28,
+    "unit": "m",
+    "r2": null,
+    "notes": "Site-index validation on the 75-plot FIA set; relative RMSE 19.7% at base age 25. The paper also reports an Appomattox-Buckingham set (n=23; bias -1.0 m; RMSE 3.0 m), not used for this card."
+  },
+  "applicability": {
+    "regions": ["southeastern USA"],
+    "species": ["Pinus taeda"],
+    "age_min": 15,
+    "age_max": 27,
+    "height_min": null,
+    "height_max": null,
+    "notes": "Young loblolly pine plantations established after 1984; the published map is 30 m resolution. The method is not valid for older or uneven-aged stands."
+  },
+  "licence_id": "CC-BY-4.0",
+  "created_utc": "2026-10-26T00:00:00+00:00",
+  "notes": "Published model card, metadata only. The source is an ALS height model plus Landsat age, not a linear predictor; its coefficients/raster workflow are not copied here. The card makes the claim inspectable; it is not a local validation."
+}

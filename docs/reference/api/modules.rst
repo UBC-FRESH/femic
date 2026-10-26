@@ -70,7 +70,7 @@ Current curated pages in this section include ``femic.instance_context``,
 ``femic.pipeline.bundle``, ``femic.pipeline.legacy_runtime``,
 ``femic.pipeline.manifest``, ``femic.contracts.climate``,
 ``femic.contracts.climate_na``, ``femic.climate.consumer``, ``femic.contracts.disturbance``, ``femic.contracts.efi``,
-``femic.efi.application``, and ``femic.site_index``.
+``femic.efi.application``, ``femic.efi.pipeline``, and ``femic.site_index``.
 
 .. toctree::
    :maxdepth: 1
@@ -110,6 +110,7 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-contracts-disturbance
    femic-contracts-efi
    femic-efi-application
+   femic-efi-pipeline
    femic-site-index
 
 Curated rebuild and release modules

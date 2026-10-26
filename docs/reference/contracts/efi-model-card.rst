@@ -149,6 +149,67 @@ Attaching to Attribute Rows
 
 The input rows are not mutated.
 
+Attaching to Attribute Tables
+-----------------------------
+
+:func:`femic.efi.pipeline.annotate_attribute_table` is the file-level seam for
+CSV, Parquet, and Feather attribute tables. It adds the card metadata plus:
+
+- ``model_card_schema_version``;
+- ``model_in_domain``; and
+- ``model_domain_reasons`` (a JSON list).
+
+The ``domain_policy`` is ``flag`` (keep every row and flag it), ``drop`` (omit
+out-of-domain rows), or ``require`` (raise on the first out-of-domain row). The
+default region/species/age/height columns are ``region``, ``species``, ``age``,
+and ``height``; each can be remapped or disabled.
+
+.. code-block:: bash
+
+   femic efi annotate attributes.csv \
+     --card config/efi/models/als_loreys_height_cwh_2015.json \
+     --output attributes_annotated.csv \
+     --summary attributes_annotation_summary.json \
+     --domain-policy flag
+
+Published Cards
+---------------
+
+Two metadata-only cards are checked in under ``config/efi/models/``:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 34 14 18 18 16
+
+   * - Card
+     - Attribute
+     - Region
+     - Species
+     - Validation
+   * - ``als_loreys_height_cwh_2015.json``
+     - height
+     - CWH, northern Vancouver Island, BC
+     - Cw, Hw, Hm
+     - RMSE 2.88 m; bias 0.05 m; 140 plots
+   * - ``als_site_index_loblolly_seus_2019.json``
+     - site index
+     - southeastern USA
+     - *Pinus taeda*
+     - RMSE 3.8 m; bias -0.28 m; 75 FIA plots
+
+Sources:
+
+- White et al. (2015), *Forests* 6:3704,
+  https://doi.org/10.3390/f6103704.
+- Gopalakrishnan et al. (2019), *Forests* 10:234,
+  https://doi.org/10.3390/f10030234.
+
+Both are CC BY 4.0. The cards are metadata-only because the published models are
+Random Forests or an ALS-height-plus-Landsat workflow, not the linear form in
+``femic.efi.coefficients.v1``. Do not invent linear coefficients to force them
+through the application engine. The cards are published claims, not local FEMIC
+validation.
+
 Validation Rules
 ----------------
 
@@ -179,6 +240,17 @@ Example
    rows = annotate_attribute_rows(
        [{"fragment_id": 1001, "height_m": 24.5}], card
    )
+
+   from femic.efi.pipeline import annotate_attribute_table
+
+   result = annotate_attribute_table(
+       Path("attributes.csv"),
+       Path("config/efi/models/als_loreys_height_cwh_2015.json"),
+       Path("attributes_annotated.csv"),
+       summary_path=Path("attributes_annotation_summary.json"),
+       domain_policy="flag",
+   )
+   print(result.in_domain_count, result.out_of_domain_count)
 
 Out of Scope
 ------------
