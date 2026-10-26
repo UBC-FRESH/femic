@@ -16047,3 +16047,33 @@
 - The audit writes CO2/CH4/N2O/CO2e accounts using IPCC AR6 GWP100; the thesis
   dynamic LCA is recorded as a caveat. Fertilization is no longer blocked on
   missing curves.
+
+## 2026-10-26 - P118.7 Chapman DEM mosaic (#403)
+
+- Added `scripts/build_chapman_dem_mosaic.py`, clipping the native 1 m DEM to
+  the Chapman watershed and recording coverage, nodata normalization, size, and
+  SHA-256.
+- Built `runtime/p118_chapman/dem_mosaic_3157_cgvd2013.tif` from 90 selected
+  tiles: 114,396,884 bytes, SHA-256
+  `68e9e891dfc41856de8d2db07f659e017cf89cd03b3feb439aff6f1865d0eba0`,
+  horizontal EPSG:3157.
+- 81 tiles are CGVD2013 compound; 9 older 2D tiles lack vertical metadata, so
+  vertical status is mixed/unresolved.
+- Valid area inside the watershed is 4,985.9 ha, with a 1,931.2 ha unfilled
+  gap. This is the real valid-pixel gap, larger than the P118.4 bbox estimate.
+- Added five offline tests; no bulk data committed and no flood model run.
+
+## 2026-10-26 - P118.8 Chapman domain defensibility decision (#405)
+
+- Added `planning/phase118_domain_decision.md`; the current public Chapman DEM
+  mosaic is **blocked for hydrologic elevation and flood use**.
+- Quantified vertical coverage: 1,621.6 ha CGVD2013 (32.5% of valid), 3,347.5 ha
+  covered only by 2D tiles with unknown vertical datum (67.1%), 16.7 ha valid
+  outside both footprints, and a 1,931.2 ha unfilled watershed gap.
+- Limited terrain/slope review is possible only after seam inspection; it is not
+  a flood product.
+- Recorded the exact unblock requirements: 9-tile vertical metadata or a
+  consistent CGVD2013 replacement, coverage gap closure, reviewed receptor,
+  current/govened gauge, culvert inventory, hydrologist review, and WS4
+  crosswalk.
+- No flood model or claim was produced.

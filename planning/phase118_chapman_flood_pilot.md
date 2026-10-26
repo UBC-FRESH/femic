@@ -244,3 +244,31 @@ marked **unreviewed**; no geometry was inferred from the road.
 The domain remains blocked on the DEM mosaic (including the 126.6 ha edge gap),
 reviewed receptor geometry, current/govened gauge series, culvert inventory,
 hydrologist review, and the WS4 crosswalk. No flood model or claim was produced.
+
+## P118.7 DEM mosaic
+
+The mosaic builder produced a clipped, native 1 m raster in EPSG:3157 from 90
+selected DEM tiles:
+
+- mosaic: `runtime/p118_chapman/dem_mosaic_3157_cgvd2013.tif`
+- size: 114,396,884 bytes; SHA-256
+  `68e9e891dfc41856de8d2db07f659e017cf89cd03b3feb439aff6f1865d0eba0`
+- 81 tiles are EPSG:6653 compound with CGVD2013 heights; 9 older 2D tiles have
+  no vertical metadata. The mosaic is therefore **horizontal EPSG:3157 with
+  mixed/unresolved vertical metadata**, not a complete CGVD2013 surface.
+- Valid area inside the watershed: 4,985.9 ha. Unfilled gap: 1,931.2 ha.
+- Valid elevation range: -0.26 to 1,659.65 m; nodata normalized to -32767.
+
+The larger gap is real valid-pixel coverage, not the bbox estimate from
+P118.4. The domain remains blocked on mixed vertical metadata, the coverage gap,
+receptor geometry, current gauge, culverts, hydrologist review, and the WS4
+crosswalk.
+
+## P118.8 defensibility decision
+
+The current public data is **blocked for hydrologic elevation and flood use**.
+See `planning/phase118_domain_decision.md`: 67.1% of valid DEM pixels have
+unknown vertical datum, the unfilled gap is 1,931.2 ha, and the receptor,
+current gauge, culverts, hydrologist review, and WS4 crosswalk remain missing.
+Limited terrain/slope review may be possible after seam inspection, but it is
+not a flood product.

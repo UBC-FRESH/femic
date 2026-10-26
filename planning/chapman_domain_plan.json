@@ -1,6 +1,7 @@
 {
   "blockers": [
-    "DEM mosaic is not built and the 126.6 ha edge gap remains.",
+    "67.1% of valid DEM pixels have unknown vertical datum (9 older 2D tiles).",
+    "1,931.2 ha of the watershed has no valid mosaic pixels.",
     "No reviewed receptor geometry or capacity/damage assumption.",
     "No current public daily gauge series or governed SCRD series.",
     "No culvert/road-stream crossing inventory.",
@@ -27,27 +28,31 @@
     "review_status": "resolved from actual tile metadata; geospatial review still recommended",
     "vector_transform": "Reproject FWA/DRA/WSC vectors from EPSG:3005 or EPSG:4326 to EPSG:3157 with a documented transformation and record it in the domain manifest."
   },
+  "defensibility": {
+    "flood_response": "blocked",
+    "hydrologic_elevation": "blocked",
+    "reason": "67.1% of valid DEM pixels are covered only by 2D tiles without vertical metadata; 1,931.2 ha of the watershed has no valid mosaic pixels.",
+    "terrain_slope_screening": "partial; seam review required, not a flood product"
+  },
   "generated_utc": "2026-10-26T00:00:00+00:00",
   "layers": {
     "dem": {
-      "metadata_audit": "runtime/p118_chapman/dem_metadata_audit.json",
-      "product": {
-        "acquisition_years": [
-          2019,
-          2020,
-          2024
-        ],
-        "covered_area_ha": 6790.457332589796,
-        "intersecting_tile_count": 90,
-        "projections": [
-          "utm10"
-        ],
-        "tile_count": 90,
-        "uncovered_area_ha": 126.61713626071923,
-        "vertical_datum_missing": 90
-      },
-      "selection_sha256": "ac2a4b6310592db2d63ed0367259d30efc5b5202036d6170dca1c5979fed166c",
-      "status": "selected; metadata resolved; mosaic not downloaded"
+      "compound_tile_count": 81,
+      "crs_epsg": 3157,
+      "edge_gap_ha": 1931.1727,
+      "mosaic_path": "runtime/p118_chapman/dem_mosaic_3157_cgvd2013.tif",
+      "mosaic_sha256": "68e9e891dfc41856de8d2db07f659e017cf89cd03b3feb439aff6f1865d0eba0",
+      "mosaic_size_bytes": 114396884,
+      "resolution_m": [
+        1.0,
+        1.0
+      ],
+      "source_tile_count": 90,
+      "status": "mosaic built; coverage and vertical metadata partial",
+      "two_d_tile_count": 9,
+      "valid_area_ha": 4985.9018,
+      "vertical_status": "mixed_unresolved",
+      "watershed_area_ha": 6917.0745
     },
     "gauge": {
       "source": {
@@ -128,10 +133,12 @@
     }
   },
   "next_actions": [
-    "Build the DEM mosaic in EPSG:3157 with CGVD2013 heights and document the 126.6 ha gap.",
-    "Select and source the reviewed receptor geometry with public evidence.",
-    "Build a Chapman WS4 dataset and reviewed crosswalk.",
-    "Review the domain and model card with a hydrologist before any response surface."
+    "Resolve the 9-tile vertical metadata or replace them with a consistent CGVD2013 DEM.",
+    "Close or explicitly bound the 1,931.2 ha coverage gap.",
+    "Select and source a reviewed receptor geometry with public evidence.",
+    "Obtain a current public or governed gauge series.",
+    "Assemble the culvert/crossing inventory and reviewed WS4 crosswalk.",
+    "Complete hydrologist review before any response surface."
   ],
   "pilot": {
     "flood_claim": false,
@@ -154,13 +161,24 @@
   },
   "schema_version": "femic.chapman_domain_plan.v1",
   "status": "blocked",
+  "vertical_coverage": {
+    "known_cgvd2013_ha": 1621.6382,
+    "known_share_of_valid": 0.3252,
+    "unfilled_gap_ha": 1931.1727,
+    "unknown_2d_ha": 3347.5455,
+    "unknown_share_of_valid": 0.6714,
+    "valid_area_ha": 4985.9018,
+    "valid_outside_both_ha": 16.7181
+  },
   "vertical_datum": {
-    "blocking": false,
-    "required": "Preserve CGVD2013 heights and record the compound CRS in the DEM mosaic and domain provenance.",
-    "source": "LidarBC DEM tile compound CRS, audited across 90/90 selected DEM tiles",
-    "status": "resolved",
-    "value": "CGVD2013(CGG2013) height",
-    "vertical_epsg": "6647"
+    "blocking": true,
+    "compound_tile_count": 81,
+    "compound_value": "CGVD2013(CGG2013) height",
+    "compound_vertical_epsg": "6647",
+    "reason": "81 DEM tiles are EPSG:6653 compound with CGVD2013 heights; 9 older 2D tiles are EPSG:3157 without vertical metadata.",
+    "required": "Resolve vertical metadata for the 9 2D tiles or document a reviewed vertical-control strategy.",
+    "status": "mixed_unresolved",
+    "two_d_tile_count": 9
   },
   "watershed": {
     "area_ha": 6917.074468850516,
