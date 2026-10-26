@@ -4150,6 +4150,18 @@ Tasks:
   - [x] Audit LidarBC product coverage and metadata gaps.
   - [x] Add offline tests and write the planning note.
   - [x] Update roadmap and changelog.
+- [x] P118.5 Define the Chapman domain assembly and blocked decisions (`#397`).
+  - [x] Record the native-CRS/vertical-datum decision and blockers.
+  - [x] Define layer assembly and clipping rules.
+  - [x] Define receptor and crosswalk evidence requirements.
+  - [x] Write the plan JSON and planning note.
+  - [x] Update roadmap and changelog.
+- [x] P118.6 Resolve LidarBC DEM CRS and audit receptor evidence (`#401`).
+  - [x] Add a DEM metadata audit script and typed result.
+  - [x] Resolve horizontal/vertical CRS and audit selected tiles.
+  - [x] Record receptor candidate/evidence and review status.
+  - [x] Add offline tests and update the domain plan.
+  - [x] Update roadmap and changelog.
 
 Acceptance: the audit has source provenance; gauge discontinuities and missing
 damage/review inputs are explicit; no response surface or flood claim is made;
@@ -4159,9 +4171,9 @@ Detailed plan: `planning/phase118_chapman_flood_pilot.md`.
 
 ## Phase 119: Site-Index Provenance and Reconciliation (`#392`)
 
-Status: **active** (implementation and TSA46 pilot complete; PR pending).
+Status: **active** (P119.1 complete, merged #396 as `2a02fac`; P119.2 open).
 
-Branch: `feature/p119-si-reconciliation`
+Branch: `feature/p119-si-reconciliation` (P119.1, merged); P119.2 branch TBD.
 
 Goal: make the existing VRI, VDYP, and SIBEC site-index sources legible and
 comparable without deriving a new site-index model or changing curves. VRI
@@ -4182,6 +4194,14 @@ Tasks:
     species-mismatch, missing-source, and CLI cases.
   - [x] Run the TSA46 pilot and record coverage and limits.
   - [x] Add the contract, guide, API page, roadmap, and changelog.
+
+- [ ] P119.2 Merge the SIBEC 2014 addendum and reconcile AU-level TSA SI
+  (`#399`).
+  - [ ] Parse `2013sisuaddendum_jul2014.xlsx` with explicit provenance, or
+    record a precise unsupported reason.
+  - [ ] Read AU-level `03_input` SI as a separate grain.
+  - [ ] Keep polygon and AU-level reports distinct.
+  - [ ] Add tests, docs, and changelog.
 
 Acceptance: SIBEC loads with mean/range/plot count/standard error; VRI and VDYP
 join with documented species/BEC mapping; reconciliation reports coverage,

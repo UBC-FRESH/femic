@@ -11,6 +11,7 @@
   triple coverage, and 25,643 are flagged at the 2.0 m threshold. The 2014
   SIBEC addendum and AU-level TSA SI reconciliation remain follow-ups. Added
   contract, guide, API, roadmap, and focused tests; no curve or AAC changes.
+  Merged #396 (`2a02fac`); P119.2 is #399.
 - P117.1: added `femic.efi.application` with the
   `femic.efi.coefficients.v1` contract, linear prediction, applicability
   checks, domain flagging/dropping, and a bias/RMSE/MAE/R-squared backtest.
@@ -15834,6 +15835,33 @@
   - `pytest tests/test_chapman_domain_audit.py` passed (4 tests).
   - `ruff check` and `mypy` passed for the script and test.
   - Real audit wrote `runtime/p118_chapman/domain_audit.json`.
+
+## 2026-10-26 - P118.5 Chapman domain assembly plan (#397)
+
+- Added `planning/chapman_domain_plan.json` and a planning-note section.
+- Proposed EPSG:32610 (native UTM10) as the domain CRS to avoid resampling the
+  1 m DEM; FWA/DRA/WSC vectors would be reprojected with documentation.
+- Marked the vertical datum unresolved: all selected DEM/DSM tiles have
+  `vertical_datum=null`, so the domain is blocked.
+- Recorded the 288-part watershed dissolve, 08GA046 match within 0.2%, 126.6 ha
+  DEM edge gap, missing receptor, missing current gauge, missing culvert
+  inventory, missing hydrologist review, and missing WS4 crosswalk.
+- No bulk data was committed and no flood model or claim was produced.
+
+## 2026-10-26 - P118.6 LidarBC DEM metadata and receptor evidence (#401)
+
+- Added `scripts/audit_chapman_dem_metadata.py` and audited all 90 selected DEM
+  tiles through GDAL `/vsicurl/` without downloading rasters.
+- Resolved the compound DEM CRS: EPSG:6653, horizontal EPSG:3157
+  (NAD83(CSRS)/UTM zone 10N), vertical EPSG:6647
+  (CGVD2013(CGG2013) height). The discovery manifest's null vertical datum was
+  a metadata gap; 90/90 tiles agree. Resolution 1 m; nodata -32767 or -9999.
+- Corrected the domain plan to EPSG:3157 + CGVD2013 and removed the
+  vertical-datum blocker.
+- Recorded the Chapman WTP/Reservoir Road receptor candidate as unreviewed; no
+  geometry was inferred. The DEM edge gap, current gauge, culverts, hydrologist
+  review, and WS4 crosswalk remain blockers.
+- Added three offline tests; no bulk data committed and no flood model run.
 
 ## 2026-10-25 - P115 activation: forest carbon domain and CBM packages
 

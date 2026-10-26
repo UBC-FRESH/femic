@@ -1,0 +1,210 @@
+{
+  "blockers": [
+    "DEM mosaic is not built and the 126.6 ha edge gap remains.",
+    "No reviewed receptor geometry or capacity/damage assumption.",
+    "No current public daily gauge series or governed SCRD series.",
+    "No culvert/road-stream crossing inventory.",
+    "No hydrologist review.",
+    "No reviewed WS4 block/fragment crosswalk."
+  ],
+  "crosswalk": {
+    "note": "No WS4 Chapman dataset or reviewed crosswalk exists. Do not infer a watershed from block centroids.",
+    "required_fields": [
+      "fragment_id or block_id",
+      "unit_id",
+      "watershed_id",
+      "receptor_id",
+      "source",
+      "review_status"
+    ],
+    "status": "missing"
+  },
+  "crs_decision": {
+    "alternative": "EPSG:3005 would require resampling the 1 m DEM.",
+    "compound_dem_crs": "EPSG:6653",
+    "proposed_domain_crs": "EPSG:3157",
+    "reason": "The selected LidarBC DEM tiles use NAD83(CSRS) / UTM zone 10N horizontally (EPSG:3157) with CGVD2013(CGG2013) heights (vertical EPSG:6647), compound EPSG:6653. Keeping the DEM native avoids a silent raster resample.",
+    "review_status": "resolved from actual tile metadata; geospatial review still recommended",
+    "vector_transform": "Reproject FWA/DRA/WSC vectors from EPSG:3005 or EPSG:4326 to EPSG:3157 with a documented transformation and record it in the domain manifest."
+  },
+  "generated_utc": "2026-10-26T00:00:00+00:00",
+  "layers": {
+    "dem": {
+      "metadata_audit": "runtime/p118_chapman/dem_metadata_audit.json",
+      "product": {
+        "acquisition_years": [
+          2019,
+          2020,
+          2024
+        ],
+        "covered_area_ha": 6790.457332589796,
+        "intersecting_tile_count": 90,
+        "projections": [
+          "utm10"
+        ],
+        "tile_count": 90,
+        "uncovered_area_ha": 126.61713626071923,
+        "vertical_datum_missing": 90
+      },
+      "selection_sha256": "ac2a4b6310592db2d63ed0367259d30efc5b5202036d6170dca1c5979fed166c",
+      "status": "selected; metadata resolved; mosaic not downloaded"
+    },
+    "gauge": {
+      "source": {
+        "bbox": [
+          -123.7205581665039,
+          49.44194030761719,
+          -123.71083068847656,
+          49.48221969604492
+        ],
+        "crs": "EPSG:4326",
+        "feature_count": 3,
+        "licence_id": "OGL-Canada",
+        "relative_path": "gauges.geojson",
+        "sha256": "58d12f157e613e80b49316060db94be99842fcf175f5fd51b70fd4ff88507193",
+        "size_bytes": 1334,
+        "source_url": "https://api.weather.gc.ca/collections/hydrometric-stations"
+      },
+      "status": "historical only; current public daily series missing"
+    },
+    "receptor": {
+      "candidate": "Chapman Creek water-system intake/WTP",
+      "required": "Reviewed point or polygon with public source and capacity/damage assumption",
+      "status": "missing"
+    },
+    "road": {
+      "source": {
+        "bbox": [
+          1162907.8,
+          492863.4,
+          1171239.896,
+          501087.495
+        ],
+        "crs": "EPSG:3005",
+        "feature_count": 492,
+        "licence_id": "OGL-BC",
+        "relative_path": "roads.geojson",
+        "sha256": "c9f27d0bc46294246653364a6bb7817a544cee4a8f09782cf517d1400db466a0",
+        "size_bytes": 741287,
+        "source_url": "https://openmaps.gov.bc.ca/geo/pub/WHSE_BASEMAPPING.DRA_DGTL_ROAD_ATLAS_MPAR_SP/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=pub%3AWHSE_BASEMAPPING.DRA_DGTL_ROAD_ATLAS_MPAR_SP&outputFormat=application%2Fjson&count=5000&bbox=1163000%2C493000%2C1170000%2C500000%2CEPSG%3A3005"
+      },
+      "status": "acquired; clip and reproject pending; culvert inventory missing"
+    },
+    "stream": {
+      "source": {
+        "bbox": [
+          1163230.348,
+          493177.159,
+          1171265.616,
+          501297.746
+        ],
+        "crs": "EPSG:3005",
+        "feature_count": 24,
+        "licence_id": "OGL-BC",
+        "relative_path": "streams.geojson",
+        "sha256": "f1007ced5501c6a9a4328feec0ae496f4e48fe2eb548fb0ab4e93551fe8bce7a",
+        "size_bytes": 269441,
+        "source_url": "https://openmaps.gov.bc.ca/geo/pub/WHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=pub%3AWHSE_BASEMAPPING.FWA_STREAM_NETWORKS_SP&outputFormat=application%2Fjson&count=5000&bbox=1163000%2C493000%2C1170000%2C500000%2CEPSG%3A3005"
+      },
+      "status": "acquired; clip and reproject pending"
+    },
+    "watershed": {
+      "source": {
+        "bbox": [
+          1164341.588,
+          494054.629,
+          1176347.226,
+          513103.736
+        ],
+        "crs": "EPSG:3005",
+        "feature_count": 288,
+        "licence_id": "OGL-BC",
+        "relative_path": "watersheds.geojson",
+        "sha256": "1085a0e897187373dbc98d347118f09a4e4ecaecd8b4bd5bb20a7a25666904a7",
+        "size_bytes": 1677590,
+        "source_url": "https://openmaps.gov.bc.ca/geo/pub/WHSE_BASEMAPPING.FWA_WATERSHEDS_POLY/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=pub%3AWHSE_BASEMAPPING.FWA_WATERSHEDS_POLY&outputFormat=application%2Fjson&count=5000&CQL_FILTER=FWA_WATERSHED_CODE+LIKE+%27900-127577%25%27"
+      },
+      "status": "acquired; dissolve and reproject pending"
+    }
+  },
+  "next_actions": [
+    "Build the DEM mosaic in EPSG:3157 with CGVD2013 heights and document the 126.6 ha gap.",
+    "Select and source the reviewed receptor geometry with public evidence.",
+    "Build a Chapman WS4 dataset and reviewed crosswalk.",
+    "Review the domain and model card with a hydrologist before any response surface."
+  ],
+  "pilot": {
+    "flood_claim": false,
+    "name": "Chapman Creek coastal flood pilot",
+    "parent_issue": "UBC-FRESH/femic#383",
+    "pilot_id": "chapman-creek",
+    "role": "gauged coastal method-development and cross-check; not a GNN AOI result"
+  },
+  "receptor": {
+    "candidate": "Chapman Creek water-system intake / WTP, Reservoir Road, Sechelt",
+    "evidence": [
+      "https://blogs.ubc.ca/mstaats8/methods-2/study-area",
+      "https://letstalk.scrd.ca/29788/widgets/126451/documents/83185",
+      "https://eocp.ca/wp-content/uploads/2012/10/plants-Sunshine-Coast-Regional-District.pdf",
+      "https://www.openstreetmap.org/way/164627850"
+    ],
+    "geometry": null,
+    "required": "Reviewed intake/WTP point or polygon with public geometry, capacity, and damage/screening assumptions.",
+    "status": "candidate_unreviewed"
+  },
+  "schema_version": "femic.chapman_domain_plan.v1",
+  "status": "blocked",
+  "vertical_datum": {
+    "blocking": false,
+    "required": "Preserve CGVD2013 heights and record the compound CRS in the DEM mosaic and domain provenance.",
+    "source": "LidarBC DEM tile compound CRS, audited across 90/90 selected DEM tiles",
+    "status": "resolved",
+    "value": "CGVD2013(CGG2013) height",
+    "vertical_epsg": "6647"
+  },
+  "watershed": {
+    "area_ha": 6917.074468850516,
+    "assembly": "Dissolve the 288 FWA parts into one watershed polygon; do not use the ~861 ha local polygon.",
+    "bounds_epsg3005": [
+      1164341.588,
+      494054.629,
+      1176347.226,
+      513103.736
+    ],
+    "gauge_area_ratio_08GA046": 1.0021841213093408,
+    "gauge_records": [
+      {
+        "drainage_area_km2": 69.0199966430664,
+        "gauge_id": "08GA046",
+        "station_name": "CHAPMAN CREEK NEAR WILSON CREEK"
+      },
+      {
+        "drainage_area_km2": 63.060001373291016,
+        "gauge_id": "08GA060",
+        "station_name": "CHAPMAN CREEK ABOVE SECHELT DIVERSION"
+      },
+      {
+        "drainage_area_km2": 62.58000183105469,
+        "gauge_id": "08GA078",
+        "station_name": "CHAPMAN CREEK BELOW SECHELT DIVERSION"
+      }
+    ],
+    "part_count": 288,
+    "review_status": "area matches 08GA046 within 0.2%; hydrologist review required",
+    "source": {
+      "bbox": [
+        1164341.588,
+        494054.629,
+        1176347.226,
+        513103.736
+      ],
+      "crs": "EPSG:3005",
+      "feature_count": 288,
+      "licence_id": "OGL-BC",
+      "relative_path": "watersheds.geojson",
+      "sha256": "1085a0e897187373dbc98d347118f09a4e4ecaecd8b4bd5bb20a7a25666904a7",
+      "size_bytes": 1677590,
+      "source_url": "https://openmaps.gov.bc.ca/geo/pub/WHSE_BASEMAPPING.FWA_WATERSHEDS_POLY/ows?service=WFS&version=2.0.0&request=GetFeature&typeName=pub%3AWHSE_BASEMAPPING.FWA_WATERSHEDS_POLY&outputFormat=application%2Fjson&count=5000&CQL_FILTER=FWA_WATERSHED_CODE+LIKE+%27900-127577%25%27"
+    }
+  }
+}
