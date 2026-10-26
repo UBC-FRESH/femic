@@ -10,6 +10,16 @@ Turn FEMIC's existing LiDAR product bundle into inventory attributes and a
 biomass curve family the estate models can consume. P79 owns the sensor
 pipeline; this phase owns the inventory model and the curve family.
 
+## Implemented (2026-10-26)
+
+- `femic.efi.application`: `femic.efi.coefficients.v1` contract, linear
+  prediction, applicability checks, domain flagging/dropping, and a
+  bias/RMSE/MAE/R-squared backtest.
+- Synthetic site-index pilot card and coefficients, with 13 focused tests and
+  contract/API docs.
+- Real coefficients, the instance backtest, and the `si_als` pipeline remain
+  open in `#375`.
+
 ## Children
 
 - `P117.1` (`#375`): ALS site-index / potential-height layer.

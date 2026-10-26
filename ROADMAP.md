@@ -3986,6 +3986,11 @@ ground-plot validation surfaces.
 Tasks:
 
 - [ ] P117.1 Add an ALS site-index / potential-height layer (`#375`).
+  - [x] Add the `femic.efi.coefficients.v1` contract, linear application
+    engine, domain checks, backtest harness, synthetic pilot card, and docs.
+  - [ ] Supply a published or project site-index coefficient set.
+  - [ ] Run the backtest on one instance with the P48/P49 ground-plot surfaces.
+  - [ ] Add `si_als` to the fragment attribute pipeline.
 - [ ] P117.2 Add a biomass curve family and carbon conversion (`#376`).
 
 Acceptance: the site-index layer covers the pilot AOI and reports its gaps; a

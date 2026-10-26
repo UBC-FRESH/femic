@@ -42,3 +42,4 @@ Contract Pages
    climate-contract
    disturbance-contract
    efi-model-card
+   efi-application

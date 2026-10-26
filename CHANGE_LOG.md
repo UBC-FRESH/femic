@@ -1,5 +1,13 @@
 # Change Log
 
+## 2026-10-26
+- P117.1: added `femic.efi.application` with the
+  `femic.efi.coefficients.v1` contract, linear prediction, applicability
+  checks, domain flagging/dropping, and a bias/RMSE/MAE/R-squared backtest.
+  Added a synthetic site-index pilot card and coefficients, 13 focused tests,
+  and contract/API docs. Real coefficients, the instance backtest, and the
+  `si_als` pipeline remain open.
+
 ## 2026-10-25
 - P116.1 adapter: added `femic.contracts.climate_na.read_climate_na_csv`, a
   defensive default annual column map, a public-safe ClimateNA-shaped fixture,
