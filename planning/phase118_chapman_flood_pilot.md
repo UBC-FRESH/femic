@@ -263,3 +263,12 @@ The larger gap is real valid-pixel coverage, not the bbox estimate from
 P118.4. The domain remains blocked on mixed vertical metadata, the coverage gap,
 receptor geometry, current gauge, culverts, hydrologist review, and the WS4
 crosswalk.
+
+## P118.8 defensibility decision
+
+The current public data is **blocked for hydrologic elevation and flood use**.
+See `planning/phase118_domain_decision.md`: 67.1% of valid DEM pixels have
+unknown vertical datum, the unfilled gap is 1,931.2 ha, and the receptor,
+current gauge, culverts, hydrologist review, and WS4 crosswalk remain missing.
+Limited terrain/slope review may be possible after seam inspection, but it is
+not a flood product.

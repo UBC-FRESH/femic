@@ -15877,3 +15877,18 @@
 - Valid area inside the watershed is 4,985.9 ha, with a 1,931.2 ha unfilled
   gap. This is the real valid-pixel gap, larger than the P118.4 bbox estimate.
 - Added five offline tests; no bulk data committed and no flood model run.
+
+## 2026-10-26 - P118.8 Chapman domain defensibility decision (#405)
+
+- Added `planning/phase118_domain_decision.md`; the current public Chapman DEM
+  mosaic is **blocked for hydrologic elevation and flood use**.
+- Quantified vertical coverage: 1,621.6 ha CGVD2013 (32.5% of valid), 3,347.5 ha
+  covered only by 2D tiles with unknown vertical datum (67.1%), 16.7 ha valid
+  outside both footprints, and a 1,931.2 ha unfilled watershed gap.
+- Limited terrain/slope review is possible only after seam inspection; it is not
+  a flood product.
+- Recorded the exact unblock requirements: 9-tile vertical metadata or a
+  consistent CGVD2013 replacement, coverage gap closure, reviewed receptor,
+  current/govened gauge, culvert inventory, hydrologist review, and WS4
+  crosswalk.
+- No flood model or claim was produced.
