@@ -15967,3 +15967,12 @@
 - Review packet: `notes/reports/p1151-crosswalk-review.md`. Residual model extensions:
   multi-boundary packages, fertilization growth/emissions, species-resolved curves,
   intensity-specific `ct`, and MPB severity input.
+
+## 2026-10-26 - P115 fertilization reference review
+
+- Inspected the public thesis implementation `UBC-FRESH/msc_jimmy_ke`. Recorded the
+  reference fertilization assumptions in the carbon contract and review packet:
+  200 kg N/ha, a 10-year growth response, per-hectare factors of ~17.14 kg CO2,
+  0.0557 kg CH4, and 20.00 kg N2O for one application (40.00/60.00 kg N2O for
+  two/three), converted through dynamic LCA. Fertilization remains deliberately
+  unmapped and unsupported until a fertilized curve and emission account exist.

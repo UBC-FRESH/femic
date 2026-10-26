@@ -103,10 +103,12 @@ corrected.
 | `null` | Natural succession | Explicit no-op only. |
 | `f1`–`f3` | **removed** | Do not map to a no-op. Fertilization needs a ~10-year growth response plus manufacturing/transport/application emissions and N2O. The current package has no fertilized curve or fertilizer emissions account, so WS4 must reject these labels until that extension exists. |
 
-The CBM AIDB has no fertilization disturbance type; the thesis uses 200 kg N/ha, a
-10-year growth response, and an N2O emission factor of 0.1 for temperate forests, with a
-separate LCA for manufacturing/transport/application. That is a future package/runtime
-extension, not a crosswalk row.
+The CBM AIDB has no fertilization disturbance type. The thesis code
+(``UBC-FRESH/msc_jimmy_ke``) uses a 200 kg N/ha dose and a 10-year growth response,
+with per-hectare factors of ~17.14 kg CO2, 0.0557 kg CH4, and 20.00 kg N2O for
+one application; repeat applications use 40.00/60.00 kg N2O. The thesis applies a
+dynamic LCA to CH4/N2O, not a fixed GWP. That is a future package/runtime extension,
+not a crosswalk row.
 
 ## 6. Land-class review
 

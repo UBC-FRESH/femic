@@ -223,6 +223,14 @@ fertilized growth curve and no fertilizer life-cycle/N2O account, so mapping
 ``f1``-``f3`` to a no-op would be wrong. WS4 rejects those treatment labels until
 that extension exists.
 
+The thesis implementation (``UBC-FRESH/msc_jimmy_ke``) uses a 200 kg N/ha dose and
+a growth response beginning 10 years after application. Its fertilization notebook
+records per-hectare factors of approximately 17.14 kg CO2, 0.0557 kg CH4, and
+20.00 kg N2O for one application, with 40.00/60.00 kg N2O for two/three
+applications. Those are converted through a dynamic LCA (CH4/N2O residence times),
+not a simple fixed GWP. A future FEMIC/WS4 adapter must carry both the fertilized
+curve and these emission factors.
+
 Land class
 ~~~~~~~~~~
 
