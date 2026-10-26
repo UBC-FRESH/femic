@@ -40,8 +40,13 @@ Implemented:
 
 ## P116.3 EFI model cards
 
-Planned: `femic.efi.model.v1` card with training, validation, applicability,
-and licence metadata.
+Implemented contract:
+
+- `femic.contracts.efi`: `femic.efi.model.v1` card with training, validation,
+  applicability, and licence metadata; domain checks and row annotation.
+- Two public-safe synthetic cards, contract/API docs, and 22 focused tests.
+
+Open: real project/published cards and the FEMIC attribute-pipeline wiring.
 
 ## Out of scope
 

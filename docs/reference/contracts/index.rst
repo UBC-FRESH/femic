@@ -42,3 +42,4 @@ Contract Pages
    climate-contract
    climate-consumer
    disturbance-contract
+   efi-model-card
