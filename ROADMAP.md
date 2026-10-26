@@ -3948,7 +3948,7 @@ Tasks:
     provenance summary, sample fixture, and docs.
   - [x] Add the annual ClimateNA/SilvR21 CSV adapter with a public-safe
     fixture.
-  - [ ] Wire the first curve or attribute consumer.
+  - [x] Wire the first attribute consumer: `femic.climate.consumer` attaches a validated context to rows.
 - [ ] P116.2 Add `disturbance.v1` and a ws4 consumer (`#371`).
   - [x] Add the `femic.contracts.disturbance` schema, validator, examples,
     consumer rows, and docs.

@@ -1,5 +1,11 @@
 # Change Log
 
+## 2026-10-26
+- P116.1 consumer: added `femic.climate.consumer` with context selection,
+  ambiguity and mixed-source checks, per-row AOI resolution, and
+  provenance-bearing attachment to attribute rows. Added 13 focused tests and
+  contract/API docs. This closes the first `femic.climate.v1` consumer slice.
+
 ## 2026-10-25
 - P116.1 adapter: added `femic.contracts.climate_na.read_climate_na_csv`, a
   defensive default annual column map, a public-safe ClimateNA-shaped fixture,

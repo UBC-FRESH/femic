@@ -40,5 +40,6 @@ Contract Pages
    lidar-canopy-products
    lidar-product-bundle
    climate-contract
+   climate-consumer
    disturbance-contract
    efi-model-card

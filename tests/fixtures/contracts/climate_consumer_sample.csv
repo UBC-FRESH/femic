@@ -1,0 +1,5 @@
+schema_version,aoi_id,variable,unit,year,scenario,gcm,value,variance,source_id,source_version,downscaling_method,retrieved_utc,notes
+femic.climate.v1,north-island,tavg,degC,2050,ssp245,synthetic-ensemble,10.1,0.35,climate-fixture,1.0,none,2026-10-26T00:00:00+00:00,Consumer fixture.
+femic.climate.v1,north-island,ppt,mm,2050,ssp245,synthetic-ensemble,1420.0,8100.0,climate-fixture,1.0,none,2026-10-26T00:00:00+00:00,Consumer fixture.
+femic.climate.v1,south-island,tavg,degC,2050,ssp245,synthetic-ensemble,12.3,0.42,climate-fixture,1.0,none,2026-10-26T00:00:00+00:00,Consumer fixture.
+femic.climate.v1,south-island,ppt,mm,2050,ssp245,synthetic-ensemble,1100.0,6400.0,climate-fixture,1.0,none,2026-10-26T00:00:00+00:00,Consumer fixture.
