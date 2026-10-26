@@ -4063,3 +4063,29 @@ Tracking: issue `#374`; the issue bodies carry scope, out-of-scope, acceptance,
 verification, artifacts, and risks.
 
 Detailed plan: `planning/phase117_efi_attributes.md`.
+
+## Phase 118: Chapman Creek Flood Pilot (`#383`)
+
+Status: **active** (public-data audit; no flood model).
+
+Branch: `feature/p118-flood-pilot`
+
+Goal: run a bounded Sunshine Coast flood pilot at Chapman Creek, starting with a
+public-data audit and a reviewed domain/receptor plan. This is a rain/coastal
+pilot, not a GNN North Island result and not a regulatory flood map.
+
+Tasks:
+
+- [ ] P118.1 Audit Chapman Creek public data and define the bounded pilot
+  domain (`#384`).
+  - [x] Record candidate and broad audit bbox.
+  - [x] Audit LidarBC coverage.
+  - [x] Audit historical WSC and current SCRD gauge evidence.
+  - [x] Record FWA/roads source requirements and the Chapman receptor.
+  - [x] Record 2021 flood evidence and all missing inputs.
+
+Acceptance: the audit has source provenance; gauge discontinuities and missing
+damage/review inputs are explicit; no response surface or flood claim is made;
+the next data task is clear.
+
+Detailed plan: `planning/phase118_chapman_flood_pilot.md`.
