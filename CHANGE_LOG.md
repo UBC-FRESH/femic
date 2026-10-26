@@ -15198,3 +15198,19 @@
   `ruff`; `sphinx-build -W` passes. Report: `notes/reports/p1154-gcbm-export.md`.
 - Caveat: MAT is a constant placeholder, one baseline species/curve per AU/IFM, and the
   Wine pool workaround is external to FEMIC.
+
+## 2026-10-26 - P115.5 TSA24 handoff and WS3/WS4 parity
+
+- Published the TSA24 package handoff: package id `femic-carbon-24-fc431f827c66`,
+  WS4 fingerprint `cd336536...`, manifest SHA-256 `0dca089d...`, deterministic archive
+  SHA-256 `74f858ee...`, 6,016,466.4 ha, 108 tracks, 3,348 yield rows.
+- Added `scripts/ws3_carbon_reference.py`, a runnable WS3 `to_cbm_sit` + libcbm
+  reference that writes accounts, pools, and a manifest. On `tsa24_clipped` it produced
+  25 inventory rows, 24 yield rows, and 264,504.7 -> 274,479.4 tC over 20 steps.
+- Reran the P58.5 WS3/WS4 parity adapter: pool and flux comparisons are exact
+  (`max_abs = 0.0`, `max_rel = 0.0`, atol/rtol 1e-6); initial pools match exactly.
+- Recorded the production TSA24 WS4 baseline (21,774,124.4 -> 21,949,881.3 tC over five
+  years) and the same-landscape GCBM smoke (1,489,453.2 -> 1,504,436.7 tC over 12 steps,
+  500 fragments) with explicit non-parity caveats.
+- Reports: `notes/reports/p1155-handoff-parity.md` and
+  `notes/reports/p1155-handoff.json`. P115.1 crosswalk review remains open.

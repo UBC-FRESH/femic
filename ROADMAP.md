@@ -3894,7 +3894,7 @@ Tasks:
 - [x] P115.2 Export static CBM input packages from FEMIC (#363)
 - [x] P115.3 Add carbon config, validation, and TSA24/MKRF fixtures (#364)
 - [x] P115.4 Export GCBM walltowall projects from FEMIC (#365)
-- [ ] P115.5 Hand off packages to WS4 and WS3 and record parity (#366)
+- [x] P115.5 Hand off packages to WS4 and WS3 and record parity (#366)
 - [ ] P115.6 Record CBM4 and platform adapter readiness (#367)
 
 Acceptance:

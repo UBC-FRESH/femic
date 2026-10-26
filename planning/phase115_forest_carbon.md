@@ -134,7 +134,7 @@ the external dependencies are documented. CaMP/peatlands are out of scope for th
 | P115.2 | #363 | Static CBM input package exporter |
 | P115.3 | #364 | Carbon config, validation, fixtures (complete) |
 | P115.4 | #365 | GCBM walltowall export (complete) |
-| P115.5 | #366 | WS4/WS3 handoff and parity |
+| P115.5 | #366 | WS4/WS3 handoff and parity (complete) |
 | P115.6 | #367 | CBM4 and platform adapter readiness |
 
 ## 9. Risks and open questions

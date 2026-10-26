@@ -1,0 +1,57 @@
+{
+  "package": {
+    "path": "/tmp/opencode/tsa24_carbon_package_ds",
+    "archive": "/tmp/opencode/carbon_handoff/femic-carbon-24-tsa24.tar.gz",
+    "package_id": "femic-carbon-24-fc431f827c66",
+    "fingerprint": "cd33653608119121c11256628aabe3bbf8111d53fcf05e6383c97db948dfd8a3",
+    "manifest_sha256": "0dca089d63e67e05aa60c36a9dd06677e012ff56b70353917142bd9982d613db",
+    "archive_sha256": "74f858eed4a7381c5c7e1e710edd5d2f8b310a6b0d144184b2ef350619c062cc",
+    "area_ha": 6016466.4,
+    "tracks": 108,
+    "yield_rows": 3348,
+    "join_key": "track_name",
+    "cbm_defaults": {
+      "version": "1.2.9300.391",
+      "sha256": "4bd722d8825abeda3c9cf77247bbd4903824259e2fcc046d9a335336c8842155"
+    }
+  },
+  "ws3_reference": {
+    "model": "tsa24_clipped",
+    "inventory_rows": 25,
+    "yield_rows": 24,
+    "steps": 20,
+    "initial_ecosystem_tc": 264504.7162930766,
+    "final_ecosystem_tc": 274479.4311443737,
+    "initial_pools_tc": {
+      "SoftwoodMerch": 36160.80587280838,
+      "HardwoodMerch": 97.48525128389282,
+      "AboveGroundSlowSoil": 33866.22996487887,
+      "Products": 7355.055886522457
+    }
+  },
+  "parity": {
+    "tolerance": {"atol": 1e-06, "rtol": 1e-06},
+    "pools_max_abs": 0.0,
+    "pools_max_rel": 0.0,
+    "flux_max_abs": 0.0,
+    "flux_max_rel": 0.0,
+    "ok": true
+  },
+  "ws4_tsa24": {
+    "au": 2401005,
+    "years": 5,
+    "initial_ecosystem_tc": 21774124.4,
+    "final_ecosystem_tc": 21949881.3
+  },
+  "gcbm_smoke": {
+    "au": 2401005,
+    "fragments": 500,
+    "area_ha": 4789.8,
+    "resolution_deg": 0.005,
+    "start_year": 2020,
+    "end_year": 2030,
+    "initial_ecosystem_tc": 1489453.2,
+    "final_ecosystem_tc": 1504436.7,
+    "steps": 12
+  }
+}
