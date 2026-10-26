@@ -218,18 +218,19 @@ CBM type. ``ct`` uses ``40% commercial thinning`` as an upper-bound proxy for a
 40% basal-area removal from below; the actual merchantable-volume removal is
 normally lower. ``mpb`` uses the 10% moderate default as an evergreen placeholder
 and must be replaced with a severity-specific type when the instance supplies
-one. Fertilization is deliberately **not** mapped: the current package has no
-fertilized growth curve and no fertilizer life-cycle/N2O account, so mapping
-``f1``-``f3`` to a no-op would be wrong. WS4 rejects those treatment labels until
-that extension exists.
+one. Fertilization is deliberately **not** mapped to a CBM disturbance row: the
+public TIPSY response and the thesis emissions audit are implemented as carbon-lane
+functions, but mapping ``f1``-``f3`` to a no-op would be wrong. WS4 rejects those
+treatment labels until the fertilized curves and accounts are wired into the compiled
+dataset and optimizer.
 
-The thesis implementation (``UBC-FRESH/msc_jimmy_ke``) uses a 200 kg N/ha dose and
-a growth response beginning 10 years after application. Its fertilization notebook
-records per-hectare factors of approximately 17.14 kg CO2, 0.0557 kg CH4, and
-20.00 kg N2O for one application, with 40.00/60.00 kg N2O for two/three
-applications. Those are converted through a dynamic LCA (CH4/N2O residence times),
-not a simple fixed GWP. A future FEMIC/WS4 adapter must carry both the fertilized
-curve and these emission factors.
+The public TIPSY ``FertRespMOF.txt`` table provides the growth response by species,
+site index, and fertilization age (FDC, SS, SW, PLI, FDI), with the default 80%
+effectiveness applied over 10 years. The thesis implementation uses a 200 kg N/ha
+dose and records per-hectare factors of approximately 17.14 kg CO2, 0.0557 kg CH4,
+and 20.00 kg N2O for one application, with 40.00/60.00 kg N2O for two/three
+applications. FEMIC exposes the curve transform and the emissions audit; the CBM
+pool/optimizer wiring is a separate runtime step.
 
 Land class
 ~~~~~~~~~~

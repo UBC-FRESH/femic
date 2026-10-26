@@ -40,9 +40,11 @@ fingerprint, classifiers, the yield grid, area, and boundaries. The public-safe
   from below; actual merchantable-volume removal is normally lower.
 - `mpb` uses the 10% moderate default as a variable placeholder; use a severity-specific
   type when the instance supplies one.
-- Fertilization is not mapped. The package has no fertilized growth curve or fertilizer
-  life-cycle/N2O account, so `f1`-`f3` must be rejected rather than silently treated as a
-  no-op.
+- Fertilization uses the public TIPSY `FertRespMOF.txt` response table and the
+  thesis emissions factors. `femic carbon fertilization-audit` writes the CO2/CH4/N2O
+  accounts; `femic.carbon.fertilized_curve` applies the public 10-year response to a
+  yield curve. The CBM pool/optimizer wiring remains a separate runtime task; `f1`-`f3`
+  are not mapped to a silent no-op.
 - Managed forest land is class `0`; unmanaged forest land is class `16` per CBM-CFS3
   Unmanaged Forest Land. Nonforest area must supply its actual land-use class; unmapped
   IFM states are errors.

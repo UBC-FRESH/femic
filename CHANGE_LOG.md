@@ -16006,3 +16006,14 @@
   0.0557 kg CH4, and 20.00 kg N2O for one application (40.00/60.00 kg N2O for
   two/three), converted through dynamic LCA. Fertilization remains deliberately
   unmapped and unsupported until a fertilized curve and emission account exist.
+
+## 2026-10-26 - P115 public fertilization response and audit
+
+- Added `config/carbon/tipsy/FertRespMOF.txt` (public BC TIPSY MOF response table)
+  and parser/curve transform `femic.carbon.fertilized_curve`.
+- Added `femic carbon fertilization-audit` and the thesis emissions factors:
+  CO2 17.13779467, CH4 0.055734646, N2O 20.00206748/40.00206748/60.00206748
+  kg/ha for f1/f2/f3; 200 kg N/ha; 10-year response; 80% effectiveness.
+- The audit writes CO2/CH4/N2O/CO2e accounts using IPCC AR6 GWP100; the thesis
+  dynamic LCA is recorded as a caveat. Fertilization is no longer blocked on
+  missing curves.

@@ -18,6 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path, PosixPath, WindowsPath
 from typing import Any
 
+import pandas as pd
 import typer
 import yaml
 from rich.console import Console
@@ -63,10 +64,13 @@ from femic.builtin_instances import (
 from femic.carbon import (
     CarbonValidationError,
     export_carbon_package,
+    fertilization_audit,
     load_carbon_export_config,
     load_carbon_instance_config,
+    load_fertilization_config,
     to_export_config,
     validate_carbon_package,
+    write_fertilization_audit,
 )
 from femic.document_figures import (
     DOCUMENT_FIGURE_DOWNSTREAM_USE_CLASSES,
@@ -1671,6 +1675,35 @@ CARBON_INSTANCE_CONFIG_OPTION = typer.Option(
     "--config",
     help="Instance carbon YAML block (for example config/carbon/tsa24.yaml).",
     show_default=False,
+)
+CARBON_FERTILIZATION_CONFIG_OPTION = typer.Option(
+    Path("config/carbon/fertilization.bc.yaml"),
+    "--fertilization-config",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="Public fertilization response and emission assumptions.",
+)
+CARBON_FERTILIZATION_DATASET_OPTION = typer.Option(
+    ...,
+    "--dataset",
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="Compiled dataset with blocks.parquet or fragments.parquet.",
+)
+CARBON_FERTILIZATION_SCHEDULE_OPTION = typer.Option(
+    ...,
+    "--schedule",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="CSV with block_id, treatment, and offset.",
+)
+CARBON_FERTILIZATION_OUT_OPTION = typer.Option(
+    ...,
+    "--out",
+    help="Directory for fertilization_accounts.csv and manifest.",
 )
 CARBON_VALIDATE_PACKAGE_ARGUMENT = typer.Argument(
     ...,
@@ -9304,6 +9337,54 @@ def carbon_validate(
         f"yield_rows={result.yield_rows}"
     )
     console.print(f"package_id: {result.package_id}")
+
+
+@carbon_app.command("fertilization-audit")
+def carbon_fertilization_audit(
+    dataset: Path = CARBON_FERTILIZATION_DATASET_OPTION,
+    schedule: Path = CARBON_FERTILIZATION_SCHEDULE_OPTION,
+    fertilization_config: Path = CARBON_FERTILIZATION_CONFIG_OPTION,
+    out: Path = CARBON_FERTILIZATION_OUT_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Audit fertilization emissions and public TIPSY response assumptions."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_dataset = instance_context.resolve_path(dataset)
+    resolved_schedule = instance_context.resolve_path(schedule)
+    resolved_config = instance_context.resolve_path(fertilization_config)
+    resolved_out = instance_context.resolve_path(out)
+    blocks_path = resolved_dataset / "blocks.parquet"
+    fragments_path = resolved_dataset / "fragments.parquet"
+    try:
+        if blocks_path.is_file():
+            blocks = pd.read_parquet(blocks_path)
+        elif fragments_path.is_file():
+            fragments = pd.read_parquet(fragments_path)
+            blocks = fragments.groupby("block_id", as_index=False)["area_ha"].sum()
+        else:
+            raise FileNotFoundError(
+                f"{resolved_dataset} has no blocks.parquet or fragments.parquet"
+            )
+        schedule_frame = pd.read_csv(resolved_schedule)
+        config = load_fertilization_config(resolved_config)
+        result = fertilization_audit(
+            schedule=schedule_frame,
+            block_areas=blocks,
+            config=config,
+        )
+        accounts_path = write_fertilization_audit(result, resolved_out)
+    except (FileNotFoundError, ValueError, TypeError) as exc:
+        console.print(f"[red]Fertilization audit failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(
+        "[green]fertilization audit complete[/green] "
+        f"area_ha={result.total_area_ha:.1f} co2e_t={result.total_co2e_t:.3f}"
+    )
+    console.print(f"accounts: {accounts_path}")
+    console.print(
+        "[yellow]note:[/yellow] the growth response is a public TIPSY curve "
+        "transformation; this audit does not alter CBM pool accounts."
+    )
 
 
 @carbon_app.command("export-package")

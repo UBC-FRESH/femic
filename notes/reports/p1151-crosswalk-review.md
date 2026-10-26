@@ -101,14 +101,14 @@ corrected.
 | `mpb` | Mountain pine beetle — Moderate impact | Keep 10% softwood mortality as an evergreen placeholder; real impact depends on pine fraction and beetle intensity. Severity-specific types are available in the AIDB. |
 | `salvage` | Salvage logging after fire | Keep, low confidence; usually paired with a preceding fire event. |
 | `null` | Natural succession | Explicit no-op only. |
-| `f1`–`f3` | **removed** | Do not map to a no-op. Fertilization needs a ~10-year growth response plus manufacturing/transport/application emissions and N2O. The current package has no fertilized curve or fertilizer emissions account, so WS4 must reject these labels until that extension exists. |
+| `f1`–`f3` | **not mapped to CBM** | Do not map to a no-op. The public TIPSY growth response and the thesis emissions audit are implemented in the carbon lane; the remaining step is to wire the fertilized curves and accounts into the compiled dataset/optimizer. WS4 still rejects f1-f3 as CBM events until that wiring exists. |
 
-The CBM AIDB has no fertilization disturbance type. The thesis code
-(``UBC-FRESH/msc_jimmy_ke``) uses a 200 kg N/ha dose and a 10-year growth response,
-with per-hectare factors of ~17.14 kg CO2, 0.0557 kg CH4, and 20.00 kg N2O for
-one application; repeat applications use 40.00/60.00 kg N2O. The thesis applies a
-dynamic LCA to CH4/N2O, not a fixed GWP. That is a future package/runtime extension,
-not a crosswalk row.
+The CBM AIDB has no fertilization disturbance type. The public TIPSY
+``FertRespMOF.txt`` table provides the growth response by species/site index/age,
+and the thesis code (``UBC-FRESH/msc_jimmy_ke``) provides the 200 kg N/ha dose and
+per-hectare factors: ~17.14 kg CO2, 0.0557 kg CH4, 20.00 kg N2O for one application
+(40.00/60.00 for two/three). FEMIC exposes the curve transform and a reproducible
+emissions audit; the CBM pool/optimizer wiring is a separate runtime step.
 
 ## 6. Land-class review
 
@@ -133,7 +133,7 @@ managed and unmanaged; the parity adapter keeps its own fixture mapping.
 
 - Multi-boundary package support for TSA 08, 16, 40, 41 (and the small overlaps in
   24, 29, 46, 47).
-- Fertilization growth response and fertilizer LCA/N2O accounting.
+- Wire the public TIPSY fertilization curves and emissions audit into the compiled dataset, optimizer ledger, and report.
 - Intensity-specific `ct` matrix and MPB severity input.
 - Species-resolved curves for S/Sx, SB, and the Douglas-fir group.
 - Re-export the TSA24 package after these crosswalk changes; package hashes change.

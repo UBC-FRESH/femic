@@ -38,10 +38,10 @@ Branch: `feature/p115-forest-carbon`
 
 - Multi-boundary carbon packages for TSA 08, 16, 40, 41 and the small overlaps in
   TSA 24, 29, 46, 47.
-- Fertilization growth response plus fertilizer life-cycle/N2O accounting. The
-  thesis repo `UBC-FRESH/msc_jimmy_ke` provides the reference assumptions: 200 kg
-  N/ha, a 10-year response, and per-hectare CO2/CH4/N2O factors (20.00 kg N2O for
-  one application; 40.00/60.00 for two/three) with dynamic LCA.
+- Fertilization runtime wiring: the public TIPSY response table,
+  `femic.carbon.fertilized_curve`, and `femic carbon fertilization-audit` are
+  implemented; the remaining step is to feed those curves/accounts into the compiled
+  dataset, optimizer ledger, and report.
 - Species-resolved curves for S/Sx, SB, and the Douglas-fir group.
 - Intensity-specific `ct` matrix and MPB severity input.
 - Full 536k-fragment TSA24 carbon-aware search (baseline runtime limit).
