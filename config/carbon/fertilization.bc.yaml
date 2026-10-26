@@ -1,0 +1,27 @@
+# Fertilization reference assumptions from UBC-FRESH/msc_jimmy_ke.
+# These are audit factors, not a claim that the full thesis dynamic LCA is reproduced.
+schema_version: "0.1"
+dose_kg_n_ha: 200
+response_years: 10
+factors_kg_ha:
+  co2: 17.13779467
+  ch4: 0.055734646
+  n2o_once: 20.00206748
+  n2o_twice: 40.00206748
+  n2o_thrice: 60.00206748
+gwp100:
+  ch4: 27.9
+  n2o: 273.0
+source:
+  repository: "https://github.com/UBC-FRESH/msc_jimmy_ke"
+  emission_notebook: "02_emission_calculation_&_climate_impact_conversion/01_model_emission_calculation.ipynb"
+  growth_notebook: "01_forest_estate_model_&_ecosystem_carbon_model/model_input.ipynb"
+  lca_notebook: "02_emission_calculation_&_climate_impact_conversion/02_model_DLCA.ipynb"
+  note: "Thesis code uses a dynamic LCA; this audit uses fixed IPCC AR6 GWP100 values."
+growth_response:
+  method: "tipsy_mof_response"
+  response_file: "tipsy/FertRespMOF.txt"
+  response_file_sha256: "2e579683fc933d8cab79b44a4e477349d743d9e8dd8432c20a0064157fb741cf"
+  effectiveness: 0.8
+  response_years: 10
+  note: "Public TIPSY MOF default response tables; effectiveness is applied by species/site index and the per-hectare emissions are audited separately."

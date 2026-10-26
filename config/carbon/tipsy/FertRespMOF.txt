@@ -1,0 +1,326 @@
+﻿$TIPSYchm=TIPSY_no_econ\Fertilization_in_TIPSY.htm|Fertilization
+$TIPSYchm=TIPSY_no_econ\Ministry_Recommended_Fertilizati.htm|Fertilization: Ministry Default Responses
+$TIPSYchm=TIPSY_no_econ\Input_file_for_fertilization_response.htm|Fertilization: Input File Format
+'[ResponseName,SiteIndexSpeciesCode,SI]
+'[] new section, followed by species siteindex code, then the site index,BEC
+'
+'site index code is used to join so surrogate species don't get responses.
+'
+'
+'#	column headers
+'	1. height
+'	2. age (yrs since planting);
+'	3. absvol = Gain in total volume (m³)
+'	4. pervol = Gain in total volume (%)
+
+'interpolate the tables to the siteindex
+'look up the amount of increase based on the fertilization age
+'apply the affectiveness factor (default of 80%)
+'divide the amount by 10 and apply for 10 years
+'figure out the height increase needed to get to the new total volume 
+
+
+'create a height bump for each species
+'if there are multiple bump apply in order, do not add bumps if the overlap, use the larger of the current value and the new value
+
+
+
+'* MOF Default Fertilization Responses will be linked to species by the SINDEX species name
+
+'Percent is default
+
+
+
+'Fertilzer Applications, Batch only appears when Fertilization has been selected in the Input Variables dialog box.
+'Enter the Input File column numbers defining up to five ages at which fertilizer is to be applied.
+'Each species will be fertilized by the ministry standard response (defaults), with an automatic effectiveness default of 80%.
+'
+'The response is also automatically reduced further (x 0.75) to compensate for competition (under- or over-stocked stands) if the:
+'	Crown cover is < 30% (low stocking adjustment) or
+'	Live crown ratio of prime trees is < 40% (intense competition adjustment)
+
+
+'custom responses in batch
+'UA = User Absolute
+'UP = User Percent
+'Blank = MOF Default Response (FDC, SS, SW, PLI, and FDI have hardcoded MOF standard responses)
+
+
+'can we get rid of height column seems like we use age always as fert happens at an age and lasts 10 years
+'all records start with 0 and end with 400
+'0	0.0	0	0   
+'??	400.0	0	0
+
+#ht	age	absvol	pervol
+
+
+'coastal douglas fir
+[MOF,FDC,10] 
+0	0.0	0	0
+5	21.7	3	21
+10	55.7	4	31
+15	136.8	3	50
+16	167.7	0	0
+19	400.0	0	0
+
+[MOF,FDC,15]
+0	0.0	0	0
+5	15.7	6	19
+10	31.5	13	33	
+20	96.0	9	53
+25	181.5	4	44
+26	210.4	0	0	
+29	400.0	0	0
+
+[MOF,FDC,20]
+0	0.0	0	0
+5	12.8	11	21
+10	23.2	25	36
+20	54.6	25	56
+25	82.4	18	53
+30	129.3	11	46
+40	222.2	0	0
+38	400.0	0	0
+
+[MOF,FDC,25]
+0	0.0	0	0
+5	11.8	18	23
+10	20.1	35	33
+20	40.4	40	50
+30	73.8	25	43
+35	141.0	0	0
+48	400.0	0	0
+
+[MOF,FDC,30]
+0	0.0	0	0
+5	10.4	18	17
+10	17.1	32	23
+20	32.3	39	32
+30	54.2	30	29
+40	89.8	19	30
+50	157.7	0	0
+58	400.0	0	0
+
+[MOF,FDC,35]
+0	0.0	0	0
+5	9.1	2	1
+10	14.8	4	2
+20	27.1	4	2
+30	43.2	3	2
+40	66.4	3	3
+45	82.6	2	3
+50	103.3	0	0
+69	400.0	0	0
+
+'sitka spruce
+[MOF,SS,10]
+0	0.0	0	0
+5	21.7	3	21
+10	55.7	4	31
+15	136.8	3	50
+16	167.7	0	0
+19	400.0	0	0
+
+[MOF,SS,15]
+0	0.0	0	0
+5	15.7	6	19
+10	31.5	13	33
+20	96.0	9	53
+25	181.5	4	44
+26	210.4	0	0
+29	400.0	0	0
+
+[MOF,SS,20]
+0	0.0	0	0
+5	12.8	11	21
+10	23.2	25	36
+20	54.6	25	56
+25	82.4	18	53
+30	129.3	11	46
+40	222.2	0	0
+38	400.0	0	0
+
+[MOF,SS,25]
+0	0.0	0	0
+5	11.8	18	23
+10	20.1	35	33
+20	40.4	40	50
+30	73.8	25	43
+35	141.0	0	0
+48	400.0	0	0
+
+[MOF,SS,30]
+0	0.0	0	0
+5	10.4	18	17
+10	17.1	32	23
+20	32.3	39	32
+30	54.2	30	29
+40	89.8	19	30
+50	157.7	0	0
+58	400.0	0	0
+
+[MOF,SS,35]
+0	0.0	0	0
+5	9.1	2	1
+10	14.8	4	2
+20	27.1	4	2
+30	43.2	3	2
+40	66.4	3	3
+45	82.6	2	3
+50	103.3	0	0
+69	400.0	0	0
+
+
+'white spruce
+[MOF,SW,5]
+0	0.0	0	0
+5	65.1	0	0
+10	112.7	1	6
+15	162.4	0	0
+25	400.0	0	0
+
+[MOF,SW,10]
+0	0.0	0	0
+5	34.1	2	29
+10	58.6	8	22
+15	85.0	11	23
+20	117.2	0	0
+33	400.0	0	0
+
+[MOF,SW,15]
+0	0.0	0	0
+5	23.2	3	25
+10	39.2	13	22
+15	56.2	16	22
+20	76.8	15	22
+25	104.3	11	23
+30	146.1	0	0
+38	400.0	0	0
+
+[MOF,SW,20]
+0	0.0	0	0
+5	17.5	4	25
+10	28.9	17	18
+15	41.0	21	19
+20	55.0	19	20
+25	73.1	15	22
+30	98.9	10	29
+35	141.7	0	0
+42	400.0	0	0
+
+[MOF,SW,25]
+0	0.0	0	0
+5	14.1	5	10
+10	22.9	13	7
+15	31.7	16	6
+20	41.9	14	6
+25	54.5	11	8
+30	71.3	7	10
+35	96.4	0	0
+46	400.0	0	0
+
+lodgepole pine
+[MOF,PLI,5]
+0	0.0	0	0
+5	60.7	0	0
+10	150.1	1	20
+14	400.0	0	0
+
+[MOF,PLI,10]
+0	0.0	0	0
+5	27.1	4	33
+10	55.9	6	32
+15	105.3	7	47
+20	261.7	0	0
+21	400.0	0	0
+
+[MOF,PLI,15]
+0	0.0	0	0
+5	17.6	7	25
+10	33.2	11	28
+15	54.5	11	30
+20	92.1	10	42
+25	200.6	0	0
+27	400.0	0	0
+
+[MOF,PLI,20]
+0	0.0	0	0
+5	13.1	11	21
+10	23.3	17	24
+15	35.8	17	25
+20	53.9	15	29
+25	85.7	10	31
+30	172.5	3	75
+31	215.8	0	0
+33	400.0	0	0
+
+[MOF,PLI,25]
+0	0.0	0	0
+5	10.3	10	11
+10	17.7	14	13
+15	26.1	14	13
+20	37.1	13	15
+25	53.2	8	15
+30	81.6	8	133
+35	156.0	0	0
+38	400.0	0	0
+'** 133 from help The growth of the unfertilized trees is extremely small at this age, making a minimal fertilizer response appear to be unusually large.
+
+
+'interior douglas fir
+[MOF,FDI,5,ICH]
+0	0.0	0	0
+5	63.5	1	50
+10	206.1	0	0
+12	400.0	0	0
+
+[MOF,FDI,10,ICH]
+0	0.0	0	0
+5	27.2	2	20
+10	57.5	4	27
+15	103.9	3	27
+20	192.9	0	0
+23	400.0	0	0
+
+[MOF,FDI,15,ICH]
+0	0.0	0	0
+5	18.3	4	30
+10	35.0	7	30
+15	55.8	7	30
+20	83.9	6	30
+25	125.9	5	30
+30	198.5	0	0
+34	400.0	0	0
+
+[MOF,FDI,20,ICH]
+0	0.0	0	0
+5	13.9	9	25
+10	25.4	14	25
+15	38.6	15	26
+20	54.6	15	26
+25	74.9	14	26
+30	102.4	11	28
+35	142.2	0	0
+44	400.0	0	0
+
+[MOF,FDI,25,ICH]
+0	0.0	0	0
+5	11.4	17	30
+10	20.3	16	22
+15	29.9	18	20
+20	40.9	19	20
+25	54.0	20	22
+30	70.0	17	23
+35	90.4	0	0
+54	400.0	0	0
+
+[MOF,FDI,30,ICH]
+0	0.0	0	0
+5	10.3	14	18
+10	17.4	22	20
+15	25.0	25	20
+20	33.4	28	21
+25	42.9	29	22
+30	54.0	26	23
+35	67.3	0	0
+64	400.0	0	0

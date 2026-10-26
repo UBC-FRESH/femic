@@ -3681,7 +3681,7 @@ As of the completion of Phase 106, the FEMIC roadmap has been refined to address
 
 The roadmap now follows a more consistent structure that should be easier for automated tools to parse while maintaining all the detailed implementation information that developers need. Future phases will follow these established patterns for better consistency and maintainability.
 
-### Phase 107 Closeout Status
+## P107 closeout status
 
 ### Tasks Completed for Phase 107
 1. Created standardized roadmap structure templates in planning directory
@@ -3986,6 +3986,56 @@ Tasks:
     follow-up conditions, not claimed completions.
 
 Detailed plan: `planning/phase114_forest_hydrology_flood_risk.md`.
+
+## Phase 115: Forest carbon domain, CBM packages, and GCBM export (`#361`)
+
+Status: **pr-open**
+
+Branch: `feature/p115-forest-carbon`
+
+Goal: give FEMIC a reviewed, versioned carbon domain and make it the producer of the static CBM
+input packages that WS4 and WS3 consume, plus a GCBM walltowall export bridge.
+
+Architecture boundary:
+
+- FEMIC owns the static carbon domain: the package schema, units and provenance, the BC species to
+  CBM species crosswalk, the TSA/AU to eco-boundary mapping, land-class defaults, the WS4 treatment to
+  CBM disturbance-type mapping, and the initial inventory/yield tables.
+- WS4 owns the runtime: it joins the package to the compiled dataset, turns the schedule into SIT
+  events, builds transitions from its treatment table, and runs libcbm.
+- WS3 remains the reference implementation and parity oracle.
+- The package is the cross-repo contract; the engine (libcbm now, CBM4 later) is replaceable behind a
+  driver boundary.
+- The GCBM export bridge emits files and configuration. It does not make FLINT a FEMIC runtime
+  dependency.
+
+Tasks:
+
+- [x] P115.1 Define the carbon domain contract and crosswalks (#362)
+- [x] P115.2 Export static CBM input packages from FEMIC (#363)
+- [x] P115.3 Add carbon config, validation, and TSA24/MKRF fixtures (#364)
+- [x] P115.4 Export GCBM walltowall projects from FEMIC (#365)
+- [x] P115.5 Hand off packages to WS4 and WS3 and record parity (#366)
+- [x] P115.6 Record CBM4 and platform adapter readiness (#367)
+
+Acceptance:
+
+- A TSA24 package builds and validates, and a second run is stable for the same inputs.
+- The package contract, crosswalks, units, and provenance are documented and reviewable.
+- A TSA24 GCBM walltowall export prepares on a supported host, with its external dependencies
+  documented.
+- WS4 can consume the package and report carbon without FEMIC-side runtime code.
+- The CBM4 migration path is recorded without adding an unreleased dependency.
+
+Verification:
+
+- `python -m pytest`
+- `python -m ruff check .`
+- `python -m mypy src`
+- `pre-commit run --all-files`
+- `sphinx-build -b html docs _build/html -W`
+
+Detailed plan: `planning/phase115_forest_carbon.md`.
 
 ## Phase 116: Shared Environmental Contracts (`#369`)
 

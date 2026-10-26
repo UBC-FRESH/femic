@@ -49,6 +49,9 @@ export modules.
    stage-01b-post-tipsy
    btc-fansier-runtime-and-extraction
    model-input-bundle-and-export
+   carbon-export
+   fertilization-audit
+   gcbm-export
    patchworks-variant-and-scenario-management
    diagnostics-playbook
    troubleshooting

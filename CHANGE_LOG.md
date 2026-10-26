@@ -15863,6 +15863,191 @@
   review, and WS4 crosswalk remain blockers.
 - Added three offline tests; no bulk data committed and no flood model run.
 
+## 2026-10-25 - P115 activation: forest carbon domain and CBM packages
+
+- Created parent issue #361 and tasks #362-#367 on `feature/p115-forest-carbon`.
+- The phase adds the carbon-domain contract and crosswalks, a static CBM input package exporter,
+  carbon validation and TSA24/MKRF fixtures, a GCBM walltowall export bridge, the WS4/WS3 handoff,
+  and a CBM4 adapter-readiness note.
+- The planning note is `planning/phase115_forest_carbon.md`.
+- WS3 remains the reference implementation; WS4 consumes the package and runs libcbm.
+- Scaffold verification: the worktree test run is blocked by uninitialized instance/submodule data,
+  and the roadmap-control test reports the pre-existing duplicate Phase 107. This change set touches
+  only `ROADMAP.md`, `CHANGE_LOG.md`, and `planning/phase115_forest_carbon.md`.
+
+## 2026-10-25 - P115.1 carbon-domain contract and draft crosswalks
+
+- Added `docs/reference/contracts/carbon-domain.rst`, the producer-side package contract: track-name
+  join, manifest provenance, table schemas, units, validation rules, and open review questions.
+- Added the draft crosswalk config under `config/carbon/`: BC species to CBM species, known TSA to
+  CBM eco boundary, treatment to CBM disturbance type, land-class defaults, and an example instance
+  block. Every row carries a confidence and a source/note.
+- Added `tests/test_carbon_domain_config.py` for structural checks (unique keys, valid types, CBM
+  eco-boundary names, YAML parse).
+- Verification: `sphinx-build -b html docs _build/html -W` passed; the new test module passes
+  (5 tests); `ruff check` passes. The crosswalk science review is still open, so P115.1 remains open.
+
+## 2026-10-25 - P115.2 static CBM package exporter
+
+- Added `src/femic/carbon/` with `load_carbon_export_config`,
+  `build_carbon_package_tables`, `write_carbon_package`, `export_carbon_package`, and
+  `track_names_from_compiled_dataset`.
+- Added `femic carbon export-package` with bundle/checkpoint inputs, crosswalk config, optional
+  compiled-WS4 dataset track-name resolution, CBM defaults provenance, age-grid controls, and
+  the package manifest.
+- Added `docs/guides/carbon-export.rst` and the guide index entry.
+- Added `tests/test_carbon_package_export.py` for the table builder, writer/manifest, exact
+  track-name resolution, and crosswalk config. Nine carbon-domain tests pass.
+- Cross-repo check: a synthetic FEMIC package written with the exporter loads in the WS4
+  `load_carbon_package` consumer with zero findings. The package has one managed track, a
+  valid manifest, and the WS4 fingerprint matches.
+- Materialized the TSA24 instance submodule and fetched the stands shapefile from the
+  Arbutus annex remote, then built a 537,243-stand checkpoint and ran the real export:
+  **54 tracks, 6,016,466.4 ha, 1,674 yield rows**. The package uses CBM species classifier
+  names (for example `White spruce`) so libcbm can apply species-specific parameters.
+- The real TSA24 package loads in the WS4 `load_carbon_package` consumer with **zero
+  findings** and the expected 54 tracks / 6,016,466.4 ha.
+- Extended `build_woodstock_areas_table` with pass-through IFM arguments so an explicit
+  `IFM_FLAG` in the checkpoint can drive managed/unmanaged without changing the default
+  proportional behaviour.
+- Verification: `sphinx-build -b html docs _build/html -W` passed; targeted pytest and
+  `ruff`/`mypy` checks pass.
+
+## 2026-10-26 - P115.3 carbon config, validation, and fixtures
+
+- Added `config/carbon/tsa24.yaml` and `config/carbon/mkrf.yaml`, plus the MKRF
+  eco-boundary row. The `carbon:` block now selects the crosswalks, boundary, CBM defaults
+  hash, age grid, fallbacks, review state, and optional validation pins without a long
+  command line.
+- Added `femic/carbon/config.py` with `CarbonInstanceConfig`,
+  `load_carbon_instance_config`, and `to_export_config`. The loader rejects a malformed
+  block, an unknown CBM eco boundary, an unknown TSA/FMU code, a boundary mismatch, and a
+  crosswalk set spread across directories.
+- Added `femic/carbon/validate.py` and `femic carbon validate`. The validator checks the
+  manifest, required tables and hashes, package fingerprint, boundaries, classifiers,
+  inventory, yield grid, curve shares, disturbance declarations, and optional expected
+  area/track totals. It exits non-zero on an area, classifier, or manifest mismatch.
+- Added the public-safe `tests/fixtures/carbon/tsa24_minimal` package: one synthetic TSA24
+  track, 5.0 ha, 31 yield rows, draft crosswalks, and the pinned CBM defaults hash.
+- Added `tests/test_carbon_config.py` and `tests/test_carbon_validate.py`, including CLI
+  success and failure paths.
+- Verification: the real TSA24 package validates (108 tracks, 6,016,466.4 ha, 3,348 yield
+  rows); 20 targeted carbon tests pass; `sphinx-build -b html docs _build/html -W` passes;
+  the carbon modules are clean under `mypy` and targeted `ruff`. The full suite still has
+  unrelated environment/data failures in K3Z/TSR/patchworks/annex tests.
+- P115.1 crosswalk science review remains open; the config records `review.status: draft`.
+
+## 2026-10-26 - P115.4 GCBM walltowall export
+
+- Added `femic/gcbm/export.py` and `femic export gcbm`: a walltowall JSON,
+  `inventory.gpkg`, wide `yield.csv`, optional `disturbances.gpkg`, copied SQLite AIDB,
+  and a hashed manifest.
+- Selects one baseline package track per AU/IFM and emits dense small classifier codes
+  (`Classifier1` 1..N, `Classifier2` 1/0). Raw AU ids were found to become
+  `2.401005e+6` in the Float32 raster and break GCBM growth-curve lookup.
+- Reprojects EPSG:3005 checkpoints to EPSG:4326, clamps initial ages to the package yield
+  grid, records a constant MAT fallback, verifies the AIDB hash against the carbon package,
+  and clips optional disturbances to the simulation window.
+- Added `validate_gcbm_project`, six exporter tests, and `docs/guides/gcbm-export.rst`.
+- Real TSA24 smoke: 500 fragments of AU 2401005, 2 tracks, 4,789.8 ha at 0.005 degrees.
+  The bundled walltowall/GCBM stack was installed under Wine; `walltowall prepare` produced
+  `gcbm_input.db` and `gcbm_project` (with an external serial-pool workaround for Wine's
+  multiprocessing handle limit). GCBM ran 2020-2030 with 276 processed land units, 196 result
+  locations, 0 errors in 107 s; WS4 read 12 steps, 1,489,453.2 -> 1,504,436.7 tC.
+- Verification: six GCBM tests pass; the GCBM module is clean under `mypy` and targeted
+  `ruff`; `sphinx-build -W` passes. Report: `notes/reports/p1154-gcbm-export.md`.
+- Caveat: MAT is a constant placeholder, one baseline species/curve per AU/IFM, and the
+  Wine pool workaround is external to FEMIC.
+
+## 2026-10-26 - P115.5 TSA24 handoff and WS3/WS4 parity
+
+- Published the TSA24 package handoff: package id `femic-carbon-24-fc431f827c66`,
+  WS4 fingerprint `cd336536...`, manifest SHA-256 `0dca089d...`, deterministic archive
+  SHA-256 `74f858ee...`, 6,016,466.4 ha, 108 tracks, 3,348 yield rows.
+- Added `scripts/ws3_carbon_reference.py`, a runnable WS3 `to_cbm_sit` + libcbm
+  reference that writes accounts, pools, and a manifest. On `tsa24_clipped` it produced
+  25 inventory rows, 24 yield rows, and 264,504.7 -> 274,479.4 tC over 20 steps.
+- Reran the P58.5 WS3/WS4 parity adapter: pool and flux comparisons are exact
+  (`max_abs = 0.0`, `max_rel = 0.0`, atol/rtol 1e-6); initial pools match exactly.
+- Recorded the production TSA24 WS4 baseline (21,774,124.4 -> 21,949,881.3 tC over five
+  years) and the same-landscape GCBM smoke (1,489,453.2 -> 1,504,436.7 tC over 12 steps,
+  500 fragments) with explicit non-parity caveats.
+- Reports: `notes/reports/p1155-handoff-parity.md` and
+  `notes/reports/p1155-handoff.json`. P115.1 crosswalk review remains open.
+
+## 2026-10-26 - P115.6 CBM4 and platform adapter readiness
+
+- Documented the engine adapter boundary in `docs/reference/contracts/carbon-domain.rst`:
+  package -> SIT tables -> driver -> `carbon.*` accounts/report. libcbm 2.10.2 and CBM
+  defaults 1.2.9300.391 remain the pinned driver.
+- Recorded CBM4 as unreleased: public CFS material from May 2026 targets open-source
+  availability in the latter half of 2026, but no public CBM4 package, input schema, or
+  version is pinned here. `gcbmwalltowall convert` is a watchlist path, not a runtime
+  dependency.
+- Recorded migration triggers, what changes/does not change, the version-pin policy, and
+  the platform watchlist. No unreleased CBM4 dependency or code was added.
+- P115.1 crosswalk science review remains the only open P115 task.
+
+## 2026-10-26 - P115.1 crosswalk review packet
+
+- Added `scripts/check_carbon_crosswalks.py` and
+  `notes/reports/p1151-crosswalk-review.json`; every mapped CBM species, admin/eco
+  boundary, disturbance type, and land class exists in CBM defaults `1.2.9300.391`.
+- Added `notes/reports/p1151-crosswalk-review.md` with the semantic decisions still
+  needed for species resolution, TSA/MKRF boundary provenance, disturbance removal and
+  transition assumptions, land-class choice, and fallback policy.
+- The mechanical check passes; P115.1 remains open because the CBM/CFS science sign-off
+  has not been completed. No runtime, parity, GCBM, or package behavior changed.
+
+## 2026-10-26 - P115.1 crosswalk review and TSA24 v2 package
+
+- Corrected the species crosswalk to public BC VRI codes: `Bl` subalpine fir,
+  `Sb` black spruce, `Ep` paper birch, `Dr` red alder, `Pa` whitebark pine,
+  `Qg` Garry oak, `Ey` yellow birch; added `Act`/`Acb`, `Pj`, `Pw`, `Plc`,
+  `Sxw`/`Sxl`/`Sxs`; retained clearly marked legacy aliases.
+- Corrected TSA names and eco-boundary dominance by intersecting BCGW
+  `WHSE_ADMIN_BOUNDARIES.FADM_TSA` with AAFC Terrestrial Ecozones. TSA 08, 16, 40,
+  and 41 span boundaries and are marked split-required; TSA24 is 98.33% Montane
+  Cordillera with a recorded 1.67% Boreal overlap. MKRF is identified as the Malcolm
+  Knapp Research Forest.
+- Changed `ct` to `40% commercial thinning` as an upper-bound proxy for 40%
+  basal-area removal from below. Kept `pct` at 85%, kept MPB at the 10% moderate
+  placeholder with a variable-severity caveat, and removed the `f1`-`f3` no-op
+  mappings: fertilization needs a ~10-year growth response plus fertilizer LCA/N2O
+  emissions (Jinming Ke MSc thesis).
+- Land classes now follow CBM-CFS3 Table 3-2: managed `0`, unmanaged `16`, and no
+  generic nonforest default. Unmapped IFM states are hard errors.
+- Added the VRI code table and crosswalk checker coverage. The checker passes:
+  41 species rows, 36 VRI codes, 10 TSA/MKRF rows, 8 disturbance rows, 2 land classes.
+- Re-exported the TSA24 package as `femic-carbon-24-d7a5dc27910f`; WS4 fingerprint
+  `153f0060...`; archive SHA-256 `111feaeb...`. The AU 2401005 five-year baseline is
+  unchanged at 21,774,124.4 -> 21,949,881.3 tC.
+- Review packet: `notes/reports/p1151-crosswalk-review.md`. Residual model extensions:
+  multi-boundary packages, fertilization growth/emissions, species-resolved curves,
+  intensity-specific `ct`, and MPB severity input.
+
+## 2026-10-26 - P115 fertilization reference review
+
+- Inspected the public thesis implementation `UBC-FRESH/msc_jimmy_ke`. Recorded the
+  reference fertilization assumptions in the carbon contract and review packet:
+  200 kg N/ha, a 10-year growth response, per-hectare factors of ~17.14 kg CO2,
+  0.0557 kg CH4, and 20.00 kg N2O for one application (40.00/60.00 kg N2O for
+  two/three), converted through dynamic LCA. Fertilization remains deliberately
+  unmapped and unsupported until a fertilized curve and emission account exist.
+
+## 2026-10-26 - P115 public fertilization response and audit
+
+- Added `config/carbon/tipsy/FertRespMOF.txt` (public BC TIPSY MOF response table)
+  and parser/curve transform `femic.carbon.fertilized_curve`.
+- Added `femic carbon fertilization-curve` to materialize a public TIPSY response
+  curve for a package track with a provenance sidecar.
+- Added `femic carbon fertilization-audit` and the thesis emissions factors:
+  CO2 17.13779467, CH4 0.055734646, N2O 20.00206748/40.00206748/60.00206748
+  kg/ha for f1/f2/f3; 200 kg N/ha; 10-year response; 80% effectiveness.
+- The audit writes CO2/CH4/N2O/CO2e accounts using IPCC AR6 GWP100; the thesis
+  dynamic LCA is recorded as a caveat. Fertilization is no longer blocked on
+  missing curves.
+
 ## 2026-10-26 - P118.7 Chapman DEM mosaic (#403)
 
 - Added `scripts/build_chapman_dem_mosaic.py`, clipping the native 1 m DEM to

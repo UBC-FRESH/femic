@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 import pandas as pd
 
@@ -19,9 +20,12 @@ from .patchworks import (
     DEFAULT_CC_MAX_AGE,
     DEFAULT_CC_MIN_AGE,
     DEFAULT_FRAGMENTS_CRS,
+    DEFAULT_IFM_MODE,
+    DEFAULT_IFM_SOURCE_COL,
+    DEFAULT_IFM_TARGET_MANAGED_SHARE,
+    DEFAULT_IFM_THRESHOLD,
     build_fragments_geodataframe,
 )
-
 
 DEFAULT_WOODSTOCK_OUTPUT_DIR = Path("output/woodstock")
 SPECIES_VOLUME_COLUMN_PREFIX = "live_vol_per_ha_125_"
@@ -117,7 +121,7 @@ def compute_au_species_shares(
         total = softwood_volume + hardwood_volume
         if total <= 0.0:
             continue
-        shares[int(au_id)] = {
+        shares[int(str(au_id))] = {
             "sw": softwood_volume / total,
             "hw": hardwood_volume / total,
         }
@@ -189,6 +193,10 @@ def build_woodstock_areas_table(
     initial_age_cap: int | None = None,
     age_class_width: int | None = None,
     thlb_min: float | None = None,
+    ifm_mode: str = DEFAULT_IFM_MODE,
+    ifm_source_col: str | None = DEFAULT_IFM_SOURCE_COL,
+    ifm_threshold: float | None = DEFAULT_IFM_THRESHOLD,
+    ifm_target_managed_share: float | None = DEFAULT_IFM_TARGET_MANAGED_SHARE,
 ) -> pd.DataFrame:
     """Build Woodstock compatibility areas table from checkpoint geometries.
 
@@ -196,12 +204,20 @@ def build_woodstock_areas_table(
     ages to class midpoints (e.g. width 10 -> 5, 15, 25, ...). Both shrink the
     ws3 development-type x age root space without materially changing the
     inventory (ages beyond 300 are < 1% of the TSA24 landbase).
+
+    The IFM arguments are passed through to the fragment builder so a
+    checkpoint that carries an explicit managed/unmanaged signal can be used
+    without changing the default proportional behaviour.
     """
     fragments = build_fragments_geodataframe(
         checkpoint_path=checkpoint_path,
         au_table=au_table,
         tsa_list=tsa_list,
         fragments_crs=fragments_crs,
+        ifm_mode=ifm_mode,
+        ifm_source_col=ifm_source_col,
+        ifm_threshold=ifm_threshold,
+        ifm_target_managed_share=ifm_target_managed_share,
         min_thlb=thlb_min,
     )
     ages = pd.to_numeric(fragments["F_AGE"], errors="coerce").fillna(0).astype(int)

@@ -1,0 +1,26 @@
+# TSA24 carbon defaults for the current FEMIC instance.
+# These are draft crosswalks; review status is recorded in the package manifest.
+carbon:
+  schema_version: "0.1"
+  tsa_codes: ["24"]
+  admin_boundary: British Columbia
+  eco_boundary: Montane Cordillera
+  species_map: species_map.bc.csv
+  eco_boundary_map: eco_boundary.bc.csv
+  disturbance_map: disturbance_map.bc.csv
+  land_class_map: land_class.bc.csv
+  age_interval: 10
+  max_age: 300
+  volume_feature_label: feature.Volume
+  cbm_defaults:
+    version: "1.2.9300.391"
+    sha256: "4bd722d8825abeda3c9cf77247bbd4903824259e2fcc046d9a335336c8842155"
+    source: libcbm
+  fallback:
+    softwood_species: "Unspecified softwood species"
+    hardwood_species: "Unspecified hardwood species"
+    wood_type: softwood
+  review:
+    status: reviewed
+    reviewer: "FEMIC maintainer direction (VRI/CBM/GIS sources)"
+    reviewed_utc: "2026-10-26"

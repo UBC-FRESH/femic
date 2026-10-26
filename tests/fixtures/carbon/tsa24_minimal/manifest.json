@@ -1,0 +1,76 @@
+{
+  "boundaries": {
+    "admin": "British Columbia",
+    "eco": "Montane Cordillera"
+  },
+  "cbm_defaults": {
+    "sha256": "4bd722d8825abeda3c9cf77247bbd4903824259e2fcc046d9a335336c8842155",
+    "source": "libcbm",
+    "version": "1.2.9300.391"
+  },
+  "created_utc": "2026-10-26T05:21:27Z",
+  "event_source": "ws4.schedule",
+  "mapping": {
+    "disturbance_classifier": "user_dist_type",
+    "species_classifier": "species",
+    "track_key": "track_name"
+  },
+  "package_id": "femic-carbon-24fixture-46b8de48453a",
+  "producer": {
+    "name": "femic",
+    "version": "0.2.0a1"
+  },
+  "schema_version": "0.1",
+  "sources": [
+    {
+      "path": "fixture/stand_inventory.csv",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "path": "config/carbon/species_map.bc.csv",
+      "sha256": "086ead3ee9af0f90bca2068ad07b3691d9ce4fb99f2bf489e3753f024e9746cb"
+    },
+    {
+      "path": "config/carbon/eco_boundary.bc.csv",
+      "sha256": "1628fb78bdc3930c907d0671e09aaafb630d89d5e072ad9d2391afa182c618e6"
+    },
+    {
+      "path": "config/carbon/disturbance_map.bc.csv",
+      "sha256": "fea8f74fb8b52cf826117de9477179fe40680a74eac0b590a1b667d64a5d71b2"
+    },
+    {
+      "path": "config/carbon/land_class.bc.csv",
+      "sha256": "0ddb5d62dbfb41886d6958427576e72d72ae8d43cd2ed36cd854f4dc7a7860f3"
+    }
+  ],
+  "table_files": {
+    "age_classes": "age_classes.csv",
+    "boundaries": "boundaries.csv",
+    "classifiers": "classifiers.csv",
+    "curve_carbon_map": "curve_carbon_map.csv",
+    "disturbance_types": "disturbance_types.csv",
+    "inventory": "inventory.csv",
+    "species_map": "species_map.csv",
+    "track_carbon_map": "track_carbon_map.csv",
+    "yield": "yield.csv"
+  },
+  "table_hashes": {
+    "age_classes": "e033f68206a1bbf525b009ccf82b7f905a00f8d251a51745e1b0a96ea8c6b7eb",
+    "boundaries": "584f8bec014eb95b357d0dc9128d8730c0b85144420ada5ae7b3a485145117c9",
+    "classifiers": "ed170b94e854fc189038ff70baa443428d3524cf9a767d16b458b3ab2ebadc3f",
+    "curve_carbon_map": "37b2353c6b751dfebbc75675e76859bb78644cdf9df3a17dfc25ff2c10d3c174",
+    "disturbance_types": "c7a1ec5a7032bf9524d94b01ad8c6de56cc37606dd2b85ef74875fb50e39ddc0",
+    "inventory": "bd7d516c81c184b6fb9a49de127f540fa7c2b8696716cd7060404f721e6e1083",
+    "species_map": "afaca4ad9439d79e0864f3706be1c7cce7ead6862047684e3d88f6dd831e0f92",
+    "track_carbon_map": "ab17f38304a58d9513df90bda4cf8d63b9235a1551372f25d8472a3e4ae52534",
+    "yield": "ea48e30607909b79d253aa136a1cd88d04fa2689e87988aa1338f1a5bc52fcf6"
+  },
+  "transition_source": "ws4.treatments",
+  "units": {
+    "area": "ha",
+    "carbon": "tC",
+    "carbon_density": "tC/ha",
+    "co2e": "tCO2e",
+    "volume": "m3/ha"
+  }
+}

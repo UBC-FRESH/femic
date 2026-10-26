@@ -1,0 +1,29 @@
+# Example instance-level carbon configuration.
+# Copy into an instance config or run profile and replace the placeholders.
+carbon:
+  schema_version: "0.1"
+  tsa_codes: ["24"]
+  admin_boundary: British Columbia
+  eco_boundary: Montane Cordillera
+  species_map: config/carbon/species_map.bc.csv
+  eco_boundary_map: config/carbon/eco_boundary.bc.csv
+  disturbance_map: config/carbon/disturbance_map.bc.csv
+  land_class_map: config/carbon/land_class.bc.csv
+  age_interval: 10
+  max_age: 300
+  volume_feature_label: feature.Volume
+  cbm_defaults:
+    version: "1.2.9300.391"
+    sha256: "4bd722d8825abeda3c9cf77247bbd4903824259e2fcc046d9a335336c8842155"
+    source: "libcbm"
+  fallback:
+    softwood_species: "Unspecified softwood species"
+    hardwood_species: "Unspecified hardwood species"
+  review:
+    status: "draft"
+    reviewer: ""
+    reviewed_utc: ""
+  validation:
+    # Optional: pin the expected package totals for a fixture or release check.
+    expected_area_ha:
+    expected_track_count:

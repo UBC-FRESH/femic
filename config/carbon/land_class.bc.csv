@@ -1,0 +1,3 @@
+ifm,landclass,description,confidence,notes
+managed,0,Forest Land remaining Forest Land,high,Managed forest land; CBM-CFS3 land class 0.
+unmanaged,16,Unmanaged Forest Land,high,CBM-CFS3 land class 16; differs from the WS3 parity fixture which used 0.

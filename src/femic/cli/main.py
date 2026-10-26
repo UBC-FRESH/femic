@@ -18,6 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path, PosixPath, WindowsPath
 from typing import Any
 
+import pandas as pd
 import typer
 import yaml
 from rich.console import Console
@@ -59,6 +60,19 @@ from femic.builtin_instances import (
     install_builtin_instances,
     load_instance_catalog,
     resolve_builtin_repo_status,
+)
+from femic.carbon import (
+    CarbonValidationError,
+    export_carbon_package,
+    fertilization_audit,
+    fertilized_curve,
+    load_carbon_export_config,
+    load_carbon_instance_config,
+    load_fertilization_config,
+    to_export_config,
+    validate_carbon_package,
+    write_fertilization_audit,
+    write_fertilized_curve,
 )
 from femic.document_figures import (
     DOCUMENT_FIGURE_DOWNSTREAM_USE_CLASSES,
@@ -108,6 +122,12 @@ from femic.fmg import (
     DEFAULT_WOODSTOCK_OUTPUT_DIR,
     export_patchworks_package,
     export_woodstock_package,
+)
+from femic.gcbm import (
+    GcbmExportConfig,
+    GcbmExportError,
+    export_gcbm_project,
+    validate_gcbm_project,
 )
 from femic.geospatial_preflight import run_geospatial_preflight
 from femic.glb import build_tsa_raw_glb
@@ -350,6 +370,11 @@ export_app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
     help="Export model artifacts for downstream planning systems.",
+)
+carbon_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Build the static forest carbon packages consumed by WS4 and WS3.",
 )
 patchworks_app = typer.Typer(
     add_completion=False,
@@ -1636,6 +1661,249 @@ EXPORT_WOODSTOCK_OUTPUT_DIR_OPTION = typer.Option(
     DEFAULT_WOODSTOCK_OUTPUT_DIR,
     "--output-dir",
     help="Output directory for Woodstock compatibility CSV files.",
+)
+CARBON_OUTPUT_DIR_OPTION = typer.Option(
+    Path("output/carbon"),
+    "--output-dir",
+    help="Output directory for the static carbon package.",
+)
+CARBON_CONFIG_DIR_OPTION = typer.Option(
+    Path("config/carbon"),
+    "--config-dir",
+    help="Directory holding the carbon crosswalk CSVs.",
+)
+CARBON_INSTANCE_CONFIG_OPTION = typer.Option(
+    None,
+    "--config",
+    help="Instance carbon YAML block (for example config/carbon/tsa24.yaml).",
+    show_default=False,
+)
+CARBON_FERTILIZATION_PACKAGE_OPTION = typer.Option(
+    Path("output/carbon/tsa24"),
+    "--package",
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="Carbon package containing the source yield table.",
+)
+CARBON_FERTILIZATION_TRACK_OPTION = typer.Option(
+    ...,
+    "--track",
+    help="Exact package track_name to fertilize.",
+)
+CARBON_FERTILIZATION_SPECIES_OPTION = typer.Option(
+    "SW",
+    "--species",
+    help="TIPSY species code (FDC, SS, SW, PLI, FDI).",
+)
+CARBON_FERTILIZATION_SITE_INDEX_OPTION = typer.Option(
+    20,
+    "--site-index",
+    help="Site index for the TIPSY response table.",
+)
+CARBON_FERTILIZATION_AGE_OPTION = typer.Option(
+    20,
+    "--response-age",
+    help="Age at which the fertilization response begins.",
+)
+CARBON_FERTILIZATION_CURVE_OUT_OPTION = typer.Option(
+    ...,
+    "--out",
+    help="CSV path for the materialized fertilized curve.",
+)
+CARBON_FERTILIZATION_CONFIG_OPTION = typer.Option(
+    Path("config/carbon/fertilization.bc.yaml"),
+    "--fertilization-config",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="Public fertilization response and emission assumptions.",
+)
+CARBON_FERTILIZATION_DATASET_OPTION = typer.Option(
+    ...,
+    "--dataset",
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="Compiled dataset with blocks.parquet or fragments.parquet.",
+)
+CARBON_FERTILIZATION_SCHEDULE_OPTION = typer.Option(
+    ...,
+    "--schedule",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="CSV with block_id, treatment, and offset.",
+)
+CARBON_FERTILIZATION_OUT_OPTION = typer.Option(
+    ...,
+    "--out",
+    help="Directory for fertilization_accounts.csv and manifest.",
+)
+CARBON_VALIDATE_PACKAGE_ARGUMENT = typer.Argument(
+    ...,
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="Carbon package directory containing manifest.json.",
+)
+CARBON_ADMIN_BOUNDARY_OPTION = typer.Option(
+    "British Columbia",
+    "--admin-boundary",
+    help="CBM administrative boundary name.",
+)
+CARBON_ECO_BOUNDARY_OPTION = typer.Option(
+    "Montane Cordillera",
+    "--eco-boundary",
+    help="CBM eco-boundary name for the package.",
+)
+CARBON_DEFAULTS_VERSION_OPTION = typer.Option(
+    None,
+    "--cbm-defaults-version",
+    help="CBM defaults database version; detected from libcbm when omitted.",
+    show_default=False,
+)
+CARBON_DEFAULTS_SHA256_OPTION = typer.Option(
+    None,
+    "--cbm-defaults-sha256",
+    help="CBM defaults database SHA-256; detected from libcbm when omitted.",
+    show_default=False,
+)
+CARBON_DEFAULTS_SOURCE_OPTION = typer.Option(
+    "libcbm",
+    "--cbm-defaults-source",
+    help="Source label for the CBM defaults database.",
+)
+CARBON_DATASET_DIR_OPTION = typer.Option(
+    None,
+    "--dataset-dir",
+    help="Optional compiled WS4 dataset used to resolve exact track names.",
+    show_default=False,
+)
+CARBON_AGE_INTERVAL_OPTION = typer.Option(
+    10,
+    "--age-interval",
+    help="Yield grid width in years.",
+)
+CARBON_MAX_AGE_OPTION = typer.Option(
+    300,
+    "--max-age",
+    help="Maximum yield age in years.",
+)
+CARBON_VOLUME_FEATURE_LABEL_OPTION = typer.Option(
+    "feature.Volume",
+    "--volume-feature-label",
+    help="WS4 feature label that carries merchantable volume.",
+)
+GCBM_CARBON_PACKAGE_OPTION = typer.Option(
+    Path("output/carbon/tsa24"),
+    "--carbon-package",
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="FEMIC carbon package used for the yield table.",
+)
+GCBM_OUTPUT_DIR_OPTION = typer.Option(
+    Path("output/gcbm"),
+    "--output-dir",
+    help="Destination directory for the walltowall project.",
+)
+GCBM_AIDB_OPTION = typer.Option(
+    None,
+    "--aidb",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="CBM defaults SQLite AIDB; detected from libcbm when omitted.",
+    show_default=False,
+)
+GCBM_START_YEAR_OPTION = typer.Option(
+    2020,
+    "--start-year",
+    help="First GCBM simulation year.",
+)
+GCBM_END_YEAR_OPTION = typer.Option(
+    2030,
+    "--end-year",
+    help="Last GCBM simulation year.",
+)
+GCBM_RESOLUTION_OPTION = typer.Option(
+    0.001,
+    "--resolution",
+    help="Output cell size in degrees.",
+)
+GCBM_EPSG_OPTION = typer.Option(
+    4326,
+    "--epsg",
+    help="Output CRS EPSG code.",
+)
+GCBM_CHECKPOINT_CRS_OPTION = typer.Option(
+    "EPSG:3005",
+    "--checkpoint-crs",
+    help="CRS assigned to the checkpoint when it has none.",
+)
+GCBM_MEAN_ANNUAL_TEMPERATURE_OPTION = typer.Option(
+    3.0,
+    "--mean-annual-temperature",
+    help="Fallback mean annual temperature when the checkpoint has no MAT column.",
+)
+GCBM_INITIAL_AGE_CAP_OPTION = typer.Option(
+    None,
+    "--initial-age-cap",
+    help="Clamp initial ages; defaults to the package maximum yield age.",
+    show_default=False,
+)
+GCBM_PROJECT_NAME_OPTION = typer.Option(
+    None,
+    "--project-name",
+    help="walltowall project name; derived from the package id when omitted.",
+    show_default=False,
+)
+GCBM_AU_OPTION = typer.Option(
+    None,
+    "--au",
+    help="Limit the export to one or more AU ids; repeat the option.",
+    show_default=False,
+)
+GCBM_MAX_FRAGMENTS_OPTION = typer.Option(
+    None,
+    "--max-fragments",
+    help="Cap inventory polygons for a bounded smoke export.",
+    show_default=False,
+)
+GCBM_DISTURBANCE_OPTION = typer.Option(
+    None,
+    "--disturbance",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="Optional vector with year, disturbance_type, and geometry columns.",
+    show_default=False,
+)
+GCBM_TEMPLATES_OPTION = typer.Option(
+    None,
+    "--gcbm-templates",
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="Optional walltowall GCBM config template directory.",
+    show_default=False,
+)
+GCBM_EXE_OPTION = typer.Option(
+    None,
+    "--gcbm-exe",
+    help="Optional GCBM executable recorded in the walltowall configuration.",
+    show_default=False,
+)
+GCBM_ALLOW_AIDB_MISMATCH_OPTION = typer.Option(
+    False,
+    "--allow-aidb-mismatch",
+    help="Allow an AIDB hash that differs from the carbon package.",
+)
+GCBM_NO_COPY_AIDB_OPTION = typer.Option(
+    False,
+    "--no-copy-aidb",
+    help="Reference the AIDB in place instead of copying it into the project.",
 )
 EXPORT_INITIAL_AGE_CAP_OPTION = typer.Option(
     None,
@@ -9058,6 +9326,351 @@ def export_woodstock(
     console.print(f"transitions_csv: {result.transitions_csv_path}")
 
 
+@carbon_app.command("validate")
+def carbon_validate(
+    package_dir: Path = CARBON_VALIDATE_PACKAGE_ARGUMENT,
+    carbon_config: Path | None = CARBON_INSTANCE_CONFIG_OPTION,
+    expect_area_ha: float | None = typer.Option(
+        None,
+        "--expect-area-ha",
+        help="Require the inventory area to match this value.",
+        show_default=False,
+    ),
+    expect_tracks: int | None = typer.Option(
+        None,
+        "--expect-tracks",
+        help="Require this number of package tracks.",
+        show_default=False,
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Validate a static carbon package against the FEMIC contract."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_package = instance_context.resolve_path(package_dir)
+    expected_area = expect_area_ha
+    expected_tracks = expect_tracks
+    try:
+        if carbon_config is not None:
+            settings = load_carbon_instance_config(
+                instance_context.resolve_path(carbon_config)
+            )
+            if expected_area is None:
+                expected_area = settings.expected_area_ha
+            if expected_tracks is None:
+                expected_tracks = settings.expected_track_count
+        result = validate_carbon_package(
+            resolved_package,
+            expected_area_ha=expected_area,
+            expected_track_count=expected_tracks,
+        )
+    except (CarbonValidationError, FileNotFoundError, TypeError, ValueError) as exc:
+        console.print(f"[red]Carbon validation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(
+        "[green]carbon package valid[/green] "
+        f"tracks={result.track_count} area_ha={result.inventory_area_ha:.1f} "
+        f"yield_rows={result.yield_rows}"
+    )
+    console.print(f"package_id: {result.package_id}")
+
+
+@carbon_app.command("fertilization-curve")
+def carbon_fertilization_curve(
+    package: Path = CARBON_FERTILIZATION_PACKAGE_OPTION,
+    track: str = CARBON_FERTILIZATION_TRACK_OPTION,
+    species: str = CARBON_FERTILIZATION_SPECIES_OPTION,
+    site_index: int = CARBON_FERTILIZATION_SITE_INDEX_OPTION,
+    response_age: int = CARBON_FERTILIZATION_AGE_OPTION,
+    fertilization_config: Path = CARBON_FERTILIZATION_CONFIG_OPTION,
+    out: Path = CARBON_FERTILIZATION_CURVE_OUT_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Materialize a public TIPSY fertilization response curve for a package track."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_package = instance_context.resolve_path(package)
+    resolved_config = instance_context.resolve_path(fertilization_config)
+    resolved_out = instance_context.resolve_path(out)
+    yield_path = resolved_package / "yield.csv"
+    if not yield_path.is_file():
+        console.print(f"[red]Missing package yield table:[/red] {yield_path}")
+        raise typer.Exit(code=1)
+    frame = pd.read_csv(yield_path)
+    track_frame = frame.loc[frame["track_name"] == track]
+    if track_frame.empty:
+        console.print(f"[red]Unknown package track:[/red] {track}")
+        raise typer.Exit(code=1)
+    curve = tuple(
+        zip(
+            track_frame["age"].astype(float),
+            track_frame["volume_m3_ha"].astype(float),
+            strict=True,
+        )
+    )
+    try:
+        config = load_fertilization_config(resolved_config)
+        fertilized = fertilized_curve(
+            curve=curve,
+            response_age=response_age,
+            config=config,
+            species_code=species,
+            site_index=site_index,
+        )
+        path = write_fertilized_curve(
+            track_name=track,
+            curve=fertilized,
+            config=config,
+            species_code=species,
+            site_index=site_index,
+            response_age=response_age,
+            output_path=resolved_out,
+        )
+    except (FileNotFoundError, ValueError, TypeError) as exc:
+        console.print(f"[red]Fertilization curve failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(
+        f"[green]fertilized curve written[/green] {path} "
+        f"points={len(fertilized)} species={species} si={site_index} age={response_age}"
+    )
+
+
+@carbon_app.command("fertilization-audit")
+def carbon_fertilization_audit(
+    dataset: Path = CARBON_FERTILIZATION_DATASET_OPTION,
+    schedule: Path = CARBON_FERTILIZATION_SCHEDULE_OPTION,
+    fertilization_config: Path = CARBON_FERTILIZATION_CONFIG_OPTION,
+    out: Path = CARBON_FERTILIZATION_OUT_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Audit fertilization emissions and public TIPSY response assumptions."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_dataset = instance_context.resolve_path(dataset)
+    resolved_schedule = instance_context.resolve_path(schedule)
+    resolved_config = instance_context.resolve_path(fertilization_config)
+    resolved_out = instance_context.resolve_path(out)
+    blocks_path = resolved_dataset / "blocks.parquet"
+    fragments_path = resolved_dataset / "fragments.parquet"
+    try:
+        if blocks_path.is_file():
+            blocks = pd.read_parquet(blocks_path)
+        elif fragments_path.is_file():
+            fragments = pd.read_parquet(fragments_path)
+            blocks = fragments.groupby("block_id", as_index=False)["area_ha"].sum()
+        else:
+            raise FileNotFoundError(
+                f"{resolved_dataset} has no blocks.parquet or fragments.parquet"
+            )
+        schedule_frame = pd.read_csv(resolved_schedule)
+        config = load_fertilization_config(resolved_config)
+        result = fertilization_audit(
+            schedule=schedule_frame,
+            block_areas=blocks,
+            config=config,
+        )
+        accounts_path = write_fertilization_audit(result, resolved_out)
+    except (FileNotFoundError, ValueError, TypeError) as exc:
+        console.print(f"[red]Fertilization audit failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(
+        "[green]fertilization audit complete[/green] "
+        f"area_ha={result.total_area_ha:.1f} co2e_t={result.total_co2e_t:.3f}"
+    )
+    console.print(f"accounts: {accounts_path}")
+    console.print(
+        "[yellow]note:[/yellow] the growth response is a public TIPSY curve "
+        "transformation; this audit does not alter CBM pool accounts."
+    )
+
+
+@carbon_app.command("export-package")
+def carbon_export_package(
+    tsa: list[str] | None = TSA_OPTION,
+    bundle_dir: Path = EXPORT_BUNDLE_DIR_OPTION,
+    checkpoint: Path = EXPORT_CHECKPOINT_OPTION,
+    output_dir: Path = CARBON_OUTPUT_DIR_OPTION,
+    config_dir: Path = CARBON_CONFIG_DIR_OPTION,
+    carbon_config: Path | None = CARBON_INSTANCE_CONFIG_OPTION,
+    admin_boundary: str = CARBON_ADMIN_BOUNDARY_OPTION,
+    eco_boundary: str = CARBON_ECO_BOUNDARY_OPTION,
+    cbm_defaults_version: str | None = CARBON_DEFAULTS_VERSION_OPTION,
+    cbm_defaults_sha256: str | None = CARBON_DEFAULTS_SHA256_OPTION,
+    cbm_defaults_source: str = CARBON_DEFAULTS_SOURCE_OPTION,
+    dataset_dir: Path | None = CARBON_DATASET_DIR_OPTION,
+    age_interval: int = CARBON_AGE_INTERVAL_OPTION,
+    max_age: int = CARBON_MAX_AGE_OPTION,
+    volume_feature_label: str = CARBON_VOLUME_FEATURE_LABEL_OPTION,
+    fragments_crs: str = EXPORT_FRAGMENTS_CRS_OPTION,
+    initial_age_cap: int | None = EXPORT_INITIAL_AGE_CAP_OPTION,
+    snap_initial_ages: int | None = EXPORT_SNAP_INITIAL_AGES_OPTION,
+    thlb_min: float | None = EXPORT_THLB_MIN_OPTION,
+    ifm_mode: str = EXPORT_IFM_MODE_OPTION,
+    ifm_source_col: str | None = EXPORT_IFM_SOURCE_COL_OPTION,
+    ifm_threshold: float | None = EXPORT_IFM_THRESHOLD_OPTION,
+    ifm_target_managed_share: float | None = (EXPORT_IFM_TARGET_MANAGED_SHARE_OPTION),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Export a static CBM carbon package from the selected FMU/code targets."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_bundle_dir = instance_context.resolve_path(bundle_dir)
+    resolved_checkpoint = instance_context.resolve_path(checkpoint)
+    resolved_output_dir = instance_context.resolve_path(output_dir)
+    resolved_config_dir = instance_context.resolve_path(config_dir)
+    resolved_dataset_dir = (
+        instance_context.resolve_path(dataset_dir) if dataset_dir is not None else None
+    )
+    instance_settings = None
+    if carbon_config is not None:
+        try:
+            instance_settings = load_carbon_instance_config(
+                instance_context.resolve_path(carbon_config)
+            )
+        except (FileNotFoundError, TypeError, ValueError) as exc:
+            console.print(f"[red]Carbon config failed:[/red] {exc}")
+            raise typer.Exit(code=1) from exc
+        resolved_config_dir = instance_settings.crosswalk_dir
+    targets = (
+        [str(v).zfill(2) if str(v).isdigit() else str(v).lower() for v in tsa]
+        if tsa
+        else list(instance_settings.tsa_codes)
+        if instance_settings is not None
+        else []
+    )
+    if not targets:
+        console.print("[red]Provide at least one FMU/code via --tsa or --config.[/red]")
+        raise typer.Exit(code=1)
+    try:
+        config = (
+            to_export_config(instance_settings)
+            if instance_settings is not None
+            else load_carbon_export_config(
+                config_dir=resolved_config_dir,
+                admin_boundary=admin_boundary,
+                eco_boundary=eco_boundary,
+                cbm_defaults_version=cbm_defaults_version,
+                cbm_defaults_sha256=cbm_defaults_sha256,
+                cbm_defaults_source=cbm_defaults_source,
+                age_interval=age_interval,
+                max_age=max_age,
+                volume_feature_label=volume_feature_label,
+            )
+        )
+        result = export_carbon_package(
+            bundle_dir=resolved_bundle_dir,
+            checkpoint_path=resolved_checkpoint,
+            output_dir=resolved_output_dir,
+            tsa_list=targets,
+            config=config,
+            dataset_dir=resolved_dataset_dir,
+            fragments_crs=fragments_crs,
+            initial_age_cap=initial_age_cap,
+            age_class_width=snap_initial_ages,
+            thlb_min=thlb_min,
+            ifm_mode=ifm_mode,
+            ifm_source_col=ifm_source_col,
+            ifm_threshold=ifm_threshold,
+            ifm_target_managed_share=ifm_target_managed_share,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        console.print(f"[red]Carbon export failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(
+        "[green]carbon export completed[/green] "
+        f"tsa={targets} tracks={result.track_count} "
+        f"area_ha={result.inventory_area_ha:.1f} yield_rows={result.yield_rows}"
+    )
+    console.print(f"package_id: {result.package_id}")
+    console.print(f"package_dir: {result.package_dir}")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(f"fingerprint: {result.fingerprint}")
+
+
+@export_app.command("gcbm")
+def export_gcbm(
+    checkpoint: Path = EXPORT_CHECKPOINT_OPTION,
+    carbon_package: Path = GCBM_CARBON_PACKAGE_OPTION,
+    output_dir: Path = GCBM_OUTPUT_DIR_OPTION,
+    aidb: Path | None = GCBM_AIDB_OPTION,
+    start_year: int = GCBM_START_YEAR_OPTION,
+    end_year: int = GCBM_END_YEAR_OPTION,
+    resolution: float = GCBM_RESOLUTION_OPTION,
+    epsg: int = GCBM_EPSG_OPTION,
+    checkpoint_crs: str = GCBM_CHECKPOINT_CRS_OPTION,
+    mean_annual_temperature: float = GCBM_MEAN_ANNUAL_TEMPERATURE_OPTION,
+    initial_age_cap: int | None = GCBM_INITIAL_AGE_CAP_OPTION,
+    project_name: str | None = GCBM_PROJECT_NAME_OPTION,
+    au: list[int] | None = GCBM_AU_OPTION,
+    max_fragments: int | None = GCBM_MAX_FRAGMENTS_OPTION,
+    disturbance: Path | None = GCBM_DISTURBANCE_OPTION,
+    gcbm_templates: Path | None = GCBM_TEMPLATES_OPTION,
+    gcbm_exe: Path | None = GCBM_EXE_OPTION,
+    allow_aidb_mismatch: bool = GCBM_ALLOW_AIDB_MISMATCH_OPTION,
+    no_copy_aidb: bool = GCBM_NO_COPY_AIDB_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Export a GCBM walltowall project from a checkpoint and carbon package."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_checkpoint = instance_context.resolve_path(checkpoint)
+    resolved_package = instance_context.resolve_path(carbon_package)
+    resolved_output = instance_context.resolve_path(output_dir)
+    resolved_aidb = instance_context.resolve_path(aidb) if aidb is not None else None
+    resolved_disturbance = (
+        instance_context.resolve_path(disturbance) if disturbance is not None else None
+    )
+    resolved_templates = (
+        instance_context.resolve_path(gcbm_templates)
+        if gcbm_templates is not None
+        else None
+    )
+    resolved_exe = (
+        instance_context.resolve_path(gcbm_exe) if gcbm_exe is not None else None
+    )
+    try:
+        result = export_gcbm_project(
+            GcbmExportConfig(
+                checkpoint_path=resolved_checkpoint,
+                carbon_package_dir=resolved_package,
+                output_dir=resolved_output,
+                aidb_path=resolved_aidb,
+                start_year=start_year,
+                end_year=end_year,
+                resolution=resolution,
+                epsg=epsg,
+                checkpoint_crs=checkpoint_crs,
+                mean_annual_temperature=mean_annual_temperature,
+                initial_age_cap=initial_age_cap,
+                project_name=project_name,
+                au_filter=tuple(au or ()),
+                max_fragments=max_fragments,
+                disturbance_path=resolved_disturbance,
+                gcbm_templates=resolved_templates,
+                gcbm_exe=resolved_exe,
+                allow_aidb_mismatch=allow_aidb_mismatch,
+                copy_aidb=not no_copy_aidb,
+            )
+        )
+        issues = validate_gcbm_project(result.project_dir)
+        if issues:
+            raise GcbmExportError("project validation failed: " + "; ".join(issues))
+    except (FileNotFoundError, GcbmExportError, ValueError) as exc:
+        console.print(f"[red]GCBM export failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(
+        "[green]GCBM export prepared[/green] "
+        f"fragments={result.fragments} tracks={result.tracks} "
+        f"area_ha={result.area_ha:.1f}"
+    )
+    console.print(f"project: {result.project_dir}")
+    console.print(f"config: {result.config_path}")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(f"aidb: {result.aidb_path}")
+    if not result.aidb_matches_package:
+        console.print(
+            "[yellow]warning:[/yellow] AIDB hash does not match the carbon package"
+        )
+    for warning in result.warnings:
+        console.print(f"[yellow]warning:[/yellow] {warning}")
+
+
 @export_app.command("ws3-sections")
 def export_ws3_sections(
     woodstock_dir: Path = EXPORT_WS3_WOODSTOCK_DIR_OPTION,
@@ -11488,6 +12101,7 @@ freshforge_app.add_typer(freshforge_workflows_app, name="workflows")
 app.add_typer(freshforge_app, name="freshforge")
 app.add_typer(tsr_app, name="tsr")
 app.add_typer(export_app, name="export")
+app.add_typer(carbon_app, name="carbon")
 patchworks_app.add_typer(patchworks_instances_app, name="instances")
 patchworks_app.add_typer(patchworks_scenarios_app, name="scenarios")
 patchworks_app.add_typer(patchworks_scenario_sets_app, name="scenario-sets")

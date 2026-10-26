@@ -1,0 +1,37 @@
+vri_code,common_name,scientific_name,group
+Ac,poplar,Populus,hardwood
+Act,black cottonwood,Populus balsamifera ssp. trichocarpa,hardwood
+Acb,balsam poplar,Populus balsamifera ssp. balsamifera,hardwood
+At,trembling aspen,Populus tremuloides,hardwood
+Ba,amabilis fir,Abies amabilis,softwood
+Bg,grand fir,Abies grandis,softwood
+Bl,subalpine fir,Abies lasiocarpa,softwood
+Ep,paper birch,Betula papyrifera,hardwood
+Ea,Alaska paper birch,Betula neoalaskana,hardwood
+Ey,yellow birch,Betula alleghaniensis,hardwood
+Dr,red alder,Alnus rubra,hardwood
+Fd,Douglas-fir,Pseudotsuga menziesii,softwood
+Fdc,coastal Douglas-fir,Pseudotsuga menziesii var. menziesii,softwood
+Fdi,interior Douglas-fir,Pseudotsuga menziesii var. glauca,softwood
+Hm,mountain hemlock,Tsuga mertensiana,softwood
+Hw,western hemlock,Tsuga heterophylla,softwood
+Lw,western larch,Larix occidentalis,softwood
+Mb,bigleaf maple,Acer macrophyllum,hardwood
+Pl,lodgepole pine,Pinus contorta,softwood
+Pli,lodgepole pine,Pinus contorta var. latifolia,softwood
+Pj,jack pine,Pinus banksiana,softwood
+Pw,western white pine,Pinus monticola,softwood
+Plc,shore pine,Pinus contorta var. contorta,softwood
+Py,ponderosa pine,Pinus ponderosa,softwood
+Pa,whitebark pine,Pinus albicaulis,softwood
+S,spruce,Picea spp.,softwood
+Sb,black spruce,Picea mariana,softwood
+Se,Engelmann spruce,Picea engelmannii,softwood
+Ss,Sitka spruce,Picea sitchensis,softwood
+Sw,white spruce,Picea glauca,softwood
+Sx,spruce hybrid,Picea cross,softwood
+Sxw,Engelmann x white spruce,Picea engelmannii x glauca,softwood
+Sxl,Sitka x white spruce,Picea x lutzii,softwood
+Sxs,Sitka x unknown spruce,Picea sitchensis x ?,softwood
+Yc,yellow cedar,Chamaecyparis nootkatensis,softwood
+Qg,Garry oak,Quercus garryana,hardwood

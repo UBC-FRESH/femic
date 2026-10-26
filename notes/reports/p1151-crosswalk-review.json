@@ -1,0 +1,112 @@
+{
+  "created_utc": "2026-10-26T05:22:01Z",
+  "aidb": "/tmp/opencode/libcbm-venv/lib/python3.12/site-packages/libcbm/resources/cbm_defaults_db/cbm_defaults_v1.2.9300.391.db",
+  "aidb_sha256": "4bd722d8825abeda3c9cf77247bbd4903824259e2fcc046d9a335336c8842155",
+  "config_dir": "config/carbon",
+  "counts": {
+    "species_rows": 41,
+    "tsa_rows": 10,
+    "disturbance_rows": 8,
+    "land_class_rows": 2
+  },
+  "vri_codes_path": "config/carbon/vri_species_codes.csv",
+  "missing": {
+    "species": [],
+    "vri_codes": [],
+    "boundaries": [],
+    "disturbances": [],
+    "land_classes": []
+  },
+  "disturbances": [
+    {
+      "treatment_pattern": "cc",
+      "default_dist_type": "Clearcut harvesting without salvage",
+      "cbm_id": 204,
+      "cbm_description": "Same as the default Clearcut harvesting disturbance type, except all snags are transferred to the Medium pool",
+      "removes_biomass": "true",
+      "confidence": "high",
+      "notes": "Default clearcut."
+    },
+    {
+      "treatment_pattern": "ct",
+      "default_dist_type": "40% commercial thinning",
+      "cbm_id": 187,
+      "cbm_description": "This disturbance type can be used to simulate a 40% reduction in biomass carbon and a transfer of the merchantable C to the forest product sector (FPS).  The remaining carbon removed from the biomass pools is transferred to the respective DOM pools.",
+      "removes_biomass": "true",
+      "confidence": "medium",
+      "notes": "Proxy for 40% basal-area removal from below; CBM 40% commercial thinning removes 40% biomass carbon, so this is an upper bound on merchantable-volume removal. Replace with a custom matrix when cruise/intensity data are available."
+    },
+    {
+      "treatment_pattern": "pct",
+      "default_dist_type": "85% precommercial thinning",
+      "cbm_id": 197,
+      "cbm_description": "Sylva 85% precommercial thinning (\u00c9claircie pr\u00e9commerciale)",
+      "removes_biomass": "true",
+      "confidence": "medium",
+      "notes": "Sylva 85% precommercial thinning; merchantable volume is near zero at the usual age 10-20, so the stock effect is small."
+    },
+    {
+      "treatment_pattern": "fire",
+      "default_dist_type": "Wildfire",
+      "cbm_id": 1,
+      "cbm_description": "Wildfire causing stand mortality.",
+      "removes_biomass": "true",
+      "confidence": "high",
+      "notes": "Stand-replacing wildfire."
+    },
+    {
+      "treatment_pattern": "wildfire",
+      "default_dist_type": "Wildfire",
+      "cbm_id": 1,
+      "cbm_description": "Wildfire causing stand mortality.",
+      "removes_biomass": "true",
+      "confidence": "high",
+      "notes": "Stand-replacing wildfire alias."
+    },
+    {
+      "treatment_pattern": "mpb",
+      "default_dist_type": "Mountain pine beetle \u2014 Moderate impact",
+      "cbm_id": 137,
+      "cbm_description": "Moderate impact (10% softwood mortality)",
+      "removes_biomass": "true",
+      "confidence": "medium",
+      "notes": "Evergreen placeholder: 10% softwood mortality depends on pine fraction and beetle intensity; use a severity-specific type when the instance supplies one."
+    },
+    {
+      "treatment_pattern": "salvage",
+      "default_dist_type": "Salvage logging after fire",
+      "cbm_id": 130,
+      "cbm_description": "Salvage logging on areas burned by fire.",
+      "removes_biomass": "true",
+      "confidence": "low",
+      "notes": "Use only when the salvage type is known; usually paired with a preceding fire event."
+    },
+    {
+      "treatment_pattern": NaN,
+      "default_dist_type": "Natural succession",
+      "cbm_id": 11,
+      "cbm_description": "For users who explicitly model natural succession in stands as events. No stock changes are associatied with this disturbance type.",
+      "removes_biomass": "false",
+      "confidence": "high",
+      "notes": "Explicit no-op event."
+    }
+  ],
+  "land_classes": [
+    {
+      "ifm": "managed",
+      "landclass": 0,
+      "cbm_description": "suelo forestal mantenido suelo forestal",
+      "confidence": "high",
+      "notes": "Managed forest land; CBM-CFS3 land class 0."
+    },
+    {
+      "ifm": "unmanaged",
+      "landclass": 16,
+      "cbm_description": "Suelo forestal no explotado",
+      "confidence": "high",
+      "notes": "CBM-CFS3 land class 16; differs from the WS3 parity fixture which used 0."
+    }
+  ],
+  "ok": true,
+  "note": "Mechanical existence check only; CBM/CFS science review, species resolution, boundary provenance, removal fractions, and transition semantics remain reviewer decisions."
+}
