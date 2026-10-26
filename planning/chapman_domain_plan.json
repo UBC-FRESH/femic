@@ -1,12 +1,11 @@
 {
   "blockers": [
-    "DEM/DSM vertical datum is unresolved.",
+    "DEM mosaic is not built and the 126.6 ha edge gap remains.",
     "No reviewed receptor geometry or capacity/damage assumption.",
     "No current public daily gauge series or governed SCRD series.",
     "No culvert/road-stream crossing inventory.",
     "No hydrologist review.",
-    "No reviewed WS4 block/fragment crosswalk.",
-    "DEM coverage gap is 126.6 ha at the watershed edge."
+    "No reviewed WS4 block/fragment crosswalk."
   ],
   "crosswalk": {
     "note": "No WS4 Chapman dataset or reviewed crosswalk exists. Do not infer a watershed from block centroids.",
@@ -22,14 +21,16 @@
   },
   "crs_decision": {
     "alternative": "EPSG:3005 would require resampling the 1 m DEM.",
-    "proposed_domain_crs": "EPSG:32610",
-    "reason": "All selected LidarBC DEM/DSM tiles are native UTM zone 10N at 1 m. Keeping the DEM native avoids a silent raster resample.",
-    "review_status": "proposed; geospatial review required",
-    "vector_transform": "Reproject FWA/DRA/WSC vectors from EPSG:3005 or EPSG:4326 to EPSG:32610 with a documented transformation and record it in the domain manifest."
+    "compound_dem_crs": "EPSG:6653",
+    "proposed_domain_crs": "EPSG:3157",
+    "reason": "The selected LidarBC DEM tiles use NAD83(CSRS) / UTM zone 10N horizontally (EPSG:3157) with CGVD2013(CGG2013) heights (vertical EPSG:6647), compound EPSG:6653. Keeping the DEM native avoids a silent raster resample.",
+    "review_status": "resolved from actual tile metadata; geospatial review still recommended",
+    "vector_transform": "Reproject FWA/DRA/WSC vectors from EPSG:3005 or EPSG:4326 to EPSG:3157 with a documented transformation and record it in the domain manifest."
   },
   "generated_utc": "2026-10-26T00:00:00+00:00",
   "layers": {
     "dem": {
+      "metadata_audit": "runtime/p118_chapman/dem_metadata_audit.json",
       "product": {
         "acquisition_years": [
           2019,
@@ -46,7 +47,7 @@
         "vertical_datum_missing": 90
       },
       "selection_sha256": "ac2a4b6310592db2d63ed0367259d30efc5b5202036d6170dca1c5979fed166c",
-      "status": "selected but not downloaded"
+      "status": "selected; metadata resolved; mosaic not downloaded"
     },
     "gauge": {
       "source": {
@@ -127,9 +128,8 @@
     }
   },
   "next_actions": [
-    "Resolve vertical datum from LidarBC metadata or a reviewed control check.",
-    "Acquire or document additional DEM coverage for the 126.6 ha gap.",
-    "Select and source the receptor geometry with public evidence.",
+    "Build the DEM mosaic in EPSG:3157 with CGVD2013 heights and document the 126.6 ha gap.",
+    "Select and source the reviewed receptor geometry with public evidence.",
     "Build a Chapman WS4 dataset and reviewed crosswalk.",
     "Review the domain and model card with a hydrologist before any response surface."
   ],
@@ -140,13 +140,27 @@
     "pilot_id": "chapman-creek",
     "role": "gauged coastal method-development and cross-check; not a GNN AOI result"
   },
+  "receptor": {
+    "candidate": "Chapman Creek water-system intake / WTP, Reservoir Road, Sechelt",
+    "evidence": [
+      "https://blogs.ubc.ca/mstaats8/methods-2/study-area",
+      "https://letstalk.scrd.ca/29788/widgets/126451/documents/83185",
+      "https://eocp.ca/wp-content/uploads/2012/10/plants-Sunshine-Coast-Regional-District.pdf",
+      "https://www.openstreetmap.org/way/164627850"
+    ],
+    "geometry": null,
+    "required": "Reviewed intake/WTP point or polygon with public geometry, capacity, and damage/screening assumptions.",
+    "status": "candidate_unreviewed"
+  },
   "schema_version": "femic.chapman_domain_plan.v1",
   "status": "blocked",
   "vertical_datum": {
-    "blocking": true,
-    "reason": "All selected DEM/DSM tiles have vertical_datum=null in the LidarBC selection manifest.",
-    "required": "Obtain LidarBC metadata or a reviewed local vertical-control check before hydrologic use.",
-    "status": "unknown"
+    "blocking": false,
+    "required": "Preserve CGVD2013 heights and record the compound CRS in the DEM mosaic and domain provenance.",
+    "source": "LidarBC DEM tile compound CRS, audited across 90/90 selected DEM tiles",
+    "status": "resolved",
+    "value": "CGVD2013(CGG2013) height",
+    "vertical_epsg": "6647"
   },
   "watershed": {
     "area_ha": 6917.074468850516,

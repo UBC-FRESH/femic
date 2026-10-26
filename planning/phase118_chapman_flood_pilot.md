@@ -223,3 +223,24 @@ The machine-readable plan is `planning/chapman_domain_plan.json`. It is marked
 Other blockers: no current public/govened gauge series, no culvert inventory, no
 hydrologist review, and no reviewed WS4 crosswalk. No flood model or claim was
 produced.
+
+## P118.6 DEM metadata and receptor evidence
+
+The DEM metadata audit opened all 90 selected DEM tiles through GDAL `/vsicurl/`
+without downloading the rasters. Results:
+
+- 90/90 tiles probed, 0 failures.
+- CRS: **EPSG:6653** compound, **NAD83(CSRS) / UTM zone 10N** (horizontal
+  EPSG:3157) plus **CGVD2013(CGG2013) height** (vertical EPSG:6647).
+- Resolution: 1 m; nodata: `-32767` or `-9999`.
+- The selection manifest's `vertical_datum=null` was a discovery metadata gap,
+  not an absent datum. Preserve the compound CRS in the DEM mosaic.
+
+Receptor candidate: Chapman Creek water-system intake / WTP on Reservoir Road,
+Sechelt. Public evidence points to the WTP and reservoir road, but no reviewed
+intake polygon/point or capacity/damage assumption exists. The candidate is
+marked **unreviewed**; no geometry was inferred from the road.
+
+The domain remains blocked on the DEM mosaic (including the 126.6 ha edge gap),
+reviewed receptor geometry, current/govened gauge series, culvert inventory,
+hydrologist review, and the WS4 crosswalk. No flood model or claim was produced.

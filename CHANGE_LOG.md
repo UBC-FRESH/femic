@@ -15847,3 +15847,18 @@
   DEM edge gap, missing receptor, missing current gauge, missing culvert
   inventory, missing hydrologist review, and missing WS4 crosswalk.
 - No bulk data was committed and no flood model or claim was produced.
+
+## 2026-10-26 - P118.6 LidarBC DEM metadata and receptor evidence (#401)
+
+- Added `scripts/audit_chapman_dem_metadata.py` and audited all 90 selected DEM
+  tiles through GDAL `/vsicurl/` without downloading rasters.
+- Resolved the compound DEM CRS: EPSG:6653, horizontal EPSG:3157
+  (NAD83(CSRS)/UTM zone 10N), vertical EPSG:6647
+  (CGVD2013(CGG2013) height). The discovery manifest's null vertical datum was
+  a metadata gap; 90/90 tiles agree. Resolution 1 m; nodata -32767 or -9999.
+- Corrected the domain plan to EPSG:3157 + CGVD2013 and removed the
+  vertical-datum blocker.
+- Recorded the Chapman WTP/Reservoir Road receptor candidate as unreviewed; no
+  geometry was inferred. The DEM edge gap, current gauge, culverts, hydrologist
+  review, and WS4 crosswalk remain blockers.
+- Added three offline tests; no bulk data committed and no flood model run.
