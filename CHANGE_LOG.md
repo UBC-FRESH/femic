@@ -1,6 +1,11 @@
 # Change Log
 
 ## 2026-10-26
+- P116.2: added `femic.contracts.disturbance` with the
+  `femic.disturbance.v1` event schema, validator, JSON reader/writer,
+  provenance summary, ws4-facing consumer rows, fire and NSR examples, and
+  contract/API docs. The ws4 consumer is already merged in
+  `UBC-FRESH/ws4#398` (`5ea4a05`). 18 focused tests; `sphinx-build -W` passes.
 - P116.1: added the `femic.climate.v1` contract with schema, validator,
   CSV/JSON reader and writer, provenance summary, and a public-safe sample
   table.
