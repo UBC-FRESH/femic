@@ -1,6 +1,12 @@
 # Change Log
 
 ## 2026-10-26
+- P117.1: added `femic.efi.application` with the
+  `femic.efi.coefficients.v1` contract, linear prediction, applicability
+  checks, domain flagging/dropping, and a bias/RMSE/MAE/R-squared backtest.
+  Added a synthetic site-index pilot card and coefficients, 13 focused tests,
+  and contract/API docs. Real coefficients, the `si_als` pipeline, and the
+  instance backtest remain open.
 - P116.3: added `femic.contracts.efi` with the `femic.efi.model.v1` model-card
   schema, nested training/validation/applicability metadata, applicability
   checks, attribute-row annotation, two public-safe synthetic cards, and

@@ -3971,3 +3971,36 @@ verification, artifacts, and risks. Phase 115 (carbon) is tracked separately
 under `#361`.
 
 Detailed plan: `planning/phase116_shared_contracts.md`.
+
+## Phase 117: EFI Inventory Attributes and Biomass Curves (`#374`)
+
+Status: **active** (P117.1 application engine; real coefficients/backtest pending).
+
+Branch: `feature/p117-efi-attributes`; P117.1 split PR:
+`feature/p117.1-efi-application`.
+
+Goal: turn the P79 LiDAR product bundle into inventory attributes and a biomass
+curve family the estate models can consume. P79 owns the sensor pipeline; this
+phase owns the inventory model and the curve family.
+
+Tasks:
+
+- [ ] P117.1 Add an ALS site-index / potential-height layer (`#375`).
+  - [x] Add the `femic.efi.coefficients.v1` contract, linear application
+    engine, domain checks, backtest harness, synthetic pilot card, and docs.
+  - [ ] Supply a published or project site-index coefficient set.
+  - [ ] Map the selected FEMIC LiDAR metrics.
+  - [ ] Add `si_als` to the fragment attribute pipeline.
+  - [ ] Run the instance backtest with the P48/P49 ground-plot surfaces.
+- [ ] P117.2 Add a biomass curve family and carbon conversion (`#376`).
+
+Acceptance: the site-index layer covers the pilot AOI and reports its gaps; a
+backtest reports bias, RMSE, and the fragments whose curve assignment changes;
+species outside the calibrated set are rejected or flagged; the biomass curve is
+independently selectable and carries its source, species, and conversion; no
+P79 or P115 code is duplicated.
+
+Tracking: issue `#374`; the issue bodies carry scope, out-of-scope, acceptance,
+verification, artifacts, and risks.
+
+Detailed plan: `planning/phase117_efi_attributes.md`.
