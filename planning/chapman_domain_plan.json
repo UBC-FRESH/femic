@@ -1,7 +1,7 @@
 {
   "blockers": [
-    "DEM vertical metadata is mixed: 9 older 2D tiles lack a vertical datum.",
-    "DEM valid coverage is 4,985.9 ha with a 1,931.2 ha unfilled gap.",
+    "67.1% of valid DEM pixels have unknown vertical datum (9 older 2D tiles).",
+    "1,931.2 ha of the watershed has no valid mosaic pixels.",
     "No reviewed receptor geometry or capacity/damage assumption.",
     "No current public daily gauge series or governed SCRD series.",
     "No culvert/road-stream crossing inventory.",
@@ -27,6 +27,12 @@
     "reason": "The selected LidarBC DEM tiles use NAD83(CSRS) / UTM zone 10N horizontally (EPSG:3157) with CGVD2013(CGG2013) heights (vertical EPSG:6647), compound EPSG:6653. Keeping the DEM native avoids a silent raster resample.",
     "review_status": "resolved from actual tile metadata; geospatial review still recommended",
     "vector_transform": "Reproject FWA/DRA/WSC vectors from EPSG:3005 or EPSG:4326 to EPSG:3157 with a documented transformation and record it in the domain manifest."
+  },
+  "defensibility": {
+    "flood_response": "blocked",
+    "hydrologic_elevation": "blocked",
+    "reason": "67.1% of valid DEM pixels are covered only by 2D tiles without vertical metadata; 1,931.2 ha of the watershed has no valid mosaic pixels.",
+    "terrain_slope_screening": "partial; seam review required, not a flood product"
   },
   "generated_utc": "2026-10-26T00:00:00+00:00",
   "layers": {
@@ -127,11 +133,12 @@
     }
   },
   "next_actions": [
-    "Resolve vertical metadata for the 9 2D DEM tiles or document a reviewed vertical-control strategy.",
-    "Document or acquire data for the 1,931.2 ha DEM coverage gap.",
-    "Select and source the reviewed receptor geometry with public evidence.",
-    "Build a Chapman WS4 dataset and reviewed crosswalk.",
-    "Review the domain and model card with a hydrologist before any response surface."
+    "Resolve the 9-tile vertical metadata or replace them with a consistent CGVD2013 DEM.",
+    "Close or explicitly bound the 1,931.2 ha coverage gap.",
+    "Select and source a reviewed receptor geometry with public evidence.",
+    "Obtain a current public or governed gauge series.",
+    "Assemble the culvert/crossing inventory and reviewed WS4 crosswalk.",
+    "Complete hydrologist review before any response surface."
   ],
   "pilot": {
     "flood_claim": false,
@@ -154,6 +161,15 @@
   },
   "schema_version": "femic.chapman_domain_plan.v1",
   "status": "blocked",
+  "vertical_coverage": {
+    "known_cgvd2013_ha": 1621.6382,
+    "known_share_of_valid": 0.3252,
+    "unfilled_gap_ha": 1931.1727,
+    "unknown_2d_ha": 3347.5455,
+    "unknown_share_of_valid": 0.6714,
+    "valid_area_ha": 4985.9018,
+    "valid_outside_both_ha": 16.7181
+  },
   "vertical_datum": {
     "blocking": true,
     "compound_tile_count": 81,

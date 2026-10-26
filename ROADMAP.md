@@ -4118,6 +4118,11 @@ Tasks:
   - [x] Record edge gap, checksums, and valid coverage.
   - [x] Add offline tests and update the plan.
   - [x] Update roadmap and changelog.
+- [x] P118.8 Decide Chapman domain defensibility and record the data block (`#405`).
+  - [x] Quantify vertical coverage and gap.
+  - [x] Write the defensibility decision.
+  - [x] Update the domain plan and roadmap.
+  - [x] Record the unblock requirements.
 
 Acceptance: the audit has source provenance; gauge discontinuities and missing
 damage/review inputs are explicit; no response surface or flood claim is made;
