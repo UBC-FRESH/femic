@@ -53,3 +53,11 @@
 [submodule "external/femic-gnn-instance"]
 	path = external/femic-gnn-instance
 	url = https://github.com/UBC-FRESH/femic-gnn-instance.git
+[submodule "external/femic-afrf-gavinlake-instance"]
+	path = external/femic-afrf-gavinlake-instance
+	url = https://github.com/UBC-FRESH/femic-afrf-gavinlake-instance.git
+	branch = main
+[submodule "external/femic-afrf-knifecreek-instance"]
+	path = external/femic-afrf-knifecreek-instance
+	url = https://github.com/UBC-FRESH/femic-afrf-knifecreek-instance.git
+	branch = main
