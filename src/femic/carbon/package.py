@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import itertools
 import json
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -552,19 +553,51 @@ def export_carbon_package(
             for au in context.analysis_units
         ]
     )
-    areas = build_woodstock_areas_table(
-        checkpoint_path=Path(checkpoint_path),
-        au_table=au_table,
-        tsa_list=normalized_tsa,
-        fragments_crs=fragments_crs,
-        initial_age_cap=initial_age_cap,
-        age_class_width=age_class_width,
-        thlb_min=thlb_min,
-        ifm_mode=ifm_mode,
-        ifm_source_col=ifm_source_col,
-        ifm_threshold=ifm_threshold,
-        ifm_target_managed_share=ifm_target_managed_share,
-    )
+    if dataset_dir is not None:
+        fragments = pd.read_parquet(Path(dataset_dir) / "fragments.parquet")
+        tracks = pd.read_parquet(Path(dataset_dir) / "tracks.parquet")
+        track_name_by_id = {
+            int(str(row.track_id)): str(row.name)
+            for row in tracks.itertuples(index=False)
+        }
+        rows: list[dict[str, object]] = []
+        for fragment in fragments.itertuples(index=False):
+            track_name = track_name_by_id.get(int(str(fragment.track_id)))
+            if track_name is None:
+                raise ValueError(
+                    f"compiled dataset track {fragment.track_id} has no name"
+                )
+            au_match = re.search(r"AU\((\d+)\)", track_name)
+            ifm_match = re.search(r"IFM\(([^)]+)\)", track_name)
+            if not au_match or not ifm_match:
+                raise ValueError(
+                    f"track {track_name!r} does not carry AU(...) and IFM(...) tokens"
+                )
+            rows.append(
+                {
+                    "track_name": track_name,
+                    "au_id": int(au_match.group(1)),
+                    "ifm": ifm_match.group(1).strip().lower(),
+                    "age": int(str(fragment.age)),
+                    "area_ha": float(str(fragment.area_ha)),
+                }
+            )
+        inventory = pd.DataFrame(rows)
+    else:
+        areas = build_woodstock_areas_table(
+            checkpoint_path=Path(checkpoint_path),
+            au_table=au_table,
+            tsa_list=normalized_tsa,
+            fragments_crs=fragments_crs,
+            initial_age_cap=initial_age_cap,
+            age_class_width=age_class_width,
+            thlb_min=thlb_min,
+            ifm_mode=ifm_mode,
+            ifm_source_col=ifm_source_col,
+            ifm_threshold=ifm_threshold,
+            ifm_target_managed_share=ifm_target_managed_share,
+        )
+        inventory = areas.loc[:, ["au_id", "ifm", "age", "area_ha"]].copy()
     shares: dict[int, tuple[float, float]] = {}
     resolved_species_checkpoint = (
         Path(species_checkpoint_path)
@@ -581,17 +614,10 @@ def export_carbon_package(
             int(au_id): (float(values.get("sw", 0.0)), float(values.get("hw", 0.0)))
             for au_id, values in raw_shares.items()
         }
-    track_names = (
-        track_names_from_compiled_dataset(Path(dataset_dir))
-        if dataset_dir is not None
-        else None
-    )
-    inventory = areas.loc[:, ["au_id", "ifm", "age", "area_ha"]].copy()
     tables = build_carbon_package_tables(
         context=context,
         inventory=inventory,
         config=config,
-        track_names=track_names,
         species_by_au=species_by_au,
         shares_by_au=shares,
     )
@@ -603,6 +629,11 @@ def export_carbon_package(
     source_hashes.append(
         (f"checkpoint/{Path(checkpoint_path).name}", _sha256(Path(checkpoint_path)))
     )
+    if dataset_dir is not None:
+        for name in ("fragments.parquet", "tracks.parquet"):
+            path = Path(dataset_dir) / name
+            if path.is_file():
+                source_hashes.append((f"dataset/{name}", _sha256(path)))
     label = "-".join(normalized_tsa)
     return write_carbon_package(
         tables=tables,
