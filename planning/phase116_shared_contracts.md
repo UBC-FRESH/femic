@@ -30,7 +30,13 @@ Implemented:
 
 ## P116.2 disturbance contract
 
-Planned: `femic.disturbance.v1` event record and a ws4 consumer.
+Implemented:
+
+- `femic.contracts.disturbance`: `femic.disturbance.v1` event record,
+  controlled types, severity model, spatial references, JSON reader/writer,
+  provenance summary, and ws4-facing consumer rows.
+- Fire and NSR examples, contract/API docs, and 18 focused tests.
+- The ws4 consumer is merged: `UBC-FRESH/ws4#398` (`5ea4a05`).
 
 ## P116.3 EFI model cards
 
