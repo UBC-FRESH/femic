@@ -1,0 +1,4 @@
+fragment_id,region,species,age,height,chm_p95
+1,CWH,Cw,60,30.0,30.0
+2,ICH,Sx,200,90.0,20.0
+3,CWH,Hw,80,28.0,25.0

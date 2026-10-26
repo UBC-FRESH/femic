@@ -95,8 +95,8 @@ Out of Scope
 - Fitting or calibrating coefficients.
 - A non-linear or mixed-effects model.
 - A universal site-index equation.
-- The final ``si_als`` fragment attribute and instance backtest. Those remain
-  P117.1 work.
+- The final ``si_als`` fragment attribute and instance backtest; P117 is
+  cancelled and this application engine is not a site-index model.
 - A replacement for the P48/P49 validation surfaces.
 
 Cross-References
@@ -104,4 +104,5 @@ Cross-References
 
 - :doc:`efi-model-card`
 - :doc:`../api/femic-efi-application`
+- :doc:`../api/femic-efi-pipeline`
 - :doc:`index`

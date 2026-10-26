@@ -1,6 +1,37 @@
 # Change Log
 
 ## 2026-10-26
+- P116.3: added two published EFI model cards under `config/efi/models/`:
+  - `als_loreys_height_cwh_2015.json`: CWH northern Vancouver Island, Cw/Hw/Hm,
+    RMSE 2.88 m, bias 0.05 m, 140 plots, 10-fold CV repeated 5 times
+    (White et al. 2015, Forests 6:3704, CC BY 4.0);
+  - `als_site_index_loblolly_seus_2019.json`: southeastern USA loblolly pine,
+    RMSE 3.8 m, bias -0.28 m, 75 FIA plots, base age 25
+    (Gopalakrishnan et al. 2019, Forests 10:234, CC BY 4.0).
+  The cards are metadata-only; the published Random Forest/ALS-plus-Landsat
+  models do not fit the linear `femic.efi.coefficients.v1` form, so no
+  coefficients were invented.
+- Added `femic.efi.pipeline.annotate_attribute_table` and `femic efi annotate`
+  to attach model identity, validation metadata, applicability, and
+  `model_in_domain` / `model_domain_reasons` to CSV, Parquet, or Feather
+  attribute tables. Domain policies: `flag`, `drop`, `require`.
+- Added published-card, pipeline, Parquet, domain-policy, and CLI tests; docs
+  and roadmap updates. No curve or AAC changes.
+
+```bash
+PYTHONPATH=src python -m pytest \
+  tests/test_efi_pipeline.py tests/test_contracts_efi.py tests/test_efi_application.py -q
+# 42 passed
+
+python -m ruff check src/femic/efi tests/test_efi_pipeline.py
+# All checks passed!
+
+PYTHONPATH=src python -m mypy src/femic/efi
+# Success: no issues found
+
+PYTHONPATH=src python -m sphinx -b html docs _build/html -W
+# build succeeded
+```
 - P119.2: merged the public SIBEC 2014 addendum into the tidy SIBEC contract
   with explicit `source_table` provenance (`femic.sibec.v2`). The 2013
   approximation and 2014 addendum remain distinguishable; the addendum is

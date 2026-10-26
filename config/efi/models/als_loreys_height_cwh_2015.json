@@ -1,0 +1,47 @@
+{
+  "schema_version": "femic.efi.model.v1",
+  "model_id": "published-als-loreys-height-cwh-2015",
+  "model_version": "2015.1",
+  "attribute": "height",
+  "unit": "m",
+  "predictors": [
+    "hmean",
+    "cov",
+    "skewness",
+    "kurtosis",
+    "p10",
+    "p90",
+    "ccmean",
+    "rumple"
+  ],
+  "training": {
+    "source_id": "white-et-al-2015-forests-6-3704",
+    "source_version": "2015",
+    "region": "CWH",
+    "plot_count": 140,
+    "species": ["Cw", "Hw", "Hm"],
+    "period": null,
+    "notes": "140 ground plots on northern Vancouver Island, British Columbia; area-based ALS model for Lorey's mean height. Dominant sampled species were Cw, Hw, and Hm; deciduous-leading plots were part of the sample but are outside this card's applicability. Source: White et al. (2015), Forests 6:3704, https://doi.org/10.3390/f6103704."
+  },
+  "validation": {
+    "design": "10-fold cross-validation repeated 5 times",
+    "n": 140,
+    "rmse": 2.88,
+    "bias": 0.05,
+    "unit": "m",
+    "r2": null,
+    "notes": "ALS model in Table 10; observed mean Lorey's mean height 32.10 m. Reported RMSE is 2.88 m and bias is 0.05 m."
+  },
+  "applicability": {
+    "regions": ["CWH"],
+    "species": ["Cw", "Hw", "Hm"],
+    "age_min": null,
+    "age_max": null,
+    "height_min": null,
+    "height_max": null,
+    "notes": "Coastal western hemlock (CWH) stands on northern Vancouver Island, BC. The published model was developed for the sampled coastal mixed-conifer population; do not apply outside that domain."
+  },
+  "licence_id": "CC-BY-4.0",
+  "created_utc": "2026-10-26T00:00:00+00:00",
+  "notes": "Published model card, metadata only. The source is a Random Forests area-based model; the published coefficients/forest objects are not copied here. The card makes the claim inspectable; it is not a local validation."
+}

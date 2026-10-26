@@ -4039,11 +4039,12 @@ Detailed plan: `planning/phase115_forest_carbon.md`.
 
 ## Phase 116: Shared Environmental Contracts (`#369`)
 
-Status: **active** (contract layer complete; P116.3 real cards and pipeline wiring pending).
+Status: **complete** (P116.1-P116.3 complete).
 
 Branch: `feature/p116-shared-contracts`; split PRs:
-`feature/p116.1-climate-contract`, `feature/p116.2-disturbance-contract`, and
-`feature/p116.3-efi-model-card`.
+`feature/p116.1-climate-contract`, `feature/p116.2-disturbance-contract`,
+`feature/p116.3-efi-model-card`, and
+`feature/p116.3-real-cards-pipeline`.
 
 Goal: add dependency-light contracts for climate, disturbance, and EFI model
 metadata so FEMIC, ws3, ws4, FHOPS, and Nemora share one vocabulary. Each
@@ -4064,12 +4065,13 @@ Tasks:
   - [x] Add the `femic.contracts.disturbance` schema, validator, examples,
     consumer rows, and docs.
   - [x] Consume the consumer rows in ws4 (PR #398, merged as `5ea4a05`).
-- [ ] P116.3 Add `efi.model.v1` model cards (`#372`).
+- [x] P116.3 Add `efi.model.v1` model cards (`#372`).
   - [x] Add the `femic.contracts.efi` schema, validator, nested metadata,
     applicability checks, row annotation, synthetic cards, and docs.
-  - [ ] Replace or augment the synthetic cards with two real project or
-    published model cards.
-  - [ ] Wire the card metadata through the FEMIC attribute pipeline.
+  - [x] Add two published cards under `config/efi/models/` (CWH Lorey's height;
+    southeastern USA loblolly site index).
+  - [x] Add `femic.efi.pipeline.annotate_attribute_table` and the `femic efi
+    annotate` CLI for file-level attribute annotation and domain decisions.
 
 Acceptance: each schema has a validator, an example, and a failure test; each
 contract has one downstream consumer reading real data; provenance survives the

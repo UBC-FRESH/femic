@@ -13,11 +13,19 @@ from femic.efi.application import (
     backtest_linear_model,
     load_linear_efi_model,
 )
+from femic.efi.pipeline import (
+    EFI_ATTRIBUTE_TABLE_SCHEMA_VERSION,
+    EFIAttributeAnnotationResult,
+    annotate_attribute_table,
+)
 
 __all__ = [
+    "EFI_ATTRIBUTE_TABLE_SCHEMA_VERSION",
     "EFI_COEFFICIENTS_SCHEMA_VERSION",
     "EFIApplicationError",
+    "EFIAttributeAnnotationResult",
     "LinearEFIModel",
+    "annotate_attribute_table",
     "apply_linear_model",
     "backtest_linear_model",
     "load_linear_efi_model",
