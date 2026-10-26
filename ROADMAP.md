@@ -4123,6 +4123,12 @@ Tasks:
   - [x] Write the defensibility decision.
   - [x] Update the domain plan and roadmap.
   - [x] Record the unblock requirements.
+- [x] P118.9 Audit FEMIC-native terrain and stream functions on Chapman (`#407`).
+  - [x] Audit the terrain/hydrography contracts and code.
+  - [x] Run terrain and stream candidates through the native functions.
+  - [x] Compare CDED/LidarBC and record the reference-overlap result.
+  - [x] Write the audit note and update the plan.
+  - [x] Update roadmap and changelog.
 
 Acceptance: the audit has source provenance; gauge discontinuities and missing
 damage/review inputs are explicit; no response surface or flood claim is made;

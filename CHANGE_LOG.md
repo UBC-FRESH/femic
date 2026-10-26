@@ -15892,3 +15892,20 @@
   current/govened gauge, culvert inventory, hydrologist review, and WS4
   crosswalk.
 - No flood model or claim was produced.
+
+## 2026-10-26 - P118.9 FEMIC-native terrain/stream audit (#407)
+
+- Audited and used the established FEMIC stack: `build_terrain_products`,
+  `derive_slope_percent`, and `derive_stream_candidates` (Horn slope, D8 flow,
+  accumulation), not a new terrain pipeline.
+- CDED 1:250,000 is the generic BCDC `DEM` result and is too coarse for 1 m
+  flood/channel work; LidarBC 1 m is the correct source.
+- Mixed-mosaic AOI slope max 45,466.8% exposes vertical/seam artefacts; the
+  full mixed terrain attempt exceeded a 10-minute local timeout.
+- CGVD2013-only subset: 1,620.6 ha, slope max 838.8%, mean 31.31%, 16.17M valid
+  slope pixels.
+- D8 stream candidates: 211,734 cells / 21.17 ha at threshold 500. FWA overlap
+  is poor (precision 0.00055, recall 0.0029, Jaccard 0.00046), confirming the
+  DEM/reference data are not usable for a hydrologic stream product.
+- 31 terrain/hydrography tests passed. No new terrain script was added and no
+  flood model was run.
