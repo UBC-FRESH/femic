@@ -4100,3 +4100,42 @@ damage/review inputs are explicit; no response surface or flood claim is made;
 the next data task is clear.
 
 Detailed plan: `planning/phase118_chapman_flood_pilot.md`.
+
+## Phase 119: Site-Index Provenance and Reconciliation (`#392`)
+
+Status: **active** (implementation and TSA46 pilot complete; PR pending).
+
+Branch: `feature/p119-si-reconciliation`
+
+Goal: make the existing VRI, VDYP, and SIBEC site-index sources legible and
+comparable without deriving a new site-index model or changing curves. VRI
+polygon SI, VDYP primary-layer SI, and SIBEC BEC-unit/species estimates are
+joined at feature level, with source coverage, pairwise deltas, conflict flags,
+and a documented reference value.
+
+Tasks:
+
+- [x] P119.1 Reconcile VRI, VDYP, and SIBEC site index on TSA46 (`#393`).
+  - [x] Add the `femic.sibec.v1` SIBEC loader and BEC-unit/species aggregate
+    with mean, range, plot count, and standard error.
+  - [x] Add VRI and VDYP primary-layer site-index readers with explicit
+    BEC/species mapping.
+  - [x] Add `femic.site-index.reconciliation.v1` output, conflict flags,
+    reference precedence, and JSON summary.
+  - [x] Add fixtures and focused tests for complete, partial, conflict,
+    species-mismatch, missing-source, and CLI cases.
+  - [x] Run the TSA46 pilot and record coverage and limits.
+  - [x] Add the contract, guide, API page, roadmap, and changelog.
+
+Acceptance: SIBEC loads with mean/range/plot count/standard error; VRI and VDYP
+join with documented species/BEC mapping; reconciliation reports coverage,
+pairwise deltas, and conflicts; reference precedence is explicit; no curve,
+AAC, THLB, or schedule is changed; tests cover mapping and missing-source cases.
+
+Pilot limits: VDYP primary-layer SI is sparse (3,384 of 171,826 VRI features),
+so complete three-way coverage is only 2,285 features. SIBEC is used as a
+BEC-unit/species range because VRI has no site series. The 2014 SIBEC addendum
+is not merged yet. AU-level TSA SI is a separate grain and is not forced into
+the polygon table.
+
+Detailed contract: `docs/reference/contracts/site-index-reconciliation.rst`.
