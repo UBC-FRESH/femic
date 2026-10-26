@@ -15804,3 +15804,23 @@
   - `pytest tests/test_chapman_acquisition.py` passed (5 tests).
   - `ruff check` and `mypy` passed for the script and test.
   - Public acquisition completed against the BC WFS and WSC APIs.
+
+## 2026-10-26 - P118.4 Chapman watershed and LidarBC audit (#391)
+
+- Added `scripts/audit_chapman_domain.py`, which unions the full FWA
+  `900-127577%` watershed layer, reports gauge-area comparisons, audits
+  stream/road/gauge features, and intersects LidarBC product tile bboxes with
+  the union.
+- Corrected the WSC drainage figures to the API values: 08GA046 6,902 ha,
+  08GA060 6,306 ha, 08GA078 6,258 ha. The union (6,917.1 ha) matches 08GA046
+  within 0.2%; the smaller diversion stations are not the same catchment.
+- LidarBC audit: DEM 90 tiles/6,790.5 ha covered (126.6 ha gap); DSM 84
+  tiles/6,672.8 ha covered (244.3 ha gap); point cloud 223 tiles/3,751.7 ha
+  covered. All selected DEM/DSM tiles lack a recorded vertical datum; all use
+  UTM zone 10.
+- Added four offline tests; no bulk data was committed and no flood model was
+  run.
+- Verification:
+  - `pytest tests/test_chapman_domain_audit.py` passed (4 tests).
+  - `ruff check` and `mypy` passed for the script and test.
+  - Real audit wrote `runtime/p118_chapman/domain_audit.json`.
