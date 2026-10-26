@@ -1,0 +1,36 @@
+{
+  "applicability_domain": {
+    "feature_names": [
+      "harvest_fraction"
+    ],
+    "max_distance": 3.0,
+    "max_values": {
+      "harvest_fraction": 0.6
+    },
+    "mean_values": {
+      "harvest_fraction": 0.3
+    },
+    "min_values": {
+      "harvest_fraction": 0.0
+    },
+    "scale_values": {
+      "harvest_fraction": 0.2
+    }
+  },
+  "coefficients": [
+    0.2
+  ],
+  "family": "linear",
+  "feature_names": [
+    "harvest_fraction"
+  ],
+  "mean_values": {
+    "harvest_fraction": 0.3
+  },
+  "residual_sigma": 0.01,
+  "scale_values": {
+    "harvest_fraction": 0.2
+  },
+  "schema_version": "femic.hydrology.surrogate_model.v1",
+  "warnings": []
+}

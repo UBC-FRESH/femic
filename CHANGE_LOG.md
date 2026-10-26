@@ -1,5 +1,33 @@
 # Change Log
 
+## 2026-10-26
+- P117.1: added `femic.efi.application` with the
+  `femic.efi.coefficients.v1` contract, linear prediction, applicability
+  checks, domain flagging/dropping, and a bias/RMSE/MAE/R-squared backtest.
+  Added a synthetic site-index pilot card and coefficients, 13 focused tests,
+  and contract/API docs. Real coefficients, the `si_als` pipeline, and the
+  instance backtest remain open.
+- P116.3: added `femic.contracts.efi` with the `femic.efi.model.v1` model-card
+  schema, nested training/validation/applicability metadata, applicability
+  checks, attribute-row annotation, two public-safe synthetic cards, and
+  contract/API docs. 22 focused tests; `sphinx-build -W` passes. Real
+  project/published cards and the FEMIC attribute-pipeline wiring remain open.
+- P116.2: added `femic.contracts.disturbance` with the
+  `femic.disturbance.v1` event schema, validator, JSON reader/writer,
+  provenance summary, ws4-facing consumer rows, fire and NSR examples, and
+  contract/API docs. The ws4 consumer is already merged in
+  `UBC-FRESH/ws4#398` (`5ea4a05`). 18 focused tests; `sphinx-build -W` passes.
+- P116.1: added the `femic.climate.v1` contract with schema, validator,
+  CSV/JSON reader and writer, provenance summary, and a public-safe sample
+  table.
+- P116.1: added the annual ClimateNA/SilvR21 CSV adapter with a defensive
+  default column map and a public-safe fixture.
+- P116.1: added `femic.climate.consumer` to resolve one AOI/scenario/year
+  context and attach values and provenance to attribute rows. This is the first
+  `femic.climate.v1` consumer.
+- P116.1: contract, API, and consumer docs; 40 focused tests across the three
+  climate suites. `sphinx-build -W` passes. P116.2/P116.3 remain open.
+
 ## 2026-10-20
 - Retired the `ria_` filename prefix throughout the engine (#329). It is leftover Western
   Boreal Initiative nomenclature with no meaning in FEMIC, and it kept being reintroduced.
@@ -15102,6 +15130,680 @@
 - P36.2: add the `femic.ws4_quality` FreshForge node contract and command builder. It runs
   `ws4 quality` with `--sidecar`, optional `--targets`, and `--check`; the provider metadata and
   exact command are covered by tests.
+
+## 2026-10-25 - P79.1 LidarBC source and tile-index contract (#212)
+
+- Activated P79 (`#211`) on `feature/p79-lidar-pipeline` and extended the
+  roadmap with P79.7-P79.9 for native canopy products, versioned delivery, and
+  WS4/FHOPS validation.
+- Added `femic.lidar.catalog` with the LidarBC source descriptor, direct
+  point-cloud/DEM/DSM layer map, positive-area AOI selection, provenance-rich
+  tile records, paginated discovery, and the `femic.lidar.selection.v1`
+  manifest writer.
+- Recorded the source boundary explicitly: OGL-BC product licence, BC Albers
+  (`EPSG:3005`) native CRS, BC Data Catalogue `Access Only` wrapper caveat,
+  metadata-only discovery, and no provincial mirror.
+- Added the LiDAR guide, technical contract page, curated API page, and
+  roadmap/planning notes.
+- Verification:
+  - `pytest tests/test_lidar_catalog.py tests/test_lidar_catalog_helpers.py`
+    passed (42 tests, 99% branch coverage for `femic.lidar.catalog`).
+  - `ruff check src/femic/lidar tests/test_lidar_catalog*.py` passed.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Selected docs-contract tests passed after the new pages were tracked.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR module.
+
+## 2026-10-25 - P79.8 versioned LiDAR product bundles (#349)
+
+- Added `femic.lidar.products` with the `femic.lidar.product.v1` manifest,
+  `femic.lidar.bundle.v1` layout, and `femic.lidar.product_plan.v1` input plan.
+- Bundles now carry selection provenance, source descriptors, processing
+  lineage, per-product SHA-256/size, CRS, native resolution, vertical datum,
+  retrieval date, licence, source tiles/layers, and derived-product lineage.
+- Added deterministic bundle identity from the selection digest, bundle and
+  processing versions, and packaged product metadata/checksums.
+- Added `femic lidar bundle` and `femic lidar inspect`, plus
+  `build_lidar_product_bundle` and `validate_lidar_product_bundle`.
+- Added safe overwrite handling, path-escape checks, source-tile membership
+  checks, licence/CRS enforcement, and consumer pinning docs for WS4 P43 and
+  FHOPS P13.
+- Added a public-safe bounded AOI fixture under `tests/fixtures/lidar` with DEM,
+  DSM, CHM, and canopy artifacts and a deterministic reproducibility test.
+- Verification:
+  - `pytest tests/test_lidar_products.py tests/test_lidar_products_helpers.py
+    tests/test_lidar_catalog.py tests/test_lidar_catalog_helpers.py` passed
+    (91 tests; 100% branch coverage for `femic.lidar.products`).
+  - Targeted `ruff check` passed for the new LiDAR modules and tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - CLI smoke: `femic lidar bundle` built the fixture bundle and
+    `femic lidar inspect --json` returned a valid four-product report.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR modules.
+
+## 2026-10-25 - P79.2 resumable LiDAR materialization (#213)
+
+- Added `femic.lidar.materialization` with the
+  `femic.lidar.materialization.v1` manifest and managed layout
+  `<root>/lidarbc/<product>/layer_<id>/<year>/<filename>`.
+- Implemented resumable Range downloads with `.part` files, ranged-`200`
+  restart, per-tile status/attempt/error state, and manifest writes before and
+  after each tile.
+- Added SHA-256 and size verification on completion, completeness reporting,
+  selection digest/tile-set pinning, path-escape checks, and missing/checksum
+  validation.
+- Added `femic lidar materialize` with `--plan-only`, `--max-tiles`,
+  `--timeout-sec`, `--fail-fast`, and `--manifest-path`, plus
+  `femic lidar materialization-status` with `--json` and `--require-complete`.
+- Added the materialization guide, technical contract page, curated API page,
+  CLI reference section, and roadmap/changelog updates.
+- Verification:
+  - `pytest tests/test_lidar_materialization.py
+    tests/test_lidar_materialization_helpers.py` passed (36 tests; 100% branch
+    coverage for `femic.lidar.materialization`).
+  - All 127 LiDAR tests passed; combined LiDAR branch coverage is 99%.
+  - Targeted `ruff check` passed for the new LiDAR modules and tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - `femic lidar --help` lists `materialize` and `materialization-status`.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR modules.
+
+## 2026-10-25 - P79.3 terrain raster and slope APIs (#214)
+
+- Added `femic.lidar.terrain` with native-grid Horn 3x3 percent slope,
+  in-memory point-cloud cell aggregation (`min`, `max`, `mean`, `count`),
+  aligned zonal statistics, and `femic.lidar.terrain_qa.v1` JSON/CSV reports.
+- Enforced projected-metre, north-up, single-band inputs and exact
+  zones/values grid alignment. Geographic, rotated, misaligned, and multiband
+  inputs are rejected rather than reprojected or resampled.
+- Recorded the dependency decision: use core `numpy` and `rasterio`; no PDAL
+  or laspy dependency is required for the raster/terrain slice.
+- Added the terrain guide, technical contract page, curated API page, roadmap
+  and planning updates.
+- Verification:
+  - `pytest tests/test_lidar_terrain.py` passed (14 tests).
+  - 100% branch coverage for `femic.lidar.terrain` (measured with a
+    preloaded-numpy/rasterio coverage bootstrap because the local coverage
+    tracer otherwise conflicts with numpy/rasterio imports).
+  - All 141 LiDAR tests passed.
+  - Targeted `ruff check` passed for the new LiDAR modules and tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR modules.
+
+## 2026-10-25 - P79.4 terrain-derived stream candidates (#215)
+
+- Added `femic.lidar.hydrography` with priority-flood depression filling, D8
+  flow routing, upstream-cell accumulation, and thresholded candidate streams.
+- Added optional comparison with aligned public hydrography:
+  - raster references must share the exact DEM grid and CRS;
+  - vector references must already be in the DEM CRS;
+  - metrics cover candidate/reference/TP/FP/FN cells, precision, recall, F1,
+    Jaccard, and hectares.
+- Added `femic.lidar.stream_candidates.v1` review manifests and a Markdown
+  caveat/review report with an explicit screening-only checklist.
+- Recorded hard caveats: candidates are not authoritative streams and require
+  field or public-hydrography review before operational, riparian, or legal use.
+- Added `read_terrain_grid` and `require_projected_metre_grid` to the terrain
+  API, and made the terrain reader handle integer mask rasters used as
+  hydrography references.
+- Added the stream-candidate guide, technical contract page, curated API page,
+  and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_lidar_hydrography.py` passed (17 tests).
+  - 100% branch coverage for `femic.lidar.hydrography` (measured with the
+    preloaded-numpy/rasterio coverage bootstrap used for the terrain module).
+  - All 158 LiDAR tests passed.
+  - Targeted `ruff check` passed for new LiDAR modules/tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR modules.
+
+## 2026-10-25 - P79.5 LiDAR CLI, docs, and instance hooks (#216)
+
+- Completed the `femic lidar` operator surface:
+  - `discover` for AOI tile discovery and selection manifests;
+  - `materialize` and `materialization-status` for resumable downloads;
+  - `terrain` for native slope products and QA;
+  - `streams` for D8 stream candidates, comparison metrics, and review reports;
+  - `bundle` and `inspect` for versioned product delivery.
+- Added `--instance-root` defaults for discover, materialize, terrain, streams,
+  and bundle:
+  - `metadata/lidar/lidarbc_selection.json`
+  - `data/lidar` materialization root
+  - `data/lidar/terrain`
+  - `data/lidar/streams`
+  - `data/lidar/products`
+- Documented the instance layout, DataLad/Arbutus boundary, end-to-end command
+  sequence, and handoff checklist in
+  `docs/guides/lidar-instance-integration.rst`.
+- Updated the CLI reference and added CLI examples to the discovery,
+  materialization, terrain, and stream-candidate guides.
+- Verification:
+  - 12 LiDAR CLI tests passed.
+  - All 170 LiDAR tests passed.
+  - Targeted `ruff check` passed for new LiDAR modules/tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - `femic lidar --help` lists discover, materialize, terrain, streams, bundle,
+    and inspect.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  LiDAR modules.
+
+## 2026-10-25 - P79.6 TFL 6 LidarBC pilot (#217)
+
+- Selected a 1 km land AOI inside TFL 6 that is fully covered by LidarBC
+  1:2,500 DEM tiles and the public CDED tile used by TFL 6 Phase 9D.
+- Ran real `femic lidar discover` and `femic lidar materialize`:
+  - 3 DEM tiles, 60.0 MiB, all checksum-verified;
+  - materialization completed in 7.18 s with about 187 MB peak RSS.
+- Compared 1 m LidarBC slope with a same-AOI 25 m CDED comparison grid:
+  - LidarBC median 19.46% versus CDED 15.03%;
+  - LidarBC mean 23.95% versus CDED 15.77%;
+  - LidarBC has 2.88 ha of `>=70%` slope; CDED has zero.
+- Ran D8 stream candidates against TFL 6-clipped FWA streams. Agreement was
+  too low for riparian use (F1 0.47-1.20% across accumulation thresholds), so
+  candidates remain review-only.
+- Recorded a full-TFL6 DEM storage estimate of roughly 13 GiB before point
+  clouds, reinforcing bounded materialization and DataLad/Arbutus annexing.
+- Evidence:
+  - `planning/phase79_p79_6_tfl6_pilot.md`
+  - `planning/phase79_p79_6_tfl6_pilot_metrics.json`
+  - `planning/phase79_p79_6_tfl6_slope_thresholds.csv`
+  - `planning/phase79_p79_6_tfl6_stream_thresholds.csv`
+- No TFL 6 model-input promotion or Step 220 rule change was made; the locked
+  CDED proxy remains pending a fragment-level LidarBC comparison.
+- Verification:
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Selected docs-contract tests passed; full-repo docs-contract baseline still
+    has the three pre-existing K3Z/TSA29 submodule failures.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the
+  P79.6 pilot.
+
+## 2026-10-25 - P79.7 native canopy and tree products (#348)
+
+- Added `femic.lidar.canopy` with native CHM = DSM - DEM on exactly aligned
+  grids, negative-height clamping/counting, canopy height percentiles, and
+  cover at 2/5/10/20 m.
+- Added VRI uncertainty comparison using CHM p95 height and CHM >=2 m cover,
+  with per-polygon rows, bias, MAE, and RMSE. No field-accuracy claim is made.
+- Added `femic.lidar.trees` for optional point-product ingestion, duplicate and
+  missing-field checks, height/crown/species summaries, and block summaries.
+  No new tree-segmentation algorithm was added.
+- Added `femic lidar canopy` and `femic lidar trees`, with instance-root
+  defaults for `data/lidar/canopy` and `data/lidar/trees`.
+- TFL 6 canopy pilot on the P79.6 AOI using 1 m LidarBC DSM/DEM:
+  - CHM mean 8.62 m, median 7.71 m, p95 21.78 m, max 55.42 m;
+  - cover 70.94% at >=2 m, 60.09% at >=5 m, 41.03% at >=10 m, 7.84% at >=20 m;
+  - 95 negative pixels clamped;
+  - VRI comparison across 7 polygons: height bias -2.93 m, MAE 4.08 m, RMSE
+    6.16 m; cover bias +23.87 points, MAE 39.47 points.
+  - LidarBC currently exposes no CHM/canopy or individual-tree layer.
+- Evidence:
+  - `planning/phase79_p79_7_tfl6_canopy_pilot.md`
+  - `planning/phase79_p79_7_tfl6_canopy_pilot_metrics.json`
+  - `planning/phase79_p79_7_tfl6_vri_comparison.csv`
+- Verification:
+  - `pytest tests/test_lidar_canopy.py` passed (21 tests).
+  - 100% branch coverage for `femic.lidar.canopy`; 99% for
+    `femic.lidar.trees`.
+  - All 191 LiDAR tests passed.
+  - Targeted `ruff check` passed for new LiDAR modules/tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference P79.7.
+
+## 2026-10-25 - P79.9 shared product validation; consumer parity blocked (#350)
+
+- Added `slope` as a supported derived raster product kind in the P79.8 bundle
+  contract and added `femic.lidar.canopy_structure.v1` to the canopy structure
+  report.
+- Built the shared TFL 6 bundle from the P79.6/P79.7 AOI:
+  - `bundle_id`: `lidarbc-995fb1f771f4d7fe`
+  - `bundle_version`: `2026.10.0-tfl6-pilot`
+  - products: `dem`, `dsm`, `slope`, `chm`, `canopy`
+  - 5 products, 13,390,216 bytes, build runtime 3.24 s.
+- Validation passed for checksums, sizes, CRS (`EPSG:3005`), 1 m resolution,
+  CGVD2013, OGL-BC, source-tile membership, and canopy schema.
+- Slope/CHM bundle values matched pre-bundle source rasters exactly over seven
+  shared-AOI VRI polygons. This is producer-side parity, not WS4/FHOPS consumer
+  parity.
+- Added the shared-bundle validation report and reference aggregation fixture:
+  - `planning/phase79_p79_9_shared_bundle_validation.md`
+  - `planning/phase79_p79_9_shared_parity_metrics.json`
+  - `planning/phase79_p79_9_shared_parity_rows.csv`
+- Blocked: WS4 P43 (`UBC-FRESH/ws4#317`) and FHOPS P13
+  (`UBC-FRESH/fhops#188`) still have no LiDAR product consumer code. Actual
+  cross-repo parity was not run, P79.9 acceptance is not met, and P79 remains
+  open until WS4 P43.1 and FHOPS P13.1 implement and pass the contract.
+- Verification:
+  - All 192 LiDAR tests passed.
+  - Targeted `ruff check` passed for new LiDAR modules/tests.
+  - `mypy src/femic/lidar` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Selected LiDAR/docs-contract tests passed. The worktree docs-contract
+    baseline still fails on uninitialized K3Z/TSA29 instance submodules.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference P79.9.
+
+## 2026-10-25 - P79.9 consumer parity passed; P79 close-out queued (#350)
+
+- Renumbered the LiDAR consumer phases to avoid existing roadmap collisions:
+  WS4 P43 -> P52 (`feature/p52-lidar-products`) and FHOPS P13 -> P14
+  (`feature/phase14-lidar-products`). Parent/child issue titles and bodies were
+  updated.
+- WS4 P52.1 (commit `8f4feb0`) and FHOPS P14.1 (commit `8b6adb6c`) implemented
+  independent FEMIC LidarBC consumer contracts:
+  - bundle id/version and manifest/checksum validation;
+  - OGL-BC, CRS, resolution, vertical datum, and source-tile checks;
+  - no reprojection/resampling;
+  - polygon support summaries.
+- Both consumers pinned `lidarbc-995fb1f771f4d7fe` / `2026.10.0-tfl6-pilot`
+  and summarized seven shared TFL 6 polygons.
+- Cross-repo parity: slope/CHM mean and p95 matched exactly; maximum absolute
+  difference `0.0` (tolerance `1e-9`). The same values also matched the FEMIC
+  producer reference rows.
+- Updated the P79.9 report, metrics, roadmap, planning notes, and product-bundle
+  guide. P79.9 is complete; P79 close-out is queued for maintainer approval.
+- Evidence: `planning/phase79_p79_9_consumer_parity.json`.
+- Verification:
+  - WS4: 5 consumer-contract tests passed, Sphinx `-W` passed,
+    `scripts/check_workflow.py` passed, and targeted ruff/mypy passed.
+  - FHOPS: 5 consumer-contract tests passed, Sphinx `-W` passed, and targeted
+    ruff/mypy passed.
+  - FEMIC selected docs-contract tests passed; full-repo baseline remains
+    non-green only on pre-existing unrelated surfaces.
+
+## 2026-10-25 - P79 merged and closed (#211)
+
+- P79 squash-merged as `65b9057` via PR #368.
+- Parent #211 and P79 child issues closed.
+- Consumer phases continue as WS4 P52 and FHOPS P14.
+
+## 2026-10-25 - P114.1 hydrology domain and receptor contract (#352)
+
+- Activated P114 (`#351`) on `feature/p114-forest-hydrology-flood-risk` and
+  created the parent/child issue tree for the forest-hydrology and flood-risk
+  expansion.
+- Added `femic.hydrology.domain` with the `femic.hydrology.domain.v1`
+  domain/receptor contract:
+  - layer roles for watersheds, streams, roads, DEM, land cover, soils,
+    climate, gauges, receptors, and HRUs;
+  - watershed, downstream receptor, and gauge records;
+  - CRS, resolution, licence, checksum, size, and provenance fields.
+- Added the `femic.hydrology.sources.v1` public source registry for FWA
+  watersheds/streams, DRA/FTEN roads, LidarBC DEM, VRI land cover, BC soils,
+  PCIC climate, WSC gauges, and reviewed receptors.
+- Added structural cross-reference validation and a local audit for missing
+  files, size mismatches, and SHA-256 mismatches.
+- Added the hydrology domain guide, technical contract page, curated API page,
+  and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_domain.py` passed (18 tests).
+  - 100% branch coverage for `femic.hydrology.domain`.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 55 passed, 3 pre-existing submodule/data failures.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology module.
+
+## 2026-10-25 - P114.2 hydrology data bundles (#353)
+
+- Added `femic.hydrology.bundle` with the `femic.hydrology.bundle.v1`
+  manifest and layout `layers/<layer_id>/<filename>`.
+- Added deterministic `bundle_id` from domain digest, AOI, bundle version, and
+  layer metadata/checksums.
+- Added plan/build/load/write/audit entry points:
+  - `plan_hydrology_bundle` reports gaps without copying files;
+  - `build_hydrology_bundle` atomically copies complete local sources and
+    refuses incomplete bundles;
+  - `audit_hydrology_bundle` checks licence, size, SHA-256, path containment,
+    required roles, and completeness.
+- Added licence/checksum enforcement, gap reporting, safe overwrite handling,
+  and DataLad annex-boundary documentation.
+- Added the hydrology data-bundle guide, technical contract page, and curated
+  API page.
+- Verification:
+  - `pytest tests/test_hydrology_bundle.py` passed (20 tests).
+  - 100% branch coverage for `femic.hydrology.bundle`.
+  - All 38 hydrology domain/bundle tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 56 passed; 3 pre-existing submodule/data failures.
+- No public layer download was executed. The fixture bundle covers all six
+  domain layers; the bounded public pilot acquisition remains optional in
+  P114.9.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.3 harvest/road/retention disturbance ledger (#354)
+
+- Added `femic.hydrology.disturbance` with the
+  `femic.hydrology.disturbance.v1` annual unit/year ledger.
+- Added units, harvest events, road events, annual rows, validation, and
+  deterministic ledger identity.
+- Added gross harvest/retention/effective-area accounting, active/connected/
+  built/decommissioned road length, active crossings, years since harvest/road
+  build, and source event lineage.
+- Added road state rules: build/use/maintain/decommission, no double-active
+  builds, no decommission beyond active/connected length or crossings, and no
+  road spanning units.
+- Added conservation checks for duplicate IDs, unknown units, event-year
+  bounds, area/retention limits, road actions, and negative values.
+- Added CSV handoff for units, harvest, and road schedules, plus JSON/CSV
+  ledger writers.
+- Added the disturbance-ledger guide, technical contract page, curated API
+  page, and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_disturbance.py` passed (12 tests).
+  - 99% branch coverage for `femic.hydrology.disturbance`.
+  - All 50 hydrology domain/bundle/disturbance tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 57 passed; 3 pre-existing submodule/data failures.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.4 Tier 0 screening metrics (#355)
+
+- Added `femic.hydrology.screening` with the `femic.hydrology.screening.v1`
+  watershed/year report.
+- Added harvest, retention, effective-area, harvest-fraction, ECA, road density,
+  connected-road density, crossing density, and connected-road fraction
+  metrics.
+- Added optional linear ECA recovery discounting and an explicit warning when
+  ECA is undiscounted.
+- Added watershed regime metadata (`rain`, `rain_on_snow`, `snowmelt`,
+  `snow_transient`, `unknown`) and context-weighted riparian, snow-transient,
+  and high-elevation exposure from reviewed per-unit fractions.
+- Added deterministic screening identity, JSON report writing, caveats, and
+  warnings.
+- Added the Tier 0 guide, technical contract page, curated API page, and
+  roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_screening.py` passed (8 tests).
+  - 100% branch coverage for `femic.hydrology.screening`.
+  - All 58 hydrology domain/bundle/disturbance/screening tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 58 passed; 3 pre-existing submodule/data failures.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.5 stochastic flood-frequency response surfaces (#356)
+
+- Added `femic.hydrology.flood` with:
+  - annual-maximum and declustered peaks-over-threshold samples;
+  - stationary GEV and LP3 fits with bootstrap percentile intervals;
+  - Poisson-GPD peaks-over-threshold fits;
+  - paired baseline/treatment return-level response ratios and bootstrap
+    ratio intervals;
+  - nonstationary GEV with a linear location model in covariates;
+  - return-period response surfaces;
+  - benchmark-envelope checks.
+- Added schemas `femic.hydrology.flood_frequency.v1` and
+  `femic.hydrology.flood_response.v1`.
+- Added deterministic response-surface identity, JSON writers, diagnostics, and
+  explicit caveats about short records, nonstationarity, bootstrap intervals,
+  and the need for hydrologist review.
+- Added the flood-frequency guide, technical contract page, curated API page,
+  and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_flood.py` passed (10 tests).
+  - 93% branch coverage for `femic.hydrology.flood`.
+  - All 68 hydrology domain/bundle/disturbance/screening/flood tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 59 passed; 3 pre-existing submodule/data failures.
+- No public-gauge calibration or published paired-watershed benchmark run was
+  executed; those remain P114.9 work.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.6 process-model adapters (#357)
+
+- Added `femic.hydrology.process_models` with the
+  `femic.hydrology.process_scenario.v1` scenario manifest and
+  `femic.hydrology.process_result.v1` result contract.
+- Registered DHSVM, RHESSys, CRHM, SUMMA, and HEC-HMS boundaries.
+- Implemented executable adapters for DHSVM and SUMMA with explicit/env/PATH
+  runtime probing and no binary bundling.
+- Added scenario build/validate/load/write, run planning, execution, timeout,
+  stdout/stderr capture, and normalized peak-flow/receptor output parsing.
+- Added normalized `peak_flows.csv` and `receptor_metrics.csv` writers/readers.
+- Added the process-model guide, technical contract page, curated API page,
+  and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_process_models.py` passed (10 tests).
+  - 93% branch coverage for `femic.hydrology.process_models`.
+  - All 78 hydrology domain/bundle/disturbance/screening/flood/process tests
+    passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 60 passed; 3 pre-existing submodule/data failures.
+- No real DHSVM/SUMMA/RHESSys/CRHM/HEC-HMS binary was executed. Tests use a
+  fake executable and the normalized output fixture; real model integration is
+  optional P114.9 work.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.7 surrogate models and applicability domains (#358)
+
+- Added `femic.hydrology.surrogate` with the
+  `femic.hydrology.surrogate_design.v1` design and
+  `femic.hydrology.surrogate_model.v1` model schemas.
+- Added Latin-hypercube design, target attachment, and deterministic
+  train/validation splitting.
+- Implemented dependency-free ridge-linear and RBF Gaussian-process
+  surrogates.
+- Added applicability domains with feature-range and standardized-distance
+  guards, default out-of-domain refusal, and explicit extrapolation override.
+- Added held-out and k-fold validation with RMSE, MAE, R2, 95% interval
+  coverage, interval width, and accepted/refused counts.
+- Added model JSON persistence/load.
+- Added the surrogate guide, technical contract page, curated API page, and
+  roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_surrogate.py` passed (10 tests).
+  - 91% branch coverage for `femic.hydrology.surrogate`.
+  - All 88 hydrology domain/bundle/disturbance/screening/flood/process/surrogate
+    tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 61 passed; 3 pre-existing submodule/data failures.
+- No real process-model scenario ensemble was trained; tests use synthetic
+  data. Public-gauge and process-model benchmark validation remain P114.9.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.8 response and flood-risk bundles (#359)
+
+- Added `femic.hydrology.response_bundle` with the
+  `femic.hydrology.response.v1`, `femic.hydrology.flood_risk.v1`, and
+  `femic.hydrology.response_plan.v1` contracts.
+- Added deterministic `bundle_id` derivation, relative artifact paths,
+  SHA-256/size checksums, provenance, applicability-domain and uncertainty
+  metadata, caveats, and the WS4/FHOPS consumer contract.
+- Added required artifact roles (response surface, flood-risk table, domain,
+  disturbance ledger) plus optional surrogate, validation, frequency, pairing,
+  screening, and benchmark roles with role-specific schema checks.
+- Added flood-risk row/table build, write, read, and validation, including
+  ratio, duplicate receptor/return-period, exceedance-probability, and
+  expected-annual-damage checks.
+- Added build, manifest validation, and local audit entry points. Audit verifies
+  manifest structure, required roles, consumer pinning, artifact existence,
+  sizes, checksums, response-surface identity/return periods, and flood-risk
+  table identity/row count.
+- Added `python -m femic hydrology bundle` and
+  `python -m femic hydrology inspect`, with deterministic JSON audit output.
+- Added a bounded synthetic response fixture with public/synthetic-only domain,
+  ledger, surface, risk, surrogate, and validation artifacts.
+- Added the response-bundle guide, technical contract page, curated and
+  generated API pages, CLI reference, consumer read order for WS4 P49 and FHOPS
+  P14, and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_response_bundle.py` passed (24 tests).
+  - 81% branch coverage for `femic.hydrology.response_bundle`.
+  - All 112 hydrology domain/bundle/disturbance/screening/flood/process/
+    surrogate/response-bundle tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 62 passed; 3 pre-existing submodule/data failures.
+- No real public-gauge calibration, process-model ensemble, or provincial
+  hydrography integration was run; those remain P114.9 work. The WS4 P49 and
+  FHOPS P14 implementation issues remain intentionally uncreated until P114.9
+  declares the response contract stable.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-26 - P114.9 validation, public pilot, and phase closeout (#360)
+
+- Added `femic.hydrology.validation` with the
+  `femic.hydrology.validation.v1`, `femic.hydrology.pilot.v1`, and
+  `femic.hydrology.model_card.v1` contracts.
+- Added a reviewed published-benchmark catalogue covering snow-transient,
+  rain, rain-on-snow, snowmelt, frequency-dependence, and paired-control
+  directional expectations, with citations and order-of-magnitude tolerances.
+- Added a bounded public Water Survey of Canada pilot using derived annual
+  maximum daily discharge for Carnation Creek (`08HB048`, rain), Coldwater
+  River (`08LG048`, snow-transient), and Squamish River (`08GA022`,
+  rain-on-snow). The fixture retains only annual maxima, dates, symbols, gauge
+  metadata, licence, and source URLs under the Open Government Licence -
+  Canada.
+- Added GEV/LP3 backcasts, bootstrap intervals, missing-year and source-symbol
+  flags, split-sample stability checks, and a 100-year tail-plausibility screen.
+- The Squamish GEV fit failed the tail screen (shape about -5.68 and a
+  non-physical 100-year tail). The fit is retained for audit but excluded from
+  usable fits; LP3 remains usable. This is recorded as a P114.5 fit-stability
+  finding, not hidden.
+- Added full-pilot readiness auditing for domain/LiDAR/stream/road layers,
+  disturbance ledger, receptor, process model, and hydrologist review.
+- Added validation-report and provisional model-card generation with
+  deterministic IDs, deviations, uncertainty, review checklist, and the
+  WS4/FHOPS conditional handoff.
+- Added `python -m femic hydrology pilot` and extended response bundles with
+  optional `validation_report`, `model_card`, and `pilot_run` artifact roles.
+- Added the closeout guide, technical contract, API/generated pages, CLI
+  reference, roadmap/planning updates, and the public pilot fixture README.
+- Verification:
+  - `pytest tests/test_hydrology_validation.py` passed (13 tests).
+  - 85% branch coverage for `femic.hydrology.validation`.
+  - All 125 hydrology domain/bundle/disturbance/screening/flood/process/
+    surrogate/response-bundle/validation tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 63 passed; 3 pre-existing submodule/data failures.
+- The full two-watershed process-model pilot, paired baseline/treatment
+  benchmark execution, downstream receptor/damage-curve work, and hydrologist
+  review were not completed. These are recorded as explicit conditions in the
+  validation report and model card. No regulatory status is claimed.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+- 2026-10-26: P114 merged as `d0bf166` (PR #382). The hydrology producer is now on `main`; parent #351 and the remaining child issues are closed. The handoff remains screening-only and conditional on hydrologist review.
+
+## 2026-10-26 - P118.1 Chapman Creek flood-pilot audit (#384)
+
+- Opened the bounded Chapman Creek flood pilot (parent `#383`).
+- Recorded the Sunshine Coast candidate, broad audit bbox, and the distinction
+  from the GNN North Island AOI.
+- LidarBC discovery over the broad bbox returned 397 tiles: 90 DEM, 84 DSM, and
+  223 point-cloud tiles, acquisition year 2024, 1 m DEM/DSM; no DSM layer 2.
+- Recorded the discontinuous WSC record: 08GA046 (1962-1970), 08GA060
+  (1971-1988), 08GA078 (1993-2003). Current SCRD monitoring is operational but
+  is not a confirmed public daily series.
+- Recorded the Chapman water-system receptor and November 2021 atmospheric-river
+  damage/intake evidence.
+- Recorded missing FWA/DRA/receptor layers, current gauge series, damage/capacity
+  curve, reviewed crosswalk, and hydrologist review.
+- No flood response surface, WS4 screen, or regulatory claim was made.
+
+## 2026-10-26 - P118.2 constrained GEV tails (#386)
+
+- Added a bounded-shape GEV fallback to the stationary frequency fit. The
+  unconstrained MLE is retained when its shape is inside `[-0.5, 0.5]`;
+  otherwise a shape-bounded MLE is used and `fit_strategy="constrained"` plus a
+  warning is recorded. Bootstrap fits use the same fallback.
+- Recorded `shape_bounds` and `fit_strategy` on every GEV fit.
+- The P114.9 Squamish GEV now returns a finite constrained tail and is usable
+  under the tail screen; LP3 remains available. The historical rejection and
+  the new remediation are both documented.
+- Added a synthetic unstable-sample regression and updated the validation
+  expectations.
+- Verification:
+  - `pytest tests/test_hydrology_flood.py tests/test_hydrology_validation.py`
+    passed (24 tests).
+  - `mypy src/femic/hydrology` passed.
+  - Sphinx `-W` passed.
+- No Chapman Creek data acquisition, response surface, or regulatory claim was
+  added.
+
+## 2026-10-26 - P118.3 Chapman public-layer acquisition (#389)
+
+- Added `scripts/acquire_chapman_public.py` to fetch the full FWA
+  `900-127577%` watershed union, FWA streams, DRA roads, and WSC gauge metadata
+  into an ignored runtime directory with per-layer checksums, sizes, feature
+  counts, bboxes, and OGL-BC provenance.
+- Real acquisition: 288 watershed polygons (6,917.1 ha union), 24 stream
+  features, 492 DRA road features, and 3 historical WSC gauges. The union is
+  about 7% larger than the WSC 6,450 ha drainage area and needs review before it
+  is treated as the gauge catchment.
+- Recorded gaps: LidarBC DEM not downloaded, no reviewed receptor, no current
+  public daily gauge series, no culvert inventory, no hydrologist review, and no
+  reviewed WS4 crosswalk.
+- Added five offline tests; no bulk public data was committed.
+- Verification:
+  - `pytest tests/test_chapman_acquisition.py` passed (5 tests).
+  - `ruff check` and `mypy` passed for the script and test.
+  - Public acquisition completed against the BC WFS and WSC APIs.
 
 ## 2026-10-25 - P115 activation: forest carbon domain and CBM packages
 

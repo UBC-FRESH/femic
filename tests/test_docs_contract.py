@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import csv
 import json
-from pathlib import Path
 import re
 import subprocess
 import zipfile
+from pathlib import Path
 
 import pandas as pd
 import pytest
-from typer.testing import CliRunner
 import yaml
+from typer.testing import CliRunner
 
 from femic.cli.main import app
 
@@ -64,6 +64,22 @@ GUIDE_PAGES = [
     "author-instance-rebuild-spec",
     "interpret-rebuild-reports",
     "data-access-inventory",
+    "hydrology-domain-contract",
+    "hydrology-data-bundle",
+    "hydrology-disturbance-ledger",
+    "hydrology-tier0-screening",
+    "hydrology-flood-frequency",
+    "hydrology-process-models",
+    "hydrology-surrogate-models",
+    "hydrology-response-bundles",
+    "hydrology-validation-closeout",
+    "lidar-data-products",
+    "lidar-materialization",
+    "lidar-terrain-products",
+    "lidar-stream-candidates",
+    "lidar-canopy-products",
+    "lidar-instance-integration",
+    "lidar-product-bundles",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -94,6 +110,21 @@ CONTRACT_PAGES = [
     "instance-and-data-roots",
     "stage-boundaries-and-canonical-artifacts",
     "recovery-and-external-runtime-boundaries",
+    "hydrology-domain",
+    "hydrology-data-bundle",
+    "hydrology-disturbance-ledger",
+    "hydrology-tier0-screening",
+    "hydrology-flood-frequency",
+    "hydrology-process-models",
+    "hydrology-surrogate-models",
+    "hydrology-response-bundles",
+    "hydrology-validation-closeout",
+    "lidar-source-and-tile-index",
+    "lidar-materialization",
+    "lidar-terrain-products",
+    "lidar-stream-candidates",
+    "lidar-canopy-products",
+    "lidar-product-bundle",
 ]
 
 NOTEBOOKS = [
@@ -167,6 +198,294 @@ def test_release_runbook_and_workflows_exist() -> None:
     assert Path(".github/workflows/publish-pypi.yml").exists()
 
 
+def test_lidar_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-data-products.rst").read_text(encoding="utf-8")
+    for heading in (
+        "Purpose",
+        "Ownership Boundary",
+        "Source Catalog",
+        "Direct Tile Layers",
+        "AOI Selection Contract",
+        "Python Usage",
+        "Storage and Dependency Boundaries",
+        "Unsupported Sources",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "LidarBC",
+        "OGL-BC",
+        "EPSG:3005",
+        "point_cloud",
+        "dem",
+        "dsm",
+        "femic.lidar.selection.v1",
+        "discover_lidarbc_tiles",
+        "write_lidar_selection_manifest",
+        "WS4 P43",
+        "FHOPS P13",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-lidar.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.lidar.catalog",
+        "discover_lidarbc_tiles",
+        "write_lidar_selection_manifest",
+        "generated/femic.lidar.catalog",
+        "lidar-source-and-tile-index",
+    ):
+        assert snippet in api_text
+    assert "femic-lidar" in (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+
+
+def test_lidar_product_bundle_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-product-bundles.rst").read_text(encoding="utf-8")
+    for heading in (
+        "Purpose",
+        "Bundle Layout",
+        "Build From A Selection",
+        "Manifest Contract",
+        "Reproducibility And Pinning",
+        "Validation",
+        "WS4 P43 And FHOPS P13 Consumer Contract",
+        "Storage And Delivery",
+        "Bounded AOI Fixture",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.lidar.product.v1",
+        "femic.lidar.bundle.v1",
+        "femic.lidar.product_plan.v1",
+        "femic lidar bundle",
+        "femic lidar inspect",
+        "provenance/selection.json",
+        "sha256",
+        "WS4 P43",
+        "FHOPS P13",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-lidar-products.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.lidar.products",
+        "build_lidar_product_bundle",
+        "validate_lidar_product_bundle",
+        "generated/femic.lidar.products",
+        "lidar-product-bundle",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-lidar-products" in modules_text
+
+
+def test_lidar_materialization_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-materialization.rst").read_text(encoding="utf-8")
+    for heading in (
+        "Purpose",
+        "Managed Layout",
+        "Plan Or Preflight",
+        "Materialize",
+        "Resume Rules",
+        "Integrity And Completeness",
+        "Failure And Retry",
+        "Manifest Changes And Selection Pinning",
+        "DataLad And Arbutus",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.lidar.materialization.v1",
+        "materialization.json",
+        ".part",
+        "206 Partial Content",
+        "femic lidar materialize",
+        "femic lidar materialization-status",
+        "--plan-only",
+        "--max-tiles",
+        "--require-complete",
+        "sha256",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-lidar-materialization.rst").read_text(
+        encoding="utf-8"
+    )
+    for snippet in (
+        "femic.lidar.materialization",
+        "materialize_lidar_selection",
+        "validate_lidar_materialization",
+        "generated/femic.lidar.materialization",
+        "lidar-materialization",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-lidar-materialization" in modules_text
+
+
+def test_lidar_terrain_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-terrain-products.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Dependency Stack",
+        "Accepted Inputs",
+        "Slope",
+        "Point-Cloud Gridding",
+        "Zonal Statistics",
+        "QA Reports",
+        "Current Limits",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.lidar.terrain_qa.v1",
+        "Horn",
+        "slope_percent",
+        "rasterize_point_cloud",
+        "compute_zonal_statistics",
+        "terrain_qa.json",
+        "No reprojection",
+        "P79.7",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-lidar-terrain.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.lidar.terrain",
+        "derive_slope_percent",
+        "rasterize_point_cloud",
+        "compute_zonal_statistics",
+        "build_terrain_products",
+        "generated/femic.lidar.terrain",
+        "lidar-terrain-products",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-lidar-terrain" in modules_text
+
+
+def test_lidar_stream_candidate_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-stream-candidates.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Workflow",
+        "Inputs",
+        "Parameters",
+        "Outputs",
+        "Comparison Metrics",
+        "Review Manifest And Caveats",
+        "Limitations",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.lidar.stream_candidates.v1",
+        "D8",
+        "stream_candidates.tif",
+        "stream_candidates_manifest.json",
+        "precision",
+        "recall",
+        "Jaccard",
+        "No reprojection",
+        "not an authoritative",
+        "P79.4",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-lidar-hydrography.rst").read_text(encoding="utf-8")
+    for snippet in (
+        "femic.lidar.hydrography",
+        "derive_stream_candidates",
+        "compare_stream_candidates",
+        "fill_dem_depressions",
+        "generated/femic.lidar.hydrography",
+        "lidar-stream-candidates",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-lidar-hydrography" in modules_text
+
+
+def test_lidar_canopy_guide_and_api_pages_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-canopy-products.rst").read_text(encoding="utf-8")
+    for heading in (
+        "Purpose",
+        "CHM From DSM And DEM",
+        "Canopy Structure",
+        "VRI Comparison And Uncertainty",
+        "Individual Tree Products",
+        "TFL 6 Pilot Evidence",
+        "Limitations",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.lidar.canopy_qa.v1",
+        "femic.lidar.individual_tree.v1",
+        "femic lidar canopy",
+        "femic lidar trees",
+        "DSM - DEM",
+        "CHM p95",
+        "tree_id",
+        "height_m",
+        "No reprojection",
+        "field-accuracy",
+    ):
+        assert snippet in guide_text
+
+    for page, module, generated in (
+        ("femic-lidar-canopy.rst", "femic.lidar.canopy", "femic.lidar.canopy"),
+        ("femic-lidar-trees.rst", "femic.lidar.trees", "femic.lidar.trees"),
+    ):
+        api_text = (API_ROOT / page).read_text(encoding="utf-8")
+        assert module in api_text
+        assert f"generated/{generated}" in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-lidar-canopy" in modules_text
+    assert "femic-lidar-trees" in modules_text
+
+
+def test_lidar_instance_integration_guide_keeps_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "lidar-instance-integration.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "Instance Layout",
+        "Instance Root Resolution",
+        "Recommended Workflow",
+        "TFL 6 Pilot Evidence",
+        "DataLad Boundary",
+        "Instance Handoff Checklist",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic lidar discover",
+        "femic lidar materialize",
+        "femic lidar terrain",
+        "femic lidar streams",
+        "femic lidar canopy",
+        "femic lidar trees",
+        "femic lidar bundle",
+        "metadata/lidar/lidarbc_selection.json",
+        "data/lidar/",
+        "data/lidar/canopy",
+        "data/lidar/trees",
+        "FEMIC_INSTANCE_ROOT",
+        "--instance-root",
+        "bundle_id",
+        "sha256",
+        "DataLad",
+    ):
+        assert snippet in guide_text
+
+
 def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
     guide_text = (GUIDES_ROOT / "bc-data-catalogue-discovery.rst").read_text(
         encoding="utf-8"
@@ -234,6 +553,33 @@ def test_bcdc_discovery_guide_and_cli_reference_are_present() -> None:
         "python -m femic data bcdc-resolve",
         "python -m femic data bcdc-fetch",
         "python -m femic data bcdc-order",
+        "python -m femic lidar bundle",
+        "python -m femic lidar inspect",
+        "python -m femic lidar discover",
+        "python -m femic lidar materialize",
+        "python -m femic lidar materialization-status",
+        "python -m femic lidar terrain",
+        "python -m femic lidar streams",
+        "python -m femic lidar canopy",
+        "python -m femic lidar trees",
+        "--dem PATH",
+        "--dsm PATH",
+        "--vri PATH",
+        "--blocks PATH",
+        "--accumulation-threshold INTEGER",
+        "--fill-depressions / --no-fill-depressions",
+        "--reference PATH",
+        "--instance-root PATH",
+        "--output-root PATH",
+        "--plan-only / --no-plan-only",
+        "--max-tiles INTEGER",
+        "--timeout-sec FLOAT",
+        "--fail-fast / --no-fail-fast",
+        "--require-complete / --no-require-complete",
+        "--selection-manifest PATH",
+        "--product-plan PATH",
+        "--overwrite / --no-overwrite",
+        "femic.lidar.product_plan.v1",
         "python -m femic tsr index",
         "python -m femic tsr fetch",
         "python -m femic tsr extract",
@@ -1722,69 +2068,332 @@ def test_reference_contract_pages_are_in_docs_tree_and_linked_from_entrypoints()
 
 
 def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
-    required_sections = {
-        "repo-runtime-invariants": [
-            "Purpose",
-            "Quick Contract",
-            "Fresh-Clone Baseline",
-            "Do Not Assume",
-            "See Also",
-        ],
-        "instance-and-data-roots": [
-            "Purpose",
-            "Instance Root Resolution",
-            "Source-Checkout Example Instances",
-            "External Data Root",
-            "Fallback Behavior To Remember",
-            "Common Mistakes",
-        ],
-        "stage-boundaries-and-canonical-artifacts": [
-            "Purpose",
-            "Pipeline Boundary Map",
-            "Canonical Artifact Rules",
-            "Freshness and Resume Rules",
-            "Quick Decision Table",
-        ],
-        "recovery-and-external-runtime-boundaries": [
-            "Purpose",
-            "External Runtime Boundaries",
-            "Recovery Workflows",
-            "Host Assumptions",
-            "If Something Looks Wrong",
-        ],
-    }
-    required_markers = {
-        "repo-runtime-invariants": [
-            "active checkout root",
-            "machine-specific absolute paths",
-            "FEMIC_EXTERNAL_DATA_ROOT",
-            "femic prep validate-case",
-            "femic prep geospatial-preflight",
-            "FADM_TSA.gdb",
-        ],
-        "instance-and-data-roots": [
-            "--instance-root",
-            "FEMIC_INSTANCE_ROOT",
-            "optional deployments, not FEMIC core",
-            "external/femic-public-data",
-            "misc.thlb.tif",
-        ],
-        "stage-boundaries-and-canonical-artifacts": [
-            "03_input-<unit>.csv",
-            "tipsy_params_tsa",
-            "04_output-<unit>.csv",
-            "FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1",
-            "FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1",
-        ],
-        "recovery-and-external-runtime-boundaries": [
-            "FEMIC_ARC_RASTER_RESCUE_EXE",
-            "femic tsa btc-post-tipsy",
-            "femic patchworks preflight",
-            "$PWD\\external\\femic-public-data\\data",
-            "Patchworks",
-            "BatchTIPSY",
-        ],
-    }
+    required_sections = {'repo-runtime-invariants': ['Purpose',
+                                 'Quick Contract',
+                                 'Fresh-Clone Baseline',
+                                 'Do Not Assume',
+                                 'See Also'],
+     'instance-and-data-roots': ['Purpose',
+                                 'Instance Root Resolution',
+                                 'Source-Checkout Example Instances',
+                                 'External Data Root',
+                                 'Fallback Behavior To Remember',
+                                 'Common Mistakes'],
+     'stage-boundaries-and-canonical-artifacts': ['Purpose',
+                                                  'Pipeline Boundary Map',
+                                                  'Canonical Artifact Rules',
+                                                  'Freshness and Resume Rules',
+                                                  'Quick Decision Table'],
+     'recovery-and-external-runtime-boundaries': ['Purpose',
+                                                  'External Runtime Boundaries',
+                                                  'Recovery Workflows',
+                                                  'Host Assumptions',
+                                                  'If Something Looks Wrong'],
+     'lidar-source-and-tile-index': ['Purpose',
+                                     'Quick Contract',
+                                     'Source Families',
+                                     'Tile Index Contract',
+                                     'AOI Selection',
+                                     'Manifest and Provenance',
+                                     'Storage and Dependencies',
+                                     'Unsupported Sources',
+                                     'See Also'],
+     'lidar-product-bundle': ['Purpose',
+                              'Quick Contract',
+                              'Bundle Layout',
+                              'Manifest Schema',
+                              'Versioning And Pinning',
+                              'Validation Rules',
+                              'Consumer Contract',
+                              'Storage And Delivery',
+                              'See Also'],
+     'lidar-materialization': ['Purpose',
+                               'Quick Contract',
+                               'Managed Layout',
+                               'Manifest Schema',
+                               'Resume Rules',
+                               'Integrity And Completeness',
+                               'Failure And Retry',
+                               'Storage Boundary',
+                               'See Also'],
+     'lidar-terrain-products': ['Purpose',
+                                'Quick Contract',
+                                'Input Contract',
+                                'Slope Contract',
+                                'Point-Cloud Gridding',
+                                'Zonal Statistics',
+                                'QA Report',
+                                'No-Resampling Rule',
+                                'See Also'],
+     'lidar-stream-candidates': ['Purpose',
+                                 'Quick Contract',
+                                 'Candidate Workflow',
+                                 'Comparison Contract',
+                                 'Review Manifest',
+                                 'Caveats',
+                                 'No-Resampling Rule',
+                                 'See Also'],
+     'lidar-canopy-products': ['Purpose',
+                               'Quick Contract',
+                               'CHM Contract',
+                               'Canopy Structure Contract',
+                               'VRI Comparison Contract',
+                               'Individual Tree Contract',
+                               'No-Resampling Rule',
+                               'See Also'],
+     'hydrology-domain': ['Purpose',
+                          'Quick Contract',
+                          'Domain Manifest',
+                          'Source Registry',
+                          'Audit Rules',
+                          'Cross-References'],
+     'hydrology-data-bundle': ['Purpose',
+                               'Quick Contract',
+                               'Bundle Layout',
+                               'Manifest Schema',
+                               'Versioning And Pinning',
+                               'Audit Rules',
+                               'Gap Policy',
+                               'DataLad Boundary',
+                               'Pilot Boundary',
+                               'Cross-References'],
+     'hydrology-disturbance-ledger': ['Purpose',
+                                      'Quick Contract',
+                                      'Manifest Fields',
+                                      'Road State Rules',
+                                      'Conservation Rules',
+                                      'CSV Handoff',
+                                      'Recovery Semantics',
+                                      'Cross-References'],
+     'hydrology-tier0-screening': ['Purpose',
+                                   'Quick Contract',
+                                   'Metric Definitions',
+                                   'ECA Semantics',
+                                   'Road And Crossing Metrics',
+                                   'Exposure Context',
+                                   'Regimes',
+                                   'Caveats',
+                                   'Cross-References'],
+     'hydrology-flood-frequency': ['Purpose',
+                                   'Quick Contract',
+                                   'Sample Contract',
+                                   'Distribution Contract',
+                                   'Paired Response',
+                                   'Nonstationary Response Surface',
+                                   'Benchmark',
+                                   'Uncertainty And Caveats',
+                                   'Cross-References'],
+     'hydrology-process-models': ['Purpose',
+                                  'Quick Contract',
+                                  'Scenario Manifest',
+                                  'Runtime Probing',
+                                  'Implemented Adapters',
+                                  'Output Contract',
+                                  'Execution',
+                                  'Licensing And Data',
+                                  'Cross-References'],
+     'hydrology-surrogate-models': ['Purpose',
+                                    'Quick Contract',
+                                    'Design And Dataset',
+                                    'Surrogate Families',
+                                    'Applicability And Refusal',
+                                    'Validation Metrics',
+                                    'Persistence',
+                                    'Limits',
+                                    'Cross-References'],
+     'hydrology-response-bundles': ['Purpose',
+                                    'Quick Contract',
+                                    'Plan Contract',
+                                    'Manifest Contract',
+                                    'Artifact and Path Rules',
+                                    'Flood-Risk Table Contract',
+                                    'Applicability And Uncertainty',
+                                    'Consumer Handshake',
+                                    'Cross-References'],
+     'hydrology-validation-closeout': ['Purpose',
+                                       'Quick Contract',
+                                       'Pilot Input Contract',
+                                       'Gauge Backcast Contract',
+                                       'Published Benchmark Contract',
+                                       'Model Card Contract',
+                                       'Validation Report Contract',
+                                       'WS4/FHOPS Handoff',
+                                       'Deviations, Gaps, And Review',
+                                       'Cross-References']}
+    required_markers = {'repo-runtime-invariants': ['active checkout root',
+                                 'machine-specific absolute paths',
+                                 'FEMIC_EXTERNAL_DATA_ROOT',
+                                 'femic prep validate-case',
+                                 'femic prep geospatial-preflight',
+                                 'FADM_TSA.gdb'],
+     'instance-and-data-roots': ['--instance-root',
+                                 'FEMIC_INSTANCE_ROOT',
+                                 'optional deployments, not FEMIC core',
+                                 'external/femic-public-data',
+                                 'misc.thlb.tif'],
+     'stage-boundaries-and-canonical-artifacts': ['03_input-<unit>.csv',
+                                                  'tipsy_params_tsa',
+                                                  '04_output-<unit>.csv',
+                                                  'FEMIC_STRICT_TIPSY_TIMESTAMP_MISMATCH=1',
+                                                  'FEMIC_ALLOW_STALE_TIPSY_OUTPUT=1'],
+     'recovery-and-external-runtime-boundaries': ['FEMIC_ARC_RASTER_RESCUE_EXE',
+                                                  'femic tsa btc-post-tipsy',
+                                                  'femic patchworks preflight',
+                                                  '$PWD\\external\\femic-public-data\\data',
+                                                  'Patchworks',
+                                                  'BatchTIPSY'],
+     'lidar-source-and-tile-index': ['LidarBC',
+                                     'OGL-BC',
+                                     'EPSG:3005',
+                                     'point_cloud',
+                                     'femic.lidar.selection.v1',
+                                     'positive-area intersection',
+                                     'WS4 P43',
+                                     'FHOPS P13',
+                                     'No tile bytes'],
+     'lidar-product-bundle': ['femic.lidar.product.v1',
+                              'femic.lidar.bundle.v1',
+                              'femic.lidar.product_plan.v1',
+                              'bundle_id',
+                              'sha256',
+                              'retrieved_utc',
+                              'provenance/selection.json',
+                              'OGL-BC',
+                              'WS4 P43',
+                              'FHOPS P13'],
+     'lidar-materialization': ['femic.lidar.materialization.v1',
+                               'materialization.json',
+                               '.part',
+                               '206 Partial Content',
+                               'sha256',
+                               'pending',
+                               'partial',
+                               'verified',
+                               'failed',
+                               'OGL-BC',
+                               'EPSG:3005'],
+     'lidar-terrain-products': ['femic.lidar.terrain_qa.v1',
+                                'Horn',
+                                'slope_percent',
+                                'projected metres',
+                                'rasterize_point_cloud',
+                                'compute_zonal_statistics',
+                                'terrain_qa.json',
+                                'No reprojection',
+                                'P79.7'],
+     'lidar-stream-candidates': ['femic.lidar.stream_candidates.v1',
+                                 'D8',
+                                 'stream_candidates.tif',
+                                 'stream_candidates_manifest.json',
+                                 'precision',
+                                 'recall',
+                                 'Jaccard',
+                                 'No reprojection',
+                                 'not an authoritative'],
+     'lidar-canopy-products': ['femic.lidar.canopy_qa.v1',
+                               'femic.lidar.individual_tree.v1',
+                               'DSM - DEM',
+                               'CHM p95',
+                               '>=2 m',
+                               'tree_id',
+                               'height_m',
+                               'No reprojection',
+                               'field-accuracy'],
+     'hydrology-domain': ['femic.hydrology.domain.v1',
+                          'femic.hydrology.sources.v1',
+                          'EPSG:3005',
+                          'watershed',
+                          'stream',
+                          'road',
+                          'dem',
+                          'receptor',
+                          'gauge',
+                          'No private'],
+     'hydrology-data-bundle': ['femic.hydrology.bundle.v1',
+                               'bundle.json',
+                               'layers/<layer_id>/<filename>',
+                               'checksum_sha256',
+                               'bundle_id',
+                               'DataLad',
+                               'No private',
+                               'watershed',
+                               'stream',
+                               'road',
+                               'dem'],
+     'hydrology-disturbance-ledger': ['femic.hydrology.disturbance.v1',
+                                      'one row per spatial unit per year',
+                                      'harvest_area_ha',
+                                      'retention_area_ha',
+                                      'road_active_length_m',
+                                      'road_connected_length_m',
+                                      'source_event_ids',
+                                      'build',
+                                      'decommission',
+                                      'No private'],
+     'hydrology-tier0-screening': ['femic.hydrology.screening.v1',
+                                   'one row per watershed per year',
+                                   'eca_area_ha',
+                                   'road_density_km_per_km2',
+                                   'crossing_density_per_km2',
+                                   'riparian_effective_harvest_ha',
+                                   'snow_transient_effective_harvest_ha',
+                                   'high_elevation_effective_harvest_ha',
+                                   'not a hydrologic response'],
+     'hydrology-flood-frequency': ['femic.hydrology.flood_frequency.v1',
+                                   'femic.hydrology.flood_response.v1',
+                                   'GEV',
+                                   'LP3',
+                                   'Poisson-GPD',
+                                   '1 - 1/T',
+                                   'baseline',
+                                   'treatment',
+                                   'bootstrap',
+                                   'not a regulatory flood map'],
+     'hydrology-process-models': ['femic.hydrology.process_scenario.v1',
+                                  'femic.hydrology.process_result.v1',
+                                  'DHSVM',
+                                  'RHESSys',
+                                  'CRHM',
+                                  'SUMMA',
+                                  'HEC-HMS',
+                                  'peak_flows.csv',
+                                  'receptor_metrics.csv',
+                                  'user-supplied'],
+     'hydrology-surrogate-models': ['femic.hydrology.surrogate_design.v1',
+                                    'femic.hydrology.surrogate_model.v1',
+                                    'linear',
+                                    'gp',
+                                    'Latin hypercube',
+                                    'RMSE',
+                                    'coverage',
+                                    'applicability',
+                                    'refuse',
+                                    'No silent extrapolation'],
+     'hydrology-response-bundles': ['femic.hydrology.response.v1',
+                                    'femic.hydrology.flood_risk.v1',
+                                    'femic.hydrology.response_plan.v1',
+                                    'manifest.json',
+                                    'SHA-256',
+                                    'bundle_id',
+                                    'WS4 P49',
+                                    'FHOPS P14',
+                                    'applicability',
+                                    'refuse',
+                                    'not a regulatory flood map',
+                                    'No private'],
+     'hydrology-validation-closeout': ['femic.hydrology.validation.v1',
+                                       'femic.hydrology.pilot.v1',
+                                       'femic.hydrology.model_card.v1',
+                                       'femic.hydrology.benchmark_evidence.2026-10',
+                                       'Water Survey of Canada',
+                                       'Open Government Licence - Canada',
+                                       'tail check',
+                                       'not_evaluated',
+                                       'not_reviewed',
+                                       'WS4 P49',
+                                       'FHOPS P14',
+                                       'not a regulatory flood map',
+                                       'No private']}
 
     for slug in CONTRACT_PAGES:
         text = (CONTRACT_ROOT / f"{slug}.rst").read_text()

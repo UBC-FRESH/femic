@@ -2154,50 +2154,82 @@ Notes: `planning/mkrf_femic_native_rebuild.md`
   - [x] P78.6c Post issue progress comments and update the changelog at each
     implementation milestone.
 
-## Phase 79: Open LiDAR Acquisition And Terrain Analysis (`#211`)
+## Phase 79: Native LidarBC Data-Product Pipeline For WS4 And FHOPS (`#211`)
 
-Status: planned.
+Status: complete (2026-10-25). Branch: `feature/p79-lidar-pipeline`.
 
-Goal: add first-class FEMIC package support for automated open LiDAR
-point-cloud acquisition and derived terrain/hydrography analysis, so instance
-repositories can build public-data proxies for steep slopes, stream
-location/classification, and related THLB/riparian workflows without one-off
-scripts.
+Goal: make FEMIC the authoritative upstream producer of native LidarBC data
+products for WS4 and FHOPS. FEMIC discovers and resolves LidarBC projects and
+tiles, materializes them reproducibly, preserves native resolution and
+provenance, compiles terrain/canopy/precision-forestry products, and delivers
+versioned consumer-ready bundles. WS4 P52 (`UBC-FRESH/ws4#317`) and FHOPS P14
+(`UBC-FRESH/fhops#188`) consume those bundles; they do not duplicate discovery
+or materialization. The packaged product manifest/bundle is the delivery
+boundary. A full provincial mirror remains out of scope.
 
-- [ ] P79.1 Define open LiDAR source and tile-index contract (`#212`).
-  - [ ] P79.1a Survey supported public source families such as LidarBC/open
+- [x] P79.1 Define open LiDAR source and tile-index contract (`#212`).
+  - [x] P79.1a Survey supported public source families such as LidarBC/open
     LiDAR.
-  - [ ] P79.1b Define tile-index records, AOI intersection behaviour,
+  - [x] P79.1b Define tile-index records, AOI intersection behaviour,
     metadata fields, and provenance requirements.
-  - [ ] P79.1c Define dependency, storage, and generated-artifact boundaries.
-- [ ] P79.2 Implement resumable LiDAR and DEM materialization manifests
+  - [x] P79.1c Define dependency, storage, and generated-artifact boundaries.
+- [x] P79.2 Implement resumable LiDAR and DEM materialization manifests
   (`#213`).
-  - [ ] P79.2a Define manifest schema for source URLs, checksums, local paths,
+  - [x] P79.2a Define manifest schema for source URLs, checksums, local paths,
     status, and retry state.
-  - [ ] P79.2b Implement resumable acquisition helpers.
-  - [ ] P79.2c Add checksum and completeness validation.
-  - [ ] P79.2d Add CLI/API preflight surfaces.
-- [ ] P79.3 Add terrain raster and slope-product pipeline APIs (`#214`).
-  - [ ] P79.3a Select optional dependency stack for point-cloud/raster work.
-  - [ ] P79.3b Implement terrain raster derivation interfaces.
-  - [ ] P79.3c Implement percent-slope and zonal-stat helpers.
-  - [ ] P79.3d Add QA report outputs.
-- [ ] P79.4 Add terrain-derived stream candidate workflows (`#215`).
-  - [ ] P79.4a Define terrain-derived hydrography product contract.
-  - [ ] P79.4b Add comparison metrics against existing public hydrography.
-  - [ ] P79.4c Emit review manifests and caveat reports.
-- [ ] P79.5 Add CLI docs tests and instance hooks for LiDAR workflows (`#216`).
-  - [ ] P79.5a Add CLI commands for tile discovery/materialization and terrain
+  - [x] P79.2b Implement resumable acquisition helpers.
+  - [x] P79.2c Add checksum and completeness validation.
+  - [x] P79.2d Add CLI/API preflight surfaces.
+- [x] P79.3 Add terrain raster and slope-product pipeline APIs (`#214`).
+  - [x] P79.3a Select optional dependency stack for point-cloud/raster work.
+  - [x] P79.3b Implement terrain raster derivation interfaces.
+  - [x] P79.3c Implement percent-slope and zonal-stat helpers.
+  - [x] P79.3d Add QA report outputs.
+- [x] P79.4 Add terrain-derived stream candidate workflows (`#215`).
+  - [x] P79.4a Define terrain-derived hydrography product contract.
+  - [x] P79.4b Add comparison metrics against existing public hydrography.
+  - [x] P79.4c Emit review manifests and caveat reports.
+- [x] P79.5 Add CLI docs tests and instance hooks for LiDAR workflows (`#216`).
+  - [x] P79.5a Add CLI commands for tile discovery/materialization and terrain
     products.
-  - [ ] P79.5b Add docs and examples.
-  - [ ] P79.5c Add tests for manifests and command behaviour.
-  - [ ] P79.5d Add instance integration notes.
-- [ ] P79.6 Pilot open LiDAR terrain workflow against TFL 6 needs (`#217`).
-  - [ ] P79.6a Select a bounded TFL 6 AOI/test area.
-  - [ ] P79.6b Run tile discovery/materialization.
-  - [ ] P79.6c Build terrain/slope candidate products.
-  - [ ] P79.6d Compare outputs against TFL 6 instance needs.
-  - [ ] P79.6e Write pilot closeout and package follow-up list.
+  - [x] P79.5b Add docs and examples.
+  - [x] P79.5c Add tests for manifests and command behaviour.
+  - [x] P79.5d Add instance integration notes.
+- [x] P79.6 Pilot open LiDAR terrain workflow against TFL 6 needs (`#217`).
+  - [x] P79.6a Select a bounded TFL 6 AOI/test area.
+  - [x] P79.6b Run tile discovery/materialization.
+  - [x] P79.6c Build terrain/slope candidate products.
+  - [x] P79.6d Compare outputs against TFL 6 instance needs.
+  - [x] P79.6e Write pilot closeout and package follow-up list.
+- [x] P79.7 Add native LidarBC canopy and precision-forestry products
+  (`#348`).
+  - [x] P79.7a Define the canopy and precision-forestry product contract,
+    including derived CHM provenance and native-resolution rules.
+  - [x] P79.7b Implement canopy/structure product compilation from LidarBC
+    point cloud, DEM, and DSM inputs without silent resampling.
+  - [x] P79.7c Consume LidarBC individual-tree products where suitable instead
+    of inventing a new segmentation algorithm.
+  - [x] P79.7d Add QA, tests, and docs for native canopy products.
+- [x] P79.8 Package and deliver versioned LidarBC products to WS4 and FHOPS
+  (`#349`).
+  - [x] P79.8a Define the versioned product manifest and bundle layout.
+  - [x] P79.8b Record source project/tile/product, CRS, resolution, vertical
+    datum, accuracy, licence, checksum, retrieval date, and lineage.
+  - [x] P79.8c Add build/inspect CLI and Python entry points plus consumer
+    contract docs for WS4 P43 and FHOPS P13.
+  - [x] P79.8d Add a bounded AOI product fixture and reproducibility test.
+- [x] P79.9 Validate the packaged product with WS4/FHOPS and close out P79
+  (`#350`). Consumer parity passed; P79 close-out queued.
+  - [x] P79.9a Run the bounded AOI catalog-to-product build and validate the
+    shared bundle contract.
+  - [x] P79.9b Compare terrain/canopy values with actual WS4 P52 and FHOPS P14
+    consumer implementations. WS4 commit `8f4feb0`, FHOPS commit `8b6adb6c`,
+    maximum difference `0.0`.
+  - [x] P79.9c Record native-resolution, CRS, vertical-datum, licence,
+    checksum, storage, and performance evidence.
+  - [x] P79.9d Write the shared-bundle validation report and reference
+    aggregation fixture.
+  - [x] P79.9e Post the P79 validation close-out for maintainer approval.
 
 ## Phase 80: FreshForge Provider Integration For FEMIC Model-Build Workflows (`#220`)
 
@@ -3328,6 +3360,8 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
 ### Detailed Next Steps Notes
 
 - Active detailed planning now lives in:
+  - `planning/phase79_lidar_product_pipeline.md`
+  - `planning/phase114_forest_hydrology_flood_risk.md`
   - `planning/phase106_mkrf_executable_model_build.md`
   - `planning/phase105_tfl6_executable_model_build.md`
   - `planning/phase104_freshforge_workflow_discovery.md`
@@ -3476,11 +3510,40 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     FreshForge workflow contract at
     `workflows/freshforge/mkrf_model_build_workflow.yaml`; the next evolution is
     P84 executable orchestration.
-  - `P79` / `#211` is planned: FEMIC will grow reusable open LiDAR
-    acquisition, terrain-raster, slope, and terrain-derived hydrography
-    workflows. The immediate TFL 6 instance uses a public DEM steep-slope
-    repair lane first; this parent package phase is the reusable long-term
-    implementation path.
+  - `P79` / `#211` is active on `feature/p79-lidar-pipeline`: FEMIC is now the
+    authoritative producer of native LidarBC products for WS4 P43 (`#317`) and
+    FHOPS P13 (`#188`). P79.1 (`#212`), P79.2 (`#213`), P79.3 (`#214`),
+    P79.4 (`#215`), P79.5 (`#216`), and P79.8 (`#349`) are complete:
+    `femic.lidar.catalog` owns discovery/AOI selection,
+    `femic.lidar.materialization` owns resumable Range downloads and the
+    `femic.lidar.materialization.v1` manifest, `femic.lidar.terrain` owns Horn
+    percent slope, point-cloud cell aggregation, aligned zonal statistics, and
+    `femic.lidar.terrain_qa.v1` reports, `femic.lidar.hydrography` owns D8
+    stream candidates, public-hydrography comparison, and
+    `femic.lidar.stream_candidates.v1` review manifests, and
+    `femic.lidar.products` owns the `femic.lidar.product.v1` bundle and
+    checksum validation. P79.6 (`#217`) is complete: a 1 km TFL 6 pilot
+    verified 3 LidarBC DEM tiles (60 MiB), showed LidarBC median slope 4.43
+    points above same-AOI CDED and 2.88 ha of >=70% slope CDED misses, and
+    found D8/FWA stream agreement too low for riparian use. P79.7 (`#348`) is
+    complete: CHM/canopy products, optional individual-tree ingestion, and a
+    TFL 6 canopy pilot are documented. The 1 m CHM had mean 8.62 m and p95
+    21.78 m; VRI height bias was -2.93 m with 4.08 m MAE, while CHM >=2 m cover
+    was 23.87 points above VRI closure. Evidence is in
+    `planning/phase79_p79_6_tfl6_pilot.md` and
+    `planning/phase79_p79_7_tfl6_canopy_pilot.md`. The full workflow is exposed
+    through `femic lidar discover|materialize|terrain|streams|canopy|trees|
+    bundle|inspect`, with instance-root defaults and integration docs. P79.9
+    (`#350`) is complete: shared bundle `lidarbc-995fb1f771f4d7fe`
+    (`2026.10.0-tfl6-pilot`) passed native-resolution, licence, checksum, and
+    source-tile checks, and actual WS4 P52.1 (`8f4feb0`) / FHOPS P14.1
+    (`8b6adb6c`) consumer contracts matched slope/CHM values exactly over seven
+    shared AOI polygons (maximum difference `0.0`). P79 close-out is queued for
+    maintainer approval. Next consumer work is WS4 P52.2/P52.3 and FHOPS
+    P14.2/P14.3. Consumers must not reimplement discovery or materialization.
+    The TFL 6 instance keeps its locked CDED Step 220 proxy until a
+    fragment-level LidarBC comparison is reviewed, and no canopy product is
+    promoted to model input.
   - `P78.6` / `#209` is complete: the optional document-figure recovery
     workflow is documented in `docs/guides/document-figure-recovery.rst`, the
     CLI reference includes `femic doc figures` commands, and
@@ -3866,6 +3929,64 @@ Tasks:
 
 Detailed plan: `planning/phase113_wbi_aoi_model_build.md`.
 
+## Phase 114: Forest Hydrology And Flood-Risk Optimization (`#351`)
+
+Status: **complete** (2026-10-26).
+
+Branch: `feature/p114-forest-hydrology-flood-risk`
+
+Goal: add a reproducible forest-hydrology and flood-risk layer that evaluates
+how the spatiotemporal pattern of harvesting and road construction changes
+peak-flow frequency and downstream flood risk, then expose a versioned response
+bundle to WS4 spatial scheduling and FHOPS operational planning. This is
+screening/decision support, not regulatory flood mapping.
+
+Scientific framing: peak-flow response is frequency-dependent and
+nonstationary; rain, rain-on-snow, and snowmelt regimes are separate; landscape
+position and road connectivity matter; ECA-style metrics are screening
+diagnostics only. Use a model ladder from screening to stochastic
+flood-frequency response to process-based distributed hydrology to validated
+surrogates.
+
+Ownership: FEMIC owns the domain, public data bundle, disturbance ledger,
+response surfaces, flood-risk bundles, and validation. WS4 P49 and FHOPS P14
+consume the response contract and are created only after it stabilizes.
+
+Tasks:
+
+- [x] P114.1 Define the hydrologic domain and receptor contract (`#352`).
+  - [x] P114.1a Define domain, layer, receptor, gauge, HRU, and provenance
+    records.
+  - [x] P114.1b Add the public source registry for FWA, roads, DEM, gauges,
+    climate, soils, and land cover.
+  - [x] P114.1c Implement domain manifest build/load/validate and local audit.
+  - [x] P114.1d Add tests and the domain contract page.
+- [x] P114.2 Assemble the public hydrology data bundle (`#353`).
+  - Fixture bundle, licence/checksum audit, and gap plan are complete. P114.9
+    used a bounded public gauge pilot; a full public LiDAR/domain acquisition
+    remains follow-up work.
+- [x] P114.3 Build the harvest/road/retention disturbance ledger (`#354`).
+- [x] P114.4 Add Tier 0 screening metrics and caveats (`#355`).
+- [x] P114.5 Add stochastic flood-frequency response surfaces (`#356`).
+- [x] P114.6 Add process-model adapters and scenario manifests (`#357`).
+- [x] P114.7 Add surrogate training, validation, and applicability domains
+  (`#358`).
+- [x] P114.8 Package hydrologic response and flood-risk bundles (`#359`).
+  - Response, flood-risk, and plan schemas, deterministic identity, checksums,
+    provenance, applicability/uncertainty metadata, audit, CLI, docs, and the
+    bounded fixture are complete. Consumer pinning is documented for WS4 P49
+    and FHOPS P14; those implementation phases remain intentionally uncreated.
+
+- [x] P114.9 Benchmark, pilot, and close out P114 (`#360`).
+  - Three-gauge public WSC backcast, tail and split-sample checks, five
+    published directional benchmark reviews, readiness/data-gap audit,
+    validation report, provisional model card, closeout guide/contract/API,
+    and the conditional WS4/FHOPS handoff are complete. The full
+    process-model/treatment pilot and hydrologist review remain explicit
+    follow-up conditions, not claimed completions.
+
+Detailed plan: `planning/phase114_forest_hydrology_flood_risk.md`.
+
 ## Phase 115: Forest carbon domain, CBM packages, and GCBM export (`#361`)
 
 Status: **pr-open**
@@ -3915,3 +4036,117 @@ Verification:
 - `sphinx-build -b html docs _build/html -W`
 
 Detailed plan: `planning/phase115_forest_carbon.md`.
+
+## Phase 116: Shared Environmental Contracts (`#369`)
+
+Status: **active** (contract layer complete; P116.3 real cards and pipeline wiring pending).
+
+Branch: `feature/p116-shared-contracts`; split PRs:
+`feature/p116.1-climate-contract`, `feature/p116.2-disturbance-contract`, and
+`feature/p116.3-efi-model-card`.
+
+Goal: add dependency-light contracts for climate, disturbance, and EFI model
+metadata so FEMIC, ws3, ws4, FHOPS, and Nemora share one vocabulary. Each
+contract needs one real consumer before the phase closes.
+
+Contract home: `femic/contracts` for this wave, kept free of the modelling
+stack. A separate `fresh-contracts` repository remains the long-term option.
+
+Tasks:
+
+- [x] P116.1 Add `climate.v1`, a ClimateNA/SilvR21 adapter, and the first
+  attribute consumer (`#370`).
+  - [x] Add the `femic.contracts.climate` schema, validator, reader/writer,
+    provenance summary, sample fixture, and docs.
+  - [x] Add the annual ClimateNA/SilvR21 CSV adapter with a public-safe fixture.
+  - [x] Add `femic.climate.consumer` and attach a context to attribute rows.
+- [x] P116.2 Add `disturbance.v1` and a ws4 consumer (`#371`).
+  - [x] Add the `femic.contracts.disturbance` schema, validator, examples,
+    consumer rows, and docs.
+  - [x] Consume the consumer rows in ws4 (PR #398, merged as `5ea4a05`).
+- [ ] P116.3 Add `efi.model.v1` model cards (`#372`).
+  - [x] Add the `femic.contracts.efi` schema, validator, nested metadata,
+    applicability checks, row annotation, synthetic cards, and docs.
+  - [ ] Replace or augment the synthetic cards with two real project or
+    published model cards.
+  - [ ] Wire the card metadata through the FEMIC attribute pipeline.
+
+Acceptance: each schema has a validator, an example, and a failure test; each
+contract has one downstream consumer reading real data; provenance survives the
+round-trip; no parallel LiDAR, hydrology, or fire-simulation lane is introduced.
+
+Tracking: issue `#369`; the issue bodies carry scope, out-of-scope, acceptance,
+verification, artifacts, and risks. Phase 115 (carbon) is tracked separately
+under `#361`.
+
+Detailed plan: `planning/phase116_shared_contracts.md`.
+
+## Phase 117: EFI Inventory Attributes and Biomass Curves (`#374`)
+
+Status: **active** (P117.1 application engine; real coefficients/backtest pending).
+
+Branch: `feature/p117-efi-attributes`; P117.1 split PR:
+`feature/p117.1-efi-application`.
+
+Goal: turn the P79 LiDAR product bundle into inventory attributes and a biomass
+curve family the estate models can consume. P79 owns the sensor pipeline; this
+phase owns the inventory model and the curve family.
+
+Tasks:
+
+- [ ] P117.1 Add an ALS site-index / potential-height layer (`#375`).
+  - [x] Add the `femic.efi.coefficients.v1` contract, linear application
+    engine, domain checks, backtest harness, synthetic pilot card, and docs.
+  - [ ] Supply a published or project site-index coefficient set.
+  - [ ] Map the selected FEMIC LiDAR metrics.
+  - [ ] Add `si_als` to the fragment attribute pipeline.
+  - [ ] Run the instance backtest with the P48/P49 ground-plot surfaces.
+- [ ] P117.2 Add a biomass curve family and carbon conversion (`#376`).
+
+Acceptance: the site-index layer covers the pilot AOI and reports its gaps; a
+backtest reports bias, RMSE, and the fragments whose curve assignment changes;
+species outside the calibrated set are rejected or flagged; the biomass curve is
+independently selectable and carries its source, species, and conversion; no
+P79 or P115 code is duplicated.
+
+Tracking: issue `#374`; the issue bodies carry scope, out-of-scope, acceptance,
+verification, artifacts, and risks.
+
+Detailed plan: `planning/phase117_efi_attributes.md`.
+
+## Phase 118: Chapman Creek Flood Pilot (`#383`)
+
+Status: **active** (public-data audit; no flood model).
+
+Branch: `feature/p118-flood-pilot`
+
+Goal: run a bounded Sunshine Coast flood pilot at Chapman Creek, starting with a
+public-data audit and a reviewed domain/receptor plan. This is a rain/coastal
+pilot, not a GNN North Island result and not a regulatory flood map.
+
+Tasks:
+
+- [x] P118.1 Audit Chapman Creek public data and define the bounded pilot
+  domain (`#384`).
+  - [x] Record candidate and broad audit bbox.
+  - [x] Audit LidarBC coverage.
+  - [x] Audit historical WSC and current SCRD gauge evidence.
+  - [x] Record FWA/roads source requirements and the Chapman receptor.
+  - [x] Record 2021 flood evidence and all missing inputs.
+- [x] P118.2 Constrain GEV tails and record the fit strategy (`#386`).
+  - [x] Add shape-bounded GEV helper and fit strategy metadata.
+  - [x] Add warning and bootstrap coverage.
+  - [x] Update validation tests for the Squamish remediation.
+  - [x] Update docs, roadmap, and changelog.
+- [x] P118.3 Acquire Chapman Creek public domain layers and provenance (`#389`).
+  - [x] Add acquisition script with source URLs and dry-run.
+  - [x] Fetch and checksum FWA watershed/stream, DRA road, and WSC gauge layers.
+  - [x] Write provenance and explicit gaps.
+  - [x] Add offline tests for queries, outputs, checksums, and gaps.
+  - [x] Update planning, roadmap, and changelog.
+
+Acceptance: the audit has source provenance; gauge discontinuities and missing
+damage/review inputs are explicit; no response surface or flood claim is made;
+the next data task is clear.
+
+Detailed plan: `planning/phase118_chapman_flood_pilot.md`.

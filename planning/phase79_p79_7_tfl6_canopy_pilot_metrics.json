@@ -1,0 +1,307 @@
+{
+  "pilot_id": "p79_7_tfl6_canopy",
+  "generated_utc": "2026-10-25T21:48:59.387435+00:00",
+  "aoi_bbox_epsg3005": [
+    881700.0,
+    627500.0,
+    882700.0,
+    628500.0
+  ],
+  "aoi_area_ha": 100.0,
+  "source": {
+    "dem_tile_ids": [
+      "bc_092l062_2_3_4_xli1m_utm9_20240316_20240317",
+      "bc_092l062_4_1_2_xli1m_utm9_20240316_20240317"
+    ],
+    "dsm_tile_ids": [
+      "bc_092l062_2_3_4_xli1m_utm9_20240316_20240317_dsm",
+      "bc_092l062_4_1_2_xli1m_utm9_20240316_20240317_dsm"
+    ],
+    "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+    "lidarbc_service_layers": [
+      "LiDARProject_Data_Extent",
+      "LiDAR DSM Index 1:2,500",
+      "LiDAR DSM Index 1:10,000",
+      "LiDAR DSM Index 1:20,000",
+      "LiDAR Point Cloud Index",
+      "LiDAR DEM Index 1:2,500",
+      "LiDAR DEM Index 1:20,000"
+    ],
+    "individual_tree_layer_present": false,
+    "canopy_or_chm_layer_present": false
+  },
+  "chm": {
+    "path": "external/femic-tfl6-instance/runtime/dem/p79_7_canopy_pilot/canopy/chm.tif",
+    "dsm_path": "external/femic-tfl6-instance/runtime/dem/p79_7_canopy_pilot/processed/lidarbc_dsm_aoi_1m.tif",
+    "dem_path": "external/femic-tfl6-instance/runtime/dem/p79_7_canopy_pilot/processed/lidarbc_dem_aoi_1m.tif",
+    "metadata": {
+      "path": "external/femic-tfl6-instance/runtime/dem/p79_7_canopy_pilot/canopy/chm.tif",
+      "crs": "EPSG:3005",
+      "transform": [
+        1.0,
+        0.0,
+        881700.0,
+        0.0,
+        -1.0,
+        628500.0
+      ],
+      "width": 1000,
+      "height": 1000,
+      "resolution_x": 1.0,
+      "resolution_y": 1.0,
+      "nodata": -9999.0,
+      "dtype": "float32",
+      "band_count": 1,
+      "bounds": [
+        881700.0,
+        627500.0,
+        882700.0,
+        628500.0
+      ]
+    },
+    "dsm_metadata": {
+      "path": "external/femic-tfl6-instance/runtime/dem/p79_7_canopy_pilot/processed/lidarbc_dsm_aoi_1m.tif",
+      "crs": "EPSG:3005",
+      "transform": [
+        1.0,
+        0.0,
+        881700.0,
+        0.0,
+        -1.0,
+        628500.0
+      ],
+      "width": 1000,
+      "height": 1000,
+      "resolution_x": 1.0,
+      "resolution_y": 1.0,
+      "nodata": -9999.0,
+      "dtype": "float32",
+      "band_count": 1,
+      "bounds": [
+        881700.0,
+        627500.0,
+        882700.0,
+        628500.0
+      ]
+    },
+    "dem_metadata": {
+      "path": "external/femic-tfl6-instance/runtime/dem/p79_7_canopy_pilot/processed/lidarbc_dem_aoi_1m.tif",
+      "crs": "EPSG:3005",
+      "transform": [
+        1.0,
+        0.0,
+        881700.0,
+        0.0,
+        -1.0,
+        628500.0
+      ],
+      "width": 1000,
+      "height": 1000,
+      "resolution_x": 1.0,
+      "resolution_y": 1.0,
+      "nodata": -9999.0,
+      "dtype": "float32",
+      "band_count": 1,
+      "bounds": [
+        881700.0,
+        627500.0,
+        882700.0,
+        628500.0
+      ]
+    },
+    "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+    "generated_utc": "2026-10-25T00:00:00+00:00",
+    "valid_pixels": 1000000,
+    "nodata_pixels": 0,
+    "negative_pixels": 95,
+    "clamped_negative": true,
+    "height_metrics": {
+      "count": 1000000,
+      "min_m": 0.0,
+      "mean_m": 8.619585331008912,
+      "median_m": 7.714378356933594,
+      "p90_m": 18.96483612060547,
+      "p95_m": 21.780885314941404,
+      "p99_m": 28.013657989501954,
+      "max_m": 55.42036437988281
+    },
+    "cover_fractions": {
+      "ge_2m": 70.9363,
+      "ge_5m": 60.0868,
+      "ge_10m": 41.0334,
+      "ge_20m": 7.842499999999999
+    },
+    "valid_area_ha": 100.0,
+    "warnings": [
+      "No reprojection or resampling was performed.",
+      "95 negative DSM-DEM pixels were clamped to zero."
+    ]
+  },
+  "structure": {
+    "path": "external/femic-tfl6-instance/runtime/dem/p79_7_canopy_pilot/canopy/chm.tif",
+    "metadata": {
+      "path": "external/femic-tfl6-instance/runtime/dem/p79_7_canopy_pilot/canopy/chm.tif",
+      "crs": "EPSG:3005",
+      "transform": [
+        1.0,
+        0.0,
+        881700.0,
+        0.0,
+        -1.0,
+        628500.0
+      ],
+      "width": 1000,
+      "height": 1000,
+      "resolution_x": 1.0,
+      "resolution_y": 1.0,
+      "nodata": -9999.0,
+      "dtype": "float32",
+      "band_count": 1,
+      "bounds": [
+        881700.0,
+        627500.0,
+        882700.0,
+        628500.0
+      ]
+    },
+    "thresholds_m": [
+      2.0,
+      5.0,
+      10.0,
+      20.0
+    ],
+    "generated_utc": "2026-10-25T00:00:00+00:00",
+    "valid_pixels": 1000000,
+    "nodata_pixels": 0,
+    "valid_area_ha": 100.0,
+    "height_metrics": {
+      "count": 1000000,
+      "min_m": 0.0,
+      "mean_m": 8.619585331008912,
+      "median_m": 7.714378356933594,
+      "p90_m": 18.96483612060547,
+      "p95_m": 21.780885314941404,
+      "p99_m": 28.013657989501954,
+      "max_m": 55.42036437988281
+    },
+    "cover_fractions": {
+      "ge_2m": 70.9363,
+      "ge_5m": 60.0868,
+      "ge_10m": 41.0334,
+      "ge_20m": 7.842499999999999
+    },
+    "warnings": [
+      "No reprojection or resampling was performed.",
+      "Canopy structure is derived from the CHM, not a field inventory."
+    ]
+  },
+  "vri_comparison": {
+    "vri_path": "external/femic-tfl6-instance/runtime/dem/p79_7_canopy_pilot/vri_aoi.geojson",
+    "height_field": "proj_height_1",
+    "cover_field": "crown_closure",
+    "chm_height_metric": "p95",
+    "polygon_count": 7,
+    "matched_count": 7,
+    "skipped_count": 0,
+    "height_bias_m": -2.9275117942301443,
+    "height_mae_m": 4.083079138712567,
+    "height_rmse_m": 6.164319800896293,
+    "cover_bias_pct": 23.86670883524225,
+    "cover_mae_pct": 39.46841406051095,
+    "rows": [
+      {
+        "polygon_id": "23339490",
+        "vri_height_m": 22.700001,
+        "chm_p95_m": 20.908148193359374,
+        "chm_mean_m": 10.65011212912247,
+        "height_delta_m": -1.7918528066406267,
+        "vri_cover_pct": 50.0,
+        "chm_cover_pct": 90.72371935382859,
+        "cover_delta_pct": 40.723719353828585,
+        "valid_pixels": 54289
+      },
+      {
+        "polygon_id": "23339461",
+        "vri_height_m": 37.0,
+        "chm_p95_m": 37.102053070068365,
+        "chm_mean_m": 19.1968649030904,
+        "height_delta_m": 0.10205307006836506,
+        "vri_cover_pct": 55.0,
+        "chm_cover_pct": 95.29322367244771,
+        "cover_delta_pct": 40.29322367244771,
+        "valid_pixels": 22372
+      },
+      {
+        "polygon_id": "23339462",
+        "vri_height_m": null,
+        "chm_p95_m": 8.235550689697256,
+        "chm_mean_m": 1.0822378980344753,
+        "height_delta_m": null,
+        "vri_cover_pct": null,
+        "chm_cover_pct": 9.834967069995406,
+        "cover_delta_pct": null,
+        "valid_pixels": 52232
+      },
+      {
+        "polygon_id": "23339458",
+        "vri_height_m": 22.700001,
+        "chm_p95_m": 20.48614807128906,
+        "chm_mean_m": 8.70222810879686,
+        "height_delta_m": -2.213852928710942,
+        "vri_cover_pct": 50.0,
+        "chm_cover_pct": 76.14349407806559,
+        "cover_delta_pct": 26.143494078065586,
+        "valid_pixels": 731180
+      },
+      {
+        "polygon_id": "16625195",
+        "vri_height_m": 23.700001,
+        "chm_p95_m": 27.064649963378905,
+        "chm_mean_m": 13.97379255928985,
+        "height_delta_m": 3.3646489633789045,
+        "vri_cover_pct": 50.0,
+        "chm_cover_pct": 91.90424125720067,
+        "cover_delta_pct": 41.90424125720067,
+        "valid_pixels": 61279
+      },
+      {
+        "polygon_id": "16624698",
+        "vri_height_m": 30.5,
+        "chm_p95_m": 16.3475341796875,
+        "chm_mean_m": 1.9925869743888656,
+        "height_delta_m": -14.1524658203125,
+        "vri_cover_pct": 60.0,
+        "chm_cover_pct": 13.19488432419389,
+        "cover_delta_pct": -46.80511567580611,
+        "valid_pixels": 66306
+      },
+      {
+        "polygon_id": "19212607",
+        "vri_height_m": 32.900002,
+        "chm_p95_m": 30.026400756835933,
+        "chm_mean_m": 16.535895914298134,
+        "height_delta_m": -2.8736012431640674,
+        "vri_cover_pct": 55.0,
+        "chm_cover_pct": 95.94069032571706,
+        "cover_delta_pct": 40.94069032571706,
+        "valid_pixels": 12342
+      }
+    ],
+    "generated_utc": "2026-10-25T00:00:00+00:00",
+    "warnings": [
+      "No reprojection or resampling was performed.",
+      "VRI comparisons are uncertainty evidence, not field-accuracy claims."
+    ]
+  },
+  "caveats": [
+    "CHM is DSM minus DEM on exactly aligned native grids. It is not a field inventory.",
+    "DSM and DEM must share the same CRS, transform, resolution, and vertical datum.",
+    "No reprojection or resampling is performed.",
+    "VRI comparisons are uncertainty evidence, not a field-accuracy claim."
+  ],
+  "runtime_sec": 4.101,
+  "storage": {
+    "dsm_materialized_bytes": 14305886,
+    "canopy_output_bytes": 3281985
+  }
+}

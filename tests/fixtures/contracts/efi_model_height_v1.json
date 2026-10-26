@@ -1,0 +1,38 @@
+{
+  "schema_version": "femic.efi.model.v1",
+  "model_id": "als-height-cwh-v1",
+  "model_version": "1.0.0",
+  "attribute": "height",
+  "unit": "m",
+  "predictors": ["chm_p95", "canopy_cover_2m"],
+  "training": {
+    "source_id": "lidarbc-fixture",
+    "source_version": "2026.1",
+    "region": "CWH",
+    "plot_count": 120,
+    "species": ["Fd", "Cw"],
+    "period": "2019-2023",
+    "notes": "Synthetic model card for contract testing."
+  },
+  "validation": {
+    "design": "holdout",
+    "n": 40,
+    "rmse": 1.8,
+    "bias": -0.2,
+    "unit": "m",
+    "r2": 0.82,
+    "notes": "Synthetic validation evidence."
+  },
+  "applicability": {
+    "regions": ["CWH"],
+    "species": ["Fd", "Cw"],
+    "age_min": 20,
+    "age_max": 120,
+    "height_min": 5.0,
+    "height_max": 60.0,
+    "notes": "Do not apply outside the coastal western hemlock zone."
+  },
+  "licence_id": "OGL-BC",
+  "created_utc": "2026-10-25T00:00:00+00:00",
+  "notes": "Synthetic contract fixture; not a published model."
+}

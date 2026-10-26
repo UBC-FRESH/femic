@@ -1,0 +1,74 @@
+{
+  "schema_version": "femic.hydrology.response_plan.v1",
+  "bundle_version": "2026.10.0",
+  "domain_id": "fixture-domain",
+  "ledger_id": "fixture-ledger",
+  "response_surface_id": "fixture-surface",
+  "artifacts": [
+    {
+      "role": "response_surface",
+      "path": "response_surface.json",
+      "schema_version": "femic.hydrology.flood_response.v1",
+      "description": "Synthetic Tier 0/process response surface."
+    },
+    {
+      "role": "flood_risk",
+      "path": "flood_risk.json",
+      "schema_version": "femic.hydrology.flood_risk.v1",
+      "description": "Synthetic receptor-level flood-risk rows."
+    },
+    {
+      "role": "surrogate_model",
+      "path": "surrogate_model.json",
+      "schema_version": "femic.hydrology.surrogate_model.v1",
+      "description": "Synthetic linear surrogate for applicability testing."
+    },
+    {
+      "role": "surrogate_validation",
+      "path": "surrogate_validation.json",
+      "description": "Synthetic held-out surrogate validation metrics."
+    },
+    {
+      "role": "domain",
+      "path": "domain.json",
+      "schema_version": "femic.hydrology.domain.v1",
+      "description": "Synthetic domain provenance."
+    },
+    {
+      "role": "disturbance_ledger",
+      "path": "disturbance.json",
+      "schema_version": "femic.hydrology.disturbance.v1",
+      "description": "Synthetic disturbance-ledger provenance."
+    }
+  ],
+  "applicability_domain": {
+    "feature_names": [
+      "harvest_fraction"
+    ],
+    "min_values": {
+      "harvest_fraction": 0.0
+    },
+    "max_values": {
+      "harvest_fraction": 0.6
+    },
+    "mean_values": {
+      "harvest_fraction": 0.3
+    },
+    "scale_values": {
+      "harvest_fraction": 0.2
+    },
+    "max_distance": 3.0
+  },
+  "uncertainty": {
+    "interval": "95%",
+    "basis": "synthetic held-out validation"
+  },
+  "caveats": [
+    "Synthetic fixture for P114.8 bundle contract tests only.",
+    "Not for operational or regulatory use."
+  ],
+  "provenance": {
+    "dataset": "synthetic",
+    "licence": "CC0-1.0"
+  }
+}
