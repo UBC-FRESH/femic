@@ -3927,3 +3927,38 @@ Tasks:
       `external/femic-tsa24-instance/evidence/p113_4_smoke_2026-10-12.md`.
 
 Detailed plan: `planning/phase113_wbi_aoi_model_build.md`.
+
+## Phase 116: Shared Environmental Contracts (`#369`)
+
+Status: **active** (P116.1 complete; P116.2 and P116.3 pending).
+
+Branch: `feature/p116-shared-contracts`; P116.1 split PR:
+`feature/p116.1-climate-contract`.
+
+Goal: add dependency-light contracts for climate, disturbance, and EFI model
+metadata so FEMIC, ws3, ws4, FHOPS, and Nemora share one vocabulary. Each
+contract needs one real consumer before the phase closes.
+
+Contract home: `femic/contracts` for this wave, kept free of the modelling
+stack. A separate `fresh-contracts` repository remains the long-term option.
+
+Tasks:
+
+- [x] P116.1 Add `climate.v1`, a ClimateNA/SilvR21 adapter, and the first
+  attribute consumer (`#370`).
+  - [x] Add the `femic.contracts.climate` schema, validator, reader/writer,
+    provenance summary, sample fixture, and docs.
+  - [x] Add the annual ClimateNA/SilvR21 CSV adapter with a public-safe fixture.
+  - [x] Add `femic.climate.consumer` and attach a context to attribute rows.
+- [ ] P116.2 Add `disturbance.v1` and a ws4 consumer (`#371`).
+- [ ] P116.3 Add `efi.model.v1` model cards (`#372`).
+
+Acceptance: each schema has a validator, an example, and a failure test; each
+contract has one downstream consumer reading real data; provenance survives the
+round-trip; no parallel LiDAR, hydrology, or fire-simulation lane is introduced.
+
+Tracking: issue `#369`; the issue bodies carry scope, out-of-scope, acceptance,
+verification, artifacts, and risks. Phase 115 (carbon) is tracked separately
+under `#361`.
+
+Detailed plan: `planning/phase116_shared_contracts.md`.

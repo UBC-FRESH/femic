@@ -1,5 +1,17 @@
 # Change Log
 
+## 2026-10-26
+- P116.1: added the `femic.climate.v1` contract with schema, validator,
+  CSV/JSON reader and writer, provenance summary, and a public-safe sample
+  table.
+- P116.1: added the annual ClimateNA/SilvR21 CSV adapter with a defensive
+  default column map and a public-safe fixture.
+- P116.1: added `femic.climate.consumer` to resolve one AOI/scenario/year
+  context and attach values and provenance to attribute rows. This is the first
+  `femic.climate.v1` consumer.
+- P116.1: contract, API, and consumer docs; 40 focused tests across the three
+  climate suites. `sphinx-build -W` passes. P116.2/P116.3 remain open.
+
 ## 2026-10-20
 - Retired the `ria_` filename prefix throughout the engine (#329). It is leftover Western
   Boreal Initiative nomenclature with no meaning in FEMIC, and it kept being reintroduced.
