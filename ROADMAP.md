@@ -4112,6 +4112,12 @@ Tasks:
   - [x] Record receptor candidate/evidence and review status.
   - [x] Add offline tests and update the domain plan.
   - [x] Update roadmap and changelog.
+- [x] P118.7 Build the Chapman DEM mosaic and record coverage (`#403`).
+  - [x] Add DEM mosaic builder and manifest.
+  - [x] Preserve compound CRS and nodata handling.
+  - [x] Record edge gap, checksums, and valid coverage.
+  - [x] Add offline tests and update the plan.
+  - [x] Update roadmap and changelog.
 
 Acceptance: the audit has source provenance; gauge discontinuities and missing
 damage/review inputs are explicit; no response surface or flood claim is made;
