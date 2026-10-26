@@ -4094,6 +4094,12 @@ Tasks:
   - [x] Write provenance and explicit gaps.
   - [x] Add offline tests for queries, outputs, checksums, and gaps.
   - [x] Update planning, roadmap, and changelog.
+- [x] P118.4 Audit the Chapman watershed union, DEM coverage, and receptor gaps (`#391`).
+  - [x] Add a domain-audit script and typed result.
+  - [x] Audit watershed union, WSC area, streams, roads, and gauges.
+  - [x] Audit LidarBC product coverage and metadata gaps.
+  - [x] Add offline tests and write the planning note.
+  - [x] Update roadmap and changelog.
 
 Acceptance: the audit has source provenance; gauge discontinuities and missing
 damage/review inputs are explicit; no response surface or flood claim is made;

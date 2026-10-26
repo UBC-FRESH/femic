@@ -153,10 +153,13 @@ Real acquisition on 2026-10-26:
 | DRA roads | 492 | 741,287 | EPSG:3005 | 1162907.8, 492863.4, 1171239.9, 501087.5 |
 | WSC gauges | 3 | 1,334 | EPSG:4326 | -123.7206, 49.4419, -123.7108, 49.4822 |
 
-The watershed code-prefix union is **6,917.1 ha**, versus the WSC record's
-**6,450 ha** drainage area (about 7% larger). The union is the correct starting
-boundary, but the difference must be reviewed before it is treated as the gauge
-catchment. The local watershed polygon is not the catchment.
+The watershed code-prefix union is **6,917.1 ha**. The WSC station metadata
+reports **6,902.0 ha** for 08GA046 (near Wilson Creek), **6,306.0 ha** for
+08GA060 (above the Sechelt diversion), and **6,258.0 ha** for 08GA078 (below the
+diversion). The union is therefore **0.2% larger** than the 08GA046 drainage
+area; the smaller upstream/diversion stations are consistent with the diversion
+and must not be treated as the same catchment. The local watershed polygon is
+not the catchment.
 
 The DRA layer contains road sections, not a culvert or road-stream crossing
 inventory. The WSC stations are historical and discontinuous. The DEM, receptor,
@@ -172,3 +175,23 @@ python scripts/acquire_chapman_public.py \
 
 Offline tests mock the HTTP responses; the public run above is the provenance
 evidence.
+
+
+## P118.4 watershed and LidarBC audit
+
+The domain-audit script `scripts/audit_chapman_domain.py` unions the 288 FWA
+polygons and intersects them with the local LidarBC selection. Real audit:
+
+| Product | Tiles | Covered ha | Uncovered ha | Years | Vertical datum missing |
+| --- | ---: | ---: | ---: | --- | ---: |
+| DEM | 90 | 6,790.5 | 126.6 | 2019, 2020, 2024 | 90 |
+| DSM | 84 | 6,672.8 | 244.3 | 2020, 2024 | 84 |
+| Point cloud | 223 | 3,751.7 | 3,165.4 | 2019, 2020, 2024 | 0 |
+
+The union is valid, 6,917.1 ha, and matches 08GA046 within 0.2%. DEM coverage
+leaves about 126.6 ha (1.8%) uncovered, and every selected DEM/DSM tile lacks a
+recorded vertical datum. All selected tiles use UTM zone 10; a domain DEM mosaic
+must record the native projection and the vertical-datum decision.
+
+The receptor, current public gauge, culvert inventory, hydrologist review, and
+reviewed WS4 crosswalk remain gaps. No flood model or screen was run.
