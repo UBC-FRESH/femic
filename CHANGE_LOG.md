@@ -15765,3 +15765,22 @@
 - Recorded missing FWA/DRA/receptor layers, current gauge series, damage/capacity
   curve, reviewed crosswalk, and hydrologist review.
 - No flood response surface, WS4 screen, or regulatory claim was made.
+
+## 2026-10-26 - P118.3 Chapman public-layer acquisition (#389)
+
+- Added `scripts/acquire_chapman_public.py` to fetch the full FWA
+  `900-127577%` watershed union, FWA streams, DRA roads, and WSC gauge metadata
+  into an ignored runtime directory with per-layer checksums, sizes, feature
+  counts, bboxes, and OGL-BC provenance.
+- Real acquisition: 288 watershed polygons (6,917.1 ha union), 24 stream
+  features, 492 DRA road features, and 3 historical WSC gauges. The union is
+  about 7% larger than the WSC 6,450 ha drainage area and needs review before it
+  is treated as the gauge catchment.
+- Recorded gaps: LidarBC DEM not downloaded, no reviewed receptor, no current
+  public daily gauge series, no culvert inventory, no hydrologist review, and no
+  reviewed WS4 crosswalk.
+- Added five offline tests; no bulk public data was committed.
+- Verification:
+  - `pytest tests/test_chapman_acquisition.py` passed (5 tests).
+  - `ruff check` and `mypy` passed for the script and test.
+  - Public acquisition completed against the BC WFS and WSC APIs.
