@@ -1,4 +1,4 @@
-Site-Index Reconciliation (``femic.site-index.reconciliation.v1``)
+Site-Index Reconciliation (``femic.site-index.reconciliation.v2``)
 ===================================================================
 
 Purpose
@@ -17,19 +17,24 @@ silently replace a curve input.
 
 The first pilot is TSA46. Its coverage and limits are recorded below so a
 consumer does not mistake a sparse VDYP layer value for a complete polygon
-estimate.
+estimate. The AU-level TSA SI is reported separately and is never forced into
+the polygon table.
 
 Quick Contract
 --------------
 
-- Reconciliation schema: ``femic.site-index.reconciliation.v1``.
-- SIBEC tidy schema: ``femic.sibec.v1``.
+- Reconciliation schema: ``femic.site-index.reconciliation.v2``.
+- SIBEC tidy schema: ``femic.sibec.v2``.
+- AU-level schema: ``femic.site-index.au.v1``.
 - VRI reader schema: ``femic.vri.site-index.v1``.
 - VDYP reader schema: ``femic.vdyp.site-index.v1``.
-- Grain: one output row per VRI feature.
+- Polygon grain: one output row per VRI feature.
+- AU grain: one output row per analysis unit and species.
 - Join keys: ``feature_id``; BEC unit key; canonical species key.
 - Default conflict threshold: ``2.0`` m.
 - Default SIBEC reference minimum: ``7`` plots.
+- SIBEC source preference: ``2014_addendum`` first, then
+  ``2013_approximation``; the selected source is written explicitly.
 - Reference precedence: VRI ``SITE_INDEX`` -> SIBEC (meeting the plot-count
   minimum) -> VDYP -> VRI ``EST_SITE_INDEX``.
 - The VDYP value is always retained as the current curve input; the reference
@@ -78,13 +83,21 @@ SIBEC
 approximation workbook (header on the third row) or a CSV export. It
 normalises the columns to:
 
+- ``source_table`` (source provenance);
 - ``region``, ``bgc_unit``, ``site_series``, ``site_association``;
 - ``species``;
 - ``plot_count``, ``mean_site_index``, ``standard_error``; and
-- ``schema_version = femic.sibec.v1``.
+- ``schema_version = femic.sibec.v2``.
 
-``aggregate_sibec_by_bgc_unit`` then groups site-series rows to BEC unit +
-species and reports:
+``load_sibec_addendum`` reads the 2014 addendum (``ciReportByUnit``). It
+removes the repeated page-header blocks and accepts the addendum's
+``Sample Size`` / ``Mean Site Index`` / ``Standard Error`` columns. The result
+keeps ``source_table = 2014_addendum``; it is never silently merged into the
+2013 approximation.
+
+``combine_sibec_tables`` concatenates the two tidy tables while preserving the
+``source_table`` labels. ``aggregate_sibec_by_bgc_unit`` groups site-series rows
+to BEC unit + species + source and reports:
 
 - ``si_sibec_mean`` (weighted by plot count when counts are available,
   otherwise unweighted);
@@ -93,13 +106,37 @@ species and reports:
 - total plot count; and
 - the number of contributing site series.
 
+``select_sibec_source`` then chooses one row per BEC-unit/species with the
+declared preference: the 2014 addendum first, then the 2013 approximation. The
+selected label is written to ``si_sibec_source`` and carried into the
+reconciliation as ``si_sibec_vri_source`` and ``si_sibec_vdyp_source``.
+
 The mean is **not** a polygon-level SIBEC estimate. VRI does not carry a site
 series, so SIBEC site-series rows cannot be joined directly to a polygon. The
 SIBEC **range** is used to test whether a VRI or VDYP value is outside the
 BEC-unit/species envelope; the mean is retained as descriptive provenance.
 
-The 2013 approximation is the first supported table. The 2014 addendum is not
-merged yet; it has a different merged-cell layout and is an explicit follow-up.
+The 2013 approximation and 2014 addendum are both supported. The addendum is a
+smaller supplement (224 usable rows in the public workbook); the 2013 table is
+the broad base.
+
+AU-level TSA SI
+~~~~~~~~~~~~~~~
+
+``femic.site_index.au.load_au_site_index`` reads
+``03_input-<tsa>.csv`` at the analysis-unit/species grain. It reports:
+
+- ``au_id`` (the ``feature_id`` in the TSA input);
+- ``bec_zone`` and ``bec_subzone``;
+- ``planted_species``, ``natural_species``, and ``leading_species``;
+- ``species`` / ``species_key`` and ``si_au``; and
+- ``is_leading`` for the leading species.
+
+``summarize_au_site_index`` states the grain explicitly
+(``analysis_unit_species``), counts AUs, rows, species, and BEC zones, and
+summarizes the leading-species SI. The AU table has no BEC variant in the TSA
+input, so it is **not** joined to the VRI polygon table. It is written as a
+separate CSV and JSON summary.
 
 Reconciliation Rules
 --------------------
@@ -196,8 +233,13 @@ Output Columns
        approximation has no plot count.
    * - ``si_sibec_vri_site_series_count``
      - Number of SIBEC site series behind the VRI-species aggregate.
+   * - ``si_sibec_vri_source``
+     - Selected SIBEC source for the VRI species (``2013_approximation`` or
+       ``2014_addendum``).
    * - ``si_sibec_vdyp`` / ``..._min`` / ``..._max``
      - SIBEC values for the VDYP species.
+   * - ``si_sibec_vdyp_source``
+     - Selected SIBEC source for the VDYP species.
    * - ``delta_vri_vdyp``
      - VDYP - VRI when species match.
    * - ``delta_vri_sibec`` / ``delta_vdyp_sibec``
@@ -228,13 +270,20 @@ Run the reconciliation after installing FEMIC:
      --vri data/vri_vclr1p_checkpoint8.feather \
      --vdyp data/vdyp_lyr-tsa46.feather \
      --sibec data/sibec2013approx_final.xlsx \
+     --sibec-addendum data/2013sisuaddendum_jul2014.xlsx \
+     --au-input data/03_input-tsa46.csv \
      --out-csv out/tsa46_si_reconciliation.csv \
      --out-json out/tsa46_si_summary.json \
+     --out-au-csv out/tsa46_au_site_index.csv \
+     --out-au-json out/tsa46_au_summary.json \
      --delta-threshold 2.0
 
-Use ``--sibec-sheet`` to select a non-default worksheet. The command prints a
-JSON summary and writes the feature-level CSV and summary when paths are
-provided.
+Use ``--sibec-sheet`` to select a non-default worksheet. Use
+``--sibec-addendum`` to combine the 2014 addendum with the 2013 base; the
+addendum is preferred for duplicate BEC-unit/species keys and the selected
+source is written to the CSV. Use ``--au-input`` plus the AU output paths for
+the separate analysis-unit report. The command prints the polygon JSON summary
+and writes the feature-level and AU-level files when paths are provided.
 
 TSA46 Pilot (26 October 2026)
 -----------------------------
@@ -242,32 +291,50 @@ TSA46 Pilot (26 October 2026)
 Inputs:
 
 - VRI checkpoint 8, 171,826 features;
-- VDYP layer table, primary layer only; and
-- SIBEC 2013 approximation, 4,023 source rows.
+- VDYP layer table, primary layer only;
+- SIBEC 2013 approximation, 4,023 source rows; and
+- SIBEC 2014 addendum, 224 usable rows.
 
-Results:
+Polygon results:
 
 - ``si_vri`` present: 171,826 (100%);
 - ``si_vri_est`` present: 5,966 (3.5%);
 - ``si_vdyp`` present: 3,384 (2.0%);
 - ``si_sibec_vri`` present: 136,807 (79.6%);
+- SIBEC VRI-species source: 136,659 from 2013 and 148 from the addendum;
 - complete triple: 2,285 (1.3%);
-- conflicts at 2.0 m: 25,643 (14.9%);
-- partial: 143,898 (83.8%); and
+- conflicts at 2.0 m: 25,559 (14.9%);
+- partial: 143,982 (83.8%); and
 - missing: 0.
 
 The high partial count is driven by sparse VDYP layer site index, not by a
 missing VRI value. The SIBEC range test is the main polygon-level consistency
 check in this pilot. The VDYP layer field is too sparse to support a complete
-three-way comparison; AU-level TSA SI is a separate grain and is not forced
-into this table.
+three-way comparison.
+
+AU-level TSA46 report:
+
+- 21 analysis units;
+- 462 AU/species rows;
+- 22 species columns;
+- BEC zones: CWH and MH;
+- leading species: HW 8, CW 3, FD 3, YC 3, BA 3, HM 1; and
+- leading-species SI: min 6.3, median 10.9, mean 11.43, max 22.5 m.
+
+The AU table has no BEC variant and is not joined to the polygon table. It is a
+separate grain and a separate output.
 
 Known Limits
 ------------
 
-- SIBEC 2013 approximation only; the 2014 addendum is not yet merged.
+- SIBEC 2013 is the broad base; the 2014 addendum is a 224-row supplement.
+  The addendum is preferred for duplicate BEC-unit/species keys, and the
+  selected source is explicit in the output.
 - SIBEC is aggregated to BEC unit + species because VRI has no site series.
   The range check is a screening test, not a site-series assignment.
+- The AU-level TSA table has no BEC variant and is not joined to the polygon
+  table. Treat its summary as the current curve-input grain, not a polygon
+  estimate.
 - VRI ``SITE_INDEX`` is a provincial inventory value, not a newly measured
   ground plot.
 - VDYP layer coverage depends on the instance and layer export; do not assume

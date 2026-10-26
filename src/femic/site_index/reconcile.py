@@ -13,7 +13,7 @@ from typing import cast
 import numpy as np
 import pandas as pd
 
-RECONCILIATION_SCHEMA_VERSION = "femic.site-index.reconciliation.v1"
+RECONCILIATION_SCHEMA_VERSION = "femic.site-index.reconciliation.v2"
 DEFAULT_DELTA_THRESHOLD = 2.0
 DEFAULT_MIN_SIBEC_PLOT_COUNT = 7
 RECONCILIATION_COLUMNS: tuple[str, ...] = (
@@ -31,10 +31,12 @@ RECONCILIATION_COLUMNS: tuple[str, ...] = (
     "si_sibec_vri_se",
     "si_sibec_vri_plot_count",
     "si_sibec_vri_site_series_count",
+    "si_sibec_vri_source",
     "si_sibec_vdyp",
     "si_sibec_vdyp_min",
     "si_sibec_vdyp_max",
     "si_sibec_vdyp_plot_count",
+    "si_sibec_vdyp_source",
     "delta_vri_vdyp",
     "delta_vri_sibec",
     "delta_vdyp_sibec",
@@ -123,7 +125,13 @@ def reconcile_site_index(
             "si_sibec_plot_count",
             "si_sibec_site_series_count",
         ],
-    ].rename(
+    ].copy()
+    sibec_vri["si_sibec_vri_source"] = (
+        sibec_by_bgc_unit["si_sibec_source"]
+        if "si_sibec_source" in sibec_by_bgc_unit.columns
+        else pd.NA
+    )
+    sibec_vri = sibec_vri.rename(
         columns={
             "bgc_unit_key": "bec_unit_key",
             "si_sibec_mean": "si_sibec_vri",
@@ -144,7 +152,13 @@ def reconcile_site_index(
             "si_sibec_max",
             "si_sibec_plot_count",
         ],
-    ].rename(
+    ].copy()
+    sibec_vdyp["si_sibec_vdyp_source"] = (
+        sibec_by_bgc_unit["si_sibec_source"]
+        if "si_sibec_source" in sibec_by_bgc_unit.columns
+        else pd.NA
+    )
+    sibec_vdyp = sibec_vdyp.rename(
         columns={
             "bgc_unit_key": "bec_unit_key",
             "species_key": "species_key_vdyp",
@@ -300,6 +314,22 @@ def summarize_reconciliation(
             "si_vdyp": count_non_null("si_vdyp"),
             "si_sibec_vri": count_non_null("si_sibec_vri"),
             "si_sibec_vdyp": count_non_null("si_sibec_vdyp"),
+        },
+        "sibec_sources": {
+            "si_sibec_vri": {
+                str(key): int(value)
+                for key, value in frame["si_sibec_vri_source"]
+                .fillna("none")
+                .value_counts()
+                .items()
+            },
+            "si_sibec_vdyp": {
+                str(key): int(value)
+                for key, value in frame["si_sibec_vdyp_source"]
+                .fillna("none")
+                .value_counts()
+                .items()
+            },
         },
         "status_counts": {
             value: int((status == value).sum())
