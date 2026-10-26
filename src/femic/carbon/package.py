@@ -607,6 +607,19 @@ def export_carbon_package(
             for au in context.analysis_units
         ]
     )
+    areas = build_woodstock_areas_table(
+        checkpoint_path=Path(checkpoint_path),
+        au_table=au_table,
+        tsa_list=normalized_tsa,
+        fragments_crs=fragments_crs,
+        initial_age_cap=initial_age_cap,
+        age_class_width=age_class_width,
+        thlb_min=thlb_min,
+        ifm_mode=ifm_mode,
+        ifm_source_col=ifm_source_col,
+        ifm_threshold=ifm_threshold,
+        ifm_target_managed_share=ifm_target_managed_share,
+    )
     if dataset_dir is not None:
         fragments = pd.read_parquet(Path(dataset_dir) / "fragments.parquet")
         tracks = pd.read_parquet(Path(dataset_dir) / "tracks.parquet")
@@ -629,6 +642,7 @@ def export_carbon_package(
                 )
             rows.append(
                 {
+                    "block_id": int(str(fragment.block_id)),
                     "track_name": track_name,
                     "au_id": int(au_match.group(1)),
                     "ifm": ifm_match.group(1).strip().lower(),
@@ -637,20 +651,13 @@ def export_carbon_package(
                 }
             )
         inventory = pd.DataFrame(rows)
+        if "cfs_ecozone" in areas.columns:
+            ecozones = areas.loc[:, ["stand_id", "cfs_ecozone"]].rename(
+                columns={"stand_id": "block_id"}
+            )
+            inventory = inventory.merge(ecozones, on="block_id", how="left")
+        inventory = inventory.drop(columns=["block_id"])
     else:
-        areas = build_woodstock_areas_table(
-            checkpoint_path=Path(checkpoint_path),
-            au_table=au_table,
-            tsa_list=normalized_tsa,
-            fragments_crs=fragments_crs,
-            initial_age_cap=initial_age_cap,
-            age_class_width=age_class_width,
-            thlb_min=thlb_min,
-            ifm_mode=ifm_mode,
-            ifm_source_col=ifm_source_col,
-            ifm_threshold=ifm_threshold,
-            ifm_target_managed_share=ifm_target_managed_share,
-        )
         inventory_columns = ["au_id", "ifm", "age", "area_ha"]
         if "cfs_ecozone" in areas.columns:
             inventory_columns.append("cfs_ecozone")
@@ -1046,6 +1053,8 @@ def _classifier_table(
 
 def _ecozone_name(value: object, config: CarbonExportConfig) -> str:
     """Resolve a public VRI ``CFS_ECOZONE`` code to a CBM eco-boundary name."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return config.eco_boundary
     try:
         code = int(float(str(value)))
     except (TypeError, ValueError):
