@@ -4179,6 +4179,11 @@ Tasks:
   - [x] Compare CDED/LidarBC and record the reference-overlap result.
   - [x] Write the audit note and update the plan.
   - [x] Update roadmap and changelog.
+- [x] P118.10 Backcast Chapman WSC gauge records and decide record defensibility (`#410`).
+  - [x] Add the public WSC fixture and provenance.
+  - [x] Run the existing FEMIC gauge backcast/frequency functions.
+  - [x] Record the record-defensibility decision.
+  - [x] Add tests and update the plan/changelog.
 
 Acceptance: the audit has source provenance; gauge discontinuities and missing
 damage/review inputs are explicit; no response surface or flood claim is made;

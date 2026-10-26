@@ -1,0 +1,50 @@
+{
+  "gauges": [
+    {
+      "contributor": "Water Survey of Canada (ECCC)",
+      "drainage_area_km2": 69.0199966430664,
+      "licence": "Open Government Licence - Canada",
+      "notes": "Historical WSC annual maximum daily discharge; discontinuous record. The three stations are sequential, not overlapping.",
+      "province": "BC",
+      "regime": "rain_on_snow",
+      "retrieved_utc": "2026-10-26T00:00:00+00:00",
+      "source_url": "https://api.weather.gc.ca/collections/hydrometric-annual-statistics/items?STATION_NUMBER=08GA046&DATA_TYPE_EN=Discharge",
+      "station_name": "Chapman Creek near Wilson Creek",
+      "station_number": "08GA046",
+      "station_url": "https://api.weather.gc.ca/collections/hydrometric-stations/items?STATION_NUMBER=08GA046",
+      "status": "Discontinued",
+      "vertical_datum": "Assumed datum"
+    },
+    {
+      "contributor": "Water Survey of Canada (ECCC)",
+      "drainage_area_km2": 63.060001373291016,
+      "licence": "Open Government Licence - Canada",
+      "notes": "Historical WSC annual maximum daily discharge; discontinuous record. The three stations are sequential, not overlapping.",
+      "province": "BC",
+      "regime": "rain_on_snow",
+      "retrieved_utc": "2026-10-26T00:00:00+00:00",
+      "source_url": "https://api.weather.gc.ca/collections/hydrometric-annual-statistics/items?STATION_NUMBER=08GA060&DATA_TYPE_EN=Discharge",
+      "station_name": "Chapman Creek above Sechelt diversion",
+      "station_number": "08GA060",
+      "station_url": "https://api.weather.gc.ca/collections/hydrometric-stations/items?STATION_NUMBER=08GA060",
+      "status": "Discontinued",
+      "vertical_datum": "Assumed datum"
+    },
+    {
+      "contributor": "Water Survey of Canada (ECCC)",
+      "drainage_area_km2": 62.58000183105469,
+      "licence": "Open Government Licence - Canada",
+      "notes": "Historical WSC annual maximum daily discharge; discontinuous record. The three stations are sequential, not overlapping.",
+      "province": "BC",
+      "regime": "rain_on_snow",
+      "retrieved_utc": "2026-10-26T00:00:00+00:00",
+      "source_url": "https://api.weather.gc.ca/collections/hydrometric-annual-statistics/items?STATION_NUMBER=08GA078&DATA_TYPE_EN=Discharge",
+      "station_name": "Chapman Creek below Sechelt diversion",
+      "station_number": "08GA078",
+      "station_url": "https://api.weather.gc.ca/collections/hydrometric-stations/items?STATION_NUMBER=08GA078",
+      "status": "Discontinued",
+      "vertical_datum": "Assumed datum"
+    }
+  ],
+  "schema_version": "femic.hydrology.pilot_gauges.v1"
+}
