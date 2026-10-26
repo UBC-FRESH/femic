@@ -33,11 +33,17 @@ def _rewrite_table(package: Path, name: str, frame: pd.DataFrame) -> None:
     frame.to_csv(path, index=False)
     manifest["table_hashes"][name] = hashlib.sha256(path.read_bytes()).hexdigest()
     if "track_name" in frame:
-        manifest["totals"]["track_count"] = int(frame["track_name"].nunique())
+        totals = manifest.get("totals")
+        if isinstance(totals, dict):
+            totals["track_count"] = int(frame["track_name"].nunique())
     if "area_ha" in frame:
-        manifest["totals"]["inventory_area_ha"] = float(frame["area_ha"].sum())
+        totals = manifest.get("totals")
+        if isinstance(totals, dict):
+            totals["inventory_area_ha"] = float(frame["area_ha"].sum())
     if name == "yield":
-        manifest["totals"]["yield_rows"] = int(frame.shape[0])
+        totals = manifest.get("totals")
+        if isinstance(totals, dict):
+            totals["yield_rows"] = int(frame.shape[0])
     manifest["package_id"] = f"femic-carbon-fixture-{_fingerprint(manifest)[:12]}"
     manifest_path.write_text(
         json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8"
@@ -92,6 +98,31 @@ def test_expected_track_mismatch_fails() -> None:
     """The validator rejects an expected-track mismatch."""
     with pytest.raises(CarbonValidationError, match="track count"):
         validate_carbon_package(FIXTURE, expected_track_count=2)
+
+
+def test_multi_boundary_fixture_validates(tmp_path: Path) -> None:
+    """A declared second boundary is accepted and must contain the track value."""
+    package = _copy_fixture(tmp_path)
+    boundaries = pd.read_csv(package / "boundaries.csv")
+    boundaries = pd.concat(
+        [
+            boundaries,
+            pd.DataFrame(
+                {
+                    "admin_boundary": ["British Columbia"],
+                    "eco_boundary": ["Pacific Maritime"],
+                }
+            ),
+        ],
+        ignore_index=True,
+    )
+    _rewrite_table(package, "boundaries", boundaries)
+    track_map = pd.read_csv(package / "track_carbon_map.csv")
+    track_map.loc[:, "eco_boundary"] = "Pacific Maritime"
+    _rewrite_table(package, "track_carbon_map", track_map)
+
+    result = validate_carbon_package(package)
+    assert result.track_count == 1
 
 
 def test_manifest_package_id_mismatch_fails(tmp_path: Path) -> None:

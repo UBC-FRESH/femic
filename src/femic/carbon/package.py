@@ -1284,10 +1284,5 @@ def _fingerprint(
     digest.update(b"\0")
     digest.update(config.eco_boundary.encode("utf-8"))
     digest.update(b"\0")
-    for code in sorted(config.ecozone_map):
-        digest.update(str(code).encode("ascii"))
-        digest.update(b"\0")
-        digest.update(config.ecozone_map[code].encode("utf-8"))
-        digest.update(b"\0")
     digest.update(config.cbm_defaults_sha256.encode("ascii"))
     return digest.hexdigest()
