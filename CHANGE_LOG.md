@@ -16111,3 +16111,19 @@
 - Deferred work remains recorded in `notes/reports/p115-closeout.md`:
   multi-boundary packages, species-resolved curves, intensity-specific `ct`,
   MPB severity input, full TSA24 search, and same-landscape GCBM comparison.
+
+## 2026-10-26 - P118.10 Chapman WSC gauge backcast (#410)
+
+- Added the bounded public WSC fixture for 08GA046 (1960-1970, 11 values),
+  08GA060 (1970-1987, 18), and 08GA078 (1993-2003, 11), with source URLs and
+  OGL-Canada provenance.
+- Ran the existing bounded GEV/LP3 backcast: 100-year GEV/LP3 values are
+  445.7/336.0 m3/s (08GA046), 106.1/105.6 (08GA060), and 93.6/95.7 (08GA078).
+  08GA046 used the constrained GEV fallback.
+- Recorded the sequential/non-overlapping structure, the 1970 overlap, the
+  1988-1992 gap, and the post-2003 absence. No split-sample check was possible
+  because each record is shorter than 20 values.
+- Decision: historical gauge-frequency screening only; not a current baseline,
+  not a pooled record, and not a flood map. Current/govened gauge data,
+  diversion review, and hydrologist review are required.
+- Added three offline tests; no bulk data or flood model was added.

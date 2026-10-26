@@ -34,6 +34,50 @@
     "reason": "67.1% of valid DEM pixels are covered only by 2D tiles without vertical metadata; 1,931.2 ha of the watershed has no valid mosaic pixels.",
     "terrain_slope_screening": "partial; seam review required, not a flood product"
   },
+  "gauge_backcast": {
+    "current_baseline": false,
+    "decision_reason": "Historical sequential records end in 2003, cross the Sechelt diversion, and are too short for a current baseline.",
+    "flood_map": false,
+    "record_structure": {
+      "gaps": [
+        "1988-1992",
+        "2004-present"
+      ],
+      "overlapping_years": [
+        1970
+      ],
+      "pooled": false,
+      "sequential": true
+    },
+    "review_required": "Current/govened gauge series, diversion review, and hydrologist review.",
+    "stations": [
+      {
+        "gev_100": 445.7119153067381,
+        "lp3_100": 336.0167954897298,
+        "period": "1960-1970",
+        "station_number": "08GA046",
+        "strategy": "constrained",
+        "values": 11
+      },
+      {
+        "gev_100": 106.05951597283389,
+        "lp3_100": 105.55398803723095,
+        "period": "1970-1987",
+        "station_number": "08GA060",
+        "strategy": "mle",
+        "values": 18
+      },
+      {
+        "gev_100": 93.57389096678656,
+        "lp3_100": 95.70715418312602,
+        "period": "1993-2003",
+        "station_number": "08GA078",
+        "strategy": "mle",
+        "values": 11
+      }
+    ],
+    "status": "historical_gauge_frequency_only"
+  },
   "generated_utc": "2026-10-26T00:00:00+00:00",
   "layers": {
     "dem": {
