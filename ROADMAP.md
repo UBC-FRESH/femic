@@ -4109,9 +4109,9 @@ Detailed plan: `planning/phase118_chapman_flood_pilot.md`.
 
 ## Phase 119: Site-Index Provenance and Reconciliation (`#392`)
 
-Status: **active** (implementation and TSA46 pilot complete; PR pending).
+Status: **active** (P119.1 complete, merged #396 as `2a02fac`; P119.2 open).
 
-Branch: `feature/p119-si-reconciliation`
+Branch: `feature/p119-si-reconciliation` (P119.1, merged); P119.2 branch TBD.
 
 Goal: make the existing VRI, VDYP, and SIBEC site-index sources legible and
 comparable without deriving a new site-index model or changing curves. VRI
@@ -4132,6 +4132,14 @@ Tasks:
     species-mismatch, missing-source, and CLI cases.
   - [x] Run the TSA46 pilot and record coverage and limits.
   - [x] Add the contract, guide, API page, roadmap, and changelog.
+
+- [ ] P119.2 Merge the SIBEC 2014 addendum and reconcile AU-level TSA SI
+  (`#399`).
+  - [ ] Parse `2013sisuaddendum_jul2014.xlsx` with explicit provenance, or
+    record a precise unsupported reason.
+  - [ ] Read AU-level `03_input` SI as a separate grain.
+  - [ ] Keep polygon and AU-level reports distinct.
+  - [ ] Add tests, docs, and changelog.
 
 Acceptance: SIBEC loads with mean/range/plot count/standard error; VRI and VDYP
 join with documented species/BEC mapping; reconciliation reports coverage,
