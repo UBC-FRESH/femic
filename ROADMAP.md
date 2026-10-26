@@ -4193,9 +4193,10 @@ Detailed plan: `planning/phase118_chapman_flood_pilot.md`.
 
 ## Phase 119: Site-Index Provenance and Reconciliation (`#392`)
 
-Status: **active** (P119.1 complete, merged #396 as `2a02fac`; P119.2 open).
+Status: **complete** (P119.1 merged #396 as `2a02fac`; P119.2 in PR).
 
-Branch: `feature/p119-si-reconciliation` (P119.1, merged); P119.2 branch TBD.
+Branch: `feature/p119.2-sibec-au`; P119.1 branch
+`feature/p119-si-reconciliation` is merged.
 
 Goal: make the existing VRI, VDYP, and SIBEC site-index sources legible and
 comparable without deriving a new site-index model or changing curves. VRI
@@ -4217,23 +4218,31 @@ Tasks:
   - [x] Run the TSA46 pilot and record coverage and limits.
   - [x] Add the contract, guide, API page, roadmap, and changelog.
 
-- [ ] P119.2 Merge the SIBEC 2014 addendum and reconcile AU-level TSA SI
+- [x] P119.2 Merge the SIBEC 2014 addendum and reconcile AU-level TSA SI
   (`#399`).
-  - [ ] Parse `2013sisuaddendum_jul2014.xlsx` with explicit provenance, or
-    record a precise unsupported reason.
-  - [ ] Read AU-level `03_input` SI as a separate grain.
-  - [ ] Keep polygon and AU-level reports distinct.
-  - [ ] Add tests, docs, and changelog.
+  - [x] Add `femic.sibec.v2` with explicit `source_table` provenance.
+  - [x] Parse the 2014 addendum (224 usable rows) and combine it with the 2013
+    approximation without collapsing source labels.
+  - [x] Add explicit addendum-first source selection and carry
+    `si_sibec_vri_source` / `si_sibec_vdyp_source` into the v2 reconciliation.
+  - [x] Add the `femic.site-index.au.v1` reader and summary for `03_input` at
+    the analysis-unit/species grain.
+  - [x] Keep the polygon and AU-level reports as separate outputs.
+  - [x] Add addendum, source-selection, AU-reader, and CLI tests.
+  - [x] Rerun the TSA46 pilot: 148 addendum-selected polygon rows; 21 AUs and
+    462 AU/species rows.
+  - [x] Update the contract, guide, API page, roadmap, and changelog.
 
 Acceptance: SIBEC loads with mean/range/plot count/standard error; VRI and VDYP
 join with documented species/BEC mapping; reconciliation reports coverage,
-pairwise deltas, and conflicts; reference precedence is explicit; no curve,
-AAC, THLB, or schedule is changed; tests cover mapping and missing-source cases.
+pairwise deltas, conflicts, and selected SIBEC source; the AU-level report is a
+separate grain; reference precedence is explicit; no curve, AAC, THLB, or
+schedule is changed; tests cover mapping and missing-source cases.
 
 Pilot limits: VDYP primary-layer SI is sparse (3,384 of 171,826 VRI features),
 so complete three-way coverage is only 2,285 features. SIBEC is used as a
-BEC-unit/species range because VRI has no site series. The 2014 SIBEC addendum
-is not merged yet. AU-level TSA SI is a separate grain and is not forced into
-the polygon table.
+BEC-unit/species range because VRI has no site series. The 2014 addendum adds
+148 polygon matches. AU-level TSA SI is a separate grain (21 AUs) and is not
+forced into the polygon table.
 
 Detailed contract: `docs/reference/contracts/site-index-reconciliation.rst`.

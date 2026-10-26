@@ -1,0 +1,4 @@
+feature_id,bec_zone,bec_subzone,planted_species1,natural_species1,hw_si,cw_si,fd_si,hm_si
+21000,CWH,vh,Cw,,8.0,8.0,8.0,5.0
+21001,CWH,vh,Hw,,9.2,9.2,9.2,5.2
+21002,MH,mm,Hm,,6.3,6.3,6.3,6.3

@@ -11,10 +11,11 @@ Start Here If...
 
 Use this page first if you are trying to:
 
-- load the public SIBEC 2013 workbook into a tidy table;
+- load the public SIBEC 2013 workbook and 2014 addendum into a tidy table;
 - read VRI ``SITE_INDEX``/``EST_SITE_INDEX``;
 - read VDYP primary-layer site index;
-- run or extend the ``femic.site-index.reconciliation.v1`` report; or
+- run or extend the ``femic.site-index.reconciliation.v2`` report;
+- report the AU-level TSA SI separately; or
 - understand why VRI and VDYP values are suppressed when species differ.
 
 Typical Usage
@@ -25,18 +26,23 @@ Typical Usage
    from pathlib import Path
    from femic.site_index import (
        aggregate_sibec_by_bgc_unit,
+       combine_sibec_tables,
+       load_sibec_addendum,
        load_sibec_table,
        load_vdyp_site_index,
        load_vri_site_index,
        reconcile_site_index,
+       select_sibec_source,
        summarize_reconciliation,
    )
 
    vri = load_vri_site_index(Path("data/vri_vclr1p_checkpoint8.feather"))
    vdyp = load_vdyp_site_index(Path("data/vdyp_lyr-tsa46.feather"))
-   sibec = aggregate_sibec_by_bgc_unit(
-       load_sibec_table(Path("data/sibec2013approx_final.xlsx"))
+   sibec_table = combine_sibec_tables(
+       load_sibec_table(Path("data/sibec2013approx_final.xlsx")),
+       load_sibec_addendum(Path("data/2013sisuaddendum_jul2014.xlsx")),
    )
+   sibec = select_sibec_source(aggregate_sibec_by_bgc_unit(sibec_table))
    frame = reconcile_site_index(vri, vdyp, sibec, delta_threshold=2.0)
    summary = summarize_reconciliation(frame, delta_threshold=2.0)
 
@@ -44,10 +50,19 @@ Key Entry Surfaces
 ------------------
 
 - :func:`femic.site_index.sibec.load_sibec_table`
-  Load the public workbook or a CSV into ``femic.sibec.v1``.
+  Load the public workbook or a CSV into ``femic.sibec.v2``.
+- :func:`femic.site_index.sibec.load_sibec_addendum`
+  Load the 2014 addendum and preserve ``source_table``.
+- :func:`femic.site_index.sibec.combine_sibec_tables`
+  Concatenate SIBEC sources without collapsing their provenance.
 - :func:`femic.site_index.sibec.aggregate_sibec_by_bgc_unit`
-  Aggregate site-series rows to BEC unit + species with mean, range, plot
-  count, and standard error.
+  Aggregate site-series rows by source, BEC unit, and species.
+- :func:`femic.site_index.sibec.select_sibec_source`
+  Choose one explicit source per key with the addendum-first preference.
+- :func:`femic.site_index.au.load_au_site_index`
+  Read ``03_input`` at the analysis-unit/species grain.
+- :func:`femic.site_index.au.summarize_au_site_index`
+  Summarize the AU-level report without joining it to polygons.
 - :func:`femic.site_index.vri.load_vri_site_index`
   Select VRI site-index fields and build BEC/species keys.
 - :func:`femic.site_index.vdyp.load_vdyp_site_index`
@@ -72,6 +87,10 @@ Cross-References
    :show-inheritance:
 
 .. automodule:: femic.site_index.sibec
+   :members:
+   :show-inheritance:
+
+.. automodule:: femic.site_index.au
    :members:
    :show-inheritance:
 

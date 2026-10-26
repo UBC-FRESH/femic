@@ -1,6 +1,43 @@
 # Change Log
 
 ## 2026-10-26
+- P119.2: merged the public SIBEC 2014 addendum into the tidy SIBEC contract
+  with explicit `source_table` provenance (`femic.sibec.v2`). The 2013
+  approximation and 2014 addendum remain distinguishable; the addendum is
+  preferred for duplicate BEC-unit/species keys and the selected source is
+  carried into `femic.site-index.reconciliation.v2` as
+  `si_sibec_vri_source` / `si_sibec_vdyp_source`. Added the separate
+  `femic.site-index.au.v1` reader and summary for AU-level TSA `03_input` data.
+  TSA46 pilot: 148 addendum-selected polygon rows; 21 AUs and 462 AU/species
+  rows; the polygon and AU reports remain separate. Added addendum,
+  source-selection, AU-reader, and CLI tests; contract/guide/API/roadmap docs.
+  No curve, AAC, THLB, or schedule changes.
+
+```bash
+PYTHONPATH=src python -m pytest tests/test_site_index.py -q
+# 15 passed
+
+python -m ruff check src/femic/site_index tests/test_site_index.py
+# All checks passed!
+
+PYTHONPATH=src python -m mypy src/femic/site_index
+# Success: no issues found
+
+PYTHONPATH=src python -m sphinx -b html docs _build/html -W
+# build succeeded
+
+PYTHONPATH=src python -m femic.site_index \
+  --vri external/femic-tsa46-instance/data/vri_vclr1p_checkpoint8.feather \
+  --vdyp external/femic-tsa46-instance/data/vdyp_lyr-tsa46.feather \
+  --sibec data/sibec2013approx_final.xlsx \
+  --sibec-addendum data/2013sisuaddendum_jul2014.xlsx \
+  --au-input external/femic-tsa46-instance/data/03_input-tsa46.csv \
+  --out-csv out/tsa46_si_reconciliation.csv \
+  --out-json out/tsa46_si_summary.json \
+  --out-au-csv out/tsa46_au_site_index.csv \
+  --out-au-json out/tsa46_au_summary.json
+# 148 addendum-selected polygon rows; 21 AUs and 462 AU/species rows
+```
 - P119.1: added `femic.site_index` and the
   `femic.site-index.reconciliation.v1` report. It loads the public SIBEC 2013
   approximation, reads VRI `SITE_INDEX`/`EST_SITE_INDEX`, reads VDYP
