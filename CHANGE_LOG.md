@@ -15862,3 +15862,18 @@
   geometry was inferred. The DEM edge gap, current gauge, culverts, hydrologist
   review, and WS4 crosswalk remain blockers.
 - Added three offline tests; no bulk data committed and no flood model run.
+
+## 2026-10-26 - P118.7 Chapman DEM mosaic (#403)
+
+- Added `scripts/build_chapman_dem_mosaic.py`, clipping the native 1 m DEM to
+  the Chapman watershed and recording coverage, nodata normalization, size, and
+  SHA-256.
+- Built `runtime/p118_chapman/dem_mosaic_3157_cgvd2013.tif` from 90 selected
+  tiles: 114,396,884 bytes, SHA-256
+  `68e9e891dfc41856de8d2db07f659e017cf89cd03b3feb439aff6f1865d0eba0`,
+  horizontal EPSG:3157.
+- 81 tiles are CGVD2013 compound; 9 older 2D tiles lack vertical metadata, so
+  vertical status is mixed/unresolved.
+- Valid area inside the watershed is 4,985.9 ha, with a 1,931.2 ha unfilled
+  gap. This is the real valid-pixel gap, larger than the P118.4 bbox estimate.
+- Added five offline tests; no bulk data committed and no flood model run.
