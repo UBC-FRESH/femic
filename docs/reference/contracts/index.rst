@@ -54,3 +54,4 @@ Contract Pages
    disturbance-contract
    efi-model-card
    efi-application
+   site-index-reconciliation

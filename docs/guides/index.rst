@@ -36,6 +36,7 @@ export modules.
    lidar-instance-integration
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
+   site-index-reconciliation
    document-figure-recovery
    freshforge-provider-integration
    tsr-thlb-reconstruction-ladder
