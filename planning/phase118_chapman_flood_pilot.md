@@ -137,3 +137,38 @@ a comparison.
 
 This does not remove the Chapman data gaps. The pilot still needs the public
 FWA/DRA/receptor/gauge layers, a reviewed crosswalk, and hydrologist review.
+
+## P118.3 public-layer acquisition
+
+The acquisition script `scripts/acquire_chapman_public.py` writes bulk public
+GeoJSON to the ignored `runtime/p118_chapman/` directory and records provenance
+there. No bulk public data is tracked.
+
+Real acquisition on 2026-10-26:
+
+| Layer | Features | Bytes | CRS | BBOX (EPSG:3005) |
+| --- | ---: | ---: | --- | --- |
+| FWA watersheds (`900-127577%`) | 288 | 1,677,590 | EPSG:3005 | 1164341.6, 494054.6, 1176347.2, 513103.7 |
+| FWA streams | 24 | 269,441 | EPSG:3005 | 1163230.3, 493177.2, 1171265.6, 501297.7 |
+| DRA roads | 492 | 741,287 | EPSG:3005 | 1162907.8, 492863.4, 1171239.9, 501087.5 |
+| WSC gauges | 3 | 1,334 | EPSG:4326 | -123.7206, 49.4419, -123.7108, 49.4822 |
+
+The watershed code-prefix union is **6,917.1 ha**, versus the WSC record's
+**6,450 ha** drainage area (about 7% larger). The union is the correct starting
+boundary, but the difference must be reviewed before it is treated as the gauge
+catchment. The local watershed polygon is not the catchment.
+
+The DRA layer contains road sections, not a culvert or road-stream crossing
+inventory. The WSC stations are historical and discontinuous. The DEM, receptor,
+current public gauge series, culvert inventory, reviewed crosswalk, and
+hydrologist review remain gaps.
+
+Reproduce:
+
+```shell
+python scripts/acquire_chapman_public.py \
+  --output-root runtime/p118_chapman --timeout 120
+```
+
+Offline tests mock the HTTP responses; the public run above is the provenance
+evidence.

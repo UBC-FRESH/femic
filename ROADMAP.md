@@ -4088,6 +4088,12 @@ Tasks:
   - [x] Add warning and bootstrap coverage.
   - [x] Update validation tests for the Squamish remediation.
   - [x] Update docs, roadmap, and changelog.
+- [x] P118.3 Acquire Chapman Creek public domain layers and provenance (`#389`).
+  - [x] Add acquisition script with source URLs and dry-run.
+  - [x] Fetch and checksum FWA watershed/stream, DRA road, and WSC gauge layers.
+  - [x] Write provenance and explicit gaps.
+  - [x] Add offline tests for queries, outputs, checksums, and gaps.
+  - [x] Update planning, roadmap, and changelog.
 
 Acceptance: the audit has source provenance; gauge discontinuities and missing
 damage/review inputs are explicit; no response surface or flood claim is made;
