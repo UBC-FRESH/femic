@@ -19,6 +19,9 @@ Branch: `feature/p115-forest-carbon`
   production TSA24 baseline, and cross-repo handoff to WS4 #357.
 - **P115.6** — CBM4 status, engine-adapter boundary, version-pin policy, and platform
   watchlist.
+- **Cross-repo follow-up** — the public TIPSY fertilization curve and emissions
+  audit are consumed by the merged WS4 runtime (`UBC-FRESH/ws4#441`), including
+  the 10-year curve recovery transition and `fertilization.*` accounts.
 
 ## 2. Evidence
 
@@ -38,10 +41,6 @@ Branch: `feature/p115-forest-carbon`
 
 - Multi-boundary carbon packages for TSA 08, 16, 40, 41 and the small overlaps in
   TSA 24, 29, 46, 47.
-- Fertilization runtime wiring: the public TIPSY response table,
-  `femic.carbon.fertilized_curve`, and `femic carbon fertilization-audit` are
-  implemented; the remaining step is to feed those curves/accounts into the compiled
-  dataset, optimizer ledger, and report.
 - Species-resolved curves for S/Sx, SB, and the Douglas-fir group.
 - Intensity-specific `ct` matrix and MPB severity input.
 - Full 536k-fragment TSA24 carbon-aware search (baseline runtime limit).
@@ -49,5 +48,6 @@ Branch: `feature/p115-forest-carbon`
 
 ## 4. Closeout
 
-All P115 child tasks are complete. The branch is pushed and the phase PR is queued.
-Merge, branch deletion, and parent #361 closure wait for maintainer approval.
+All P115 child tasks are complete. PR #394 merged as `30b1444`; the phase branch
+was deleted. Parent #361 is ready to close. The WS4 runtime fertilization follow-up
+merged separately as `UBC-FRESH/ws4#441` and does not leave FEMIC-side runtime code.

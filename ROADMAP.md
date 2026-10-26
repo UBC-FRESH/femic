@@ -3989,9 +3989,9 @@ Detailed plan: `planning/phase114_forest_hydrology_flood_risk.md`.
 
 ## Phase 115: Forest carbon domain, CBM packages, and GCBM export (`#361`)
 
-Status: **pr-open**
+Status: **complete** (merged in PR #394 as `30b1444`; WS4 runtime fertilization follows in `UBC-FRESH/ws4#441`).
 
-Branch: `feature/p115-forest-carbon`
+Branch: `feature/p115-forest-carbon` (merged and deleted).
 
 Goal: give FEMIC a reviewed, versioned carbon domain and make it the producer of the static CBM
 input packages that WS4 and WS3 consume, plus a GCBM walltowall export bridge.

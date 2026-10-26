@@ -16094,3 +16094,20 @@
   DEM/reference data are not usable for a hydrologic stream product.
 - 31 terrain/hydrography tests passed. No new terrain script was added and no
   flood model was run.
+
+## 2026-10-26 - P115 merged: forest carbon domain, CBM packages, and GCBM export (#394)
+
+- Merged PR #394 as `30b1444`; parent #361 is complete and the phase branch is
+  merged and deleted.
+- Delivered the carbon-domain contract and corrected crosswalks, the static CBM
+  package exporter, TSA24/MKRF configs and validation, the GCBM walltowall
+  export bridge, the TSA24 v2 package handoff, and CBM4 adapter readiness.
+- TSA24 v2 package: `femic-carbon-24-d7a5dc27910f`, 108 tracks, 6,016,466.4 ha,
+  3,348 yield rows; WS4 fingerprint `153f0060...`.
+- WS3/WS4 pools and flux on the clipped fixture remain exact (`max_abs = 0.0`).
+- The public TIPSY fertilization curve and emissions audit are consumed by the
+  merged WS4 runtime (`UBC-FRESH/ws4#441`), including the 10-year curve recovery
+  transition and the `fertilization.*` accounts.
+- Deferred work remains recorded in `notes/reports/p115-closeout.md`:
+  multi-boundary packages, species-resolved curves, intensity-specific `ct`,
+  MPB severity input, full TSA24 search, and same-landscape GCBM comparison.
