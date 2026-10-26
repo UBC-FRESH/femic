@@ -16127,3 +16127,19 @@
   not a pooled record, and not a flood map. Current/govened gauge data,
   diversion review, and hydrologist review are required.
 - Added three offline tests; no bulk data or flood model was added.
+
+## 2026-10-26 - P118.11 close P118 as data-blocked (#413)
+
+- Wrote `planning/phase118_closeout.md` and set P118 to **closed —
+  data-blocked**.
+- Summary: public audit, layer acquisition, DEM metadata/mosaic, FEMIC-native
+  terrain/stream audit, and historical WSC gauge backcast are complete. No
+  current flood baseline, response surface, flood map, or regulatory claim was
+  produced.
+- Key blockers: 67.1% of valid DEM pixels have unknown vertical datum, 1,931.2
+  ha coverage gap, no reviewed receptor, no current/govened gauge series, no
+  culvert inventory, no reviewed crosswalk, and no hydrologist review.
+- Historical gauge result: sequential records 1960–2003; 100-year GEV/LP3
+  445.7/336.0 (08GA046), 106.1/105.6 (08GA060), 93.6/95.7 (08GA078) m3/s;
+  historical screening only.
+- No flood model or claim was produced.

@@ -4116,7 +4116,7 @@ Detailed plan: `planning/phase117_efi_attributes.md`.
 
 ## Phase 118: Chapman Creek Flood Pilot (`#383`)
 
-Status: **active** (public-data audit; no flood model).
+Status: **closed — data-blocked** (public-data audit and historical gauge backcast only; no flood model).
 
 Branch: `feature/p118-flood-pilot`
 
@@ -4184,6 +4184,11 @@ Tasks:
   - [x] Run the existing FEMIC gauge backcast/frequency functions.
   - [x] Record the record-defensibility decision.
   - [x] Add tests and update the plan/changelog.
+- [x] P118.11 Close P118 as data-blocked and hand off requirements (`#413`).
+  - [x] Write the close-out report/decision note.
+  - [x] Record the exact unblock inputs.
+  - [x] Set the phase to closed/data-blocked and update the plan.
+  - [x] Close the parent with the handoff.
 
 Acceptance: the audit has source provenance; gauge discontinuities and missing
 damage/review inputs are explicit; no response surface or flood claim is made;
