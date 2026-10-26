@@ -4106,6 +4106,12 @@ Tasks:
   - [x] Define receptor and crosswalk evidence requirements.
   - [x] Write the plan JSON and planning note.
   - [x] Update roadmap and changelog.
+- [x] P118.6 Resolve LidarBC DEM CRS and audit receptor evidence (`#401`).
+  - [x] Add a DEM metadata audit script and typed result.
+  - [x] Resolve horizontal/vertical CRS and audit selected tiles.
+  - [x] Record receptor candidate/evidence and review status.
+  - [x] Add offline tests and update the domain plan.
+  - [x] Update roadmap and changelog.
 
 Acceptance: the audit has source provenance; gauge discontinuities and missing
 damage/review inputs are explicit; no response surface or flood claim is made;
