@@ -26,6 +26,7 @@ export modules.
    hydrology-process-models
    hydrology-surrogate-models
    hydrology-response-bundles
+   hydrology-validation-closeout
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery

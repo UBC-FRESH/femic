@@ -1659,3 +1659,19 @@ Build and inspect versioned forest-hydrology response bundles.
 artifacts without rewriting them, writes relative paths and SHA-256 checksums,
 and emits ``manifest.json``. ``hydrology inspect`` validates the manifest and
 verifies local artifact sizes and checksums; it exits non-zero on failure.
+
+``hydrology pilot`` options
+
+- ``--gauges PATH`` (required pilot gauge metadata JSON)
+- ``--annual-maxima PATH`` (required pilot annual-maxima CSV)
+- ``--output-dir PATH`` (required closeout output directory)
+- ``--domain-manifest PATH`` (optional readiness-audit domain)
+- ``--disturbance-ledger PATH`` (optional readiness-audit ledger)
+- ``--process-model-available`` (record an available process model)
+- ``--hydrologist-review-recorded`` (record a completed review)
+- ``--bootstrap-samples INT`` (default: ``200``)
+- ``--seed INT`` (default: ``42``)
+- ``--generated-utc TEXT`` (override timestamp)
+
+``hydrology pilot`` writes ``pilot_run.json``, ``validation_report.json``, and
+``model_card.json`` and reports the full-pilot readiness and data-gap count.

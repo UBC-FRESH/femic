@@ -1,6 +1,6 @@
 # Forest Hydrology And Flood-Risk Optimization Expansion
 
-Status: active (2026-10-25)
+Status: complete (2026-10-26)
 Branch: `feature/p114-forest-hydrology-flood-risk`
 Parent issue: `#351`
 Scope: FEMIC producer layer, WS4 spatial scheduling, FHOPS operations
@@ -247,7 +247,7 @@ Solution strategy:
 6. P114.6 Process-model adapters and scenario manifests (`#357`).
 7. P114.7 Surrogate training, validation, and applicability domain (`#358`).
 8. P114.8 Versioned hydrologic response and flood-risk bundles (`#359`). Complete.
-9. P114.9 Benchmark, bounded pilot, and phase closeout (`#360`).
+9. P114.9 Benchmark, bounded pilot, and phase closeout (`#360`). Complete with documented gaps.
 
 ### WS4 P49: Flood-risk-aware spatial scheduling
 
@@ -305,14 +305,18 @@ rain/rain-on-snow coastal watershed before any provincial generalization.
 
 ## Current Edge
 
-FEMIC P114 is active. P114.1 (`#352`) through P114.8 (`#359`) are complete: the
-domain/receptor contract, public source registry, bundle manifest,
+FEMIC P114 is complete. P114.1 (`#352`) through P114.9 (`#360`) are delivered:
+the domain/receptor contract, public source registry, bundle manifest,
 licence/checksum validation, annual disturbance ledger, Tier 0 screening,
 stochastic flood-frequency/response surfaces, DHSVM/SUMMA process-model
-adapters, bounded surrogates, and versioned response/flood-risk bundles are in
-place. The response bundle records deterministic identity, artifact SHA-256
-checksums, provenance, applicability and uncertainty metadata, and the
-WS4/FHOPS consumer read order. Next is P114.9 (`#360`): benchmark, bounded
-public pilot, and phase closeout. Do not create the WS4 P49 or FHOPS P14
-implementation issues until P114.9 declares the FEMIC response contract
-stable.
+adapters, bounded surrogates, versioned response/flood-risk bundles, and the
+P114.9 validation/closeout layer are in place.
+
+P114.9 ran a bounded three-gauge public WSC backcast (rain, rain-on-snow, and
+snow-transient), rejected an unstable Squamish GEV tail, cataloged five
+published directional benchmarks as not evaluated without paired treatment
+data, audited the missing full-pilot inputs, and wrote a validation report and
+provisional model card. The handoff is screening-only and conditional on
+hydrologist review and a completed process-model pilot. WS4 P49 and FHOPS P14
+may now start against the pinned response contract; they must carry the
+model-card conditions forward.

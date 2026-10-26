@@ -104,6 +104,7 @@ For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/hydrology-process-models.rst`
 - `docs/reference/contracts/hydrology-surrogate-models.rst`
 - `docs/reference/contracts/hydrology-response-bundles.rst`
+- `docs/reference/contracts/hydrology-validation-closeout.rst`
 
 ## Patchworks Model Semantics Guardrails
 

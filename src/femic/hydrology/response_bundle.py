@@ -23,6 +23,11 @@ from femic.hydrology.flood import (
 )
 from femic.hydrology.screening import HYDROLOGY_SCREENING_SCHEMA_VERSION
 from femic.hydrology.surrogate import HYDROLOGY_SURROGATE_MODEL_SCHEMA_VERSION
+from femic.hydrology.validation import (
+    HYDROLOGY_MODEL_CARD_SCHEMA_VERSION,
+    HYDROLOGY_PILOT_RUN_SCHEMA_VERSION,
+    HYDROLOGY_VALIDATION_SCHEMA_VERSION,
+)
 
 HYDROLOGY_RESPONSE_SCHEMA_VERSION = "femic.hydrology.response.v1"
 HYDROLOGY_FLOOD_RISK_SCHEMA_VERSION = "femic.hydrology.flood_risk.v1"
@@ -47,6 +52,9 @@ HYDROLOGY_RESPONSE_ARTIFACT_ROLES: tuple[str, ...] = (
     "domain",
     "disturbance_ledger",
     "benchmark_check",
+    "validation_report",
+    "model_card",
+    "pilot_run",
 )
 ROLE_SCHEMAS: dict[str, str] = {
     "response_surface": HYDROLOGY_FLOOD_RESPONSE_SCHEMA_VERSION,
@@ -56,6 +64,9 @@ ROLE_SCHEMAS: dict[str, str] = {
     "tier0_screening": HYDROLOGY_SCREENING_SCHEMA_VERSION,
     "domain": "femic.hydrology.domain.v1",
     "disturbance_ledger": "femic.hydrology.disturbance.v1",
+    "validation_report": HYDROLOGY_VALIDATION_SCHEMA_VERSION,
+    "model_card": HYDROLOGY_MODEL_CARD_SCHEMA_VERSION,
+    "pilot_run": HYDROLOGY_PILOT_RUN_SCHEMA_VERSION,
 }
 
 

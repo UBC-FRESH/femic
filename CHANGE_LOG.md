@@ -15362,3 +15362,50 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   hydrology modules.
+
+## 2026-10-26 - P114.9 validation, public pilot, and phase closeout (#360)
+
+- Added `femic.hydrology.validation` with the
+  `femic.hydrology.validation.v1`, `femic.hydrology.pilot.v1`, and
+  `femic.hydrology.model_card.v1` contracts.
+- Added a reviewed published-benchmark catalogue covering snow-transient,
+  rain, rain-on-snow, snowmelt, frequency-dependence, and paired-control
+  directional expectations, with citations and order-of-magnitude tolerances.
+- Added a bounded public Water Survey of Canada pilot using derived annual
+  maximum daily discharge for Carnation Creek (`08HB048`, rain), Coldwater
+  River (`08LG048`, snow-transient), and Squamish River (`08GA022`,
+  rain-on-snow). The fixture retains only annual maxima, dates, symbols, gauge
+  metadata, licence, and source URLs under the Open Government Licence -
+  Canada.
+- Added GEV/LP3 backcasts, bootstrap intervals, missing-year and source-symbol
+  flags, split-sample stability checks, and a 100-year tail-plausibility screen.
+- The Squamish GEV fit failed the tail screen (shape about -5.68 and a
+  non-physical 100-year tail). The fit is retained for audit but excluded from
+  usable fits; LP3 remains usable. This is recorded as a P114.5 fit-stability
+  finding, not hidden.
+- Added full-pilot readiness auditing for domain/LiDAR/stream/road layers,
+  disturbance ledger, receptor, process model, and hydrologist review.
+- Added validation-report and provisional model-card generation with
+  deterministic IDs, deviations, uncertainty, review checklist, and the
+  WS4/FHOPS conditional handoff.
+- Added `python -m femic hydrology pilot` and extended response bundles with
+  optional `validation_report`, `model_card`, and `pilot_run` artifact roles.
+- Added the closeout guide, technical contract, API/generated pages, CLI
+  reference, roadmap/planning updates, and the public pilot fixture README.
+- Verification:
+  - `pytest tests/test_hydrology_validation.py` passed (13 tests).
+  - 85% branch coverage for `femic.hydrology.validation`.
+  - All 125 hydrology domain/bundle/disturbance/screening/flood/process/
+    surrogate/response-bundle/validation tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 63 passed; 3 pre-existing submodule/data failures.
+- The full two-watershed process-model pilot, paired baseline/treatment
+  benchmark execution, downstream receptor/damage-curve work, and hydrologist
+  review were not completed. These are recorded as explicit conditions in the
+  validation report and model card. No regulatory status is claimed.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.

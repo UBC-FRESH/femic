@@ -72,6 +72,7 @@ GUIDE_PAGES = [
     "hydrology-process-models",
     "hydrology-surrogate-models",
     "hydrology-response-bundles",
+    "hydrology-validation-closeout",
     "bc-data-catalogue-discovery",
     "tsr-intelligence-workflow",
     "freshforge-provider-integration",
@@ -110,6 +111,7 @@ CONTRACT_PAGES = [
     "hydrology-process-models",
     "hydrology-surrogate-models",
     "hydrology-response-bundles",
+    "hydrology-validation-closeout",
 ]
 
 NOTEBOOKS = [
@@ -1853,6 +1855,18 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "Consumer Handshake",
             "Cross-References",
         ],
+        "hydrology-validation-closeout": [
+            "Purpose",
+            "Quick Contract",
+            "Pilot Input Contract",
+            "Gauge Backcast Contract",
+            "Published Benchmark Contract",
+            "Model Card Contract",
+            "Validation Report Contract",
+            "WS4/FHOPS Handoff",
+            "Deviations, Gaps, And Review",
+            "Cross-References",
+        ],
     }
     required_markers = {
         "repo-runtime-invariants": [
@@ -1983,6 +1997,21 @@ def test_reference_contract_pages_keep_required_sections_and_markers() -> None:
             "not a regulatory flood map",
             "No private",
         ],
+        "hydrology-validation-closeout": [
+            "femic.hydrology.validation.v1",
+            "femic.hydrology.pilot.v1",
+            "femic.hydrology.model_card.v1",
+            "femic.hydrology.benchmark_evidence.2026-10",
+            "Water Survey of Canada",
+            "Open Government Licence - Canada",
+            "tail check",
+            "not_evaluated",
+            "not_reviewed",
+            "WS4 P49",
+            "FHOPS P14",
+            "not a regulatory flood map",
+            "No private",
+        ],
     }
 
     for slug in CONTRACT_PAGES:
@@ -2083,6 +2112,53 @@ def test_hydrology_response_bundle_guide_and_api_page_keep_required_contract() -
         assert snippet in api_text
     modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
     assert "femic-hydrology-response-bundle" in modules_text
+
+
+def test_hydrology_validation_guide_and_api_page_keep_required_contract() -> None:
+    guide_text = (GUIDES_ROOT / "hydrology-validation-closeout.rst").read_text(
+        encoding="utf-8"
+    )
+    for heading in (
+        "Purpose",
+        "What Was Validated",
+        "Public Gauge Pilot",
+        "Tail Plausibility Failure",
+        "Published Benchmark Review",
+        "Pilot Readiness And Data Gaps",
+        "Uncertainty And Deviations",
+        "Model Card",
+        "WS4/FHOPS Handoff",
+        "Closeout Statement",
+        "See Also",
+    ):
+        assert heading in guide_text
+    for snippet in (
+        "femic.hydrology.validation.v1",
+        "femic.hydrology.pilot.v1",
+        "femic.hydrology.model_card.v1",
+        "08HB048",
+        "08LG048",
+        "08GA022",
+        "not_evaluated",
+        "not_reviewed",
+        "not a regulatory flood map",
+    ):
+        assert snippet in guide_text
+
+    api_text = (API_ROOT / "femic-hydrology-validation.rst").read_text(
+        encoding="utf-8"
+    )
+    for snippet in (
+        "femic.hydrology.validation",
+        "run_public_gauge_pilot",
+        "build_p1149_closeout",
+        "assess_return_period_ratios",
+        "generated/femic.hydrology.validation",
+        "hydrology-validation-closeout",
+    ):
+        assert snippet in api_text
+    modules_text = (API_ROOT / "modules.rst").read_text(encoding="utf-8")
+    assert "femic-hydrology-validation" in modules_text
 
 
 def test_hydrology_process_model_guide_and_api_page_keep_required_contract() -> None:

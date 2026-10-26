@@ -21,7 +21,7 @@ Quick Contract
   ``disturbance_ledger``.
 - Optional roles: ``surrogate_model``, ``surrogate_validation``,
   ``frequency_fit``, ``frequency_pairing``, ``tier0_screening``,
-  ``benchmark_check``.
+  ``benchmark_check``, ``validation_report``, ``model_card``, ``pilot_run``.
 - Every artifact records schema, media type, size, and SHA-256.
 - Consumers pin ``bundle_id`` and ``bundle_version`` and verify checksums.
 - Tracked fixtures must use public or synthetic data only. No private,
@@ -66,6 +66,15 @@ Artifact schema expectations:
 
 ``disturbance_ledger``
    ``femic.hydrology.disturbance.v1``
+
+``validation_report``
+   ``femic.hydrology.validation.v1``
+
+``model_card``
+   ``femic.hydrology.model_card.v1``
+
+``pilot_run``
+   ``femic.hydrology.pilot.v1``
 
 ``surrogate_validation``, ``frequency_pairing``, and ``benchmark_check`` are
 opaque JSON artifacts at this layer and must record their own caveats.
@@ -153,6 +162,8 @@ Recommended read order:
    artifacts/surrogate_model/*.json
    artifacts/domain/*.json
    artifacts/disturbance_ledger/*.json
+   artifacts/validation_report/*.json
+   artifacts/model_card/*.json
 
 Cross-References
 ----------------

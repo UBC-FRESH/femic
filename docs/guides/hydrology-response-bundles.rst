@@ -12,7 +12,8 @@ A response bundle contains:
 
 - a return-period response surface;
 - a receptor-level flood-risk table;
-- optional surrogate model, validation, frequency, and screening artifacts;
+- optional surrogate model, validation, frequency, screening, pilot, and
+  model-card artifacts;
 - the hydrology domain and disturbance-ledger provenance digests; and
 - a manifest with deterministic identity, checksums, applicability domain,
   uncertainty, caveats, and a consumer contract.
@@ -42,6 +43,9 @@ Bundle Layout
        domain/domain.json
        disturbance_ledger/disturbance.json
        benchmark_check/benchmark.json
+       validation_report/validation_report.json
+       model_card/model_card.json
+       pilot_run/pilot_run.json
      provenance/
        response_plan.json
 
@@ -181,6 +185,8 @@ Recommended read order:
    artifacts/surrogate_model/*.json
    artifacts/domain/*.json
    artifacts/disturbance_ledger/*.json
+   artifacts/validation_report/*.json
+   artifacts/model_card/*.json
 
 WS4 P49 consumes the response surface and flood-risk table as landscape-level
 schedule constraints and screening objectives. FHOPS P14 consumes the same

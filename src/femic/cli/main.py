@@ -10609,6 +10609,104 @@ def hydrology_inspect(
         raise typer.Exit(code=1)
 
 
+@hydrology_app.command("pilot")
+def hydrology_pilot(
+    gauges_path: Path = typer.Option(
+        ...,
+        "--gauges",
+        help="Pilot gauge metadata JSON.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    annual_maxima_path: Path = typer.Option(
+        ...,
+        "--annual-maxima",
+        help="Pilot annual-maxima CSV.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    output_dir: Path = typer.Option(
+        ...,
+        "--output-dir",
+        help="Directory for pilot_run.json, validation_report.json, and model_card.json.",
+    ),
+    domain_manifest_path: Path | None = typer.Option(
+        None,
+        "--domain-manifest",
+        help="Optional public hydrology domain manifest for readiness auditing.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    disturbance_ledger_path: Path | None = typer.Option(
+        None,
+        "--disturbance-ledger",
+        help="Optional disturbance ledger for readiness auditing.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    process_model_available: bool = typer.Option(
+        False,
+        "--process-model-available",
+        help="Record that an executable process model is available.",
+    ),
+    hydrologist_review_recorded: bool = typer.Option(
+        False,
+        "--hydrologist-review-recorded",
+        help="Record that a hydrologist review has been completed.",
+    ),
+    bootstrap_samples: int = typer.Option(
+        200,
+        "--bootstrap-samples",
+        min=0,
+        help="Bootstrap samples for frequency intervals.",
+    ),
+    seed: int = typer.Option(42, "--seed", help="Deterministic bootstrap seed."),
+    generated_utc: str | None = typer.Option(
+        None,
+        "--generated-utc",
+        help="Override the generated timestamp for reproducible fixtures.",
+    ),
+) -> None:
+    """Run the bounded public-gauge pilot and write P114.9 closeout records."""
+
+    from femic.hydrology.validation import (
+        HydrologyValidationError,
+        build_p1149_closeout,
+    )
+
+    try:
+        result = build_p1149_closeout(
+            gauges_path=gauges_path,
+            annual_maxima_path=annual_maxima_path,
+            output_dir=output_dir,
+            domain_manifest_path=domain_manifest_path,
+            disturbance_ledger_path=disturbance_ledger_path,
+            process_model_available=process_model_available,
+            hydrologist_review_recorded=hydrologist_review_recorded,
+            bootstrap_samples=bootstrap_samples,
+            seed=seed,
+            generated_utc=generated_utc,
+        )
+    except HydrologyValidationError as exc:
+        console.print(f"[red]Hydrology pilot failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"pilot_run: {result.pilot_path}")
+    console.print(f"validation_report: {result.validation_path}")
+    console.print(f"model_card: {result.model_card_path}")
+    console.print(f"pilot_run_id: {result.pilot_run.run_id}")
+    console.print(f"validation_id: {result.validation_report.validation_id}")
+    console.print(
+        f"full_process_pilot_ready: "
+        f"{result.validation_report.readiness.ready_for_full_process_pilot}"
+    )
+    console.print(f"data_gaps: {len(result.validation_report.readiness.gaps)}")
+
+
 app.add_typer(hydrology_app, name="hydrology")
 app.add_typer(prep_app, name="prep")
 app.add_typer(vdyp_app, name="vdyp")

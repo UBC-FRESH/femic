@@ -3353,8 +3353,9 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     with size/SHA-256 checks. `femic.hydrology.bundle` defines the
     `femic.hydrology.bundle.v1` manifest, deterministic bundle identity,
     licence/checksum validation, gap planning, and local layer audit. The
-    fixture bundle covers all six domain layers; the bounded public pilot
-    acquisition remains optional in P114.9. P114.3 (`#354`) is complete:
+    fixture bundle covers all six domain layers. P114.9 used a bounded public
+    gauge pilot; a full public LiDAR/domain acquisition remains follow-up work.
+    P114.3 (`#354`) is complete:
     `femic.hydrology.disturbance` defines the
     `femic.hydrology.disturbance.v1` annual unit/year ledger, harvest/retention
     accounting, road build/use/maintain/decommission state, conservation
@@ -3378,9 +3379,14 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
     `femic.hydrology.response_plan.v1` contracts, deterministic bundle
     identity, SHA-256 artifact checksums, applicability/uncertainty metadata,
     consumer pinning, build/audit/CLI entry points, and the bounded response
-    fixture. Next is P114.9 (`#360`) benchmark, pilot, and phase closeout. WS4
-    P49 and FHOPS P14 stay uncreated until the response contract is declared
-    stable.
+    fixture. P114.9 (`#360`) is complete: `femic.hydrology.validation` runs a
+    bounded three-gauge public WSC backcast (rain, rain-on-snow, and
+    snow-transient), records a GEV tail-plausibility rejection for the Squamish
+    gauge, catalogs five published directional benchmarks, audits full-pilot
+    data gaps, and writes the validation report and provisional model card.
+    The phase closes with a conditional screening-only handoff; WS4 P49 and
+    FHOPS P14 may now start against the pinned response contract, subject to
+    the model-card conditions and hydrologist review.
   - `P106` / `#288` is complete and merged: parent PR `#289`, parent issue
     `#288`, MKRF PR `UBC-FRESH/femic-mkrf-instance#51`, and MKRF issue
     `UBC-FRESH/femic-mkrf-instance#50` are closed. MKRF is the second
@@ -3905,7 +3911,7 @@ Detailed plan: `planning/phase113_wbi_aoi_model_build.md`.
 
 ## Phase 114: Forest Hydrology And Flood-Risk Optimization (`#351`)
 
-Status: **active** (2026-10-25).
+Status: **complete** (2026-10-26).
 
 Branch: `feature/p114-forest-hydrology-flood-risk`
 
@@ -3936,9 +3942,9 @@ Tasks:
   - [x] P114.1c Implement domain manifest build/load/validate and local audit.
   - [x] P114.1d Add tests and the domain contract page.
 - [x] P114.2 Assemble the public hydrology data bundle (`#353`).
-  - Fixture bundle, licence/checksum audit, and gap plan are complete. The
-    bounded public pilot acquisition remains an optional integration run in
-    P114.9.
+  - Fixture bundle, licence/checksum audit, and gap plan are complete. P114.9
+    used a bounded public gauge pilot; a full public LiDAR/domain acquisition
+    remains follow-up work.
 - [x] P114.3 Build the harvest/road/retention disturbance ledger (`#354`).
 - [x] P114.4 Add Tier 0 screening metrics and caveats (`#355`).
 - [x] P114.5 Add stochastic flood-frequency response surfaces (`#356`).
@@ -3951,6 +3957,12 @@ Tasks:
     bounded fixture are complete. Consumer pinning is documented for WS4 P49
     and FHOPS P14; those implementation phases remain intentionally uncreated.
 
-- [ ] P114.9 Benchmark, pilot, and close out P114 (`#360`).
+- [x] P114.9 Benchmark, pilot, and close out P114 (`#360`).
+  - Three-gauge public WSC backcast, tail and split-sample checks, five
+    published directional benchmark reviews, readiness/data-gap audit,
+    validation report, provisional model card, closeout guide/contract/API,
+    and the conditional WS4/FHOPS handoff are complete. The full
+    process-model/treatment pilot and hydrologist review remain explicit
+    follow-up conditions, not claimed completions.
 
 Detailed plan: `planning/phase114_forest_hydrology_flood_risk.md`.
