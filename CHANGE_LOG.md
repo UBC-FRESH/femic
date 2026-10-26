@@ -15824,3 +15824,15 @@
   - `pytest tests/test_chapman_domain_audit.py` passed (4 tests).
   - `ruff check` and `mypy` passed for the script and test.
   - Real audit wrote `runtime/p118_chapman/domain_audit.json`.
+
+## 2026-10-26 - P118.5 Chapman domain assembly plan (#397)
+
+- Added `planning/chapman_domain_plan.json` and a planning-note section.
+- Proposed EPSG:32610 (native UTM10) as the domain CRS to avoid resampling the
+  1 m DEM; FWA/DRA/WSC vectors would be reprojected with documentation.
+- Marked the vertical datum unresolved: all selected DEM/DSM tiles have
+  `vertical_datum=null`, so the domain is blocked.
+- Recorded the 288-part watershed dissolve, 08GA046 match within 0.2%, 126.6 ha
+  DEM edge gap, missing receptor, missing current gauge, missing culvert
+  inventory, missing hydrologist review, and missing WS4 crosswalk.
+- No bulk data was committed and no flood model or claim was produced.

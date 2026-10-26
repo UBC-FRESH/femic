@@ -195,3 +195,31 @@ must record the native projection and the vertical-datum decision.
 
 The receptor, current public gauge, culvert inventory, hydrologist review, and
 reviewed WS4 crosswalk remain gaps. No flood model or screen was run.
+
+## P118.5 domain assembly decisions
+
+The machine-readable plan is `planning/chapman_domain_plan.json`. It is marked
+**blocked**, not ready.
+
+- **Proposed CRS:** EPSG:32610 (UTM zone 10N), because every selected LidarBC
+  DEM/DSM tile is native 1 m UTM10. FWA/DRA/WSC vectors would be reprojected
+  from EPSG:3005/EPSG:4326 with a documented transformation. Using EPSG:3005
+  instead would require resampling the DEM. This is proposed, pending
+  geospatial review.
+- **Vertical datum:** unresolved. Every selected DEM/DSM tile has
+  `vertical_datum=null`. The domain is blocked until LidarBC metadata or a
+  reviewed local control check resolves it.
+- **Watershed:** dissolve the 288 FWA parts into one polygon. The 6,917.1 ha
+  union matches 08GA046 (6,902 ha) within 0.2%; the ~861 ha local polygon is not
+  the catchment. 08GA060/08GA078 are smaller diversion stations.
+- **DEM:** 90 tiles cover 6,790.5 ha with a 126.6 ha edge gap. Do not download
+  or mosaic until the vertical-datum decision is resolved.
+- **Receptor:** missing. Candidate is the Chapman Creek water-system intake/WTP;
+  a reviewed point/geometry and capacity or damage assumption are required.
+- **Crosswalk:** missing. Required fields are one of `fragment_id`/`block_id`,
+  plus `unit_id`, `watershed_id`, `receptor_id`, `source`, and `review_status`.
+  No watershed inference from block centroids.
+
+Other blockers: no current public/govened gauge series, no culvert inventory, no
+hydrologist review, and no reviewed WS4 crosswalk. No flood model or claim was
+produced.

@@ -4100,6 +4100,12 @@ Tasks:
   - [x] Audit LidarBC product coverage and metadata gaps.
   - [x] Add offline tests and write the planning note.
   - [x] Update roadmap and changelog.
+- [x] P118.5 Define the Chapman domain assembly and blocked decisions (`#397`).
+  - [x] Record the native-CRS/vertical-datum decision and blockers.
+  - [x] Define layer assembly and clipping rules.
+  - [x] Define receptor and crosswalk evidence requirements.
+  - [x] Write the plan JSON and planning note.
+  - [x] Update roadmap and changelog.
 
 Acceptance: the audit has source provenance; gauge discontinuities and missing
 damage/review inputs are explicit; no response surface or flood claim is made;
