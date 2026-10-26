@@ -145,6 +145,8 @@ def test_fit_gev_and_lp3() -> None:
     assert gev.to_dict()["parameters"]["shape_scipy"] == pytest.approx(
         gev.parameters["shape_scipy"]
     )
+    assert gev.parameters["fit_strategy"] == "mle"
+    assert gev.parameters["shape_bounds"] == [-0.5, 0.5]
 
     rng = np.random.default_rng(7)
     lp3_values = 10 ** rng.normal(2.0, 0.25, 100)
@@ -347,3 +349,51 @@ def test_frequency_report_writer(tmp_path: Path) -> None:
     assert payload["schema_version"] == "femic.hydrology.flood_frequency.v1"
     assert payload["method"] == "gev"
     assert len(payload["quantiles"]) == len(fit.return_periods)
+
+
+def test_gev_unstable_shape_uses_constrained_fallback() -> None:
+    values = np.array(
+        [
+            297.6,
+            121.71,
+            169.29,
+            133.83,
+            279.61,
+            251.68,
+            191.2,
+            61.47,
+            151.53,
+            195.09,
+            221.76,
+            115.91,
+            307.6,
+            87.52,
+            113.91,
+            215.73,
+            151.35,
+            330.62,
+            160.04,
+            115.21,
+            127.61,
+            95.92,
+            89.03,
+            190.98,
+            187.25,
+            249.09,
+            109.74,
+            291.68,
+            132.3,
+            2741.43,
+        ]
+    )
+    fit = fit_flood_frequency(
+        _sample(values),
+        return_periods=(2.0, 100.0),
+        bootstrap_samples=10,
+        seed=1,
+    )
+
+    assert fit.parameters["fit_strategy"] == "constrained"
+    assert -0.5 <= float(fit.parameters["shape_scipy"]) <= 0.5
+    assert math.isfinite(fit.quantiles[-1])
+    assert any("constrained" in warning for warning in fit.warnings)

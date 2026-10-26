@@ -4076,13 +4076,18 @@ pilot, not a GNN North Island result and not a regulatory flood map.
 
 Tasks:
 
-- [ ] P118.1 Audit Chapman Creek public data and define the bounded pilot
+- [x] P118.1 Audit Chapman Creek public data and define the bounded pilot
   domain (`#384`).
   - [x] Record candidate and broad audit bbox.
   - [x] Audit LidarBC coverage.
   - [x] Audit historical WSC and current SCRD gauge evidence.
   - [x] Record FWA/roads source requirements and the Chapman receptor.
   - [x] Record 2021 flood evidence and all missing inputs.
+- [x] P118.2 Constrain GEV tails and record the fit strategy (`#386`).
+  - [x] Add shape-bounded GEV helper and fit strategy metadata.
+  - [x] Add warning and bootstrap coverage.
+  - [x] Update validation tests for the Squamish remediation.
+  - [x] Update docs, roadmap, and changelog.
 
 Acceptance: the audit has source provenance; gauge discontinuities and missing
 damage/review inputs are explicit; no response surface or flood claim is made;

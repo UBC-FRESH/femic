@@ -15765,3 +15765,23 @@
 - Recorded missing FWA/DRA/receptor layers, current gauge series, damage/capacity
   curve, reviewed crosswalk, and hydrologist review.
 - No flood response surface, WS4 screen, or regulatory claim was made.
+
+## 2026-10-26 - P118.2 constrained GEV tails (#386)
+
+- Added a bounded-shape GEV fallback to the stationary frequency fit. The
+  unconstrained MLE is retained when its shape is inside `[-0.5, 0.5]`;
+  otherwise a shape-bounded MLE is used and `fit_strategy="constrained"` plus a
+  warning is recorded. Bootstrap fits use the same fallback.
+- Recorded `shape_bounds` and `fit_strategy` on every GEV fit.
+- The P114.9 Squamish GEV now returns a finite constrained tail and is usable
+  under the tail screen; LP3 remains available. The historical rejection and
+  the new remediation are both documented.
+- Added a synthetic unstable-sample regression and updated the validation
+  expectations.
+- Verification:
+  - `pytest tests/test_hydrology_flood.py tests/test_hydrology_validation.py`
+    passed (24 tests).
+  - `mypy src/femic/hydrology` passed.
+  - Sphinx `-W` passed.
+- No Chapman Creek data acquisition, response surface, or regulatory claim was
+  added.
