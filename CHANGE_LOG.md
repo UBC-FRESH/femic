@@ -16,7 +16,8 @@
   `model_in_domain` / `model_domain_reasons` to CSV, Parquet, or Feather
   attribute tables. Domain policies: `flag`, `drop`, `require`.
 - Added published-card, pipeline, Parquet, domain-policy, and CLI tests; docs
-  and roadmap updates. No curve or AAC changes.
+  and roadmap updates. No curve or AAC changes. Merged #418 (`69af694`);
+  parent #369 closed.
 
 ```bash
 PYTHONPATH=src python -m pytest \

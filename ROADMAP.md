@@ -4039,7 +4039,7 @@ Detailed plan: `planning/phase115_forest_carbon.md`.
 
 ## Phase 116: Shared Environmental Contracts (`#369`)
 
-Status: **complete** (P116.1-P116.3 complete).
+Status: **complete** (P116.1-P116.3 complete; P116.3 merged #418 as `69af694`).
 
 Branch: `feature/p116-shared-contracts`; split PRs:
 `feature/p116.1-climate-contract`, `feature/p116.2-disturbance-contract`,
