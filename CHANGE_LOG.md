@@ -11,6 +11,7 @@
   triple coverage, and 25,643 are flagged at the 2.0 m threshold. The 2014
   SIBEC addendum and AU-level TSA SI reconciliation remain follow-ups. Added
   contract, guide, API, roadmap, and focused tests; no curve or AAC changes.
+  Merged #396 (`2a02fac`); P119.2 is #399.
 - P117.1: added `femic.efi.application` with the
   `femic.efi.coefficients.v1` contract, linear prediction, applicability
   checks, domain flagging/dropping, and a bias/RMSE/MAE/R-squared backtest.
