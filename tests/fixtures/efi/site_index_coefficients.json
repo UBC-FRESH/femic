@@ -1,0 +1,12 @@
+{
+  "schema_version": "femic.efi.coefficients.v1",
+  "model_id": "als-site-index-cwh-v1",
+  "model_version": "0.1.0-pilot",
+  "attribute": "site_index",
+  "unit": "m",
+  "intercept": 5.0,
+  "coefficients": {
+    "chm_p95": 0.7,
+    "canopy_cover_2m": -5.0
+  }
+}

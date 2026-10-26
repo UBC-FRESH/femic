@@ -96,6 +96,12 @@ For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/instance-and-data-roots.rst`
 - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
 - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+- `docs/reference/contracts/lidar-source-and-tile-index.rst`
+- `docs/reference/contracts/lidar-materialization.rst`
+- `docs/reference/contracts/lidar-terrain-products.rst`
+- `docs/reference/contracts/lidar-stream-candidates.rst`
+- `docs/reference/contracts/lidar-canopy-products.rst`
+- `docs/reference/contracts/lidar-product-bundle.rst`
 - `docs/reference/contracts/hydrology-domain.rst`
 - `docs/reference/contracts/hydrology-data-bundle.rst`
 - `docs/reference/contracts/hydrology-disturbance-ledger.rst`

@@ -27,6 +27,13 @@ export modules.
    hydrology-surrogate-models
    hydrology-response-bundles
    hydrology-validation-closeout
+   lidar-data-products
+   lidar-materialization
+   lidar-terrain-products
+   lidar-stream-candidates
+   lidar-canopy-products
+   lidar-product-bundles
+   lidar-instance-integration
    bc-data-catalogue-discovery
    tsr-intelligence-workflow
    document-figure-recovery

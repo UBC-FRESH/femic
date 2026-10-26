@@ -42,3 +42,14 @@ Contract Pages
    hydrology-surrogate-models
    hydrology-response-bundles
    hydrology-validation-closeout
+   lidar-source-and-tile-index
+   lidar-materialization
+   lidar-terrain-products
+   lidar-stream-candidates
+   lidar-canopy-products
+   lidar-product-bundle
+   climate-contract
+   climate-consumer
+   disturbance-contract
+   efi-model-card
+   efi-application

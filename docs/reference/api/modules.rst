@@ -55,13 +55,22 @@ Current curated pages in this section include ``femic.instance_context``,
 ``femic.bcdc_catalog``,
 ``femic.bcdc_fetch``,
 ``femic.bcdc_dwds``,
+``femic.lidar.canopy``,
+``femic.lidar.catalog``,
+``femic.lidar.hydrography``,
+``femic.lidar.trees``,
+``femic.lidar.materialization``,
+``femic.lidar.terrain``,
+``femic.lidar.products``,
 ``femic.document_figures``,
 ``femic.freshforge``,
 ``femic.freshforge_materialization``,
 ``femic.tsr_catalog``,
 ``femic.geospatial_preflight``,
-``femic.pipeline.bundle``, ``femic.pipeline.legacy_runtime``, and
-``femic.pipeline.manifest``.
+``femic.pipeline.bundle``, ``femic.pipeline.legacy_runtime``,
+``femic.pipeline.manifest``, ``femic.contracts.climate``,
+``femic.contracts.climate_na``, ``femic.climate.consumer``, ``femic.contracts.disturbance``, ``femic.contracts.efi``, and
+``femic.efi.application``.
 
 .. toctree::
    :maxdepth: 1
@@ -80,6 +89,13 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-bcdc-catalog
    femic-bcdc-fetch
    femic-bcdc-dwds
+   femic-lidar
+   femic-lidar-canopy
+   femic-lidar-hydrography
+   femic-lidar-trees
+   femic-lidar-materialization
+   femic-lidar-terrain
+   femic-lidar-products
    femic-document-figures
    femic-freshforge
    femic-freshforge-materialization
@@ -88,6 +104,12 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-pipeline-bundle
    femic-pipeline-legacy-runtime
    femic-pipeline-manifest
+   femic-contracts-climate
+   femic-contracts-climate-na
+   femic-climate-consumer
+   femic-contracts-disturbance
+   femic-contracts-efi
+   femic-efi-application
 
 Curated rebuild and release modules
 -----------------------------------

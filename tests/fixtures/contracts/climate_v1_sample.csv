@@ -1,0 +1,5 @@
+schema_version,aoi_id,variable,unit,year,scenario,gcm,value,variance,source_id,source_version,downscaling_method,retrieved_utc,notes
+femic.climate.v1,north-island,tavg,degC,2020,historical,synthetic-ensemble,8.4,0.12,contract-fixture,1.0,none,2026-10-25T00:00:00+00:00,Synthetic contract fixture; not an observed value.
+femic.climate.v1,north-island,tavg,degC,2050,ssp245,synthetic-ensemble,10.1,0.35,contract-fixture,1.0,none,2026-10-25T00:00:00+00:00,Synthetic mid-century value.
+femic.climate.v1,north-island,ppt,mm,2050,ssp245,synthetic-ensemble,1420.0,8100.0,contract-fixture,1.0,none,2026-10-25T00:00:00+00:00,Synthetic annual precipitation.
+femic.climate.v1,north-island,tmin,degC,2050,ssp245,synthetic-ensemble,4.2,0.08,contract-fixture,1.0,none,2026-10-25T00:00:00+00:00,Synthetic cold-month minimum.

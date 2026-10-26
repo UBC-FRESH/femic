@@ -1,0 +1,287 @@
+{
+  "bundle_id": "lidarbc-995fb1f771f4d7fe",
+  "ws4": {
+    "branch": "feature/p52-lidar-products",
+    "commit": "8f4feb0",
+    "rows": {
+      "slope": [
+        {
+          "polygon_id": "23339490",
+          "product": "slope",
+          "valid_pixels": 54289,
+          "statistics": {
+            "mean": 18.09368479755365,
+            "p95": 45.099568176269514
+          }
+        },
+        {
+          "polygon_id": "23339461",
+          "product": "slope",
+          "valid_pixels": 22372,
+          "statistics": {
+            "mean": 51.546346954573075,
+            "p95": 146.55247268676757
+          }
+        },
+        {
+          "polygon_id": "23339462",
+          "product": "slope",
+          "valid_pixels": 52232,
+          "statistics": {
+            "mean": 19.69319749321132,
+            "p95": 43.81108722686767
+          }
+        },
+        {
+          "polygon_id": "23339458",
+          "product": "slope",
+          "valid_pixels": 731180,
+          "statistics": {
+            "mean": 22.585566321885047,
+            "p95": 49.08007545471189
+          }
+        },
+        {
+          "polygon_id": "16625195",
+          "product": "slope",
+          "valid_pixels": 61279,
+          "statistics": {
+            "mean": 40.468577112718805,
+            "p95": 156.18781433105468
+          }
+        },
+        {
+          "polygon_id": "16624698",
+          "product": "slope",
+          "valid_pixels": 66306,
+          "statistics": {
+            "mean": 22.00791136516685,
+            "p95": 43.11737537384033
+          }
+        },
+        {
+          "polygon_id": "19212607",
+          "product": "slope",
+          "valid_pixels": 12342,
+          "statistics": {
+            "mean": 27.323783959068745,
+            "p95": 68.29227828979488
+          }
+        }
+      ],
+      "chm": [
+        {
+          "polygon_id": "23339490",
+          "product": "chm",
+          "valid_pixels": 54289,
+          "statistics": {
+            "mean": 10.65011212912247,
+            "p95": 20.908148193359374
+          }
+        },
+        {
+          "polygon_id": "23339461",
+          "product": "chm",
+          "valid_pixels": 22372,
+          "statistics": {
+            "mean": 19.1968649030904,
+            "p95": 37.102053070068365
+          }
+        },
+        {
+          "polygon_id": "23339462",
+          "product": "chm",
+          "valid_pixels": 52232,
+          "statistics": {
+            "mean": 1.0822378980344753,
+            "p95": 8.235550689697256
+          }
+        },
+        {
+          "polygon_id": "23339458",
+          "product": "chm",
+          "valid_pixels": 731180,
+          "statistics": {
+            "mean": 8.70222810879686,
+            "p95": 20.48614807128906
+          }
+        },
+        {
+          "polygon_id": "16625195",
+          "product": "chm",
+          "valid_pixels": 61279,
+          "statistics": {
+            "mean": 13.97379255928985,
+            "p95": 27.064649963378905
+          }
+        },
+        {
+          "polygon_id": "16624698",
+          "product": "chm",
+          "valid_pixels": 66306,
+          "statistics": {
+            "mean": 1.9925869743888656,
+            "p95": 16.3475341796875
+          }
+        },
+        {
+          "polygon_id": "19212607",
+          "product": "chm",
+          "valid_pixels": 12342,
+          "statistics": {
+            "mean": 16.535895914298134,
+            "p95": 30.026400756835933
+          }
+        }
+      ]
+    }
+  },
+  "fhops": {
+    "branch": "feature/phase14-lidar-products",
+    "commit": "8b6adb6c",
+    "rows": {
+      "slope": [
+        {
+          "polygon_id": "23339490",
+          "product": "slope",
+          "valid_pixels": 54289,
+          "statistics": {
+            "mean": 18.09368479755365,
+            "p95": 45.099568176269514
+          }
+        },
+        {
+          "polygon_id": "23339461",
+          "product": "slope",
+          "valid_pixels": 22372,
+          "statistics": {
+            "mean": 51.546346954573075,
+            "p95": 146.55247268676757
+          }
+        },
+        {
+          "polygon_id": "23339462",
+          "product": "slope",
+          "valid_pixels": 52232,
+          "statistics": {
+            "mean": 19.69319749321132,
+            "p95": 43.81108722686767
+          }
+        },
+        {
+          "polygon_id": "23339458",
+          "product": "slope",
+          "valid_pixels": 731180,
+          "statistics": {
+            "mean": 22.585566321885047,
+            "p95": 49.08007545471189
+          }
+        },
+        {
+          "polygon_id": "16625195",
+          "product": "slope",
+          "valid_pixels": 61279,
+          "statistics": {
+            "mean": 40.468577112718805,
+            "p95": 156.18781433105468
+          }
+        },
+        {
+          "polygon_id": "16624698",
+          "product": "slope",
+          "valid_pixels": 66306,
+          "statistics": {
+            "mean": 22.00791136516685,
+            "p95": 43.11737537384033
+          }
+        },
+        {
+          "polygon_id": "19212607",
+          "product": "slope",
+          "valid_pixels": 12342,
+          "statistics": {
+            "mean": 27.323783959068745,
+            "p95": 68.29227828979488
+          }
+        }
+      ],
+      "chm": [
+        {
+          "polygon_id": "23339490",
+          "product": "chm",
+          "valid_pixels": 54289,
+          "statistics": {
+            "mean": 10.65011212912247,
+            "p95": 20.908148193359374
+          }
+        },
+        {
+          "polygon_id": "23339461",
+          "product": "chm",
+          "valid_pixels": 22372,
+          "statistics": {
+            "mean": 19.1968649030904,
+            "p95": 37.102053070068365
+          }
+        },
+        {
+          "polygon_id": "23339462",
+          "product": "chm",
+          "valid_pixels": 52232,
+          "statistics": {
+            "mean": 1.0822378980344753,
+            "p95": 8.235550689697256
+          }
+        },
+        {
+          "polygon_id": "23339458",
+          "product": "chm",
+          "valid_pixels": 731180,
+          "statistics": {
+            "mean": 8.70222810879686,
+            "p95": 20.48614807128906
+          }
+        },
+        {
+          "polygon_id": "16625195",
+          "product": "chm",
+          "valid_pixels": 61279,
+          "statistics": {
+            "mean": 13.97379255928985,
+            "p95": 27.064649963378905
+          }
+        },
+        {
+          "polygon_id": "16624698",
+          "product": "chm",
+          "valid_pixels": 66306,
+          "statistics": {
+            "mean": 1.9925869743888656,
+            "p95": 16.3475341796875
+          }
+        },
+        {
+          "polygon_id": "19212607",
+          "product": "chm",
+          "valid_pixels": 12342,
+          "statistics": {
+            "mean": 16.535895914298134,
+            "p95": 30.026400756835933
+          }
+        }
+      ]
+    }
+  },
+  "max_abs_difference": 0.0,
+  "products": [
+    "slope",
+    "chm"
+  ],
+  "statistics": [
+    "mean",
+    "p95"
+  ],
+  "polygon_count": 7,
+  "tolerance": 1e-09,
+  "passed": true
+}

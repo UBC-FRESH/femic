@@ -1,0 +1,145 @@
+{
+  "pilot_id": "p79_6_tfl6_lidarbc",
+  "generated_utc": "2026-10-25T20:48:35.193008+00:00",
+  "aoi_bbox_epsg3005": [
+    881700.0,
+    627500.0,
+    882700.0,
+    628500.0
+  ],
+  "aoi_area_ha": 100.0,
+  "lidarbc": {
+    "tile_count": 2,
+    "materialized_tile_count": 3,
+    "tile_ids": [
+      "lidarbc:5:76205",
+      "lidarbc:5:77294"
+    ],
+    "slope": {
+      "path": "runtime/dem/p79_6_lidarbc_pilot/processed/lidarbc_slope_pct_1m.tif",
+      "resolution_m": 1.0,
+      "valid_pixels": 1000000,
+      "valid_area_ha": 100.0,
+      "mean_pct": 23.954573052235297,
+      "median_pct": 19.461365699768066,
+      "p90_pct": 41.98050804138183,
+      "max_pct": 681.3916625976562,
+      "prop_ge_60": 0.039498,
+      "prop_ge_70": 0.028779,
+      "prop_ge_80": 0.022912,
+      "prop_ge_90": 0.018857,
+      "steep70_area_ha": 2.8779
+    },
+    "step220_aoi_rule": {
+      "rule": "proportion_ge_70pct_ge_0.75",
+      "passes": false,
+      "proportion_ge_70pct": 0.028779
+    }
+  },
+  "cded": {
+    "source_archive": "https://pub.data.gov.bc.ca/datasets/175624/92L/092l12_e.dem.zip",
+    "native_crs": "EPSG:4269",
+    "comparison_grid": "EPSG:3005, 25 m",
+    "slope": {
+      "path": "runtime/dem/p79_6_lidarbc_pilot/processed/cded_slope_pct_25m.tif",
+      "resolution_m": 25.0,
+      "valid_pixels": 1600,
+      "valid_area_ha": 100.0,
+      "mean_pct": 15.766916140913963,
+      "median_pct": 15.026601791381836,
+      "p90_pct": 24.755167770385746,
+      "max_pct": 36.1596565246582,
+      "prop_ge_60": 0.0,
+      "prop_ge_70": 0.0,
+      "prop_ge_80": 0.0,
+      "prop_ge_90": 0.0,
+      "steep70_area_ha": 0.0
+    },
+    "step220_aoi_rule": {
+      "rule": "proportion_ge_70pct_ge_0.75",
+      "passes": false,
+      "proportion_ge_70pct": 0.0
+    }
+  },
+  "delta": {
+    "median_slope_pct_lidar_minus_cded": 4.4347639083862305,
+    "mean_slope_pct_lidar_minus_cded": 8.187656911321334,
+    "steep70_area_ha_lidar_minus_cded": 2.8779,
+    "median_ratio_lidar_over_cded": 1.2951275324890614
+  },
+  "streams": {
+    "primary_accumulation_threshold": 20000,
+    "candidate_cells": 5231,
+    "candidate_area_ha": 0.5231,
+    "comparison": {
+      "candidate_cells": 5231,
+      "reference_cells": 1001,
+      "true_positive": 27,
+      "false_positive": 5204,
+      "false_negative": 974,
+      "precision": 0.005161536991015102,
+      "recall": 0.026973026973026972,
+      "f1": 0.008664955070603338,
+      "jaccard": 0.004351329572925061,
+      "candidate_area_ha": 0.5231,
+      "reference_area_ha": 0.10010000000000001,
+      "overlap_area_ha": 0.0027
+    },
+    "manifest": "runtime/dem/p79_6_lidarbc_pilot/streams_t20000/stream_candidates_manifest.json",
+    "review": "runtime/dem/p79_6_lidarbc_pilot/streams_t20000/stream_candidates_review.md",
+    "sensitivity": [
+      {
+        "threshold": 5000,
+        "candidate_cells": 11816,
+        "candidate_area_ha": 1.1816,
+        "precision": 0.0025389302640487473,
+        "recall": 0.029970029970029972,
+        "f1": 0.0046812826714519775,
+        "jaccard": 0.0023461327911159773
+      },
+      {
+        "threshold": 20000,
+        "candidate_cells": 5231,
+        "candidate_area_ha": 0.5231,
+        "precision": 0.005161536991015102,
+        "recall": 0.026973026973026972,
+        "f1": 0.008664955070603338,
+        "jaccard": 0.004351329572925061
+      },
+      {
+        "threshold": 50000,
+        "candidate_cells": 3343,
+        "candidate_area_ha": 0.3343,
+        "precision": 0.007777445408315884,
+        "recall": 0.025974025974025976,
+        "f1": 0.011970534069981584,
+        "jaccard": 0.006021306160259379
+      },
+      {
+        "threshold": 100000,
+        "candidate_cells": 1866,
+        "candidate_area_ha": 0.1866,
+        "precision": 0.006966773847802787,
+        "recall": 0.012987012987012988,
+        "f1": 0.009068712940355774,
+        "jaccard": 0.004555010511562719
+      }
+    ],
+    "reference": "data/source/tfl_6/hydrology/fwa_stream_networks_tfl6.gpkg"
+  },
+  "runtime_sec": {
+    "script_total": 63.304,
+    "cli_materialization_observed": 7.18
+  },
+  "storage": {
+    "materialized_total_bytes": 62910425,
+    "materialized_layer5_bytes": 13537108,
+    "processed_dem_and_slope_bytes": 6828384
+  },
+  "caveats": [
+    "LidarBC is 1 m native DEM; CDED is a coarse 1:250,000 product reprojected to 25 m for comparison.",
+    "The AOI is a 1 km x 1 km bounded pilot, not a TFL 6-wide replacement.",
+    "The TFL 6 Phase 9D Step 220 rule is applied at AOI level here, not at fragment level.",
+    "Stream candidates are screening-only and require FWA/field review."
+  ]
+}

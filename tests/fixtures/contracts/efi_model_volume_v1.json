@@ -1,0 +1,38 @@
+{
+  "schema_version": "femic.efi.model.v1",
+  "model_id": "als-volume-cwh-v1",
+  "model_version": "2.1.0",
+  "attribute": "volume",
+  "unit": "m3_ha",
+  "predictors": ["chm_p95", "chm_mean", "canopy_cover_10m"],
+  "training": {
+    "source_id": "tsa-fixture",
+    "source_version": "2025.4",
+    "region": "CWH",
+    "plot_count": 300,
+    "species": ["Fd", "Hw"],
+    "period": "2015-2024",
+    "notes": "Synthetic model card for contract testing."
+  },
+  "validation": {
+    "design": "cross-validation",
+    "n": 75,
+    "rmse": 42.0,
+    "bias": 1.5,
+    "unit": "m3_ha",
+    "r2": 0.71,
+    "notes": "Synthetic validation evidence."
+  },
+  "applicability": {
+    "regions": ["CWH"],
+    "species": ["Fd", "Hw"],
+    "age_min": 30,
+    "age_max": 150,
+    "height_min": 10.0,
+    "height_max": 70.0,
+    "notes": "Do not apply to mixedwoods outside the calibrated species."
+  },
+  "licence_id": "OGL-BC",
+  "created_utc": "2026-10-25T00:00:00+00:00",
+  "notes": "Synthetic contract fixture; not a published model."
+}
