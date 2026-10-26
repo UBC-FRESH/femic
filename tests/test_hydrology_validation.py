@@ -89,10 +89,11 @@ def test_public_gauge_pilot_fits_and_split_sample() -> None:
     assert mountain.gauge.regime == "rain_on_snow"
     assert mountain.year_count == 71
     assert "lp3" in mountain.usable_fits
-    assert "gev" not in mountain.usable_fits
-    assert any("tail check failed" in warning for warning in mountain.warnings)
+    assert "gev" in mountain.usable_fits
+    assert not any("tail check failed" in warning for warning in mountain.warnings)
+    assert mountain.fits["gev"].parameters["fit_strategy"] == "constrained"
     assert mountain.split_sample is not None
-    assert not mountain.split_sample.usable
+    assert mountain.split_sample.usable
 
 
 def test_pilot_requires_known_station() -> None:
@@ -220,7 +221,7 @@ def test_validation_report_and_model_card_are_deterministic() -> None:
     assert report.model_card_id == card.model_card_id
     assert report.summary["gauge_count"] == 3
     assert report.summary["benchmark_not_evaluated"] == len(published_benchmarks())
-    assert report.summary["tail_check_failures"] == {"08GA022": ["gev"]}
+    assert report.summary["tail_check_failures"] == {}
     assert report.readiness.gaps
     assert any("not a regulatory flood map" in caveat for caveat in report.caveats)
     assert card.model_card_id == second_card.model_card_id

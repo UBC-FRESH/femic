@@ -71,6 +71,13 @@ Stationary Fits
 Return periods use annual-maximum non-exceedance probability ``1 - 1/T``.
 Bootstrap intervals are percentile intervals.
 
+The stationary GEV uses an unconstrained maximum-likelihood fit when its shape
+is inside the screening bounds ``[-0.5, 0.5]``. If the unconstrained shape is
+outside those bounds, the fit falls back to a bounded-shape maximum-likelihood
+fit and records ``fit_strategy="constrained"`` plus a warning. Bootstrap fits
+use the same fallback. Inspect the strategy before using the tail; the bound is
+a screening guard, not a substitute for hydrologist review.
+
 Paired Response
 ---------------
 

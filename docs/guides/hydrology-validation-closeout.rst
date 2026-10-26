@@ -93,10 +93,14 @@ late split-sample GEV fits failed the same check, so the split-sample ratios are
 not usable.
 
 This is a P114.5 fit-stability finding, not a data-entry error. The LP3 fit for
-Squamish River remains plausible and is the only usable frequency fit for that
-gauge. A response bundle must not use a fit that fails the tail check, and a
-future Tier 1 implementation should add a constrained or robust GEV estimator
-rather than silently accepting the unconstrained tail.
+Squamish River remains plausible. A response bundle must not use a fit that
+fails the tail check.
+
+**P118.2 remediation:** the stationary GEV now falls back to a bounded shape
+``[-0.5, 0.5]`` and records ``fit_strategy="constrained"``. The Squamish GEV
+fit now returns a finite constrained tail and is usable under the same tail
+screen. The original finding remains the reason for the guard; the constrained
+strategy and warning must still be reviewed before operational use.
 
 Published Benchmark Review
 ---------------------------
