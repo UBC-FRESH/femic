@@ -15749,3 +15749,19 @@
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   hydrology modules.
 - 2026-10-26: P114 merged as `d0bf166` (PR #382). The hydrology producer is now on `main`; parent #351 and the remaining child issues are closed. The handoff remains screening-only and conditional on hydrologist review.
+
+## 2026-10-26 - P118.1 Chapman Creek flood-pilot audit (#384)
+
+- Opened the bounded Chapman Creek flood pilot (parent `#383`).
+- Recorded the Sunshine Coast candidate, broad audit bbox, and the distinction
+  from the GNN North Island AOI.
+- LidarBC discovery over the broad bbox returned 397 tiles: 90 DEM, 84 DSM, and
+  223 point-cloud tiles, acquisition year 2024, 1 m DEM/DSM; no DSM layer 2.
+- Recorded the discontinuous WSC record: 08GA046 (1962-1970), 08GA060
+  (1971-1988), 08GA078 (1993-2003). Current SCRD monitoring is operational but
+  is not a confirmed public daily series.
+- Recorded the Chapman water-system receptor and November 2021 atmospheric-river
+  damage/intake evidence.
+- Recorded missing FWA/DRA/receptor layers, current gauge series, damage/capacity
+  curve, reviewed crosswalk, and hydrologist review.
+- No flood response surface, WS4 screen, or regulatory claim was made.
