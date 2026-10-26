@@ -15,7 +15,7 @@ import itertools
 import json
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from importlib import import_module, metadata
 from pathlib import Path
@@ -151,6 +151,8 @@ class CarbonExportConfig:
         Maximum yield age.
     volume_feature_label : str
         WS4 feature label that carries merchantable volume.
+    ecozone_map : mapping of int to str
+        Public VRI ``CFS_ECOZONE`` code to CBM eco-boundary name.
     """
 
     admin_boundary: str
@@ -167,6 +169,7 @@ class CarbonExportConfig:
     age_interval: int = DEFAULT_AGE_INTERVAL
     max_age: int = DEFAULT_MAX_AGE
     volume_feature_label: str = DEFAULT_VOLUME_FEATURE_LABEL
+    ecozone_map: Mapping[int, str] = field(default_factory=dict)
     crosswalk_dir: Path | None = None
     review_status: str = "draft"
     reviewer: str = ""
@@ -218,6 +221,7 @@ def load_carbon_export_config(
     age_interval: int = DEFAULT_AGE_INTERVAL,
     max_age: int = DEFAULT_MAX_AGE,
     volume_feature_label: str = DEFAULT_VOLUME_FEATURE_LABEL,
+    ecozone_map: Mapping[int, str] | None = None,
     fallback_softwood: str | None = None,
     fallback_hardwood: str | None = None,
     fallback_wood_type: str | None = None,
@@ -247,6 +251,9 @@ def load_carbon_export_config(
         Maximum yield age. Defaults to 300.
     volume_feature_label : str, optional
         WS4 feature label for merchantable volume.
+    ecozone_map : mapping of int to str or None, optional
+        Public VRI ``CFS_ECOZONE`` code to CBM eco-boundary name. When omitted,
+        ``ecozone_map.bc.csv`` in ``config_dir`` is loaded if present.
     fallback_softwood : str or None, optional
         Explicit softwood fallback CBM species. Defaults to the ``UNK_SW`` row.
     fallback_hardwood : str or None, optional
@@ -277,6 +284,11 @@ def load_carbon_export_config(
     species = _load_species_map(root / "species_map.bc.csv")
     disturbances = _load_disturbance_map(root / "disturbance_map.bc.csv")
     land_classes = _load_land_classes(root / "land_class.bc.csv")
+    resolved_ecozone_map = (
+        dict(ecozone_map)
+        if ecozone_map is not None
+        else _load_ecozone_map(root / "ecozone_map.bc.csv")
+    )
     detected_version, detected_sha = _detect_cbm_defaults()
     version = cbm_defaults_version or detected_version
     sha256 = cbm_defaults_sha256 or detected_sha
@@ -303,6 +315,7 @@ def load_carbon_export_config(
         age_interval=age_interval,
         max_age=max_age,
         volume_feature_label=volume_feature_label,
+        ecozone_map=resolved_ecozone_map,
         crosswalk_dir=root.resolve(),
         review_status=review_status,
         reviewer=reviewer,
@@ -368,6 +381,18 @@ def build_carbon_package_tables(
             _track_name(int(str(row.au_id)), str(row.ifm), track_names)
             for row in normalized.itertuples(index=False)
         ]
+    if "eco_boundary" not in normalized.columns:
+        if "cfs_ecozone" in normalized.columns:
+            normalized["eco_boundary"] = normalized["cfs_ecozone"].map(
+                lambda value: _ecozone_name(value, config)
+            )
+        else:
+            normalized["eco_boundary"] = config.eco_boundary
+    else:
+        normalized["eco_boundary"] = normalized["eco_boundary"].astype(str).str.strip()
+        if (normalized["eco_boundary"] == "").any():
+            raise ValueError("carbon inventory has an empty eco_boundary")
+    track_eco = _track_boundaries(normalized)
 
     track_species: dict[str, SpeciesMapping] = {}
     track_shares: dict[str, tuple[float, float]] = {}
@@ -389,7 +414,13 @@ def build_carbon_package_tables(
 
     ys = _yield_tables(context, normalized, track_species, track_shares, config)
     classifiers = _classifier_table(normalized, track_species)
-    track_map = _track_map(normalized, track_species, track_shares, config)
+    track_map = _track_map(
+        normalized,
+        track_species,
+        track_shares,
+        track_eco,
+        config,
+    )
     return {
         "classifiers": classifiers,
         "disturbance_types": _disturbance_table(config),
@@ -399,14 +430,7 @@ def build_carbon_package_tables(
         "track_carbon_map": track_map,
         "curve_carbon_map": ys["curve_carbon_map"],
         "species_map": _species_table(config),
-        "boundaries": pd.DataFrame(
-            [
-                {
-                    "admin_boundary": config.admin_boundary,
-                    "eco_boundary": config.eco_boundary,
-                }
-            ]
-        ),
+        "boundaries": _boundaries_table(track_map, normalized, config),
     }
 
 
@@ -627,7 +651,10 @@ def export_carbon_package(
             ifm_threshold=ifm_threshold,
             ifm_target_managed_share=ifm_target_managed_share,
         )
-        inventory = areas.loc[:, ["au_id", "ifm", "age", "area_ha"]].copy()
+        inventory_columns = ["au_id", "ifm", "age", "area_ha"]
+        if "cfs_ecozone" in areas.columns:
+            inventory_columns.append("cfs_ecozone")
+        inventory = areas.loc[:, inventory_columns].copy()
     shares: dict[int, tuple[float, float]] = {}
     resolved_species_checkpoint = (
         Path(species_checkpoint_path)
@@ -784,6 +811,25 @@ def _load_land_classes(path: Path) -> dict[str, int]:
         str(row["ifm"]).strip().lower(): int(str(row["landclass"]))
         for row in frame.to_dict("records")
     }
+
+
+def _load_ecozone_map(path: Path) -> dict[int, str]:
+    """Load the public CFS ecozone to CBM eco-boundary map."""
+    if not path.is_file():
+        return {}
+    frame = pd.read_csv(path, dtype=str, keep_default_na=False)
+    required = {"cfs_ecozone", "eco_boundary"}
+    missing = sorted(required.difference(frame.columns))
+    if missing:
+        raise ValueError(f"{path} missing required columns: {missing}")
+    result: dict[int, str] = {}
+    for row in frame.to_dict("records"):
+        code = int(str(row["cfs_ecozone"]).strip())
+        name = str(row["eco_boundary"]).strip()
+        if not name:
+            raise ValueError(f"{path} has an empty eco_boundary for code {code}")
+        result[code] = name
+    return result
 
 
 def _fallback_species(species: Mapping[str, SpeciesMapping], wood_type: str) -> str:
@@ -998,10 +1044,64 @@ def _classifier_table(
     )
 
 
+def _ecozone_name(value: object, config: CarbonExportConfig) -> str:
+    """Resolve a public VRI ``CFS_ECOZONE`` code to a CBM eco-boundary name."""
+    try:
+        code = int(float(str(value)))
+    except (TypeError, ValueError):
+        raise ValueError(f"invalid CFS_ECOZONE value: {value!r}") from None
+    name = config.ecozone_map.get(code)
+    if name is None:
+        raise ValueError(
+            f"CFS_ECOZONE {code} is not in ecozone_map.bc.csv; add the public mapping"
+        )
+    return name
+
+
+def _track_boundaries(inventory: pd.DataFrame) -> dict[str, str]:
+    """Return the area-dominant eco boundary for every track."""
+    if "eco_boundary" not in inventory.columns:
+        return {}
+    result: dict[str, str] = {}
+    for track_name, block in inventory.groupby("track_name", sort=True):
+        areas = (
+            block.assign(
+                area_ha=pd.to_numeric(block["area_ha"], errors="coerce").fillna(0.0)
+            )
+            .groupby("eco_boundary", as_index=True)["area_ha"]
+            .sum()
+        )
+        if areas.empty:
+            continue
+        result[str(track_name)] = str(areas.idxmax())
+    return result
+
+
+def _boundaries_table(
+    track_map: pd.DataFrame,
+    inventory: pd.DataFrame,
+    config: CarbonExportConfig,
+) -> pd.DataFrame:
+    """Build the unique admin/eco boundary table from the track map and inventory."""
+    observed: set[str] = set()
+    if "eco_boundary" in track_map.columns:
+        observed.update(str(value).strip() for value in track_map["eco_boundary"].tolist())
+    if "eco_boundary" in inventory.columns:
+        observed.update(
+            str(value).strip() for value in inventory["eco_boundary"].tolist()
+        )
+    observed.discard("")
+    if not observed:
+        observed.add(config.eco_boundary)
+    rows = sorted((str(config.admin_boundary), eco) for eco in observed)
+    return pd.DataFrame(rows, columns=["admin_boundary", "eco_boundary"])
+
+
 def _track_map(
     inventory: pd.DataFrame,
     track_species: Mapping[str, SpeciesMapping],
     track_shares: Mapping[str, tuple[float, float]],
+    track_eco: Mapping[str, str],
     config: CarbonExportConfig,
 ) -> pd.DataFrame:
     """Build the track carbon map."""
@@ -1022,7 +1122,7 @@ def _track_map(
                 "last_disturbance": "CC"
                 if str(first["ifm"]).lower() == "managed"
                 else "fire",
-                "eco_boundary": config.eco_boundary,
+                "eco_boundary": track_eco.get(str(track_name), config.eco_boundary),
                 "volume_feature_label": config.volume_feature_label,
             }
         )
@@ -1086,29 +1186,30 @@ def _inventory_table(
     rows: list[dict[str, object]] = []
     for row in inventory.itertuples(index=False):
         ifm = str(row.ifm).strip().lower()
-        rows.append(
-            {
-                "track_name": str(row.track_name),
-                "age": int(str(row.age)),
-                "area_ha": float(str(row.area_ha)),
-                "delay": 0,
-                "landclass": _land_class_for_ifm(config, ifm),
-                "historic_disturbance": DEFAULT_HISTORIC_DISTURBANCE,
-                "last_pass_disturbance": "cc" if ifm == "managed" else "fire",
-            }
-        )
-    return pd.DataFrame(
-        rows,
-        columns=[
-            "track_name",
-            "age",
-            "area_ha",
-            "delay",
-            "landclass",
-            "historic_disturbance",
-            "last_pass_disturbance",
-        ],
-    )
+        values = {
+            "track_name": str(row.track_name),
+            "age": int(str(row.age)),
+            "area_ha": float(str(row.area_ha)),
+            "delay": 0,
+            "landclass": _land_class_for_ifm(config, ifm),
+            "historic_disturbance": DEFAULT_HISTORIC_DISTURBANCE,
+            "last_pass_disturbance": "cc" if ifm == "managed" else "fire",
+        }
+        if "eco_boundary" in inventory.columns:
+            values["eco_boundary"] = str(row.eco_boundary).strip()
+        rows.append(values)
+    columns = [
+        "track_name",
+        "age",
+        "area_ha",
+        "delay",
+        "landclass",
+        "historic_disturbance",
+        "last_pass_disturbance",
+    ]
+    if rows and "eco_boundary" in rows[0]:
+        columns.append("eco_boundary")
+    return pd.DataFrame(rows, columns=columns)
 
 
 def _species_table(config: CarbonExportConfig) -> pd.DataFrame:
@@ -1147,6 +1248,7 @@ def _crosswalk_sources(directory: Path | None) -> list[tuple[str, str]]:
     for name in (
         "species_map.bc.csv",
         "eco_boundary.bc.csv",
+        "ecozone_map.bc.csv",
         "disturbance_map.bc.csv",
         "land_class.bc.csv",
     ):
@@ -1182,5 +1284,10 @@ def _fingerprint(
     digest.update(b"\0")
     digest.update(config.eco_boundary.encode("utf-8"))
     digest.update(b"\0")
+    for code in sorted(config.ecozone_map):
+        digest.update(str(code).encode("ascii"))
+        digest.update(b"\0")
+        digest.update(config.ecozone_map[code].encode("utf-8"))
+        digest.update(b"\0")
     digest.update(config.cbm_defaults_sha256.encode("ascii"))
     return digest.hexdigest()

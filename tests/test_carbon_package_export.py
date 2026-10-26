@@ -110,6 +110,36 @@ def test_build_tables_has_all_contract_tables() -> None:
     )
 
 
+def test_build_tables_carries_multiple_boundaries() -> None:
+    """Track rows keep their area-dominant boundary and boundaries stay unique."""
+    inventory = _inventory().assign(
+        eco_boundary=["Montane Cordillera", "Pacific Maritime"]
+    )
+    tables = build_carbon_package_tables(
+        context=_context(), inventory=inventory, config=_config()
+    )
+
+    assert tables["track_carbon_map"].loc[0, "eco_boundary"] == "Montane Cordillera"
+    assert set(tables["boundaries"]["eco_boundary"]) == {
+        "Montane Cordillera",
+        "Pacific Maritime",
+    }
+
+
+def test_build_tables_maps_public_cfs_ecozone_codes() -> None:
+    """The public VRI CFS_ECOZONE code resolves through the BC map."""
+    inventory = _inventory().assign(cfs_ecozone=[13, 14])
+    tables = build_carbon_package_tables(
+        context=_context(), inventory=inventory, config=_config()
+    )
+
+    assert set(tables["boundaries"]["eco_boundary"]) == {
+        "Pacific Maritime",
+        "Montane Cordillera",
+    }
+    assert tables["track_carbon_map"].loc[0, "eco_boundary"] == "Pacific Maritime"
+
+
 def test_write_package_writes_manifest_and_hashes(tmp_path: Path) -> None:
     """The writer produces the manifest, tables, and table hashes."""
     tables = build_carbon_package_tables(

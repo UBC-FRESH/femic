@@ -230,7 +230,7 @@ def build_woodstock_areas_table(
         ages = (ages // width) * width + width // 2
         if initial_age_cap is not None:
             ages = ages.clip(upper=int(initial_age_cap))
-    return pd.DataFrame(
+    result = pd.DataFrame(
         {
             "stand_id": fragments["BLOCK"].astype(int),
             "tsa": fragments["TSA"].astype(str),
@@ -240,6 +240,9 @@ def build_woodstock_areas_table(
             "area_ha": pd.to_numeric(fragments["AREA_HA"], errors="coerce").fillna(0.0),
         }
     )
+    if "CFS_ECOZONE" in fragments.columns:
+        result["cfs_ecozone"] = fragments["CFS_ECOZONE"].to_numpy()
+    return result
 
 
 def build_woodstock_actions_table(

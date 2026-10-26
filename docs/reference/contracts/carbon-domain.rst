@@ -166,7 +166,9 @@ Tables
 
 ``boundaries.csv``
    ``admin_boundary`` and ``eco_boundary``, with optional ``spatial_unit_id``,
-   ``source``, and ``notes``. At least one row matches the manifest boundaries.
+   ``source``, and ``notes``. The table may declare more than one pair; the
+   manifest still names the primary boundary, and every track's
+   ``eco_boundary`` must appear in this table.
 
 Why the join key is the track name
 ----------------------------------
@@ -203,10 +205,14 @@ Eco boundary
 boundaries. The current table was checked by intersecting the public BCGW
 ``WHSE_ADMIN_BOUNDARIES.FADM_TSA`` polygons with the AAFC Terrestrial Ecozones
 (2026-10-26). It records the dominant boundary and the overlap share in the notes.
-The contract still allows one boundary per package, so a TSA that straddles a
-boundary must be split or handled by a later multi-boundary extension; the table
-marks those cases as ``split required``. MKRF is represented by the ``mkrf`` FMU
-code in ``config/carbon/mkrf.yaml`` with the Pacific Maritime boundary.
+``config/carbon/ecozone_map.bc.csv`` maps the public VRI ``CFS_ECOZONE`` code to
+the CBM eco-boundary name. The exporter uses that field when the checkpoint
+carries it, assigns the area-dominant boundary to each package track, and writes
+every observed pair to ``boundaries.csv``. A TSA that straddles a boundary still
+needs its WS4 tracks split by boundary before the runtime can be fully
+eco-boundary-correct; the table marks those cases as ``split required``. MKRF is
+represented by the ``mkrf`` FMU code in ``config/carbon/mkrf.yaml`` with the
+Pacific Maritime boundary.
 
 Disturbance
 ~~~~~~~~~~~
@@ -272,7 +278,7 @@ FEMIC validation and the WS4 loader enforce the same contract:
 - every leading species in the species map;
 - every yield track present, with non-negative volume;
 - shares in 0-1 and summing to at most one;
-- every track's eco boundary equal to the manifest boundary;
+- every track's eco boundary declared in ``boundaries.csv``;
 - declared disturbance types for inventory and treatment mappings;
 - table hashes when present;
 - the package fingerprint and the manifest boundaries.
