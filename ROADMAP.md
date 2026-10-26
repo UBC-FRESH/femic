@@ -3930,10 +3930,11 @@ Detailed plan: `planning/phase113_wbi_aoi_model_build.md`.
 
 ## Phase 116: Shared Environmental Contracts (`#369`)
 
-Status: **active** (P116.1 and P116.2 complete; P116.3 pending).
+Status: **active** (contract layer complete; P116.3 real cards and pipeline wiring pending).
 
 Branch: `feature/p116-shared-contracts`; split PRs:
-`feature/p116.1-climate-contract` and `feature/p116.2-disturbance-contract`.
+`feature/p116.1-climate-contract`, `feature/p116.2-disturbance-contract`, and
+`feature/p116.3-efi-model-card`.
 
 Goal: add dependency-light contracts for climate, disturbance, and EFI model
 metadata so FEMIC, ws3, ws4, FHOPS, and Nemora share one vocabulary. Each
@@ -3955,6 +3956,11 @@ Tasks:
     consumer rows, and docs.
   - [x] Consume the consumer rows in ws4 (PR #398, merged as `5ea4a05`).
 - [ ] P116.3 Add `efi.model.v1` model cards (`#372`).
+  - [x] Add the `femic.contracts.efi` schema, validator, nested metadata,
+    applicability checks, row annotation, synthetic cards, and docs.
+  - [ ] Replace or augment the synthetic cards with two real project or
+    published model cards.
+  - [ ] Wire the card metadata through the FEMIC attribute pipeline.
 
 Acceptance: each schema has a validator, an example, and a failure test; each
 contract has one downstream consumer reading real data; provenance survives the
