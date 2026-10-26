@@ -8,6 +8,14 @@
     "No hydrologist review.",
     "No reviewed WS4 block/fragment crosswalk."
   ],
+  "closeout": "planning/phase118_closeout.md",
+  "closeout_summary": {
+    "current_flood_baseline": false,
+    "dem_mosaic": "partial; mixed vertical and 1,931.2 ha gap",
+    "flood_map": false,
+    "historical_gauge_backcast": true,
+    "reason": "Current gauge, vertical metadata, receptor, crosswalk, and review inputs are absent."
+  },
   "crosswalk": {
     "note": "No WS4 Chapman dataset or reviewed crosswalk exists. Do not infer a watershed from block centroids.",
     "required_fields": [
@@ -222,7 +230,7 @@
     "status": "candidate_unreviewed"
   },
   "schema_version": "femic.chapman_domain_plan.v1",
-  "status": "blocked",
+  "status": "closed_data_blocked",
   "vertical_coverage": {
     "known_cgvd2013_ha": 1621.6382,
     "known_share_of_valid": 0.3252,
