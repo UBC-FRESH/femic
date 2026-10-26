@@ -1,7 +1,7 @@
 {
   "package": {
     "path": "/tmp/opencode/tsa24_carbon_package_ds",
-    "archive": "/tmp/opencode/carbon_handoff/femic-carbon-24-tsa24.tar.gz",
+    "archive": "/srv/shared-data/gep/ws4/carbon-handoff/femic-carbon-24-tsa24.tar.gz",
     "package_id": "femic-carbon-24-fc431f827c66",
     "fingerprint": "cd33653608119121c11256628aabe3bbf8111d53fcf05e6383c97db948dfd8a3",
     "manifest_sha256": "0dca089d63e67e05aa60c36a9dd06677e012ff56b70353917142bd9982d613db",

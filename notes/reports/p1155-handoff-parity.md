@@ -10,7 +10,7 @@ Issue: #366
 
 The real TSA24 carbon package is in the shared workspace at
 `/tmp/opencode/tsa24_carbon_package_ds` and in the deterministic handoff archive
-`/tmp/opencode/carbon_handoff/femic-carbon-24-tsa24.tar.gz`.
+`/srv/shared-data/gep/ws4/carbon-handoff/femic-carbon-24-tsa24.tar.gz`.
 
 | Item | Value |
 | --- | --- |
@@ -33,7 +33,7 @@ Command (external WS3/libcbm environment):
 /tmp/opencode/libcbm-venv/bin/python scripts/ws3_carbon_reference.py \
   --ws3-repo /srv/shared-data/gep/ws4/ws3 \
   --model-dir /srv/shared-data/gep/ws4/ws3/examples/data/woodstock_model_files_tsa24_clipped \
-  --out /tmp/opencode/ws3_tsa24_clipped \
+  --out /srv/shared-data/gep/ws4/carbon-handoff \
   --n-steps 20
 ```
 
@@ -48,7 +48,7 @@ Result on `tsa24_clipped`:
   - `AboveGroundSlowSoil` 33,866.2300 tC
   - `Products` 7,355.0559 tC
 - Artifacts: `ws3_carbon_accounts.csv`, `ws3_carbon_pools.csv`,
-  `ws3_carbon_manifest.json` under `/tmp/opencode/ws3_tsa24_clipped`.
+  `ws3_carbon_manifest.json` under `/srv/shared-data/gep/ws4/carbon-handoff`.
 - Accounts SHA-256: `3bc920a5f86803bba1ab5d676a86bbb6f9cd0b0ac2e64a06d65b48effcf0b864`.
 
 ## 3. WS3/WS4 parity
