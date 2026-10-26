@@ -1,0 +1,141 @@
+{
+  "caveats": [
+    "Synthetic fixture for response-bundle contract tests."
+  ],
+  "created_utc": "2026-10-25T00:00:00+00:00",
+  "crs": "EPSG:3005",
+  "domain_id": "fixture-domain",
+  "gauges": [
+    {
+      "drainage_area_km2": 12.5,
+      "gauge_id": "gauge-1",
+      "layer_id": "fixture-gauges",
+      "period_end": "2025-12-31",
+      "period_start": "1990-01-01",
+      "record_url": null,
+      "station_name": "Synthetic Gauge 1",
+      "watershed_id": "watershed-1"
+    }
+  ],
+  "layers": [
+    {
+      "checksum_sha256": null,
+      "crs": "EPSG:3005",
+      "description": "Synthetic watershed boundary.",
+      "format": "GeoJSON",
+      "geometry_type": "Polygon",
+      "layer_id": "fixture-watersheds",
+      "licence_id": "OGL-BC",
+      "path": "data/watersheds.geojson",
+      "required_fields": [],
+      "resolution_m": null,
+      "role": "watershed",
+      "size_bytes": null,
+      "source_id": null
+    },
+    {
+      "checksum_sha256": null,
+      "crs": "EPSG:3005",
+      "description": "Synthetic stream network.",
+      "format": "GeoJSON",
+      "geometry_type": "LineString",
+      "layer_id": "fixture-streams",
+      "licence_id": "OGL-BC",
+      "path": "data/streams.geojson",
+      "required_fields": [],
+      "resolution_m": null,
+      "role": "stream",
+      "size_bytes": null,
+      "source_id": null
+    },
+    {
+      "checksum_sha256": null,
+      "crs": "EPSG:3005",
+      "description": "Synthetic road network.",
+      "format": "GeoJSON",
+      "geometry_type": "LineString",
+      "layer_id": "fixture-roads",
+      "licence_id": "OGL-BC",
+      "path": "data/roads.geojson",
+      "required_fields": [],
+      "resolution_m": null,
+      "role": "road",
+      "size_bytes": null,
+      "source_id": null
+    },
+    {
+      "checksum_sha256": null,
+      "crs": "EPSG:3005",
+      "description": "Synthetic 1 m DEM.",
+      "format": "GeoTIFF",
+      "geometry_type": "Raster",
+      "layer_id": "fixture-dem",
+      "licence_id": "OGL-BC",
+      "path": "data/dem.tif",
+      "required_fields": [],
+      "resolution_m": 1.0,
+      "role": "dem",
+      "size_bytes": null,
+      "source_id": null
+    },
+    {
+      "checksum_sha256": null,
+      "crs": "EPSG:3005",
+      "description": "Synthetic receptor locations.",
+      "format": "GeoJSON",
+      "geometry_type": "Point",
+      "layer_id": "fixture-receptors",
+      "licence_id": "OGL-BC",
+      "path": "data/receptors.geojson",
+      "required_fields": [],
+      "resolution_m": null,
+      "role": "receptor",
+      "size_bytes": null,
+      "source_id": null
+    },
+    {
+      "checksum_sha256": null,
+      "crs": "EPSG:3005",
+      "description": "Synthetic gauge locations.",
+      "format": "GeoJSON",
+      "geometry_type": "Point",
+      "layer_id": "fixture-gauges",
+      "licence_id": "OGL-BC",
+      "path": "data/gauges.geojson",
+      "required_fields": [],
+      "resolution_m": null,
+      "role": "gauge",
+      "size_bytes": null,
+      "source_id": null
+    }
+  ],
+  "name": "Synthetic response-bundle fixture domain",
+  "provenance": {
+    "licence": "CC0-1.0",
+    "source": "synthetic"
+  },
+  "receptors": [
+    {
+      "capacity_m3s": 140.0,
+      "damage_curve_id": null,
+      "feature_id": "r-1",
+      "layer_id": "fixture-receptors",
+      "name": "Synthetic Receptor 1",
+      "notes": "",
+      "receptor_id": "receptor-1",
+      "receptor_type": "channel_capacity",
+      "watershed_id": "watershed-1"
+    }
+  ],
+  "resolution_m": 1.0,
+  "schema_version": "femic.hydrology.domain.v1",
+  "watersheds": [
+    {
+      "area_km2": 12.5,
+      "feature_id": "ws-1",
+      "layer_id": "fixture-watersheds",
+      "name": "Synthetic Watershed 1",
+      "watershed_id": "watershed-1"
+    }
+  ]
+}

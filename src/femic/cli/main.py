@@ -441,6 +441,11 @@ tsr_app = typer.Typer(
     no_args_is_help=True,
     help="Index BC TSR TSA document surfaces and canonical discovery metadata.",
 )
+hydrology_app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="Build and inspect versioned forest-hydrology response bundles.",
+)
 console = Console()
 
 WINDOWS_ARBUTUS_ENV_FILE_RELATIVE = Path(".config") / "femic" / "arbutus.env"
@@ -11280,6 +11285,195 @@ def freshforge_workflows_commands(
         typer.echo(command)
 
 
+@hydrology_app.command("bundle")
+def hydrology_bundle(
+    plan_path: Path = typer.Option(
+        ...,
+        "--plan",
+        help="Response-bundle plan JSON.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    output_dir: Path = typer.Option(
+        ...,
+        "--output-dir",
+        help="Destination response-bundle directory.",
+    ),
+    overwrite: bool = typer.Option(
+        False,
+        "--overwrite",
+        help="Replace an existing FEMIC response bundle.",
+    ),
+    generated_utc: str | None = typer.Option(
+        None,
+        "--generated-utc",
+        help="Override the manifest timestamp for reproducible fixtures.",
+    ),
+) -> None:
+    """Build a versioned hydrology response bundle from a plan."""
+
+    from femic.hydrology.response_bundle import (
+        HydrologyResponseError,
+        build_hydrology_response_bundle,
+    )
+
+    try:
+        result = build_hydrology_response_bundle(
+            plan_path,
+            output_dir,
+            overwrite=overwrite,
+            generated_utc=generated_utc,
+        )
+    except HydrologyResponseError as exc:
+        console.print(f"[red]Hydrology bundle build failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"bundle_dir: {result.bundle_dir}")
+    console.print(f"manifest: {result.manifest_path}")
+    console.print(f"bundle_id: {result.manifest.bundle_id}")
+    console.print(f"bundle_version: {result.manifest.bundle_version}")
+    console.print(f"artifacts: {len(result.manifest.artifacts)}")
+
+
+@hydrology_app.command("inspect")
+def hydrology_inspect(
+    bundle_path: Path = typer.Argument(
+        ...,
+        help="Response-bundle directory or manifest path.",
+        exists=True,
+        readable=True,
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit deterministic JSON instead of a text summary.",
+    ),
+    checked_utc: str | None = typer.Option(
+        None,
+        "--checked-utc",
+        help="Override the audit timestamp for reproducible checks.",
+    ),
+) -> None:
+    """Validate a hydrology response bundle and its artifact checksums."""
+
+    from femic.hydrology.response_bundle import audit_hydrology_response_bundle
+
+    audit = audit_hydrology_response_bundle(bundle_path, checked_utc=checked_utc)
+    if json_output:
+        typer.echo(json.dumps(audit.to_dict(), indent=2, sort_keys=True))
+    else:
+        console.print(f"bundle_id: {audit.bundle_id or '(unknown)'}")
+        console.print(f"valid: {audit.is_valid}")
+        console.print(f"complete: {audit.is_complete}")
+        console.print(f"artifacts: {len(audit.artifacts)}")
+        for error in audit.errors:
+            console.print(f"[red]error:[/red] {error}")
+        for warning in audit.warnings:
+            console.print(f"[yellow]warning:[/yellow] {warning}")
+    if not audit.is_valid:
+        raise typer.Exit(code=1)
+
+
+@hydrology_app.command("pilot")
+def hydrology_pilot(
+    gauges_path: Path = typer.Option(
+        ...,
+        "--gauges",
+        help="Pilot gauge metadata JSON.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    annual_maxima_path: Path = typer.Option(
+        ...,
+        "--annual-maxima",
+        help="Pilot annual-maxima CSV.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    output_dir: Path = typer.Option(
+        ...,
+        "--output-dir",
+        help="Directory for pilot_run.json, validation_report.json, and model_card.json.",
+    ),
+    domain_manifest_path: Path | None = typer.Option(
+        None,
+        "--domain-manifest",
+        help="Optional public hydrology domain manifest for readiness auditing.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    disturbance_ledger_path: Path | None = typer.Option(
+        None,
+        "--disturbance-ledger",
+        help="Optional disturbance ledger for readiness auditing.",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
+    process_model_available: bool = typer.Option(
+        False,
+        "--process-model-available",
+        help="Record that an executable process model is available.",
+    ),
+    hydrologist_review_recorded: bool = typer.Option(
+        False,
+        "--hydrologist-review-recorded",
+        help="Record that a hydrologist review has been completed.",
+    ),
+    bootstrap_samples: int = typer.Option(
+        200,
+        "--bootstrap-samples",
+        min=0,
+        help="Bootstrap samples for frequency intervals.",
+    ),
+    seed: int = typer.Option(42, "--seed", help="Deterministic bootstrap seed."),
+    generated_utc: str | None = typer.Option(
+        None,
+        "--generated-utc",
+        help="Override the generated timestamp for reproducible fixtures.",
+    ),
+) -> None:
+    """Run the bounded public-gauge pilot and write P114.9 closeout records."""
+
+    from femic.hydrology.validation import (
+        HydrologyValidationError,
+        build_p1149_closeout,
+    )
+
+    try:
+        result = build_p1149_closeout(
+            gauges_path=gauges_path,
+            annual_maxima_path=annual_maxima_path,
+            output_dir=output_dir,
+            domain_manifest_path=domain_manifest_path,
+            disturbance_ledger_path=disturbance_ledger_path,
+            process_model_available=process_model_available,
+            hydrologist_review_recorded=hydrologist_review_recorded,
+            bootstrap_samples=bootstrap_samples,
+            seed=seed,
+            generated_utc=generated_utc,
+        )
+    except HydrologyValidationError as exc:
+        console.print(f"[red]Hydrology pilot failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print(f"pilot_run: {result.pilot_path}")
+    console.print(f"validation_report: {result.validation_path}")
+    console.print(f"model_card: {result.model_card_path}")
+    console.print(f"pilot_run_id: {result.pilot_run.run_id}")
+    console.print(f"validation_id: {result.validation_report.validation_id}")
+    console.print(
+        f"full_process_pilot_ready: "
+        f"{result.validation_report.readiness.ready_for_full_process_pilot}"
+    )
+    console.print(f"data_gaps: {len(result.validation_report.readiness.gaps)}")
+
+
+app.add_typer(hydrology_app, name="hydrology")
 app.add_typer(prep_app, name="prep")
 app.add_typer(vdyp_app, name="vdyp")
 app.add_typer(tsa_app, name="tsa")

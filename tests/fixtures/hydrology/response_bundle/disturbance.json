@@ -1,0 +1,70 @@
+{
+  "caveats": [
+    "Synthetic fixture for response-bundle contract tests."
+  ],
+  "domain_id": "fixture-domain",
+  "generated_utc": "2026-10-25T00:00:00+00:00",
+  "ledger_id": "fixture-ledger",
+  "provenance": {
+    "licence": "CC0-1.0",
+    "source": "synthetic"
+  },
+  "rows": [
+    {
+      "effective_harvest_area_ha": 9.0,
+      "harvest_area_ha": 10.0,
+      "hru_id": null,
+      "retention_area_ha": 1.0,
+      "road_active_length_m": 1200.0,
+      "road_built_length_m": 300.0,
+      "road_connected_length_m": 400.0,
+      "road_crossing_count": 1,
+      "road_decommissioned_length_m": 0.0,
+      "source_event_ids": [
+        "harvest-2020"
+      ],
+      "unit_area_ha": 100.0,
+      "unit_id": "unit-1",
+      "watershed_id": "watershed-1",
+      "year": 2020,
+      "years_since_harvest": 0,
+      "years_since_road_build": 0
+    },
+    {
+      "effective_harvest_area_ha": 0.0,
+      "harvest_area_ha": 0.0,
+      "hru_id": null,
+      "retention_area_ha": 0.0,
+      "road_active_length_m": 1200.0,
+      "road_built_length_m": 0.0,
+      "road_connected_length_m": 400.0,
+      "road_crossing_count": 1,
+      "road_decommissioned_length_m": 0.0,
+      "source_event_ids": [],
+      "unit_area_ha": 100.0,
+      "unit_id": "unit-1",
+      "watershed_id": "watershed-1",
+      "year": 2021,
+      "years_since_harvest": 1,
+      "years_since_road_build": 1
+    }
+  ],
+  "schema_version": "femic.hydrology.disturbance.v1",
+  "summary": {
+    "row_count": 2,
+    "unit_count": 1,
+    "year_count": 2
+  },
+  "units": [
+    {
+      "area_ha": 100.0,
+      "hru_id": null,
+      "unit_id": "unit-1",
+      "watershed_id": "watershed-1"
+    }
+  ],
+  "years": [
+    2020,
+    2021
+  ]
+}

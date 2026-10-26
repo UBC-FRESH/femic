@@ -1,0 +1,35 @@
+{
+  "schema_version": "femic.hydrology.flood_risk.v1",
+  "table_id": "hydro-risk-fixture001",
+  "generated_utc": "2026-10-25T00:00:00+00:00",
+  "source_surface_id": "fixture-surface",
+  "baseline_name": "baseline",
+  "summary": {
+    "row_count": 2
+  },
+  "rows": [
+    {
+      "receptor_id": "receptor-1",
+      "watershed_id": "watershed-1",
+      "return_period": 2.0,
+      "baseline_peak_flow_m3s": 50.0,
+      "scenario_peak_flow_m3s": 52.5,
+      "ratio": 1.05,
+      "exceedance_probability": 0.5,
+      "expected_annual_damage": 1200.0
+    },
+    {
+      "receptor_id": "receptor-1",
+      "watershed_id": "watershed-1",
+      "return_period": 100.0,
+      "baseline_peak_flow_m3s": 120.0,
+      "scenario_peak_flow_m3s": 150.0,
+      "ratio": 1.25,
+      "exceedance_probability": 0.01,
+      "expected_annual_damage": 42000.0
+    }
+  ],
+  "caveats": [
+    "Screening values for contract tests only; not regulatory flood mapping."
+  ]
+}

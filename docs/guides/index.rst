@@ -18,6 +18,15 @@ export modules.
    author-instance-rebuild-spec
    interpret-rebuild-reports
    data-access-inventory
+   hydrology-domain-contract
+   hydrology-data-bundle
+   hydrology-disturbance-ledger
+   hydrology-tier0-screening
+   hydrology-flood-frequency
+   hydrology-process-models
+   hydrology-surrogate-models
+   hydrology-response-bundles
+   hydrology-validation-closeout
    lidar-data-products
    lidar-materialization
    lidar-terrain-products

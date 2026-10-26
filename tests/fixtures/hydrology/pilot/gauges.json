@@ -1,0 +1,50 @@
+{
+  "gauges": [
+    {
+      "contributor": "Water Survey of Canada (ECCC)",
+      "drainage_area_km2": 10.21,
+      "licence": "Open Government Licence - Canada",
+      "notes": "Coastal rainforest watershed; rain-dominated with rare rain-on-snow at low elevation. Small drainage area; not a full process-model pilot.",
+      "province": "BC",
+      "regime": "rain",
+      "retrieved_utc": "2026-10-25T23:55:00+00:00",
+      "source_url": "https://api.weather.gc.ca/collections/hydrometric-annual-statistics/items?STATION_NUMBER=08HB048&DATA_TYPE_EN=Discharge",
+      "station_name": "Carnation Creek at the Mouth",
+      "station_number": "08HB048",
+      "station_url": "https://api.weather.gc.ca/collections/hydrometric-stations/items?STATION_NUMBER=08HB048",
+      "status": "Active",
+      "vertical_datum": "Assumed datum"
+    },
+    {
+      "contributor": "Water Survey of Canada (ECCC)",
+      "drainage_area_km2": 315.1,
+      "licence": "Open Government Licence - Canada",
+      "notes": "Interior snow-transient watershed. Gauge backcast only; no public harvest/road disturbance ledger was assembled for this phase.",
+      "province": "BC",
+      "regime": "snow_transient",
+      "retrieved_utc": "2026-10-25T23:55:00+00:00",
+      "source_url": "https://api.weather.gc.ca/collections/hydrometric-annual-statistics/items?STATION_NUMBER=08LG048&DATA_TYPE_EN=Discharge",
+      "station_name": "Coldwater River near Brookmere",
+      "station_number": "08LG048",
+      "station_url": "https://api.weather.gc.ca/collections/hydrometric-stations/items?STATION_NUMBER=08LG048",
+      "status": "Active",
+      "vertical_datum": "Assumed datum"
+    },
+    {
+      "contributor": "BC Hydro / Water Survey of Canada (ECCC)",
+      "drainage_area_km2": 2353.0,
+      "licence": "Open Government Licence - Canada",
+      "notes": "Large coastal mountain watershed with rain-on-snow potential in upper elevations. Gauge backcast only; not a full process-model pilot.",
+      "province": "BC",
+      "regime": "rain_on_snow",
+      "retrieved_utc": "2026-10-25T23:58:00+00:00",
+      "source_url": "https://api.weather.gc.ca/collections/hydrometric-annual-statistics/items?STATION_NUMBER=08GA022&DATA_TYPE_EN=Discharge",
+      "station_name": "Squamish River near Brackendale",
+      "station_number": "08GA022",
+      "station_url": "https://api.weather.gc.ca/collections/hydrometric-stations/items?STATION_NUMBER=08GA022",
+      "status": "Active",
+      "vertical_datum": "Assumed datum"
+    }
+  ],
+  "schema_version": "femic.hydrology.pilot_gauges.v1"
+}

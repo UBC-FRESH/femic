@@ -15441,3 +15441,310 @@
 - P79 squash-merged as `65b9057` via PR #368.
 - Parent #211 and P79 child issues closed.
 - Consumer phases continue as WS4 P52 and FHOPS P14.
+
+## 2026-10-25 - P114.1 hydrology domain and receptor contract (#352)
+
+- Activated P114 (`#351`) on `feature/p114-forest-hydrology-flood-risk` and
+  created the parent/child issue tree for the forest-hydrology and flood-risk
+  expansion.
+- Added `femic.hydrology.domain` with the `femic.hydrology.domain.v1`
+  domain/receptor contract:
+  - layer roles for watersheds, streams, roads, DEM, land cover, soils,
+    climate, gauges, receptors, and HRUs;
+  - watershed, downstream receptor, and gauge records;
+  - CRS, resolution, licence, checksum, size, and provenance fields.
+- Added the `femic.hydrology.sources.v1` public source registry for FWA
+  watersheds/streams, DRA/FTEN roads, LidarBC DEM, VRI land cover, BC soils,
+  PCIC climate, WSC gauges, and reviewed receptors.
+- Added structural cross-reference validation and a local audit for missing
+  files, size mismatches, and SHA-256 mismatches.
+- Added the hydrology domain guide, technical contract page, curated API page,
+  and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_domain.py` passed (18 tests).
+  - 100% branch coverage for `femic.hydrology.domain`.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 55 passed, 3 pre-existing submodule/data failures.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology module.
+
+## 2026-10-25 - P114.2 hydrology data bundles (#353)
+
+- Added `femic.hydrology.bundle` with the `femic.hydrology.bundle.v1`
+  manifest and layout `layers/<layer_id>/<filename>`.
+- Added deterministic `bundle_id` from domain digest, AOI, bundle version, and
+  layer metadata/checksums.
+- Added plan/build/load/write/audit entry points:
+  - `plan_hydrology_bundle` reports gaps without copying files;
+  - `build_hydrology_bundle` atomically copies complete local sources and
+    refuses incomplete bundles;
+  - `audit_hydrology_bundle` checks licence, size, SHA-256, path containment,
+    required roles, and completeness.
+- Added licence/checksum enforcement, gap reporting, safe overwrite handling,
+  and DataLad annex-boundary documentation.
+- Added the hydrology data-bundle guide, technical contract page, and curated
+  API page.
+- Verification:
+  - `pytest tests/test_hydrology_bundle.py` passed (20 tests).
+  - 100% branch coverage for `femic.hydrology.bundle`.
+  - All 38 hydrology domain/bundle tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 56 passed; 3 pre-existing submodule/data failures.
+- No public layer download was executed. The fixture bundle covers all six
+  domain layers; the bounded public pilot acquisition remains optional in
+  P114.9.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.3 harvest/road/retention disturbance ledger (#354)
+
+- Added `femic.hydrology.disturbance` with the
+  `femic.hydrology.disturbance.v1` annual unit/year ledger.
+- Added units, harvest events, road events, annual rows, validation, and
+  deterministic ledger identity.
+- Added gross harvest/retention/effective-area accounting, active/connected/
+  built/decommissioned road length, active crossings, years since harvest/road
+  build, and source event lineage.
+- Added road state rules: build/use/maintain/decommission, no double-active
+  builds, no decommission beyond active/connected length or crossings, and no
+  road spanning units.
+- Added conservation checks for duplicate IDs, unknown units, event-year
+  bounds, area/retention limits, road actions, and negative values.
+- Added CSV handoff for units, harvest, and road schedules, plus JSON/CSV
+  ledger writers.
+- Added the disturbance-ledger guide, technical contract page, curated API
+  page, and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_disturbance.py` passed (12 tests).
+  - 99% branch coverage for `femic.hydrology.disturbance`.
+  - All 50 hydrology domain/bundle/disturbance tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 57 passed; 3 pre-existing submodule/data failures.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.4 Tier 0 screening metrics (#355)
+
+- Added `femic.hydrology.screening` with the `femic.hydrology.screening.v1`
+  watershed/year report.
+- Added harvest, retention, effective-area, harvest-fraction, ECA, road density,
+  connected-road density, crossing density, and connected-road fraction
+  metrics.
+- Added optional linear ECA recovery discounting and an explicit warning when
+  ECA is undiscounted.
+- Added watershed regime metadata (`rain`, `rain_on_snow`, `snowmelt`,
+  `snow_transient`, `unknown`) and context-weighted riparian, snow-transient,
+  and high-elevation exposure from reviewed per-unit fractions.
+- Added deterministic screening identity, JSON report writing, caveats, and
+  warnings.
+- Added the Tier 0 guide, technical contract page, curated API page, and
+  roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_screening.py` passed (8 tests).
+  - 100% branch coverage for `femic.hydrology.screening`.
+  - All 58 hydrology domain/bundle/disturbance/screening tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 58 passed; 3 pre-existing submodule/data failures.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.5 stochastic flood-frequency response surfaces (#356)
+
+- Added `femic.hydrology.flood` with:
+  - annual-maximum and declustered peaks-over-threshold samples;
+  - stationary GEV and LP3 fits with bootstrap percentile intervals;
+  - Poisson-GPD peaks-over-threshold fits;
+  - paired baseline/treatment return-level response ratios and bootstrap
+    ratio intervals;
+  - nonstationary GEV with a linear location model in covariates;
+  - return-period response surfaces;
+  - benchmark-envelope checks.
+- Added schemas `femic.hydrology.flood_frequency.v1` and
+  `femic.hydrology.flood_response.v1`.
+- Added deterministic response-surface identity, JSON writers, diagnostics, and
+  explicit caveats about short records, nonstationarity, bootstrap intervals,
+  and the need for hydrologist review.
+- Added the flood-frequency guide, technical contract page, curated API page,
+  and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_flood.py` passed (10 tests).
+  - 93% branch coverage for `femic.hydrology.flood`.
+  - All 68 hydrology domain/bundle/disturbance/screening/flood tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 59 passed; 3 pre-existing submodule/data failures.
+- No public-gauge calibration or published paired-watershed benchmark run was
+  executed; those remain P114.9 work.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.6 process-model adapters (#357)
+
+- Added `femic.hydrology.process_models` with the
+  `femic.hydrology.process_scenario.v1` scenario manifest and
+  `femic.hydrology.process_result.v1` result contract.
+- Registered DHSVM, RHESSys, CRHM, SUMMA, and HEC-HMS boundaries.
+- Implemented executable adapters for DHSVM and SUMMA with explicit/env/PATH
+  runtime probing and no binary bundling.
+- Added scenario build/validate/load/write, run planning, execution, timeout,
+  stdout/stderr capture, and normalized peak-flow/receptor output parsing.
+- Added normalized `peak_flows.csv` and `receptor_metrics.csv` writers/readers.
+- Added the process-model guide, technical contract page, curated API page,
+  and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_process_models.py` passed (10 tests).
+  - 93% branch coverage for `femic.hydrology.process_models`.
+  - All 78 hydrology domain/bundle/disturbance/screening/flood/process tests
+    passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 60 passed; 3 pre-existing submodule/data failures.
+- No real DHSVM/SUMMA/RHESSys/CRHM/HEC-HMS binary was executed. Tests use a
+  fake executable and the normalized output fixture; real model integration is
+  optional P114.9 work.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.7 surrogate models and applicability domains (#358)
+
+- Added `femic.hydrology.surrogate` with the
+  `femic.hydrology.surrogate_design.v1` design and
+  `femic.hydrology.surrogate_model.v1` model schemas.
+- Added Latin-hypercube design, target attachment, and deterministic
+  train/validation splitting.
+- Implemented dependency-free ridge-linear and RBF Gaussian-process
+  surrogates.
+- Added applicability domains with feature-range and standardized-distance
+  guards, default out-of-domain refusal, and explicit extrapolation override.
+- Added held-out and k-fold validation with RMSE, MAE, R2, 95% interval
+  coverage, interval width, and accepted/refused counts.
+- Added model JSON persistence/load.
+- Added the surrogate guide, technical contract page, curated API page, and
+  roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_surrogate.py` passed (10 tests).
+  - 91% branch coverage for `femic.hydrology.surrogate`.
+  - All 88 hydrology domain/bundle/disturbance/screening/flood/process/surrogate
+    tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 61 passed; 3 pre-existing submodule/data failures.
+- No real process-model scenario ensemble was trained; tests use synthetic
+  data. Public-gauge and process-model benchmark validation remain P114.9.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-25 - P114.8 response and flood-risk bundles (#359)
+
+- Added `femic.hydrology.response_bundle` with the
+  `femic.hydrology.response.v1`, `femic.hydrology.flood_risk.v1`, and
+  `femic.hydrology.response_plan.v1` contracts.
+- Added deterministic `bundle_id` derivation, relative artifact paths,
+  SHA-256/size checksums, provenance, applicability-domain and uncertainty
+  metadata, caveats, and the WS4/FHOPS consumer contract.
+- Added required artifact roles (response surface, flood-risk table, domain,
+  disturbance ledger) plus optional surrogate, validation, frequency, pairing,
+  screening, and benchmark roles with role-specific schema checks.
+- Added flood-risk row/table build, write, read, and validation, including
+  ratio, duplicate receptor/return-period, exceedance-probability, and
+  expected-annual-damage checks.
+- Added build, manifest validation, and local audit entry points. Audit verifies
+  manifest structure, required roles, consumer pinning, artifact existence,
+  sizes, checksums, response-surface identity/return periods, and flood-risk
+  table identity/row count.
+- Added `python -m femic hydrology bundle` and
+  `python -m femic hydrology inspect`, with deterministic JSON audit output.
+- Added a bounded synthetic response fixture with public/synthetic-only domain,
+  ledger, surface, risk, surrogate, and validation artifacts.
+- Added the response-bundle guide, technical contract page, curated and
+  generated API pages, CLI reference, consumer read order for WS4 P49 and FHOPS
+  P14, and roadmap/planning updates.
+- Verification:
+  - `pytest tests/test_hydrology_response_bundle.py` passed (24 tests).
+  - 81% branch coverage for `femic.hydrology.response_bundle`.
+  - All 112 hydrology domain/bundle/disturbance/screening/flood/process/
+    surrogate/response-bundle tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 62 passed; 3 pre-existing submodule/data failures.
+- No real public-gauge calibration, process-model ensemble, or provincial
+  hydrography integration was run; those remain P114.9 work. The WS4 P49 and
+  FHOPS P14 implementation issues remain intentionally uncreated until P114.9
+  declares the response contract stable.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.
+
+## 2026-10-26 - P114.9 validation, public pilot, and phase closeout (#360)
+
+- Added `femic.hydrology.validation` with the
+  `femic.hydrology.validation.v1`, `femic.hydrology.pilot.v1`, and
+  `femic.hydrology.model_card.v1` contracts.
+- Added a reviewed published-benchmark catalogue covering snow-transient,
+  rain, rain-on-snow, snowmelt, frequency-dependence, and paired-control
+  directional expectations, with citations and order-of-magnitude tolerances.
+- Added a bounded public Water Survey of Canada pilot using derived annual
+  maximum daily discharge for Carnation Creek (`08HB048`, rain), Coldwater
+  River (`08LG048`, snow-transient), and Squamish River (`08GA022`,
+  rain-on-snow). The fixture retains only annual maxima, dates, symbols, gauge
+  metadata, licence, and source URLs under the Open Government Licence -
+  Canada.
+- Added GEV/LP3 backcasts, bootstrap intervals, missing-year and source-symbol
+  flags, split-sample stability checks, and a 100-year tail-plausibility screen.
+- The Squamish GEV fit failed the tail screen (shape about -5.68 and a
+  non-physical 100-year tail). The fit is retained for audit but excluded from
+  usable fits; LP3 remains usable. This is recorded as a P114.5 fit-stability
+  finding, not hidden.
+- Added full-pilot readiness auditing for domain/LiDAR/stream/road layers,
+  disturbance ledger, receptor, process model, and hydrologist review.
+- Added validation-report and provisional model-card generation with
+  deterministic IDs, deviations, uncertainty, review checklist, and the
+  WS4/FHOPS conditional handoff.
+- Added `python -m femic hydrology pilot` and extended response bundles with
+  optional `validation_report`, `model_card`, and `pilot_run` artifact roles.
+- Added the closeout guide, technical contract, API/generated pages, CLI
+  reference, roadmap/planning updates, and the public pilot fixture README.
+- Verification:
+  - `pytest tests/test_hydrology_validation.py` passed (13 tests).
+  - 85% branch coverage for `femic.hydrology.validation`.
+  - All 125 hydrology domain/bundle/disturbance/screening/flood/process/
+    surrogate/response-bundle/validation tests passed.
+  - Targeted `ruff check` passed.
+  - `mypy src/femic/hydrology` passed.
+  - `sphinx-build -b html docs _build/html -W` passed.
+  - Full docs-contract run: 63 passed; 3 pre-existing submodule/data failures.
+- The full two-watershed process-model pilot, paired baseline/treatment
+  benchmark execution, downstream receptor/damage-curve work, and hydrologist
+  review were not completed. These are recorded as explicit conditions in the
+  validation report and model card. No regulatory status is claimed.
+- Known local toolchain baseline: full-repo `ruff check src tests`, `mypy src`,
+  and `pytest` still report pre-existing failures in unrelated Windows runtime,
+  unmaterialized submodule, and docs-contract surfaces. None reference the new
+  hydrology modules.

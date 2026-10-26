@@ -102,6 +102,15 @@ For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/lidar-stream-candidates.rst`
 - `docs/reference/contracts/lidar-canopy-products.rst`
 - `docs/reference/contracts/lidar-product-bundle.rst`
+- `docs/reference/contracts/hydrology-domain.rst`
+- `docs/reference/contracts/hydrology-data-bundle.rst`
+- `docs/reference/contracts/hydrology-disturbance-ledger.rst`
+- `docs/reference/contracts/hydrology-tier0-screening.rst`
+- `docs/reference/contracts/hydrology-flood-frequency.rst`
+- `docs/reference/contracts/hydrology-process-models.rst`
+- `docs/reference/contracts/hydrology-surrogate-models.rst`
+- `docs/reference/contracts/hydrology-response-bundles.rst`
+- `docs/reference/contracts/hydrology-validation-closeout.rst`
 
 ## Patchworks Model Semantics Guardrails
 

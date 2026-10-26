@@ -43,7 +43,16 @@ own real runtime contracts that are easy to miss when left as generated-only
 stubs.
 
 Current curated pages in this section include ``femic.instance_context``,
-``femic.instance_bootstrap``, ``femic.bcdc_catalog``,
+``femic.instance_bootstrap``, ``femic.hydrology.domain``,
+``femic.hydrology.bundle``,
+``femic.hydrology.disturbance``,
+``femic.hydrology.screening``,
+``femic.hydrology.flood``,
+``femic.hydrology.process_models``,
+``femic.hydrology.surrogate``,
+``femic.hydrology.response_bundle``,
+``femic.hydrology.validation``,
+``femic.bcdc_catalog``,
 ``femic.bcdc_fetch``,
 ``femic.bcdc_dwds``,
 ``femic.lidar.canopy``,
@@ -68,6 +77,15 @@ Current curated pages in this section include ``femic.instance_context``,
 
    femic-instance-context
    femic-instance-bootstrap
+   femic-hydrology-domain
+   femic-hydrology-bundle
+   femic-hydrology-disturbance
+   femic-hydrology-screening
+   femic-hydrology-flood
+   femic-hydrology-process-models
+   femic-hydrology-surrogate
+   femic-hydrology-response-bundle
+   femic-hydrology-validation
    femic-bcdc-catalog
    femic-bcdc-fetch
    femic-bcdc-dwds

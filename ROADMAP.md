@@ -3361,6 +3361,7 @@ Parent PR `#289` carried the merged-pointer update after MKRF PR
 
 - Active detailed planning now lives in:
   - `planning/phase79_lidar_product_pipeline.md`
+  - `planning/phase114_forest_hydrology_flood_risk.md`
   - `planning/phase106_mkrf_executable_model_build.md`
   - `planning/phase105_tfl6_executable_model_build.md`
   - `planning/phase104_freshforge_workflow_discovery.md`
@@ -3927,6 +3928,64 @@ Tasks:
       `external/femic-tsa24-instance/evidence/p113_4_smoke_2026-10-12.md`.
 
 Detailed plan: `planning/phase113_wbi_aoi_model_build.md`.
+
+## Phase 114: Forest Hydrology And Flood-Risk Optimization (`#351`)
+
+Status: **complete** (2026-10-26).
+
+Branch: `feature/p114-forest-hydrology-flood-risk`
+
+Goal: add a reproducible forest-hydrology and flood-risk layer that evaluates
+how the spatiotemporal pattern of harvesting and road construction changes
+peak-flow frequency and downstream flood risk, then expose a versioned response
+bundle to WS4 spatial scheduling and FHOPS operational planning. This is
+screening/decision support, not regulatory flood mapping.
+
+Scientific framing: peak-flow response is frequency-dependent and
+nonstationary; rain, rain-on-snow, and snowmelt regimes are separate; landscape
+position and road connectivity matter; ECA-style metrics are screening
+diagnostics only. Use a model ladder from screening to stochastic
+flood-frequency response to process-based distributed hydrology to validated
+surrogates.
+
+Ownership: FEMIC owns the domain, public data bundle, disturbance ledger,
+response surfaces, flood-risk bundles, and validation. WS4 P49 and FHOPS P14
+consume the response contract and are created only after it stabilizes.
+
+Tasks:
+
+- [x] P114.1 Define the hydrologic domain and receptor contract (`#352`).
+  - [x] P114.1a Define domain, layer, receptor, gauge, HRU, and provenance
+    records.
+  - [x] P114.1b Add the public source registry for FWA, roads, DEM, gauges,
+    climate, soils, and land cover.
+  - [x] P114.1c Implement domain manifest build/load/validate and local audit.
+  - [x] P114.1d Add tests and the domain contract page.
+- [x] P114.2 Assemble the public hydrology data bundle (`#353`).
+  - Fixture bundle, licence/checksum audit, and gap plan are complete. P114.9
+    used a bounded public gauge pilot; a full public LiDAR/domain acquisition
+    remains follow-up work.
+- [x] P114.3 Build the harvest/road/retention disturbance ledger (`#354`).
+- [x] P114.4 Add Tier 0 screening metrics and caveats (`#355`).
+- [x] P114.5 Add stochastic flood-frequency response surfaces (`#356`).
+- [x] P114.6 Add process-model adapters and scenario manifests (`#357`).
+- [x] P114.7 Add surrogate training, validation, and applicability domains
+  (`#358`).
+- [x] P114.8 Package hydrologic response and flood-risk bundles (`#359`).
+  - Response, flood-risk, and plan schemas, deterministic identity, checksums,
+    provenance, applicability/uncertainty metadata, audit, CLI, docs, and the
+    bounded fixture are complete. Consumer pinning is documented for WS4 P49
+    and FHOPS P14; those implementation phases remain intentionally uncreated.
+
+- [x] P114.9 Benchmark, pilot, and close out P114 (`#360`).
+  - Three-gauge public WSC backcast, tail and split-sample checks, five
+    published directional benchmark reviews, readiness/data-gap audit,
+    validation report, provisional model card, closeout guide/contract/API,
+    and the conditional WS4/FHOPS handoff are complete. The full
+    process-model/treatment pilot and hydrologist review remain explicit
+    follow-up conditions, not claimed completions.
+
+Detailed plan: `planning/phase114_forest_hydrology_flood_risk.md`.
 
 ## Phase 116: Shared Environmental Contracts (`#369`)
 
