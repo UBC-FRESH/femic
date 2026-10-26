@@ -15748,3 +15748,4 @@
   and `pytest` still report pre-existing failures in unrelated Windows runtime,
   unmaterialized submodule, and docs-contract surfaces. None reference the new
   hydrology modules.
+- 2026-10-26: P114 merged as `d0bf166` (PR #382). The hydrology producer is now on `main`; parent #351 and the remaining child issues are closed. The handoff remains screening-only and conditional on hydrologist review.
