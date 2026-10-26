@@ -56,6 +56,26 @@ The schedule uses ``block_id,treatment,offset`` with treatments ``f1``, ``f2``, 
 
 and ``fertilization_manifest.json``.
 
+Materializing a fertilized curve
+--------------------------------
+
+``femic carbon fertilization-curve`` applies the public TIPSY response to one
+package track and writes a provenance sidecar:
+
+.. code-block:: bash
+
+   femic carbon fertilization-curve \
+     --package output/carbon/tsa24 \
+     --track "AU(2401000)+IFM(managed)+treatment()" \
+     --species SW \
+     --site-index 20 \
+     --response-age 20 \
+     --fertilization-config config/carbon/fertilization.bc.yaml \
+     --out output/carbon/tsa24/fertilized/SW_SI20_age20.csv
+
+The output is a ``track_name,age,volume_m3_ha`` CSV plus a JSON manifest with the
+response file hash, species, site index, response age, effectiveness, and units.
+
 Current boundary
 ----------------
 

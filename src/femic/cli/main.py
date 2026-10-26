@@ -65,12 +65,14 @@ from femic.carbon import (
     CarbonValidationError,
     export_carbon_package,
     fertilization_audit,
+    fertilized_curve,
     load_carbon_export_config,
     load_carbon_instance_config,
     load_fertilization_config,
     to_export_config,
     validate_carbon_package,
     write_fertilization_audit,
+    write_fertilized_curve,
 )
 from femic.document_figures import (
     DOCUMENT_FIGURE_DOWNSTREAM_USE_CLASSES,
@@ -1675,6 +1677,39 @@ CARBON_INSTANCE_CONFIG_OPTION = typer.Option(
     "--config",
     help="Instance carbon YAML block (for example config/carbon/tsa24.yaml).",
     show_default=False,
+)
+CARBON_FERTILIZATION_PACKAGE_OPTION = typer.Option(
+    Path("output/carbon/tsa24"),
+    "--package",
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="Carbon package containing the source yield table.",
+)
+CARBON_FERTILIZATION_TRACK_OPTION = typer.Option(
+    ...,
+    "--track",
+    help="Exact package track_name to fertilize.",
+)
+CARBON_FERTILIZATION_SPECIES_OPTION = typer.Option(
+    "SW",
+    "--species",
+    help="TIPSY species code (FDC, SS, SW, PLI, FDI).",
+)
+CARBON_FERTILIZATION_SITE_INDEX_OPTION = typer.Option(
+    20,
+    "--site-index",
+    help="Site index for the TIPSY response table.",
+)
+CARBON_FERTILIZATION_AGE_OPTION = typer.Option(
+    20,
+    "--response-age",
+    help="Age at which the fertilization response begins.",
+)
+CARBON_FERTILIZATION_CURVE_OUT_OPTION = typer.Option(
+    ...,
+    "--out",
+    help="CSV path for the materialized fertilized curve.",
 )
 CARBON_FERTILIZATION_CONFIG_OPTION = typer.Option(
     Path("config/carbon/fertilization.bc.yaml"),
@@ -9337,6 +9372,65 @@ def carbon_validate(
         f"yield_rows={result.yield_rows}"
     )
     console.print(f"package_id: {result.package_id}")
+
+
+@carbon_app.command("fertilization-curve")
+def carbon_fertilization_curve(
+    package: Path = CARBON_FERTILIZATION_PACKAGE_OPTION,
+    track: str = CARBON_FERTILIZATION_TRACK_OPTION,
+    species: str = CARBON_FERTILIZATION_SPECIES_OPTION,
+    site_index: int = CARBON_FERTILIZATION_SITE_INDEX_OPTION,
+    response_age: int = CARBON_FERTILIZATION_AGE_OPTION,
+    fertilization_config: Path = CARBON_FERTILIZATION_CONFIG_OPTION,
+    out: Path = CARBON_FERTILIZATION_CURVE_OUT_OPTION,
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Materialize a public TIPSY fertilization response curve for a package track."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_package = instance_context.resolve_path(package)
+    resolved_config = instance_context.resolve_path(fertilization_config)
+    resolved_out = instance_context.resolve_path(out)
+    yield_path = resolved_package / "yield.csv"
+    if not yield_path.is_file():
+        console.print(f"[red]Missing package yield table:[/red] {yield_path}")
+        raise typer.Exit(code=1)
+    frame = pd.read_csv(yield_path)
+    track_frame = frame.loc[frame["track_name"] == track]
+    if track_frame.empty:
+        console.print(f"[red]Unknown package track:[/red] {track}")
+        raise typer.Exit(code=1)
+    curve = tuple(
+        zip(
+            track_frame["age"].astype(float),
+            track_frame["volume_m3_ha"].astype(float),
+            strict=True,
+        )
+    )
+    try:
+        config = load_fertilization_config(resolved_config)
+        fertilized = fertilized_curve(
+            curve=curve,
+            response_age=response_age,
+            config=config,
+            species_code=species,
+            site_index=site_index,
+        )
+        path = write_fertilized_curve(
+            track_name=track,
+            curve=fertilized,
+            config=config,
+            species_code=species,
+            site_index=site_index,
+            response_age=response_age,
+            output_path=resolved_out,
+        )
+    except (FileNotFoundError, ValueError, TypeError) as exc:
+        console.print(f"[red]Fertilization curve failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(
+        f"[green]fertilized curve written[/green] {path} "
+        f"points={len(fertilized)} species={species} si={site_index} age={response_age}"
+    )
 
 
 @carbon_app.command("fertilization-audit")

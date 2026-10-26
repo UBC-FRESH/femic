@@ -494,6 +494,39 @@ def fertilization_audit(
     )
 
 
+def write_fertilized_curve(
+    *,
+    track_name: str,
+    curve: tuple[tuple[float, float], ...],
+    config: FertilizationConfig,
+    species_code: str,
+    site_index: int,
+    response_age: int,
+    output_path: Path,
+) -> Path:
+    """Write a materialized fertilized curve with provenance."""
+    frame = pd.DataFrame(curve, columns=["age", "volume_m3_ha"])
+    frame.insert(0, "track_name", track_name)
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(output, index=False)
+    manifest = {
+        "track_name": track_name,
+        "species_code": species_code,
+        "site_index": site_index,
+        "response_age": response_age,
+        "response_years": config.response_years,
+        "effectiveness": config.effectiveness,
+        "response_file": str(config.response_file) if config.response_file else None,
+        "response_file_sha256": config.response_sha256,
+        "units": {"age": "years", "volume": "m3/ha"},
+    }
+    output.with_suffix(".json").write_text(
+        pd.Series(manifest).to_json(indent=2), encoding="utf-8"
+    )
+    return output
+
+
 def write_fertilization_audit(
     result: FertilizationAuditResult, output_dir: Path
 ) -> Path:

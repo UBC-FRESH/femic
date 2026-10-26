@@ -108,3 +108,35 @@ def test_cli_fertilization_audit(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert "fertilization audit complete" in result.output
     assert (tmp_path / "audit" / "fertilization_accounts.csv").is_file()
+
+
+def test_cli_fertilization_curve(tmp_path: Path) -> None:
+    """The CLI materializes a fertilized yield curve from the package."""
+    package = Path("tests/fixtures/carbon/tsa24_minimal")
+    track = "AU(2401000)+IFM(managed)+treatment()"
+    out = tmp_path / "fertilized.csv"
+    result = CliRunner().invoke(
+        app,
+        [
+            "carbon",
+            "fertilization-curve",
+            "--package",
+            str(package),
+            "--track",
+            track,
+            "--species",
+            "SW",
+            "--site-index",
+            "20",
+            "--response-age",
+            "10",
+            "--fertilization-config",
+            str(CONFIG),
+            "--out",
+            str(out),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert out.is_file()
+    assert out.with_suffix(".json").is_file()
+    assert "fertilized curve written" in result.output

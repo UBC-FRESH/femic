@@ -16039,6 +16039,8 @@
 
 - Added `config/carbon/tipsy/FertRespMOF.txt` (public BC TIPSY MOF response table)
   and parser/curve transform `femic.carbon.fertilized_curve`.
+- Added `femic carbon fertilization-curve` to materialize a public TIPSY response
+  curve for a package track with a provenance sidecar.
 - Added `femic carbon fertilization-audit` and the thesis emissions factors:
   CO2 17.13779467, CH4 0.055734646, N2O 20.00206748/40.00206748/60.00206748
   kg/ha for f1/f2/f3; 200 kg N/ha; 10-year response; 80% effectiveness.

@@ -16,6 +16,7 @@ from .fertilization import (
     load_tipsy_fertilization_response,
     tipsy_response_percent,
     write_fertilization_audit,
+    write_fertilized_curve,
 )
 from .package import (
     CarbonExportConfig,
@@ -58,4 +59,5 @@ __all__ = [
     "validate_carbon_package",
     "write_carbon_package",
     "write_fertilization_audit",
+    "write_fertilized_curve",
 ]
