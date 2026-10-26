@@ -15,6 +15,13 @@ manifest must record which crosswalk version was used.
 - `disturbance_map.bc.csv` — normalized WS4 treatment label to CBM disturbance type.
 - `land_class.bc.csv` — default CBM land class by IFM state.
 - `carbon.example.yaml` — example instance-level `carbon:` block.
+- `tsa24.yaml` — TSA24 defaults (Montane Cordillera, TSA `24`).
+- `mkrf.yaml` — MKRF defaults (Pacific Maritime, FMU code `mkrf`).
+
+Run `femic carbon validate <package>` (or `--config config/carbon/tsa24.yaml`)
+before a cross-repo handoff. The validator checks table hashes, the package
+fingerprint, classifiers, the yield grid, area, and boundaries. The public-safe
+`tests/fixtures/carbon/tsa24_minimal` package exercises the same contract.
 
 ## Rules
 

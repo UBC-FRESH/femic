@@ -15152,3 +15152,27 @@
   proportional behaviour.
 - Verification: `sphinx-build -b html docs _build/html -W` passed; targeted pytest and
   `ruff`/`mypy` checks pass.
+
+## 2026-10-26 - P115.3 carbon config, validation, and fixtures
+
+- Added `config/carbon/tsa24.yaml` and `config/carbon/mkrf.yaml`, plus the MKRF
+  eco-boundary row. The `carbon:` block now selects the crosswalks, boundary, CBM defaults
+  hash, age grid, fallbacks, review state, and optional validation pins without a long
+  command line.
+- Added `femic/carbon/config.py` with `CarbonInstanceConfig`,
+  `load_carbon_instance_config`, and `to_export_config`. The loader rejects a malformed
+  block, an unknown CBM eco boundary, an unknown TSA/FMU code, a boundary mismatch, and a
+  crosswalk set spread across directories.
+- Added `femic/carbon/validate.py` and `femic carbon validate`. The validator checks the
+  manifest, required tables and hashes, package fingerprint, boundaries, classifiers,
+  inventory, yield grid, curve shares, disturbance declarations, and optional expected
+  area/track totals. It exits non-zero on an area, classifier, or manifest mismatch.
+- Added the public-safe `tests/fixtures/carbon/tsa24_minimal` package: one synthetic TSA24
+  track, 5.0 ha, 31 yield rows, draft crosswalks, and the pinned CBM defaults hash.
+- Added `tests/test_carbon_config.py` and `tests/test_carbon_validate.py`, including CLI
+  success and failure paths.
+- Verification: the real TSA24 package validates (108 tracks, 6,016,466.4 ha, 3,348 yield
+  rows); 20 targeted carbon tests pass; `sphinx-build -b html docs _build/html -W` passes;
+  the carbon modules are clean under `mypy` and targeted `ruff`. The full suite still has
+  unrelated environment/data failures in K3Z/TSR/patchworks/annex tests.
+- P115.1 crosswalk science review remains open; the config records `review.status: draft`.

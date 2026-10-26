@@ -3618,7 +3618,7 @@ As of the completion of Phase 106, the FEMIC roadmap has been refined to address
 
 The roadmap now follows a more consistent structure that should be easier for automated tools to parse while maintaining all the detailed implementation information that developers need. Future phases will follow these established patterns for better consistency and maintainability.
 
-## Phase 107 Closeout Status
+## P107 closeout status
 
 ### Tasks Completed for Phase 107
 1. Created standardized roadmap structure templates in planning directory
@@ -3892,7 +3892,7 @@ Tasks:
 
 - [ ] P115.1 Define the carbon domain contract and crosswalks (#362)
 - [x] P115.2 Export static CBM input packages from FEMIC (#363)
-- [ ] P115.3 Add carbon config, validation, and TSA24/MKRF fixtures (#364)
+- [x] P115.3 Add carbon config, validation, and TSA24/MKRF fixtures (#364)
 - [ ] P115.4 Export GCBM walltowall projects from FEMIC (#365)
 - [ ] P115.5 Hand off packages to WS4 and WS3 and record parity (#366)
 - [ ] P115.6 Record CBM4 and platform adapter readiness (#367)

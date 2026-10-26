@@ -8,3 +8,4 @@ tsa_code,tsa_name,admin_boundary,eco_boundary,confidence,source,notes
 46,Sunshine Coast,British Columbia,Pacific Maritime,medium,BC TSA list; CBM eco-boundary names,Confirm against the instance BEC metadata.
 47,Arrowsmith,British Columbia,Pacific Maritime,medium,BC TSA list; CBM eco-boundary names,Confirm against the instance BEC metadata.
 48,North Island,British Columbia,Pacific Maritime,high,BC TSA list; CBM eco-boundary names,
+mkrf,Mackenzie Forest District,British Columbia,Pacific Maritime,medium,Instance metadata; CBM eco-boundary names,Legacy FMU-style instance; confirm the BEC boundary.

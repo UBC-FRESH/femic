@@ -128,6 +128,10 @@ def test_write_package_writes_manifest_and_hashes(tmp_path: Path) -> None:
     assert result.package_dir == tmp_path / "package"
     assert result.track_count == 1
     assert result.yield_rows == 31
+    assert any(
+        source["path"] == "config/carbon/species_map.bc.csv"
+        for source in manifest["sources"]
+    )
 
 
 def test_track_names_from_compiled_dataset(tmp_path: Path) -> None:

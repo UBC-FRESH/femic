@@ -1,0 +1,30 @@
+bc_species,common_name,cbm_species,wood_type,confidence,source,notes
+AC,black cottonwood,Black cottonwood,hardwood,high,BC species code convention; CBM default species list,Coastal cottonwood may be a balsam poplar/black cottonwood complex.
+AT,trembling aspen,Trembling aspen,hardwood,high,BC species code convention; CBM default species list,
+BA,amabilis fir,Amabilis fir,softwood,high,BC species code convention; CBM default species list,
+BG,grand fir,Grand fir,softwood,high,BC species code convention; CBM default species list,
+BL,paper birch,White birch,hardwood,medium,BC species code convention; CBM default species list,CBM also has Alaska paper birch and mountain paper birch; this is a conservative default.
+CW,western redcedar,Western redcedar,softwood,high,BC species code convention; CBM default species list,
+FD,Douglas-fir,Douglas-fir and Rocky Mountain Douglas-fir,softwood,high,BC species code convention; CBM default species list,
+FDC,coastal Douglas-fir,Douglas-fir and Rocky Mountain Douglas-fir,softwood,high,BC species code convention; CBM default species list,
+FDI,interior Douglas-fir,Douglas-fir and Rocky Mountain Douglas-fir,softwood,high,BC species code convention; CBM default species list,
+HM,mountain hemlock,Mountain hemlock,softwood,high,BC species code convention; CBM default species list,
+HW,western hemlock,Western hemlock,softwood,high,BC species code convention; CBM default species list,
+LW,western larch,Western larch,softwood,high,BC species code convention; CBM default species list,
+MB,bigleaf maple,Bigleaf maple,hardwood,high,BC species code convention; CBM default species list,
+OA,Garry oak,Garry oak,hardwood,high,BC species code convention; CBM default species list,
+PL,lodgepole pine,Lodgepole pine,softwood,high,BC species code convention; CBM default species list,
+PLI,lodgepole pine,Lodgepole pine,softwood,high,BC species code convention; CBM default species list,
+PY,ponderosa pine,Ponderosa pine,softwood,high,BC species code convention; CBM default species list,
+RA,red alder,Red alder,hardwood,high,BC species code convention; CBM default species list,
+S,spruce,Spruce,softwood,medium,BC species code convention; CBM default species list,Use a species-resolved curve when the bundle carries one.
+SB,subalpine fir,Subalpine fir (or alpine fir),softwood,medium,BC species code convention; CBM default species list,BC SB is subalpine fir; CBM balsam fir is the eastern default.
+SE,Engelmann spruce,Engelmann spruce,softwood,high,BC species code convention; CBM default species list,
+SS,Sitka spruce,Sitka spruce,softwood,high,BC species code convention; CBM default species list,
+SW,white spruce,White spruce,softwood,high,BC species code convention; CBM default species list,
+SX,spruce hybrid,Spruce,softwood,medium,BC species code convention; CBM default species list,Hybrid spruce complex; use a species-resolved curve when available.
+WB,whitebark pine,Whitebark pine,softwood,high,BC species code convention; CBM default species list,
+YB,yellow birch,Yellow birch,hardwood,high,BC species code convention; CBM default species list,
+YC,yellow cedar,Yellow-cypress,softwood,high,BC species code convention; CBM default species list,
+UNK_SW,unmapped conifer,Unspecified softwood species,softwood,low,Explicit fallback,Use only when the BC code is unknown and the stand is conifer-leading.
+UNK_HW,unmapped broadleaf,Unspecified hardwood species,hardwood,low,Explicit fallback,Use only when the BC code is unknown and the stand is broadleaf-leading.

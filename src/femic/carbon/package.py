@@ -167,6 +167,10 @@ class CarbonExportConfig:
     age_interval: int = DEFAULT_AGE_INTERVAL
     max_age: int = DEFAULT_MAX_AGE
     volume_feature_label: str = DEFAULT_VOLUME_FEATURE_LABEL
+    crosswalk_dir: Path | None = None
+    review_status: str = "draft"
+    reviewer: str = ""
+    reviewed_utc: str = ""
 
 
 @dataclass(frozen=True)
@@ -214,6 +218,12 @@ def load_carbon_export_config(
     age_interval: int = DEFAULT_AGE_INTERVAL,
     max_age: int = DEFAULT_MAX_AGE,
     volume_feature_label: str = DEFAULT_VOLUME_FEATURE_LABEL,
+    fallback_softwood: str | None = None,
+    fallback_hardwood: str | None = None,
+    fallback_wood_type: str | None = None,
+    review_status: str = "draft",
+    reviewer: str = "",
+    reviewed_utc: str = "",
 ) -> CarbonExportConfig:
     """Load the draft crosswalks and the CBM defaults provenance.
 
@@ -237,6 +247,18 @@ def load_carbon_export_config(
         Maximum yield age. Defaults to 300.
     volume_feature_label : str, optional
         WS4 feature label for merchantable volume.
+    fallback_softwood : str or None, optional
+        Explicit softwood fallback CBM species. Defaults to the ``UNK_SW`` row.
+    fallback_hardwood : str or None, optional
+        Explicit hardwood fallback CBM species. Defaults to the ``UNK_HW`` row.
+    fallback_wood_type : {"softwood", "hardwood"} or None, optional
+        Fallback for an unmapped species that cannot be classified.
+    review_status : str, optional
+        Crosswalk review status. Defaults to ``draft``.
+    reviewer : str, optional
+        Crosswalk reviewer.
+    reviewed_utc : str, optional
+        Review timestamp.
 
     Returns
     -------
@@ -262,23 +284,29 @@ def load_carbon_export_config(
         raise ValueError(
             "cbm_defaults version and sha256 are required when libcbm is not installed"
         )
-    fallback_softwood = _fallback_species(species, "softwood")
-    fallback_hardwood = _fallback_species(species, "hardwood")
+    resolved_softwood = fallback_softwood or _fallback_species(species, "softwood")
+    resolved_hardwood = fallback_hardwood or _fallback_species(species, "hardwood")
+    if fallback_wood_type not in {None, "softwood", "hardwood"}:
+        raise ValueError("fallback_wood_type must be 'softwood' or 'hardwood'")
     return CarbonExportConfig(
         admin_boundary=admin_boundary,
         eco_boundary=eco_boundary,
         species_map=species,
         disturbance_map=disturbances,
         land_class_by_ifm=land_classes,
-        fallback_softwood=fallback_softwood,
-        fallback_hardwood=fallback_hardwood,
-        fallback_wood_type="softwood",
+        fallback_softwood=resolved_softwood,
+        fallback_hardwood=resolved_hardwood,
+        fallback_wood_type=fallback_wood_type or "softwood",
         cbm_defaults_version=version,
         cbm_defaults_sha256=sha256,
         cbm_defaults_source=cbm_defaults_source,
         age_interval=age_interval,
         max_age=max_age,
         volume_feature_label=volume_feature_label,
+        crosswalk_dir=root.resolve(),
+        review_status=review_status,
+        reviewer=reviewer,
+        reviewed_utc=reviewed_utc,
     )
 
 
@@ -429,14 +457,18 @@ def write_carbon_package(
         table_paths[name] = path
         table_hashes[name] = _sha256(path)
 
-    fingerprint = _fingerprint(table_hashes, source_hashes, config)
+    all_sources = list(source_hashes) + _crosswalk_sources(config.crosswalk_dir)
+    fingerprint = _fingerprint(table_hashes, all_sources, config)
     package_id = f"femic-carbon-{package_label}-{fingerprint[:12]}"
+    inventory_area_ha = float(
+        pd.to_numeric(tables["inventory"]["area_ha"], errors="coerce").sum()
+    )
     manifest = {
         "schema_version": SCHEMA_VERSION,
         "package_id": package_id,
         "created_utc": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "producer": {"name": "femic", "version": _producer_version()},
-        "sources": [{"path": path, "sha256": digest} for path, digest in source_hashes],
+        "sources": [{"path": path, "sha256": digest} for path, digest in all_sources],
         "cbm_defaults": {
             "version": config.cbm_defaults_version,
             "sha256": config.cbm_defaults_sha256,
@@ -465,9 +497,7 @@ def write_carbon_package(
         package_id=package_id,
         fingerprint=fingerprint,
         track_count=int(tables["track_carbon_map"].shape[0]),
-        inventory_area_ha=float(
-            pd.to_numeric(tables["inventory"]["area_ha"], errors="coerce").sum()
-        ),
+        inventory_area_ha=inventory_area_ha,
         yield_rows=int(tables["yield"].shape[0]),
     )
 
@@ -1099,6 +1129,23 @@ def _species_table(config: CarbonExportConfig) -> pd.DataFrame:
             "notes",
         ],
     )
+
+
+def _crosswalk_sources(directory: Path | None) -> list[tuple[str, str]]:
+    """Return public-safe source records for the crosswalk files."""
+    if directory is None:
+        return []
+    result: list[tuple[str, str]] = []
+    for name in (
+        "species_map.bc.csv",
+        "eco_boundary.bc.csv",
+        "disturbance_map.bc.csv",
+        "land_class.bc.csv",
+    ):
+        path = Path(directory) / name
+        if path.is_file():
+            result.append((f"config/carbon/{name}", _sha256(path)))
+    return result
 
 
 def _sha256(path: Path) -> str:

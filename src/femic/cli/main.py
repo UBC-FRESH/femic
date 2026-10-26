@@ -61,8 +61,12 @@ from femic.builtin_instances import (
     resolve_builtin_repo_status,
 )
 from femic.carbon import (
+    CarbonValidationError,
     export_carbon_package,
     load_carbon_export_config,
+    load_carbon_instance_config,
+    to_export_config,
+    validate_carbon_package,
 )
 from femic.document_figures import (
     DOCUMENT_FIGURE_DOWNSTREAM_USE_CLASSES,
@@ -1337,6 +1341,19 @@ CARBON_CONFIG_DIR_OPTION = typer.Option(
     Path("config/carbon"),
     "--config-dir",
     help="Directory holding the carbon crosswalk CSVs.",
+)
+CARBON_INSTANCE_CONFIG_OPTION = typer.Option(
+    None,
+    "--config",
+    help="Instance carbon YAML block (for example config/carbon/tsa24.yaml).",
+    show_default=False,
+)
+CARBON_VALIDATE_PACKAGE_ARGUMENT = typer.Argument(
+    ...,
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="Carbon package directory containing manifest.json.",
 )
 CARBON_ADMIN_BOUNDARY_OPTION = typer.Option(
     "British Columbia",
@@ -8354,6 +8371,54 @@ def export_woodstock(
     console.print(f"transitions_csv: {result.transitions_csv_path}")
 
 
+@carbon_app.command("validate")
+def carbon_validate(
+    package_dir: Path = CARBON_VALIDATE_PACKAGE_ARGUMENT,
+    carbon_config: Path | None = CARBON_INSTANCE_CONFIG_OPTION,
+    expect_area_ha: float | None = typer.Option(
+        None,
+        "--expect-area-ha",
+        help="Require the inventory area to match this value.",
+        show_default=False,
+    ),
+    expect_tracks: int | None = typer.Option(
+        None,
+        "--expect-tracks",
+        help="Require this number of package tracks.",
+        show_default=False,
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Validate a static carbon package against the FEMIC contract."""
+    instance_context = _resolve_cli_instance_context(instance_root=instance_root)
+    resolved_package = instance_context.resolve_path(package_dir)
+    expected_area = expect_area_ha
+    expected_tracks = expect_tracks
+    try:
+        if carbon_config is not None:
+            settings = load_carbon_instance_config(
+                instance_context.resolve_path(carbon_config)
+            )
+            if expected_area is None:
+                expected_area = settings.expected_area_ha
+            if expected_tracks is None:
+                expected_tracks = settings.expected_track_count
+        result = validate_carbon_package(
+            resolved_package,
+            expected_area_ha=expected_area,
+            expected_track_count=expected_tracks,
+        )
+    except (CarbonValidationError, FileNotFoundError, TypeError, ValueError) as exc:
+        console.print(f"[red]Carbon validation failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(
+        "[green]carbon package valid[/green] "
+        f"tracks={result.track_count} area_ha={result.inventory_area_ha:.1f} "
+        f"yield_rows={result.yield_rows}"
+    )
+    console.print(f"package_id: {result.package_id}")
+
+
 @carbon_app.command("export-package")
 def carbon_export_package(
     tsa: list[str] | None = TSA_OPTION,
@@ -8361,6 +8426,7 @@ def carbon_export_package(
     checkpoint: Path = EXPORT_CHECKPOINT_OPTION,
     output_dir: Path = CARBON_OUTPUT_DIR_OPTION,
     config_dir: Path = CARBON_CONFIG_DIR_OPTION,
+    carbon_config: Path | None = CARBON_INSTANCE_CONFIG_OPTION,
     admin_boundary: str = CARBON_ADMIN_BOUNDARY_OPTION,
     eco_boundary: str = CARBON_ECO_BOUNDARY_OPTION,
     cbm_defaults_version: str | None = CARBON_DEFAULTS_VERSION_OPTION,
@@ -8389,27 +8455,41 @@ def carbon_export_package(
     resolved_dataset_dir = (
         instance_context.resolve_path(dataset_dir) if dataset_dir is not None else None
     )
+    instance_settings = None
+    if carbon_config is not None:
+        try:
+            instance_settings = load_carbon_instance_config(
+                instance_context.resolve_path(carbon_config)
+            )
+        except (FileNotFoundError, TypeError, ValueError) as exc:
+            console.print(f"[red]Carbon config failed:[/red] {exc}")
+            raise typer.Exit(code=1) from exc
+        resolved_config_dir = instance_settings.crosswalk_dir
     targets = (
         [str(v).zfill(2) if str(v).isdigit() else str(v).lower() for v in tsa]
         if tsa
+        else list(instance_settings.tsa_codes)
+        if instance_settings is not None
         else []
     )
     if not targets:
-        console.print(
-            "[red]Provide at least one FMU/code via --tsa for carbon export.[/red]"
-        )
+        console.print("[red]Provide at least one FMU/code via --tsa or --config.[/red]")
         raise typer.Exit(code=1)
     try:
-        config = load_carbon_export_config(
-            config_dir=resolved_config_dir,
-            admin_boundary=admin_boundary,
-            eco_boundary=eco_boundary,
-            cbm_defaults_version=cbm_defaults_version,
-            cbm_defaults_sha256=cbm_defaults_sha256,
-            cbm_defaults_source=cbm_defaults_source,
-            age_interval=age_interval,
-            max_age=max_age,
-            volume_feature_label=volume_feature_label,
+        config = (
+            to_export_config(instance_settings)
+            if instance_settings is not None
+            else load_carbon_export_config(
+                config_dir=resolved_config_dir,
+                admin_boundary=admin_boundary,
+                eco_boundary=eco_boundary,
+                cbm_defaults_version=cbm_defaults_version,
+                cbm_defaults_sha256=cbm_defaults_sha256,
+                cbm_defaults_source=cbm_defaults_source,
+                age_interval=age_interval,
+                max_age=max_age,
+                volume_feature_label=volume_feature_label,
+            )
         )
         result = export_carbon_package(
             bundle_dir=resolved_bundle_dir,

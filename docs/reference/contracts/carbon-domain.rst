@@ -83,6 +83,8 @@ Required content:
 
 ``sources``
    Upstream source records with a public-safe ``path`` and a ``sha256`` digest.
+   The crosswalk files (``config/carbon/*.bc.csv``) are recorded here so the
+   package states which crosswalk version produced it.
 
 ``cbm_defaults``
    The CBM default parameter database ``version``, ``sha256``, and ``source``.
@@ -202,8 +204,8 @@ boundaries. The first version supports one boundary per package. A multi-boundar
 instance is split into packages or handled by a later extension.
 
 An unknown TSA or a boundary that spans more than one CBM eco boundary is a
-configuration error, not a guess. MKRF is intentionally absent until the
-instance metadata names the boundary.
+configuration error, not a guess. MKRF is represented by the ``mkrf`` FMU code
+in ``config/carbon/mkrf.yaml`` with the Pacific Maritime boundary.
 
 Disturbance
 ~~~~~~~~~~~
@@ -253,7 +255,12 @@ FEMIC validation and the WS4 loader enforce the same contract:
 - shares in 0-1 and summing to at most one;
 - every track's eco boundary equal to the manifest boundary;
 - declared disturbance types for inventory and treatment mappings;
-- table hashes when present.
+- table hashes when present;
+- the package fingerprint and the manifest boundaries.
+
+``femic carbon validate <package>`` runs these producer-side checks and exits
+non-zero on an area, classifier, or manifest mismatch. The public-safe
+``tests/fixtures/carbon/tsa24_minimal`` package is the CI fixture.
 
 Open questions
 --------------

@@ -1,0 +1,2 @@
+track_name,classifier_set,leading_species,softwood_share,hardwood_share,landclass,last_disturbance,eco_boundary,volume_feature_label
+AU(2401000)+IFM(managed)+treatment(),AU(2401000)+IFM(managed)+treatment();White spruce,White spruce,1.0,0.0,0,CC,Montane Cordillera,feature.Volume

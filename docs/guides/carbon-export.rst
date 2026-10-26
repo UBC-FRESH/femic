@@ -27,6 +27,24 @@ Prerequisites
 Command
 -------
 
+The supported form selects an instance configuration:
+
+.. code-block:: bash
+
+   femic carbon export-package \
+     --config config/carbon/tsa24.yaml \
+     --bundle-dir data/model_input_bundle \
+     --checkpoint data/vri_vclr1p_checkpoint7.feather \
+     --output-dir output/carbon/tsa24 \
+     --dataset-dir output/ws4/tsa24/compiled
+
+``config/carbon/tsa24.yaml`` and ``config/carbon/mkrf.yaml`` carry the default
+boundary, crosswalk paths, CBM defaults hash, age grid, and review status. The
+config also supplies the TSA/FMU codes, so ``--tsa`` is optional when
+``--config`` is used.
+
+The explicit form remains available for a one-off export:
+
 .. code-block:: bash
 
    femic carbon export-package \
@@ -40,6 +58,12 @@ Command
 
 The CLI resolves paths through the active instance context. Use
 ``--instance-root`` when the current directory is not the instance root.
+
+The ``carbon:`` block is documented by ``config/carbon/carbon.example.yaml``.
+Every key has a default except the crosswalk paths, the boundaries, and the CBM
+defaults version. ``validation.expected_area_ha`` and
+``validation.expected_track_count`` are optional pins for a fixture or a release
+check.
 
 What it writes
 --------------
@@ -82,15 +106,23 @@ Model choices in the first version
 Validation
 ----------
 
-The package consumer validates the same contract. Before handing a package to
-WS4, check:
+Run the producer-side validator before handing a package to WS4:
 
-- every inventory track is in ``track_carbon_map.csv``;
-- every track has a yield row on the age grid;
-- every classifier set has the right number of values;
-- every leading species is in ``species_map.csv``;
-- every track's eco boundary matches the manifest;
-- the CBM defaults hash matches the environment used for the run.
+.. code-block:: bash
+
+   femic carbon validate output/carbon/tsa24
+   femic carbon validate output/carbon/tsa24 --config config/carbon/tsa24.yaml
+   femic carbon validate output/carbon/tsa24 --expect-area-ha 6016466.4
+
+The command checks the manifest shape, table files and hashes, package
+fingerprint, boundaries, classifiers, inventory, yield grid, curve shares, and
+declared disturbances. It exits non-zero on an area, classifier, or manifest
+mismatch. The optional ``--expect-area-ha`` and ``--expect-tracks`` flags can be
+pinned in the instance config under ``validation`` for a fixture.
+
+The public-safe TSA24 fixture at
+``tests/fixtures/carbon/tsa24_minimal`` exercises the validator in CI. It is a
+synthetic one-track package, not real TSA24 inventory.
 
 WS4 exposes the consumer-side checks in ``docs/reference/carbon.rst`` and
 ``ws4/carbon/package.py``.
@@ -100,7 +132,7 @@ Caveats
 
 - The crosswalks under ``config/carbon/`` are draft defaults and need CBM/CFS
   review.
-- The first exporter does not run a carbon engine. Use WS4 P51.2/P51.3 for the
+- The first exporter does not run a carbon engine. Use WS4 P58.2/P58.3 for the
   SIT compile and the libcbm run.
 - The first exporter does not model retention splits or partial harvest beyond
   the disturbance map. WS4 rejects unsupported retention explicitly.

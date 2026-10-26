@@ -132,7 +132,7 @@ the external dependencies are documented. CaMP/peatlands are out of scope for th
 | --- | --- | --- |
 | P115.1 | #362 | Carbon domain contract and crosswalks |
 | P115.2 | #363 | Static CBM input package exporter |
-| P115.3 | #364 | Carbon config, validation, fixtures |
+| P115.3 | #364 | Carbon config, validation, fixtures (complete) |
 | P115.4 | #365 | GCBM walltowall export |
 | P115.5 | #366 | WS4/WS3 handoff and parity |
 | P115.6 | #367 | CBM4 and platform adapter readiness |

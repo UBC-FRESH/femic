@@ -1,0 +1,13 @@
+user_dist_type,default_dist_type,removes_biomass,transition_reset_age,regen_delay,confidence,notes
+cc,Clearcut harvesting without salvage,True,0,0,high,Default clearcut.
+ct,Partial cutting,True,0,0,medium,CBM partial cutting removes 50% of merchantable biomass; replace with an intensity-specific commercial-thinning type when known.
+pct,85% precommercial thinning,True,0,0,medium,Precommercial thinning; confirm the CBM removal assumption.
+f1,Natural succession,False,0,0,low,Fertilization is represented through the growth curve; this event carries no stock change.
+f2,Natural succession,False,0,0,low,Fertilization is represented through the growth curve; this event carries no stock change.
+f3,Natural succession,False,0,0,low,Fertilization is represented through the growth curve; this event carries no stock change.
+fire,Wildfire,True,0,0,high,Stand-replacing wildfire.
+wildfire,Wildfire,True,0,0,high,Stand-replacing wildfire.
+mpb,Mountain pine beetle — Moderate impact,True,0,0,medium,Severity must be supplied by the instance; moderate is a placeholder.
+salvage,Salvage logging after fire,True,0,0,low,Use only when the salvage type is known.
+null,Natural succession,False,0,0,high,No-op event.
+default,Natural succession,False,0,0,low,Fallback for an unrecognized treatment; the package must record it.
