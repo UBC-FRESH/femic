@@ -15214,3 +15214,16 @@
   500 fragments) with explicit non-parity caveats.
 - Reports: `notes/reports/p1155-handoff-parity.md` and
   `notes/reports/p1155-handoff.json`. P115.1 crosswalk review remains open.
+
+## 2026-10-26 - P115.6 CBM4 and platform adapter readiness
+
+- Documented the engine adapter boundary in `docs/reference/contracts/carbon-domain.rst`:
+  package -> SIT tables -> driver -> `carbon.*` accounts/report. libcbm 2.10.2 and CBM
+  defaults 1.2.9300.391 remain the pinned driver.
+- Recorded CBM4 as unreleased: public CFS material from May 2026 targets open-source
+  availability in the latter half of 2026, but no public CBM4 package, input schema, or
+  version is pinned here. `gcbmwalltowall convert` is a watchlist path, not a runtime
+  dependency.
+- Recorded migration triggers, what changes/does not change, the version-pin policy, and
+  the platform watchlist. No unreleased CBM4 dependency or code was added.
+- P115.1 crosswalk science review remains the only open P115 task.

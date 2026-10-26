@@ -262,6 +262,85 @@ FEMIC validation and the WS4 loader enforce the same contract:
 non-zero on an area, classifier, or manifest mismatch. The public-safe
 ``tests/fixtures/carbon/tsa24_minimal`` package is the CI fixture.
 
+Engine adapter and CBM4 readiness
+---------------------------------
+
+The package and the SIT tables are the stable contract; the carbon engine is replaceable.
+The current runtime is ``libcbm==2.10.2`` with the bundled CBM defaults database
+``1.2.9300.391`` (SHA-256
+``4bd722d8825abeda3c9cf77247bbd4903824259e2fcc046d9a335336c8842155``). WS4 owns the
+schedule-to-events/transitions step; FEMIC owns the static package. Neither side imports
+CBM4 today.
+
+The adapter boundary is:
+
+- **Package** — schema ``0.1``, exact ``track_name`` join, CBM species names, units
+  ``ha``/``m3/ha``/``tC``, and a manifest with source, table, and CBM-defaults hashes.
+- **SIT tables** — classifiers, disturbance types, age classes, inventory, yield, events,
+  and transitions. The compiler is engine-neutral in shape, even where the first driver
+  consumes libcbm.
+- **Driver** — turns SIT tables plus a schedule into pools, fluxes, accounts, and a
+  manifest. ``libcbm`` is the first driver; a CBM4 driver would implement the same
+  outputs and provenance.
+- **Reporting** — ``carbon.*`` accounts, the block ledger, the optimizer objective, and
+  the run report do not depend on a particular engine.
+
+CBM4 status (2026-10-26)
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+CBM4 is the Canadian Forest Service's next-generation, spatially explicit forest carbon
+model. Public CFS material from May 2026 describes it as open-source with public
+availability targeted for the latter half of 2026, and a CBM4 workshop was scheduled for
+IBFRA 2026. No public CBM4 Python package, input schema, or release artifact is pinned in
+this repository, so CBM4 is treated as **unreleased** until a public source and version
+are verified.
+
+The public ``cat-cfs`` organization currently exposes `libcbm_py
+<https://github.com/cat-cfs/libcbm_py>`_, `cbm_defaults
+<https://github.com/cat-cfs/cbm_defaults>`_, and `gcbmwalltowall
+<https://github.com/cat-cfs/gcbmwalltowall>`_. ``gcbmwalltowall`` includes an external
+``convert`` path from a prepared GCBM project to CBM4, but it is not a FEMIC runtime
+dependency and is not used by this phase. The CBM4 status and timing are from the CFS
+presentation at the EEA/JRC LULUCF Workshop (May 2026) and the IBFRA 2026 workshop
+listing.
+
+Migration triggers
+~~~~~~~~~~~~~~~~~~
+
+Revisit CBM4 when all of the following hold:
+
+1. A public release is available with a versioned package and input contract.
+2. A CBM4 driver can consume the SIT/package boundary (directly or through a documented
+   adapter) and emit the same pool, flux, and account semantics.
+3. A parity run on the TSA24 clipped fixture and the real TSA24 package passes the
+   existing tolerance and replay checks.
+4. The release license and platform support are acceptable for the lab environment.
+
+What changes and what does not
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A CBM4 migration would change the driver, its version pin, its output mapping, and the
+calibration/parameter provenance. It would **not** change the package schema, the exact
+``track_name`` join, the WS4 event/transition compiler, the ``carbon.*`` account names,
+the block ledger, the optimizer target interface, or the report contract.
+
+Version-pin policy
+~~~~~~~~~~~~~~~~~~
+
+- ``libcbm`` is an optional extra, pinned exactly to ``2.10.2`` in FEMIC and WS4.
+- The CBM defaults version and SHA-256 are recorded in every package and run manifest.
+- An engine or defaults upgrade requires a new package fingerprint, a parity run, and a
+  changelog entry; it is not a silent dependency refresh.
+- CBM4 must not be added as a dependency before a public release is verified.
+
+Platform watchlist
+~~~~~~~~~~~~~~~~~~
+
+- ``libcbm`` Linux/macOS wheels and the bundled CBM defaults database.
+- Windows and Wine paths for GCBM ``moja.cli.exe`` and ``gcbmwalltowall``.
+- CBM4 public repository, wheels, input schema, and CFS support policy.
+- CBM-CFS3 archive tooling, kept only as a reference and not as a runtime dependency.
+
 Open questions
 --------------
 
@@ -272,7 +351,7 @@ Open questions
 3. Which retention and partial-harvest cases must the first version represent
    exactly rather than reject?
 4. When CBM4 is public, does it accept this SIT-compatible package directly or
-   require an adapter?
+   require an adapter, and what is its spatial-input contract?
 
 Related
 -------

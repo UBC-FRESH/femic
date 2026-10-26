@@ -135,7 +135,7 @@ the external dependencies are documented. CaMP/peatlands are out of scope for th
 | P115.3 | #364 | Carbon config, validation, fixtures (complete) |
 | P115.4 | #365 | GCBM walltowall export (complete) |
 | P115.5 | #366 | WS4/WS3 handoff and parity (complete) |
-| P115.6 | #367 | CBM4 and platform adapter readiness |
+| P115.6 | #367 | CBM4 and platform adapter readiness (complete) |
 
 ## 9. Risks and open questions
 
@@ -144,3 +144,14 @@ the external dependencies are documented. CaMP/peatlands are out of scope for th
 - The MKRF instance may be annex-backed; fixtures must not depend on unavailable pointers.
 - GCBM tooling is Windows/Access oriented; the bridge must state what it can and cannot run in CI.
 - CBM4 is not public yet; the package remains the stable contract and the engine stays replaceable.
+
+## 10. CBM4 and platform adapter readiness
+
+The package and SIT tables remain the stable contract. libcbm 2.10.2 is the current
+driver, pinned with CBM defaults 1.2.9300.391. CBM4 is treated as unreleased: public CFS
+material from May 2026 targets open-source availability in the latter half of 2026, but no
+public CBM4 package or input schema is pinned. A future CBM4 adapter must preserve the
+package, the exact `track_name` join, the `carbon.*` account names, and the TSA24 parity
+tolerance. No unreleased CBM4 code or dependency is added. GCBM remains the external
+spatial bridge; `gcbmwalltowall convert` is a watchlist path, not a FEMIC runtime
+dependency.
