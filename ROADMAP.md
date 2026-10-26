@@ -3946,7 +3946,9 @@ Tasks:
 - [ ] P116.1 Add `climate.v1` and a ClimateNA/SilvR21 adapter (`#370`).
   - [x] Add the `femic.contracts.climate` schema, validator, reader/writer,
     provenance summary, sample fixture, and docs.
-  - [ ] Add the ClimateNA/SilvR21 adapter and wire the first consumer.
+  - [x] Add the annual ClimateNA/SilvR21 CSV adapter with a public-safe
+    fixture.
+  - [ ] Wire the first curve or attribute consumer.
 - [ ] P116.2 Add `disturbance.v1` and a ws4 consumer (`#371`).
   - [x] Add the `femic.contracts.disturbance` schema, validator, examples,
     consumer rows, and docs.

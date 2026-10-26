@@ -29,6 +29,8 @@ CLIMATE_VARIABLES: dict[str, str] = {
     "tmax": "degC",
     "tmin": "degC",
     "mat": "degC",
+    "mwmt": "degC",
+    "mcmt": "degC",
     "ppt": "mm",
     "prcp": "mm",
     "map": "mm",
@@ -38,6 +40,7 @@ CLIMATE_VARIABLES: dict[str, str] = {
     "rh": "percent",
     "vpd": "kPa",
     "gdd": "degree_days",
+    "nffd": "days",
 }
 
 #: Accepted scenario labels. ``rcp*`` labels are retained for ClimateNA v6/v7

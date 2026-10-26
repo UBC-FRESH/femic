@@ -50,11 +50,14 @@ Key Entry Surfaces
   Return the provenance-bearing summary a consumer can report.
 - :func:`climate_schema`
   Return a defensive copy of the JSON Schema document.
+- :func:`femic.contracts.climate_na.read_climate_na_csv`
+  Adapt an annual ClimateNA-style CSV to validated records.
 
 Cross-References
 ----------------
 
 - :doc:`../contracts/climate-contract`
+- :doc:`femic-contracts-climate-na`
 - :doc:`../contracts/index`
 
 .. automodule:: femic.contracts.climate

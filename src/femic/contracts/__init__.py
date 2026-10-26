@@ -20,6 +20,11 @@ from femic.contracts.climate import (
     validate_climate_record,
     write_climate_table,
 )
+from femic.contracts.climate_na import (
+    DEFAULT_CLIMATE_NA_COLUMNS,
+    climate_na_columns,
+    read_climate_na_csv,
+)
 from femic.contracts.disturbance import (
     DISTURBANCE_MAX_YEAR,
     DISTURBANCE_MIN_YEAR,
@@ -64,6 +69,7 @@ __all__ = [
     "CLIMATE_SCHEMA",
     "CLIMATE_SCHEMA_VERSION",
     "CLIMATE_VARIABLES",
+    "DEFAULT_CLIMATE_NA_COLUMNS",
     "DISTURBANCE_MAX_YEAR",
     "DISTURBANCE_MIN_YEAR",
     "DISTURBANCE_SCHEMA",
@@ -85,11 +91,13 @@ __all__ = [
     "EFITrainingData",
     "EFIValidation",
     "annotate_attribute_rows",
+    "climate_na_columns",
     "climate_schema",
     "consumer_rows",
     "disturbance_schema",
     "efi_model_schema",
     "events_for_block",
+    "read_climate_na_csv",
     "read_climate_table",
     "read_disturbance_table",
     "read_efi_model_card",

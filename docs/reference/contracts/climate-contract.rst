@@ -149,6 +149,36 @@ JSON files carry a list of record objects, or an object with a ``records``
 list. Empty tables are rejected: a consumer should fail on an empty table
 rather than silently report zero records.
 
+ClimateNA/SilvR21 Adapter
+-------------------------
+
+:func:`femic.contracts.climate_na.read_climate_na_csv` reads an annual
+ClimateNA-style CSV and emits ``femic.climate.v1`` records. The default map
+covers ``MAT``/``Tave``, ``MAP``/``PPT``, ``MWMT``, ``MCMT``, ``DD5``, ``NFFD``,
+``PAS``, ``CMD``, ``Eref``, ``RH``, and ``VPD``. A caller can supply an explicit
+``column_map`` for a release with different names.
+
+The adapter does not download data, choose an ensemble, or convert between
+non-canonical units. It skips missing tokens such as ``NA`` and rejects a
+non-numeric mapped value. With multiple rows, the record ``aoi_id`` is
+``<base>:<ID>``; with one row it is the base id. The source column name is
+appended to ``notes`` for provenance.
+
+.. code-block:: python
+
+   from pathlib import Path
+   from femic.contracts.climate_na import read_climate_na_csv
+
+   records = read_climate_na_csv(
+       Path("data/climate/climate-na-2050.csv"),
+       aoi_id="north-island",
+       year=2050,
+       scenario="ssp245",
+       gcm="ensemble",
+       source_version="ClimateNA v7.40",
+       retrieved_utc="2026-10-25T00:00:00+00:00",
+   )
+
 Validation Rules
 ----------------
 
@@ -197,6 +227,7 @@ Cross-References
 ----------------
 
 - :doc:`../api/femic-contracts-climate`
+- :doc:`../api/femic-contracts-climate-na`
 - :doc:`index`
 
 .. toctree::

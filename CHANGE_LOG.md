@@ -1,6 +1,11 @@
 # Change Log
 
 ## 2026-10-25
+- P116.1 adapter: added `femic.contracts.climate_na.read_climate_na_csv`, a
+  defensive default annual column map, a public-safe ClimateNA-shaped fixture,
+  and 11 focused tests. The adapter maps columns to canonical variables,
+  preserves the source column in notes, skips missing tokens, and rejects
+  non-numeric mapped values. The first curve/attribute consumer remains open.
 - P116.3: added `femic.contracts.efi` with the `femic.efi.model.v1` model-card
   schema, nested training/validation/applicability metadata, applicability
   checks, attribute-row annotation, two public-safe synthetic cards, and

@@ -22,7 +22,9 @@ tree. A separate `fresh-contracts` repository remains the long-term option.
   reader and writer, provenance summary, and a public-safe sample table.
 - Contract page `docs/reference/contracts/climate-contract.rst` and API page
   `docs/reference/api/femic-contracts-climate.rst`.
-- The ClimateNA/SilvR21 adapter and first consumer remain open in `#370`.
+- `femic.contracts.climate_na`: annual ClimateNA/SilvR21 CSV adapter with a
+  default column map and a public-safe fixture. The first consumer remains open
+  in `#370`.
 - `femic.contracts.disturbance`: `femic.disturbance.v1` schema, validator,
   JSON reader/writer, provenance summary, ws4-facing consumer rows, and fire
   and NSR examples. The actual ws4 loader remains open in `#371`.
