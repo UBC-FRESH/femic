@@ -110,9 +110,11 @@ The manifest uses schema ``femic.lidar.product.v1`` and layout
   licence, derived flag, and lineage.
 - The consumer contract and pin rule.
 
-Every raster product must declare a positive ``resolution_m``. Every product
-must use the selection's native CRS and licence. A product that references a
-tile outside the selection is rejected.
+Every raster product must declare a positive ``resolution_m`` and use the
+selection's native CRS. Point-cloud products may carry their source UTM CRS; it
+is recorded per product and is never silently reprojected. Every product uses
+the selection's licence. A product that references a tile outside the selection
+is rejected.
 
 Reproducibility And Pinning
 ---------------------------
