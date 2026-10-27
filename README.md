@@ -38,6 +38,11 @@ roots, external data, stage boundaries, and restart behavior, start with:
 
 - `docs/reference/contracts/index.rst`
 
+The carbon lane starts at `docs/guides/carbon-overview.rst`; package export is
+`docs/guides/carbon-export.rst`, public HWP assumptions are
+`docs/guides/hwp-lifecycle.rst`, and the separate GCBM bridge is
+`docs/guides/gcbm-export.rst`.
+
 Legacy notebook narrative provenance is preserved in:
 
 - `docs/guides/legacy-traceability.rst`

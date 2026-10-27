@@ -1,0 +1,23 @@
+# Harvested wood product (HWP) lifecycle assumptions.
+#
+# Public assumptions used by the WS4 `--hwp-config` / `--carbon-hwp` path. The
+# values are scenario parameters, not a claim about the single true half-life or
+# displacement factor; run a grid over plausible values rather than treating this
+# file as a calibrated estimate.
+#
+# Conventions:
+# - utilized fibre is split between paper and solid wood;
+# - each pool decays with exact per-period survival 2 ** (-period_length / half_life);
+# - decay is an end-of-life emission to the atmosphere;
+# - displacement is a credit on product inflow, not a change to the forest pool.
+hwp:
+  utilization_rate: 0.85
+  proportion_solid_wood: 0.5
+  half_life_paper: 2
+  half_life_solid_wood: 100
+  # tC avoided per tC of product carbon; scenario parameters, not calibration.
+  displacement_factor_solid: 1.0
+  displacement_factor_paper: 0.0
+  displacement_credit: 1.0
+  period_length: 1
+  source: "Public HWP assumptions from the UBC-FRESH forest-sector carbon work"

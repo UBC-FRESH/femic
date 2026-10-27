@@ -1,0 +1,48 @@
+# FEMIC
+
+> Agent-facing index for FEMIC. Read the linked pages before you change the project.
+
+## Start here
+
+- [Home](index.html): the documentation home, with the guide and reference sections.
+- [Guides](guides/index.html): task and workflow guides, including the instance and data lanes.
+- [Technical contracts](reference/contracts/index.html): the compact invariants and runtime seams.
+- [API reference](reference/api/index.html): public modules, functions, and types.
+- [CLI reference](reference/cli.html): command groups and options.
+
+## Carbon
+
+- [Carbon package workflow](guides/carbon-overview.html): the producer-side map from package to WS4, HWP, and GCBM.
+- [Carbon package export](guides/carbon-export.html): build, validate, and hand off the static package.
+- [Fertilization response and emissions](guides/fertilization-audit.html): the public TIPSY response and thesis factors.
+- [Harvested wood product lifecycle](guides/hwp-lifecycle.html): split, half-life, displacement, EOL, and system accounts.
+- [GCBM walltowall export](guides/gcbm-export.html): the separate bridge lane and its limits.
+- [Forest carbon domain contract](reference/contracts/carbon-domain.html): the authoritative package schema and engine boundary.
+
+## Core contracts
+
+- [Contracts index](reference/contracts/index.html)
+- [Patchworks model semantics](reference/contracts/patchworks-model-semantics.html)
+- [Repository runtime invariants](reference/contracts/repo-runtime-invariants.html)
+- [Instance and data roots](reference/contracts/instance-and-data-roots.html)
+- [Stage boundaries and canonical artifacts](reference/contracts/stage-boundaries-and-canonical-artifacts.html)
+- [Recovery and external runtime boundaries](reference/contracts/recovery-and-external-runtime-boundaries.html)
+
+## Guides
+
+- [Pipeline overview](guides/pipeline-overview.html)
+- [Developer environment bootstrap](guides/developer-environment-bootstrap.html)
+- [Case onboarding](guides/case-onboarding.html)
+- [Stage 00 data preparation](guides/stage-00-data-prep.html)
+- [Stage 01A VDYP/TIPSY input](guides/stage-01a-vdyp-tipsy-input.html)
+- [Stage 01B post-TIPSY](guides/stage-01b-post-tipsy.html)
+- [Site index reconciliation](guides/site-index-reconciliation.html)
+- [Troubleshooting](guides/troubleshooting.html)
+- [Limitations and boundaries](guides/limitations-and-boundaries.html)
+
+## Reference
+
+- [Run configuration](reference/run-config.html)
+- [Patchworks export](reference/patchworks-export.html)
+- [Woodstock export](reference/woodstock-export.html)
+- [Nemora task map](reference/nemora-task-map.html)

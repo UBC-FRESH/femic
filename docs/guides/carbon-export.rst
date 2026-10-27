@@ -6,8 +6,10 @@ WS4 and WS3. The package contains the CBM classifiers, disturbance map, age
 classes, initial inventory, merchantable yield table, track and species maps,
 boundaries, and a provenance manifest.
 
-The package is the cross-repo contract. It does not contain schedule events or
-WS4 treatment transitions; WS4 adds those at run time.
+This page is the command guide. The lane map is :doc:`carbon-overview`; the schema
+authority is :doc:`../reference/contracts/carbon-domain`. The package is the
+cross-repo contract. It does not contain schedule events or WS4 treatment
+transitions; WS4 adds those at run time.
 
 Prerequisites
 -------------
@@ -137,16 +139,27 @@ Caveats
 
 - The crosswalks under ``config/carbon/`` are draft defaults and need CBM/CFS
   review.
-- The first exporter does not run a carbon engine. Use WS4 P58.2/P58.3 for the
-  SIT compile and the libcbm run.
-- The first exporter does not model retention splits or partial harvest beyond
-  the disturbance map. WS4 rejects unsupported retention explicitly.
-- The first exporter uses one eco boundary per package. A multi-boundary
-  instance is split into packages or handled by a later extension.
+- The exporter does not run a carbon engine. Use WS4 for the SIT compile and the
+  libcbm run.
+- The exporter does not model retention splits or partial harvest beyond the
+  disturbance map. WS4 rejects unsupported retention explicitly.
+- The exporter writes every observed eco boundary and per-row boundary shares.
+  Multi-boundary packages are supported and validated for TSA08, TSA16, TSA40,
+  and TSA41; a source checkpoint without the ecozone field still falls back to the
+  dominant boundary and records that boundary in the package.
+- The merchantable yield table is the package authority. WS4 does not resample the
+  compiled dataset's curves.
 
 Related
 -------
 
-- ``docs/reference/contracts/carbon-domain.rst`` — package contract.
+- :doc:`carbon-overview` — producer-side workflow map.
+- :doc:`../reference/contracts/carbon-domain` — package contract.
+- :doc:`fertilization-audit` — public fertilization response and emissions.
+- :doc:`hwp-lifecycle` — public HWP and displacement assumptions.
+- :doc:`gcbm-export` — separate GCBM walltowall bridge.
+- `WS4 carbon reference <https://ubc-fresh.github.io/ws4/reference/carbon.html>`_ —
+  consumer contract and runtime.
+- `WS4 carbon how-to <https://ubc-fresh.github.io/ws4/howto/run-carbon.html>`_ —
+  end-to-end task path.
 - ``planning/phase115_forest_carbon.md`` — phase plan.
-- WS4 ``docs/reference/carbon.rst`` — consumer contract.

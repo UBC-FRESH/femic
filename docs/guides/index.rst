@@ -4,7 +4,9 @@ Guides
 These guides recover and curate workflow knowledge from the legacy notebooks
 (``00_data-prep.ipynb``, ``01a_run-tsa.ipynb``, ``01b_run-tsa.ipynb``) archived in
 ``reference/legacy_notebooks/``, and align it with the current FEMIC CLI and
-export modules.
+export modules. The carbon lane starts at :doc:`carbon-overview`; the package command
+guide is :doc:`carbon-export`, the public HWP assumptions are in :doc:`hwp-lifecycle`,
+and the GCBM bridge is separate in :doc:`gcbm-export`.
 
 .. toctree::
    :maxdepth: 2
@@ -49,8 +51,10 @@ export modules.
    stage-01b-post-tipsy
    btc-fansier-runtime-and-extraction
    model-input-bundle-and-export
+   carbon-overview
    carbon-export
    fertilization-audit
+   hwp-lifecycle
    gcbm-export
    patchworks-variant-and-scenario-management
    diagnostics-playbook

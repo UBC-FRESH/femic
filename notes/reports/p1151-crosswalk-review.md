@@ -101,7 +101,7 @@ corrected.
 | `mpb` | Mountain pine beetle — Moderate impact | Keep 10% softwood mortality as an evergreen placeholder; real impact depends on pine fraction and beetle intensity. Severity-specific types are available in the AIDB. |
 | `salvage` | Salvage logging after fire | Keep, low confidence; usually paired with a preceding fire event. |
 | `null` | Natural succession | Explicit no-op only. |
-| `f1`–`f3` | **not mapped to CBM** | Do not map to a no-op. The public TIPSY growth response and the thesis emissions audit are implemented in the carbon lane; the remaining step is to wire the fertilized curves and accounts into the compiled dataset/optimizer. WS4 still rejects f1-f3 as CBM events until that wiring exists. |
+| `f1`–`f3` | **not a plain CBM disturbance** | Do not map to a no-op. The public TIPSY growth response and the thesis emissions audit are implemented in the carbon lane. WS4 now accepts `f1`–`f3` only with `--fertilization-config`, using materialized curve transitions or the scalar fallback, and adds the audited emissions accounts (WS4 #441). |
 
 The CBM AIDB has no fertilization disturbance type. The public TIPSY
 ``FertRespMOF.txt`` table provides the growth response by species/site index/age,
