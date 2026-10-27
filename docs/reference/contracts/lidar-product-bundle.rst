@@ -64,9 +64,10 @@ Each product record carries:
 - ``source_tile_ids`` and ``source_layer_ids``.
 - ``licence_id``, ``derived``, and ``lineage``.
 
-Raster products must declare a positive ``resolution_m``. All products must
-use the selection's native CRS and licence. Products may only reference tiles
-inside the selection.
+Raster products must declare a positive ``resolution_m`` and use the selection's
+native CRS. Point-cloud products may carry their source UTM CRS, which is
+recorded per product; they are never silently reprojected. All products use the
+selection's licence and may only reference tiles inside the selection.
 
 Versioning And Pinning
 ----------------------

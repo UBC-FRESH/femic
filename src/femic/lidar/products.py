@@ -638,7 +638,12 @@ def validate_lidar_product_bundle(
                     f"Derived product {record.relative_path} has no lineage notes."
                 )
             if selection_facts is not None:
-                if record.crs != selection_facts.native_crs:
+                # Point-cloud LAZ tiles are delivered in the source UTM zone; raster
+                # products must stay in the selection's native CRS.
+                if (
+                    record.product != "point_cloud"
+                    and record.crs != selection_facts.native_crs
+                ):
                     errors.append(
                         f"Product {record.relative_path} CRS {record.crs!r} does not "
                         f"match native CRS {selection_facts.native_crs!r}."
@@ -800,7 +805,7 @@ def _validate_plan(plan: LidarProductPlan, selection: _SelectionFacts) -> None:
                 f"Product source is reused in the plan: {spec.source_path}"
             )
         seen_paths.add(spec.source_path)
-        if spec.crs != selection.native_crs:
+        if spec.product != "point_cloud" and spec.crs != selection.native_crs:
             raise LidarProductError(
                 f"Product {spec.product!r} CRS {spec.crs!r} does not match native "
                 f"CRS {selection.native_crs!r}; silent reprojection is not allowed."

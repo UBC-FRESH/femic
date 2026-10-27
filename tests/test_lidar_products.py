@@ -427,3 +427,56 @@ def test_slope_is_a_supported_derived_raster_product() -> None:
     assert "slope" in products.LIDAR_PRODUCT_KINDS
     assert "slope" in products.LIDAR_RASTER_PRODUCT_KINDS
     assert "slope" in products.LIDAR_DERIVED_PRODUCT_KINDS
+
+
+def test_build_accepts_point_cloud_in_source_utm(tmp_path: Path) -> None:
+    """Point-cloud LAZ may carry UTM while raster products stay in native CRS."""
+    selection = _read_json(SELECTION_MANIFEST)
+    selection["products"] = ["dem", "dsm", "point_cloud"]
+    tile = dict(selection["tiles"][0])
+    tile.update(
+        tile_id="lidarbc:4:1",
+        product="point_cloud",
+        layer_id=4,
+        filename="point_cloud.laz",
+        projection="utm10",
+    )
+    selection["tiles"].append(tile)
+    selection["summary"]["tile_count"] = len(selection["tiles"])
+    selection_path = _write_json(tmp_path / "selection_pointcloud.json", selection)
+
+    payload = _read_json(PRODUCT_PLAN)
+    for product in payload["products"]:
+        product["path"] = str(FIXTURE_ROOT / product["path"])
+    point_cloud = tmp_path / "point_cloud.laz"
+    point_cloud.write_bytes(b"not a real laz, but a stable bundle artifact")
+    payload["products"].append(
+        {
+            "product": "point_cloud",
+            "path": str(point_cloud),
+            "media_type": "application/vnd.laszip",
+            "crs": "EPSG:3156",
+            "resolution_m": None,
+            "vertical_datum": "Canadian Geodetic Vertical Datum of 2013",
+            "source_tile_ids": ["lidarbc:4:1"],
+            "source_layer_ids": [4],
+            "derived": False,
+            "lineage": ["LidarBC point cloud"],
+            "retrieved_utc": "2026-10-24T00:00:00+00:00",
+        }
+    )
+    plan_path = _write_json(tmp_path / "product_plan_pointcloud.json", payload)
+
+    result = build_lidar_product_bundle(
+        selection_manifest_path=selection_path,
+        product_plan_path=plan_path,
+        output_dir=tmp_path / "bundle",
+        generated_utc=GENERATED_UTC,
+    )
+    point_record = next(
+        product
+        for product in result.manifest.products
+        if product.product == "point_cloud"
+    )
+    assert point_record.crs == "EPSG:3156"
+    assert validate_lidar_product_bundle(result.bundle_dir).is_valid
