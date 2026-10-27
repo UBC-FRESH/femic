@@ -19,6 +19,26 @@ carbon engine. WS3 is the reference implementation and parity oracle.
 The package is the stable cross-repo contract. The engine is replaceable:
 ``libcbm`` now, CBM4 later, and GCBM as a separate spatially explicit lane.
 
+Reader paths
+------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 34 66
+
+   * - If you need to
+     - Read
+   * - Export a package
+     - :doc:`../../guides/carbon-export`
+   * - Understand the whole carbon lane
+     - :doc:`../../guides/carbon-overview`
+   * - Apply the public HWP assumptions
+     - :doc:`../../guides/hwp-lifecycle`
+   * - Apply the public fertilization response
+     - :doc:`../../guides/fertilization-audit`
+   * - Consume the package in WS4
+     - `WS4 carbon reference <https://ubc-fresh.github.io/ws4/reference/carbon.html>`_
+
 What belongs in FEMIC
 ---------------------
 
@@ -28,6 +48,7 @@ What belongs in FEMIC
 - Land-class and historical-disturbance defaults.
 - The initial inventory and the SIT-compatible yield tables.
 - The WS4 treatment label to CBM disturbance-type crosswalk.
+- The public HWP lifecycle assumptions in ``config/carbon/hwp.bc.yaml``.
 - The GCBM walltowall export, when that lane is active.
 
 What does not belong in FEMIC
@@ -210,14 +231,13 @@ boundaries. The current table was checked by intersecting the public BCGW
 (2026-10-26). It records the dominant boundary and the overlap share in the notes.
 ``config/carbon/ecozone_map.bc.csv`` maps the public VRI ``CFS_ECOZONE`` code to
 the CBM eco-boundary name. The exporter uses that field when the checkpoint
-carries it, assigns the area-dominant boundary to each package track, and writes
-every observed pair to ``boundaries.csv``. The inventory keeps the per-row
-``eco_boundary`` so the WS4 compiler can split a track by its boundary area
-shares. A TSA that straddles a boundary still needs a boundary-aware inventory
-export (or separate packages) before the result is a spatial boundary product;
-the table marks those cases as ``split required``. MKRF is represented by the
-``mkrf`` FMU code in ``config/carbon/mkrf.yaml`` with the Pacific Maritime
-boundary.
+carries it, writes every observed pair to ``boundaries.csv``, and keeps the
+per-row ``eco_boundary`` in the inventory. WS4 compiles the admin/eco SIT
+classifiers and splits a track's dataset area by the package's boundary shares.
+The multi-boundary path is implemented and validated for TSA08, TSA16, TSA40,
+and TSA41; the table may still mark a case as ``split required`` when the source
+checkpoint lacks the field. MKRF is represented by the ``mkrf`` FMU code in
+``config/carbon/mkrf.yaml`` with the Pacific Maritime boundary.
 
 Disturbance
 ~~~~~~~~~~~
@@ -229,19 +249,20 @@ CBM type. ``ct`` uses ``40% commercial thinning`` as an upper-bound proxy for a
 40% basal-area removal from below; the actual merchantable-volume removal is
 normally lower. ``mpb`` uses the 10% moderate default as an evergreen placeholder
 and must be replaced with a severity-specific type when the instance supplies
-one. Fertilization is deliberately **not** mapped to a CBM disturbance row: the
-public TIPSY response and the thesis emissions audit are implemented as carbon-lane
-functions, but mapping ``f1``-``f3`` to a no-op would be wrong. WS4 rejects those
-treatment labels until the fertilized curves and accounts are wired into the compiled
-dataset and optimizer.
+one. Fertilization is deliberately **not** a plain CBM disturbance row: mapping
+``f1``-``f3`` to a no-op would be wrong. WS4 accepts those labels only when
+``--fertilization-config`` supplies either materialized curve transitions or the
+scalar growth-response fallback; the run then adds the audited emissions accounts.
 
 The public TIPSY ``FertRespMOF.txt`` table provides the growth response by species,
 site index, and fertilization age (FDC, SS, SW, PLI, FDI), with the default 80%
 effectiveness applied over 10 years. The thesis implementation uses a 200 kg N/ha
 dose and records per-hectare factors of approximately 17.14 kg CO2, 0.0557 kg CH4,
 and 20.00 kg N2O for one application, with 40.00/60.00 kg N2O for two/three
-applications. FEMIC exposes the curve transform and the emissions audit; the CBM
-pool/optimizer wiring is a separate runtime step.
+applications. FEMIC exposes the curve transform and the emissions audit; WS4 owns
+the curve transition, recovery event, and optimizer ledger wiring. The producer
+guide is :doc:`../../guides/fertilization-audit`; the consumer reference is
+`WS4 carbon <https://ubc-fresh.github.io/ws4/reference/carbon.html>`_.
 
 Land class
 ~~~~~~~~~~
@@ -315,6 +336,27 @@ The adapter boundary is:
 - **Reporting** — ``carbon.*`` accounts, the block ledger, the optimizer objective, and
   the run report do not depend on a particular engine.
 
+HWP lifecycle (WS4-derived)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The package also does not contain a product-lifecycle ledger. FEMIC publishes the public
+assumptions in ``config/carbon/hwp.bc.yaml``; WS4 applies them to the merchantable carbon
+that a disturbance transfers to products. The accounts include paper and solid-wood
+pools, exact half-life decay, end-of-life emissions, displacement, and the whole-system
+balance. The method and its boundary are in :doc:`../../guides/hwp-lifecycle`.
+
+Carbon yield curves (WS4-derived)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The package does **not** contain carbon stock or emission curves. It contains the static
+merchantable yield table and the crosswalks. WS4 compiles carbon curves from the package
+and the compiled dataset by simulating a single stand through libcbm: the managed curve
+grows to a rotation age, a clearcut transfers the pools and emits the disturbance losses,
+and the post-event trajectory becomes age 0. The public ``fresh-yan`` repository records
+the method and the reset-error evidence; the WS4 command is ``ws4 carbon-curves``. This
+keeps the expensive, schedule-independent curve compile on the consumer side while FEMIC
+retains the stable, auditable package contract.
+
 CBM4 status (2026-10-26)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -387,6 +429,16 @@ Open questions
 Related
 -------
 
+- :doc:`../../guides/carbon-overview` — producer-side workflow map.
+- :doc:`../../guides/carbon-export` — package export and validation.
+- :doc:`../../guides/hwp-lifecycle` — public HWP, displacement, and EOL assumptions.
+- :doc:`../../guides/fertilization-audit` — public TIPSY response and emissions.
+- :doc:`../../guides/gcbm-export` — separate GCBM walltowall bridge.
+- `WS4 carbon reference <https://ubc-fresh.github.io/ws4/reference/carbon.html>`_ —
+  consumer-side loader, runtime, HWP accounts, and optimizer ledger.
+- `fresh-yan <https://github.com/UBC-FRESH/fresh-yan>`_ — corrected public accounting,
+  curve generation, and HWP grid.
+- `yan-yancun-masc-thesis-paper <https://github.com/UBC-FRESH/yan-yancun-masc-thesis-paper>`_
+  — manuscript method and evidence.
 - ``planning/phase115_forest_carbon.md`` — phase plan and task map.
-- WS4 ``docs/reference/carbon.rst`` — consumer-side loader contract.
 - ``UBC-FRESH/ws3`` — reference implementation and parity oracle.

@@ -141,15 +141,24 @@ Caveats
   state-resolved curves are a later extension.
 - No retention or partial-harvest transition beyond the disturbance vector and
   the package disturbance map.
-- One admin/eco boundary per package, matching the carbon package.
+- The exporter follows the package's boundary table; a multi-boundary package may
+  still be reduced by the GCBM project contract. Record the mapping in the project
+  manifest.
 - CaMP, peatlands, and CBM4 are out of scope.
 - Access ``.mdb`` AIDBs are rejected in this Linux export lane; use the SQLite
   AIDB.
 - GCBM and walltowall are external dependencies and are not installed by FEMIC.
+- A walltowall/GCBM run is a bridge/format check, not a parity result. GCBM and
+  libcbm are separate CFS CBM implementations, and WS4 does not target numerical
+  equality with GCBM.
 
 Related
 -------
 
-- ``docs/guides/carbon-export.rst`` — carbon package producer.
-- ``docs/reference/contracts/carbon-domain.rst`` — package contract.
-- WS4 ``docs/reference/carbon.rst`` — GCBM results reader.
+- :doc:`carbon-overview` — producer-side workflow map.
+- :doc:`carbon-export` — carbon package producer.
+- :doc:`../reference/contracts/carbon-domain` — package contract.
+- `WS4 carbon reference <https://ubc-fresh.github.io/ws4/reference/carbon.html>`_ —
+  GCBM results reader and bridge boundary.
+- `WS4 carbon how-to <https://ubc-fresh.github.io/ws4/howto/run-carbon.html>`_ —
+  read a GCBM result.

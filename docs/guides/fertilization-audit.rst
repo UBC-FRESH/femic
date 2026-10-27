@@ -79,10 +79,16 @@ response file hash, species, site index, response age, effectiveness, and units.
 Current boundary
 ----------------
 
-The audit is producer-side: it does not alter the libcbm pool accounts, the block
-ledger, or the optimizer objective. Wiring the public TIPSY response into the compiled
-dataset/optimizer is a separate runtime task; the response curve and emissions factors
-are already materialized and tested.
+The standalone audit is producer-side: it reports the emissions from a schedule
+without altering a libcbm pool run. The runtime path is now wired in WS4:
+``ws4 carbon --fertilization-config`` uses materialized curve transitions and a
+ten-year recovery event, or the scalar growth-response fallback, and adds the
+``fertilization.*`` accounts. ``ws4 optimize --carbon-fertilization`` passes the
+same assumptions to the block ledger.
+
+The public response and emissions factors are still audit assumptions, not a
+validated field response for every species and site. The curve is species/site
+specific only where the TIPSY table has a row; otherwise the fallback is explicit.
 
 References
 ----------
@@ -90,3 +96,6 @@ References
 - BC TIPSY ``FertRespMOF.txt`` (public response table; copied from the archived FEMIC
   BTC install).
 - Jinming Ke MSc thesis code: https://github.com/UBC-FRESH/msc_jimmy_ke
+- :doc:`hwp-lifecycle` — the separate product-lifecycle assumptions.
+- `WS4 carbon reference <https://ubc-fresh.github.io/ws4/reference/carbon.html>`_ —
+  the curve transitions, recovery event, and optimizer ledger.

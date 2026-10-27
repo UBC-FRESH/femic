@@ -96,6 +96,12 @@ For the compact docs source of truth behind these operating notes, see:
 - `docs/reference/contracts/instance-and-data-roots.rst`
 - `docs/reference/contracts/stage-boundaries-and-canonical-artifacts.rst`
 - `docs/reference/contracts/recovery-and-external-runtime-boundaries.rst`
+- `docs/guides/carbon-overview.rst`
+- `docs/guides/carbon-export.rst`
+- `docs/guides/fertilization-audit.rst`
+- `docs/guides/hwp-lifecycle.rst`
+- `docs/guides/gcbm-export.rst`
+- `docs/reference/contracts/carbon-domain.rst`
 - `docs/reference/contracts/lidar-source-and-tile-index.rst`
 - `docs/reference/contracts/lidar-materialization.rst`
 - `docs/reference/contracts/lidar-terrain-products.rst`

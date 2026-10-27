@@ -1,5 +1,15 @@
 # Change Log
 
+## 2026-10-27
+
+- Carbon documentation and HWP assumptions. Added `docs/guides/carbon-overview.rst`,
+  `docs/guides/hwp-lifecycle.rst`, `docs/llms.txt`, and
+  `config/carbon/hwp.bc.yaml`; linked the carbon export, fertilization, HWP, GCBM, and
+  contract pages; corrected the multi-boundary and fertilization contract text; added
+  the carbon docs to `AGENTS.md`. The WS4 runtime now consumes the same public HWP config
+  through `--hwp-config` / `--carbon-hwp` and exposes system carbon and emissions targets.
+  Verification: `sphinx-build -b html docs _build/html -W` succeeds with no warnings.
+
 ## 2026-10-26
 - P116.3: added two published EFI model cards under `config/efi/models/`:
   - `als_loreys_height_cwh_2015.json`: CWH northern Vancouver Island, Cw/Hw/Hm,

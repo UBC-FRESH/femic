@@ -38,4 +38,5 @@ else:
 
 _static_dir = Path(__file__).with_name("_static")
 html_static_path = ["_static"] if _static_dir.exists() else []
+html_extra_path = ["llms.txt"]
 templates_path = ["_templates"]

@@ -51,3 +51,11 @@ Branch: `feature/p115-forest-carbon`
 All P115 child tasks are complete. PR #394 merged as `30b1444`; the phase branch
 was deleted. Parent #361 is ready to close. The WS4 runtime fertilization follow-up
 merged separately as `UBC-FRESH/ws4#441` and does not leave FEMIC-side runtime code.
+
+## Later status (2026-10-27)
+
+The deferred multi-boundary packages were delivered under P120 (FEMIC #417/#421/#422,
+WS4 #455/#460) for TSA08, TSA16, TSA40, and TSA41. The producer summary is
+`notes/reports/p120-multi-boundary.md`; the consumer evidence is the WS4 report of the
+same name. The HWP lifecycle assumptions now live in `config/carbon/hwp.bc.yaml` and
+are consumed by WS4. The GCBM lane remains a bridge, not a parity target.

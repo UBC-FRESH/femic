@@ -16,6 +16,8 @@ manifest must record which crosswalk version was used.
 - `disturbance_map.bc.csv` — normalized WS4 treatment label to CBM disturbance type.
 - `land_class.bc.csv` — default CBM land class by IFM state.
 - `carbon.example.yaml` — example instance-level `carbon:` block.
+- `hwp.bc.yaml` — public harvested-wood-product split, half-life, displacement, and
+  end-of-life assumptions consumed by WS4 (`--hwp-config` / `--carbon-hwp`).
 - `tsa24.yaml` — TSA24 defaults (Montane Cordillera, TSA `24`).
 - `mkrf.yaml` — MKRF defaults (Pacific Maritime, FMU code `mkrf`).
 
@@ -49,6 +51,9 @@ fingerprint, classifiers, the yield grid, area, and boundaries. The public-safe
 - Managed forest land is class `0`; unmanaged forest land is class `16` per CBM-CFS3
   Unmanaged Forest Land. Nonforest area must supply its actual land-use class; unmapped
   IFM states are errors.
+- `hwp.bc.yaml` is a public scenario input, not a calibrated estimate. Run a grid over
+  half-life and displacement rather than treating the default as the answer; see
+  `docs/guides/hwp-lifecycle.rst`.
 
 ## Review checklist
 
