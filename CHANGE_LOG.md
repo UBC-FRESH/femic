@@ -16223,3 +16223,5 @@ PYTHONPATH=src python -m femic.site_index \
   445.7/336.0 (08GA046), 106.1/105.6 (08GA060), 93.6/95.7 (08GA078) m3/s;
   historical screening only.
 - No flood model or claim was produced.
+
+- P113.5: linked the public `femic-tsa27-instance` under `external/femic-tsa27-instance` and added it to the README instance list.

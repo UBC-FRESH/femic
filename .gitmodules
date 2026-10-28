@@ -61,3 +61,7 @@
 	path = external/femic-afrf-knifecreek-instance
 	url = https://github.com/UBC-FRESH/femic-afrf-knifecreek-instance.git
 	branch = main
+[submodule "external/femic-tsa27-instance"]
+	path = external/femic-tsa27-instance
+	url = https://github.com/UBC-FRESH/femic-tsa27-instance
+	branch = main

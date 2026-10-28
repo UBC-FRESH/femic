@@ -3921,6 +3921,7 @@ Tasks:
 - [x] P113.3 Per-MU model-build graphs, plan-green, with documented instance
       roots + data contract (closes the `UBC-FRESH/wbi-birds` femic-map open
       questions).
+- [ ] P113.5 Link the TSA 27 public instance under `external/femic-tsa27-instance` (#443).
 - [x] P113.4 Executable smoke on TSA24 (2026-10-12): fresh VRI 2025 clip ->
       VDYP (Wine) -> TIPSY/BTC (Wine) -> bundle -> Woodstock (species splits,
       snapped ages) -> ws3 sections -> engine `build_model` + one ε-scenario
