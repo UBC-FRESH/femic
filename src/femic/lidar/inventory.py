@@ -23,7 +23,9 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
+import numpy as np  # type: ignore[import-untyped]
 import pandas as pd  # type: ignore[import-untyped]
+import rasterio  # type: ignore[import-untyped]
 
 from femic.lidar.products import (
     LIDAR_PRODUCT_MANIFEST_NAME,
@@ -33,6 +35,8 @@ from femic.lidar.products import (
 INVENTORY_ALS_SCHEMA_VERSION = "femic.inventory.als.v1"
 INVENTORY_ALS_MODEL_SCHEMA_VERSION = "femic.inventory.als.model.v1"
 DEFAULT_FRAGMENT_ID_FIELD = "tile_id"
+DEFAULT_FEATURE_ID_FIELD = "fragment_id"
+INVENTORY_ALS_MODEL_LINKS: tuple[str, ...] = ("identity", "log")
 INVENTORY_ALS_CAVEATS: tuple[str, ...] = (
     "Area-based inventory predictions are model outputs, not field measurements.",
     "Model transferability and extrapolation are the caller's responsibility.",
@@ -61,6 +65,9 @@ class InventoryAlsModel:
     training_scope: str
     source: str
     caveats: tuple[str, ...]
+    link: str = "identity"
+    output_scale: float = 1.0
+    applicability: Mapping[str, object] = field(default_factory=dict)
     predictor_ranges: Mapping[str, tuple[float, float]] = field(default_factory=dict)
     sha256: str = ""
     schema_version: str = INVENTORY_ALS_MODEL_SCHEMA_VERSION
@@ -81,9 +88,12 @@ class InventoryAlsModel:
             "intercept": self.intercept,
             "coefficients": dict(self.coefficients),
             "rmse": self.rmse,
+            "link": self.link,
+            "output_scale": self.output_scale,
             "sample_count": self.sample_count,
             "training_scope": self.training_scope,
             "source": self.source,
+            "applicability": dict(self.applicability),
             "predictor_ranges": {
                 name: list(bounds) for name, bounds in self.predictor_ranges.items()
             },
@@ -176,6 +186,8 @@ class InventoryAlsResult:
     model: InventoryAlsModel
     rows: tuple[InventoryAlsRow, ...]
     generated_utc: str
+    features_path: Path | None = None
+    features_sha256: str = ""
     validation: InventoryAlsValidation | None = None
     warnings: tuple[str, ...] = ()
     caveats: tuple[str, ...] = INVENTORY_ALS_CAVEATS
@@ -190,6 +202,8 @@ class InventoryAlsResult:
             "bundle_id": self.bundle_id,
             "bundle_version": self.bundle_version,
             "generated_utc": self.generated_utc,
+            "features_path": str(self.features_path) if self.features_path else None,
+            "features_sha256": self.features_sha256,
             "model": self.model.to_dict(),
             "row_count": len(self.rows),
             "rows": [row.to_dict() for row in self.rows],
@@ -270,6 +284,18 @@ def load_inventory_als_model(path: Path) -> InventoryAlsModel:
         isinstance(item, str) and item.strip() for item in caveats_raw
     ):
         raise LidarInventoryError("Model card `caveats` must be a list of non-empty strings.")
+    link = _required_text(payload, "link") if "link" in payload else "identity"
+    if link not in INVENTORY_ALS_MODEL_LINKS:
+        raise LidarInventoryError(
+            f"Model card `link` must be one of {', '.join(INVENTORY_ALS_MODEL_LINKS)}."
+        )
+    output_scale = _finite_float(payload.get("output_scale", 1.0), "output_scale")
+    if output_scale <= 0:
+        raise LidarInventoryError("Model card `output_scale` must be positive.")
+    applicability_raw = payload.get("applicability", {})
+    if applicability_raw is not None and not isinstance(applicability_raw, Mapping):
+        raise LidarInventoryError("Model card `applicability` must be an object.")
+    applicability = dict(applicability_raw) if isinstance(applicability_raw, Mapping) else {}
 
     return InventoryAlsModel(
         path=resolved,
@@ -284,6 +310,9 @@ def load_inventory_als_model(path: Path) -> InventoryAlsModel:
         training_scope=_required_text(payload, "training_scope"),
         source=_required_text(payload, "source"),
         caveats=tuple(caveats_raw),
+        link=link,
+        output_scale=output_scale,
+        applicability=applicability,
         predictor_ranges=predictor_ranges,
         sha256=hashlib.sha256(resolved.read_bytes()).hexdigest(),
     )
@@ -293,15 +322,17 @@ def build_inventory_als(
     bundle_dir: Path,
     model_path: Path,
     *,
-    fragment_id_field: str = DEFAULT_FRAGMENT_ID_FIELD,
+    features_path: Path | None = None,
+    fragment_id_field: str | None = None,
     plots_path: Path | None = None,
     generated_utc: str | None = None,
 ) -> InventoryAlsResult:
     """Apply a fitted ABA model to one pinned FEMIC LiDAR bundle.
 
-    The bundle must contain a ``canopy`` table product.  The table is treated as
-    one row per fragment/tile; no zonal-statistics or reprojection step is
-    hidden here.
+    The default source is the bundle's tabular ``canopy`` product.  A caller may
+    instead pass ``features_path``, a CSV with ``fragment_id`` and the model's
+    predictor columns; this is the seam for fragment or grid metrics computed
+    from the bundle without pretending that the join happened here.
     """
     root = bundle_dir.expanduser().resolve()
     manifest_path = root / LIDAR_PRODUCT_MANIFEST_NAME
@@ -318,41 +349,50 @@ def build_inventory_als(
         raise LidarInventoryError("Bundle manifest must be a JSON object.")
     bundle_id = _required_text(manifest, "bundle_id")
     bundle_version = _required_text(manifest, "bundle_version")
-    products = manifest.get("products")
-    if not isinstance(products, list):
-        raise LidarInventoryError("Bundle manifest has no product list.")
-    canopy_record = next(
-        (
-            item
-            for item in products
-            if isinstance(item, Mapping) and item.get("product") == "canopy"
-        ),
-        None,
-    )
-    if canopy_record is None:
-        raise LidarInventoryError(
-            "Bundle has no `canopy` table product; INV-01 requires an explicit "
-            "canopy/zonal feature table."
+
+    if features_path is not None:
+        table_path = features_path.expanduser().resolve()
+        context = "Feature table"
+        field = fragment_id_field or DEFAULT_FEATURE_ID_FIELD
+    else:
+        products = manifest.get("products")
+        if not isinstance(products, list):
+            raise LidarInventoryError("Bundle manifest has no product list.")
+        canopy_record = next(
+            (
+                item
+                for item in products
+                if isinstance(item, Mapping) and item.get("product") == "canopy"
+            ),
+            None,
         )
-    relative_path = canopy_record.get("relative_path")
-    if not isinstance(relative_path, str):
-        raise LidarInventoryError("Canopy product has no relative_path.")
-    table_path = (root / relative_path).resolve()
+        if canopy_record is None:
+            raise LidarInventoryError(
+                "Bundle has no `canopy` table product; pass `--features` with an "
+                "explicit fragment feature table."
+            )
+        relative_path = canopy_record.get("relative_path")
+        if not isinstance(relative_path, str):
+            raise LidarInventoryError("Canopy product has no relative_path.")
+        table_path = (root / relative_path).resolve()
+        context = "Canopy product"
+        field = fragment_id_field or DEFAULT_FRAGMENT_ID_FIELD
+
     try:
         table = pd.read_csv(table_path)
     except (OSError, ValueError) as exc:
-        raise LidarInventoryError(f"Unable to read canopy product: {table_path}: {exc}") from exc
+        raise LidarInventoryError(f"Unable to read {context.lower()}: {table_path}: {exc}") from exc
     if table.empty:
-        raise LidarInventoryError("Canopy product contains no rows.")
-    if fragment_id_field not in table.columns:
+        raise LidarInventoryError(f"{context} contains no rows.")
+    if field not in table.columns:
         raise LidarInventoryError(
-            f"Canopy product is missing fragment identifier {fragment_id_field!r}."
+            f"{context} is missing fragment identifier {field!r}."
         )
     model = load_inventory_als_model(model_path)
     missing = [name for name in model.features if name not in table.columns]
     if missing:
         raise LidarInventoryError(
-            "Canopy product is missing model predictor(s): " + ", ".join(missing)
+            f"{context} is missing model predictor(s): " + ", ".join(missing)
         )
     for name, (low, high) in model.predictor_ranges.items():
         values = pd.to_numeric(table[name], errors="coerce")
@@ -362,26 +402,42 @@ def build_inventory_als(
             raise LidarInventoryError(
                 f"Predictor {name!r} is outside the model-card range [{low}, {high}]."
             )
-    fragment_ids = table[fragment_id_field].astype(str)
+    fragment_ids = table[field].astype(str)
     if fragment_ids.duplicated().any():
         duplicate = fragment_ids[fragment_ids.duplicated()].iloc[0]
         raise LidarInventoryError(
-            f"Canopy product has duplicate fragment identifier {duplicate!r}."
+            f"{context} has duplicate fragment identifier {duplicate!r}."
         )
     rows: list[InventoryAlsRow] = []
     for record in table.itertuples(index=False):
         predictors = {name: float(getattr(record, name)) for name in model.features}
-        value = model.intercept + sum(
-            model.coefficients[name] * predictors[name] for name in model.features
-        )
+        if model.link == "log":
+            non_positive = [name for name, value in predictors.items() if value <= 0]
+            if non_positive:
+                raise LidarInventoryError(
+                    "Log-link predictor(s) must be positive: " + ", ".join(non_positive)
+                )
+            linear = model.intercept + sum(
+                model.coefficients[name] * math.log(predictors[name])
+                for name in model.features
+            )
+            value = math.exp(linear) * model.output_scale
+        else:
+            value = (
+                model.intercept
+                + sum(
+                    model.coefficients[name] * predictors[name]
+                    for name in model.features
+                )
+            ) * model.output_scale
         if not math.isfinite(value):
             raise LidarInventoryError(
                 f"Model produced a non-finite value for fragment "
-                f"{getattr(record, fragment_id_field)!r}."
+                f"{getattr(record, field)!r}."
             )
         rows.append(
             InventoryAlsRow(
-                fragment_id=str(getattr(record, fragment_id_field)),
+                fragment_id=str(getattr(record, field)),
                 attribute=model.attribute,
                 value=value,
                 model_id=model.model_id,
@@ -395,6 +451,13 @@ def build_inventory_als(
         _validate_against_plots(tuple(rows), plots_path) if plots_path is not None else None
     )
     warnings: list[str] = []
+    regions = model.applicability.get("regions")
+    if isinstance(regions, list) and regions:
+        warnings.append(
+            "Model applicability regions: "
+            + ", ".join(str(region) for region in regions)
+            + "; bundle region was not verified."
+        )
     if validation_report is None:
         warnings.append("No plot/observation validation file was supplied.")
     elif validation_report.matched_rows == 0:
@@ -407,9 +470,129 @@ def build_inventory_als(
         model=model,
         rows=tuple(rows),
         generated_utc=generated_utc or datetime.now(UTC).isoformat(),
+        features_path=table_path if features_path is not None else None,
+        features_sha256=(
+            hashlib.sha256(table_path.read_bytes()).hexdigest()
+            if features_path is not None
+            else ""
+        ),
         validation=validation_report,
         warnings=tuple(warnings),
     )
+
+
+def build_chm_grid_features(
+    bundle_dir: Path,
+    output_path: Path,
+    *,
+    grid_size_m: float = 25.0,
+    chm_product: str = "chm",
+) -> dict[str, object]:
+    """Derive a 25 m grid feature table from a bundle CHM.
+
+    Metrics are CHM proxies for the first-return metrics used by many published
+    ABA models: mean height, coefficient of variation, p95, and percent cover
+    above 2 m.  Cells with fewer than three above-2 m pixels are omitted.  This
+    is a wall-to-wall feature seam, not a point-cloud metric replacement.
+    """
+    root = bundle_dir.expanduser().resolve()
+    validation = validate_lidar_product_bundle(root)
+    if not validation.is_valid:
+        raise LidarInventoryError(
+            "LiDAR bundle failed validation: " + "; ".join(validation.errors)
+        )
+    manifest_path = root / LIDAR_PRODUCT_MANIFEST_NAME
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, Mapping):
+        raise LidarInventoryError("Bundle manifest must be a JSON object.")
+    bundle_id = _required_text(manifest, "bundle_id")
+    products = manifest.get("products")
+    if not isinstance(products, list):
+        raise LidarInventoryError("Bundle manifest has no product list.")
+    record = next(
+        (
+            item
+            for item in products
+            if isinstance(item, Mapping) and item.get("product") == chm_product
+        ),
+        None,
+    )
+    if record is None:
+        raise LidarInventoryError(f"Bundle has no {chm_product!r} raster product.")
+    relative_path = record.get("relative_path")
+    if not isinstance(relative_path, str):
+        raise LidarInventoryError(f"{chm_product!r} product has no relative_path.")
+    chm_path = (root / relative_path).resolve()
+    if grid_size_m <= 0:
+        raise LidarInventoryError("grid_size_m must be positive.")
+
+    rows: list[dict[str, object]] = []
+    try:
+        with rasterio.open(chm_path) as dataset:
+            data = (
+                dataset.read(1, masked=True)
+                .astype("float64")
+                .filled(float("nan"))
+            )
+            transform = dataset.transform
+            resolution = abs(transform.a)
+            if resolution <= 0:
+                raise LidarInventoryError("CHM raster has an invalid resolution.")
+            block = max(1, round(grid_size_m / resolution))
+            height, width = data.shape
+            cell = 0
+            for row_start in range(0, height, block):
+                for col_start in range(0, width, block):
+                    values = np.asarray(
+                        data[
+                            row_start : min(row_start + block, height),
+                            col_start : min(col_start + block, width),
+                        ]
+                    )
+                    valid = values[np.isfinite(values)]
+                    if valid.size == 0:
+                        continue
+                    above = valid[valid > 2.0]
+                    if above.size < 3:
+                        continue
+                    mean = float(above.mean())
+                    std = float(above.std())
+                    cv = std / mean if mean > 0 else float("nan")
+                    p95 = float(np.percentile(above, 95))
+                    cover = 100.0 * above.size / valid.size
+                    center_x = float(transform.c + (col_start + block / 2) * resolution)
+                    center_y = float(transform.f - (row_start + block / 2) * resolution)
+                    rows.append(
+                        {
+                            "fragment_id": f"{bundle_id}:cell:{cell:05d}",
+                            "x_center": center_x,
+                            "y_center": center_y,
+                            "Lhmean": mean,
+                            "Lhcv": cv,
+                            "Lhp95": p95,
+                            "CC2m": cover,
+                            "valid_pixels": int(valid.size),
+                            "above2m_pixels": int(above.size),
+                            "grid_size_m": grid_size_m,
+                        }
+                    )
+                    cell += 1
+    except OSError as exc:
+        raise LidarInventoryError(f"Unable to read CHM raster: {chm_path}: {exc}") from exc
+    if not rows:
+        raise LidarInventoryError("No grid cells had enough above-2 m CHM pixels.")
+    output = output_path.expanduser().resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    frame = pd.DataFrame(rows)
+    frame.to_csv(output, index=False)
+    return {
+        "bundle_id": bundle_id,
+        "chm_path": chm_path,
+        "output_path": output,
+        "grid_size_m": grid_size_m,
+        "row_count": len(rows),
+        "columns": list(frame.columns),
+    }
 
 
 def write_inventory_als(result: InventoryAlsResult, out_dir: Path) -> dict[str, Path]:

@@ -394,6 +394,7 @@ Subcommands
 - ``canopy``: ``python -m femic lidar canopy [OPTIONS]``
 - ``trees``: ``python -m femic lidar trees [OPTIONS]``
 - ``inventory``: ``python -m femic lidar inventory [OPTIONS]``
+- ``inventory-features``: ``python -m femic lidar inventory-features [OPTIONS]``
 - ``bundle``: ``python -m femic lidar bundle [OPTIONS]``
 - ``inspect``: ``python -m femic lidar inspect [OPTIONS] BUNDLE_DIR``
 
@@ -484,14 +485,25 @@ block. Neither command segments individual trees.
 - ``--bundle PATH`` (required; validated FEMIC LiDAR product bundle)
 - ``--model PATH`` (required; JSON model card)
 - ``--output-dir PATH`` (default: ``data/lidar/inventory``)
+- ``--features PATH`` (optional explicit fragment/predictor CSV)
 - ``--plots PATH`` (optional plot/observation validation table)
-- ``--fragment-id-field TEXT`` (default: ``tile_id``)
+- ``--fragment-id-field TEXT`` (default: ``tile_id`` for canopy, ``fragment_id`` for features)
 - ``--generated-utc TEXT``
 - ``--instance-root PATH``
 
 ``femic lidar inventory`` applies a pinned area-based model card to the bundle's
-``canopy`` table and writes ``inventory_als.csv`` plus its provenance manifest;
-it does not fit a model or invent coefficients. See
+``canopy`` table or ``--features`` CSV and writes ``inventory_als.csv`` plus its
+provenance manifest; it does not fit a model or invent coefficients.
+
+``lidar inventory-features`` options
+
+- ``--bundle PATH`` (required; validated bundle with a ``chm`` product)
+- ``--output PATH`` (required; destination CSV)
+- ``--grid-size-m FLOAT`` (default: ``25.0``)
+- ``--chm-product TEXT`` (default: ``chm``)
+
+``femic lidar inventory-features`` derives a CHM grid feature table for an ABA
+model. It writes CHM proxies, not first-return point-cloud metrics. See
 ``docs/guides/lidar-inventory.rst`` and
 ``docs/reference/contracts/inventory-als.rst``.
 

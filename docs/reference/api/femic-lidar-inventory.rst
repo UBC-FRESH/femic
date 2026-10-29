@@ -14,8 +14,11 @@ Key Entry Surfaces
 - :func:`load_inventory_als_model`
   Load and validate a JSON model card.
 - :func:`build_inventory_als`
-  Apply the model to the bundle's ``canopy`` table and optionally validate
-  against a plot table.
+  Apply the model to the bundle's ``canopy`` table or an explicit feature CSV
+  and optionally validate against a plot table.
+- :func:`build_chm_grid_features`
+  Derive a CHM grid feature table (mean, CV, p95, percent cover) from a bundle
+  ``chm`` product.
 - :func:`write_inventory_als`
   Write ``inventory_als.csv`` and ``inventory_als.json``.
 - :class:`InventoryAlsResult`

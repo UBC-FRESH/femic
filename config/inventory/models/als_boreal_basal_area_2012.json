@@ -1,0 +1,49 @@
+{
+  "schema_version": "femic.inventory.als.model.v1",
+  "model_id": "published-als-boreal-basal-area-2012",
+  "model_version": "2012.1",
+  "attribute": "basal_area_m2_ha",
+  "unit": "m2/ha",
+  "link": "log",
+  "output_scale": 16.0,
+  "intercept": -3.5248,
+  "coefficients": {
+    "Lhmean": 1.124,
+    "Lhcv": 0.1757,
+    "CC2m": 0.2512
+  },
+  "rmse": 4.8,
+  "sample_count": 199,
+  "training_scope": "199 co-located lidar and field plots in Quebec, Ontario, and the Northwest Territories; 25 m x 25 m lidar plots, first returns above 2 m.",
+  "source": "Wulder et al. (2012), Canadian Journal of Remote Sensing 38(5): 600-618, https://doi.org/10.5589/m12-049. Equation: exp(-3.5248 + 1.1240 ln(Lhmean) + 0.1757 ln(Lhcv) + 0.2512 ln(CC2m)) x 1.0415 x (25^2/20^2). Published plot RMSE 0.30 m2; output_scale=16 converts plot totals to per hectare.",
+  "applicability": {
+    "regions": [
+      "boreal Canada"
+    ],
+    "species": [
+      "boreal mixedwood"
+    ],
+    "notes": "Fitted to boreal lidar plots. Applying this card outside the boreal domain is a transfer test, not an operational inventory claim."
+  },
+  "predictor_ranges": {
+    "Lhmean": [
+      2.0,
+      50.0
+    ],
+    "Lhcv": [
+      0.001,
+      2.0
+    ],
+    "CC2m": [
+      0.0,
+      100.0
+    ]
+  },
+  "caveats": [
+    "Published model coefficients are used as published; FEMIC did not refit them.",
+    "The local feature table is a CHM proxy for first-return lidar metrics; that is not an exact replication of the published predictors.",
+    "The TFL 6 pilot is CWH, outside the boreal training domain; this is a transfer test only.",
+    "The published plot RMSE is 0.30 m2; the card RMSE is scaled to m2/ha.",
+    "No P48/P49 or independent field-plot validation was available for this run."
+  ]
+}

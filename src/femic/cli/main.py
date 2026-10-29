@@ -154,8 +154,8 @@ from femic.lidar.hydrography import (
     derive_stream_candidates,
 )
 from femic.lidar.inventory import (
-    DEFAULT_FRAGMENT_ID_FIELD,
     LidarInventoryError,
+    build_chm_grid_features,
     build_inventory_als,
     write_inventory_als,
 )
@@ -4952,15 +4952,23 @@ def lidar_inventory(
         help="Inventory output directory; defaults to `data/lidar/inventory`.",
         show_default=False,
     ),
+    features: Path | None = typer.Option(
+        None,
+        "--features",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="Optional CSV of fragment predictors; overrides the bundle canopy table.",
+    ),
     plots: Path | None = typer.Option(
         None,
         "--plots",
         help="Optional plot/observation table for prediction validation.",
     ),
-    fragment_id_field: str = typer.Option(
-        DEFAULT_FRAGMENT_ID_FIELD,
+    fragment_id_field: str | None = typer.Option(
+        None,
         "--fragment-id-field",
-        help="Canopy table field used as fragment_id.",
+        help="Identifier field; defaults to tile_id for canopy, fragment_id for features.",
     ),
     generated_utc: str | None = typer.Option(
         None,
@@ -4983,6 +4991,7 @@ def lidar_inventory(
         result = build_inventory_als(
             bundle,
             model,
+            features_path=features,
             fragment_id_field=fragment_id_field,
             plots_path=plots,
             generated_utc=generated_utc,
@@ -5001,6 +5010,51 @@ def lidar_inventory(
     if result.validation is not None:
         console.print(f"validation_matched: {result.validation.matched_rows}")
         console.print(f"validation_rmse: {result.validation.rmse}")
+
+
+@lidar_app.command("inventory-features")
+def lidar_inventory_features(
+    bundle: Path = typer.Option(
+        ...,
+        "--bundle",
+        exists=True,
+        file_okay=False,
+        readable=True,
+        help="Validated FEMIC LiDAR product bundle with a CHM product.",
+    ),
+    output: Path = typer.Option(
+        ...,
+        "--output",
+        help="Destination CSV for the grid feature table.",
+    ),
+    grid_size_m: float = typer.Option(
+        25.0,
+        "--grid-size-m",
+        min=1.0,
+        help="Grid cell size in metres.",
+    ),
+    chm_product: str = typer.Option(
+        "chm",
+        "--chm-product",
+        help="Bundle product name for the canopy height model.",
+    ),
+) -> None:
+    """Derive a CHM grid feature table for an ALS inventory model."""
+    try:
+        result = build_chm_grid_features(
+            bundle,
+            output,
+            grid_size_m=grid_size_m,
+            chm_product=chm_product,
+        )
+    except (LidarInventoryError, OSError) as exc:
+        console.print(f"[red]LiDAR inventory feature error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Inventory ALS grid features built[/green]")
+    console.print(f"output: {result['output_path']}")
+    console.print(f"grid_size_m: {result['grid_size_m']}")
+    console.print(f"rows: {result['row_count']}")
 
 
 @lidar_app.command("bundle")

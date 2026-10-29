@@ -1,3 +1,28 @@
+# 2026-10-29 — INV-01 published transfer benchmark and CHM grid features
+
+- Added `link: log`, `output_scale`, and `applicability` to
+  `femic.inventory.als.model.v1` cards.
+- Added `--features` to `femic lidar inventory` for explicit fragment/predictor
+  tables while retaining bundle provenance.
+- Added `femic lidar inventory-features` / `build_chm_grid_features`: a 25 m CHM
+  grid feature helper (mean, CV, p95, cover above 2 m). It is a proxy for
+  first-return point-cloud metrics, not an exact reconstruction.
+- Added three published Wulder et al. (2012) boreal model cards under
+  `config/inventory/models/`. They are transfer-benchmark inputs, not
+  operational CWH/TSA 23 models.
+- Ran the cards on the TFL 6 pilot bundle: 1,459 25 m cells; mean Lorey's height
+  18.14 m, basal area 18.92 m2/ha, gross volume 85.39 m3/ha. A conventional
+  VRI comparison shows strong underprediction; the transfer is rejected as an
+  operational planning input.
+- Added `notes/reports/inv01-als-transfer-tfl6.md` and updated the contract,
+  guide, API, CLI, and model-card docs.
+
+Verification:
+- `pytest -q tests/test_lidar_inventory.py` -> 11 passed.
+- `ruff` and `mypy` clean on the inventory module.
+- `femic lidar inventory-features` and three `femic lidar inventory` runs
+  succeeded on the TFL 6 pilot bundle.
+
 # 2026-10-29 — INV-01 inventory.als contract and reader
 
 - Added `femic.inventory.als.v1` output and `femic.inventory.als.model.v1`
