@@ -99,6 +99,18 @@ applicability domain is boreal Canada; applying them to the CWH TFL 6 pilot is
 a transfer test.  The CHM grid helper is also a proxy for the published
 first-return metrics, not an exact reconstruction.
 
+The local CWH pilot cards are also metadata-complete cards, but they are
+FEMIC fits rather than published models:
+
+- ``als_cwh_lorey_height_2026.json``
+- ``als_cwh_basal_area_2026.json``
+- ``als_cwh_gross_volume_2026.json``
+
+They use 14 public FAIB PSP plots and LidarBC CHMs, with a 0-2 year offset.
+They are CWH northern Vancouver Island pilots, not TSA 23 operational models.
+See ``notes/reports/inv01-cwh-local-model-tfl6.md`` and
+``notes/reports/inv01-als-transfer-tfl6.md``.
+
 Bundle Prerequisite
 -------------------
 

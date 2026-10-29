@@ -54,6 +54,33 @@ The command writes:
 
 The CLI prints the row count, model id, and validation RMSE when available.
 
+Local CWH pilot
+---------------
+
+The local cards under ``config/inventory/models/als_cwh_*_2026.json`` were fit
+to 14 public FAIB PSP plots with LidarBC 2023/2024 CHMs.  They are CWH northern
+Vancouver Island pilots, not TSA 23 operational models.  Apply them only inside
+the card's predictor ranges; for the TFL 6 pilot the forest mask used
+``--min-cover-pct 34.5``.
+
+.. code-block:: bash
+
+   femic lidar inventory-features \
+     --bundle <tfl6-bundle> \
+     --output /tmp/inv01/features_25m_cwh.csv \
+     --grid-size-m 25 \
+     --min-cover-pct 34.5
+
+   femic lidar inventory \
+     --bundle <tfl6-bundle> \
+     --features /tmp/inv01/features_25m_cwh.csv \
+     --model config/inventory/models/als_cwh_lorey_height_2026.json \
+     --output-dir /tmp/inv01/cwh_lorey_height \
+     --fragment-id-field fragment_id
+
+See ``notes/reports/inv01-cwh-local-model-tfl6.md`` for the fit diagnostics and
+the VRI comparison.
+
 Published transfer benchmark
 -----------------------------
 
@@ -93,6 +120,7 @@ Limits
   accepts an explicit fragment table.
 - ``inventory-features`` derives CHM proxies, not first-return point-cloud
   metrics.
+- ``--min-cover-pct`` filters non-forest grid cells before model application.
 - The model card must carry its own training scope, RMSE, and predictor ranges.
 - The reader refuses out-of-range predictors.
 - The TSA/WS4 P48/P49 validation tables are not bundled in this repository.

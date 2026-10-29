@@ -1,3 +1,24 @@
+# 2026-10-29 — INV-01 local CWH pilot fit
+
+- Fitted three local CWH model cards from 14 public FAIB PSP plots and
+  LidarBC 2023/2024 1 m CHMs: Lorey height, basal area, and gross volume.
+- Held out 9 plots with 4-6 year ground/LiDAR offsets; LOOCV RMSE 2.14 m,
+  9.27 m2/ha, and 62.22 m3/ha respectively.
+- Added `--min-cover-pct` to `femic lidar inventory-features` for a model-domain
+  forest mask.
+- Applied the local cards to 1,289 TFL 6 forest cells: mean height 22.08 m,
+  basal area 37.27 m2/ha, gross volume 309.08 m3/ha. A conventional VRI
+  comparison is closer than the boreal transfer but still shows low basal area.
+- Added `notes/reports/inv01-cwh-local-model-tfl6.md` and
+  `notes/reports/inv01-cwh-training-plots.csv`.
+- The cards are CWH northern Vancouver Island pilots, not TSA 23 operational
+  models. No P48/P49 independent field validation is available.
+
+Verification:
+- `pytest -q tests/test_lidar_inventory.py` -> 11 passed.
+- Local cards load through `femic lidar inventory` on the TFL 6 bundle.
+- Sphinx `-W` build remains clean.
+
 # 2026-10-29 — INV-01 published transfer benchmark and CHM grid features
 
 - Added `link: log`, `output_scale`, and `applicability` to
