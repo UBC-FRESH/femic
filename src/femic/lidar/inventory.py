@@ -487,6 +487,7 @@ def build_chm_grid_features(
     *,
     grid_size_m: float = 25.0,
     chm_product: str = "chm",
+    min_cover_pct: float = 0.0,
 ) -> dict[str, object]:
     """Derive a 25 m grid feature table from a bundle CHM.
 
@@ -525,6 +526,8 @@ def build_chm_grid_features(
     chm_path = (root / relative_path).resolve()
     if grid_size_m <= 0:
         raise LidarInventoryError("grid_size_m must be positive.")
+    if not 0.0 <= min_cover_pct <= 100.0:
+        raise LidarInventoryError("min_cover_pct must be between 0 and 100.")
 
     rows: list[dict[str, object]] = []
     try:
@@ -560,6 +563,8 @@ def build_chm_grid_features(
                     cv = std / mean if mean > 0 else float("nan")
                     p95 = float(np.percentile(above, 95))
                     cover = 100.0 * above.size / valid.size
+                    if cover < min_cover_pct:
+                        continue
                     center_x = float(transform.c + (col_start + block / 2) * resolution)
                     center_y = float(transform.f - (row_start + block / 2) * resolution)
                     rows.append(
@@ -590,6 +595,7 @@ def build_chm_grid_features(
         "chm_path": chm_path,
         "output_path": output,
         "grid_size_m": grid_size_m,
+        "min_cover_pct": min_cover_pct,
         "row_count": len(rows),
         "columns": list(frame.columns),
     }

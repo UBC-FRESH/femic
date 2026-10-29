@@ -5038,6 +5038,13 @@ def lidar_inventory_features(
         "--chm-product",
         help="Bundle product name for the canopy height model.",
     ),
+    min_cover_pct: float = typer.Option(
+        0.0,
+        "--min-cover-pct",
+        min=0.0,
+        max=100.0,
+        help="Drop grid cells below this CHM cover-above-2 m percentage.",
+    ),
 ) -> None:
     """Derive a CHM grid feature table for an ALS inventory model."""
     try:
@@ -5046,6 +5053,7 @@ def lidar_inventory_features(
             output,
             grid_size_m=grid_size_m,
             chm_product=chm_product,
+            min_cover_pct=min_cover_pct,
         )
     except (LidarInventoryError, OSError) as exc:
         console.print(f"[red]LiDAR inventory feature error:[/red] {exc}")
@@ -5054,6 +5062,7 @@ def lidar_inventory_features(
     console.print("[green]Inventory ALS grid features built[/green]")
     console.print(f"output: {result['output_path']}")
     console.print(f"grid_size_m: {result['grid_size_m']}")
+    console.print(f"min_cover_pct: {result['min_cover_pct']}")
     console.print(f"rows: {result['row_count']}")
 
 

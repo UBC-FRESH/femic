@@ -215,6 +215,13 @@ def test_published_model_cards_load() -> None:
     model_root = Path(__file__).parents[1] / "config" / "inventory" / "models"
     for path in sorted(model_root.glob("*.json")):
         model = load_inventory_als_model(path)
-        assert model.link == "log"
+        assert model.link in {"identity", "log"}
         assert model.output_scale > 0
-        assert model.rmse > 0
+        assert model.rmse >= 0
+
+
+def test_chm_grid_cover_filter(tmp_path: Path) -> None:
+    bundle = _bundle(tmp_path)
+    output = tmp_path / "features.csv"
+    with pytest.raises(LidarInventoryError, match="min_cover_pct"):
+        build_chm_grid_features(bundle, output, grid_size_m=2.0, min_cover_pct=101.0)

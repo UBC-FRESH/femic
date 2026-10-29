@@ -501,6 +501,7 @@ provenance manifest; it does not fit a model or invent coefficients.
 - ``--output PATH`` (required; destination CSV)
 - ``--grid-size-m FLOAT`` (default: ``25.0``)
 - ``--chm-product TEXT`` (default: ``chm``)
+- ``--min-cover-pct FLOAT`` (default: ``0.0``; drop cells below this cover)
 
 ``femic lidar inventory-features`` derives a CHM grid feature table for an ABA
 model. It writes CHM proxies, not first-return point-cloud metrics. See

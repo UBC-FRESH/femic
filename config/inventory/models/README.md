@@ -1,8 +1,10 @@
 # Inventory ALS model cards
 
-These cards are explicit inputs to `femic lidar inventory`.  They contain
-published coefficients and provenance; FEMIC does not refit them in this
-layer.
+These cards are explicit inputs to `femic lidar inventory`.  They contain the
+coefficients and provenance used by the reader; FEMIC does not invent
+coefficients at prediction time.
+
+## Published transfer cards
 
 | Card | Attribute | Link | Output | Source |
 | --- | --- | --- | --- | --- |
@@ -17,11 +19,22 @@ context, concepts, and case study. *Canadian Journal of Remote Sensing*
 
 The published equations predict 25 m x 25 m lidar-plot totals from first
 returns above 2 m.  The basal-area and volume cards use `output_scale: 16.0`
-to report per hectare; the height card is already a per-plot mean.
+to report per hectare.  These are **boreal Canada** models; applying them to
+CWH is a transfer test, not an operational inventory.
 
-These are **boreal Canada** models.  Applying them to the CWH TFL 6 pilot is a
-transfer test, not an operational inventory.  The `inventory-features` helper
-computes CHM proxies, not first-return point-cloud metrics, so the transfer
-test also carries a predictor-definition mismatch.  Do not use the resulting
-values for planning without a co-located CWH/TSA plot calibration and an
-independent validation table.
+## Local CWH pilot cards
+
+| Card | Attribute | Link | Output | Fit |
+| --- | --- | --- | --- | --- |
+| `als_cwh_lorey_height_2026.json` | Lorey height | identity | m | 14 FAIB PSP plots, CWH northern Vancouver Island |
+| `als_cwh_basal_area_2026.json` | Basal area | log | m2/ha | same |
+| `als_cwh_gross_volume_2026.json` | Gross volume | log | m3/ha | same |
+
+These are FEMIC pilot fits, not published models.  Training used public FAIB
+PSP ground plots and LidarBC 2023/2024 1 m CHMs, with a 0-2 year plot/LiDAR
+offset and 11.28 m circular CHM metrics.  Nine additional plots with a 4-6 year
+offset were held out as a temporal stress test.
+
+The local cards are **CWH northern Vancouver Island** only.  They have 14
+training plots and CHM proxies; they are not TSA 23 operational models.  See
+`notes/reports/inv01-cwh-local-model-tfl6.md`.
