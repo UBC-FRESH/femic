@@ -393,6 +393,7 @@ Subcommands
 - ``streams``: ``python -m femic lidar streams [OPTIONS]``
 - ``canopy``: ``python -m femic lidar canopy [OPTIONS]``
 - ``trees``: ``python -m femic lidar trees [OPTIONS]``
+- ``inventory``: ``python -m femic lidar inventory [OPTIONS]``
 - ``bundle``: ``python -m femic lidar bundle [OPTIONS]``
 - ``inspect``: ``python -m femic lidar inspect [OPTIONS] BUNDLE_DIR``
 
@@ -477,6 +478,22 @@ writes ``chm.tif``, ``canopy_structure.json``, and QA reports, and optionally
 compares CHM p95/cover with VRI height/closure. ``femic lidar trees`` inspects
 an existing tree product and optionally summarizes tree counts/heights by
 block. Neither command segments individual trees.
+
+``lidar inventory`` options
+
+- ``--bundle PATH`` (required; validated FEMIC LiDAR product bundle)
+- ``--model PATH`` (required; JSON model card)
+- ``--output-dir PATH`` (default: ``data/lidar/inventory``)
+- ``--plots PATH`` (optional plot/observation validation table)
+- ``--fragment-id-field TEXT`` (default: ``tile_id``)
+- ``--generated-utc TEXT``
+- ``--instance-root PATH``
+
+``femic lidar inventory`` applies a pinned area-based model card to the bundle's
+``canopy`` table and writes ``inventory_als.csv`` plus its provenance manifest;
+it does not fit a model or invent coefficients. See
+``docs/guides/lidar-inventory.rst`` and
+``docs/reference/contracts/inventory-als.rst``.
 
 ``femic lidar materialize`` downloads selected tiles into
 ``<output-root>/lidarbc/<product>/layer_<id>/<year>/<filename>`` and records

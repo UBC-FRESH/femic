@@ -153,6 +153,12 @@ from femic.lidar.hydrography import (
     StreamCandidateError,
     derive_stream_candidates,
 )
+from femic.lidar.inventory import (
+    DEFAULT_FRAGMENT_ID_FIELD,
+    LidarInventoryError,
+    build_inventory_als,
+    write_inventory_als,
+)
 from femic.lidar.materialization import (
     LidarMaterializationError,
     materialize_lidar_selection,
@@ -4920,6 +4926,81 @@ def lidar_trees(
     except (TreeProductError, OSError) as exc:
         console.print(f"[red]LiDAR tree-product error:[/red] {exc}")
         raise typer.Exit(code=1) from exc
+
+
+@lidar_app.command("inventory")
+def lidar_inventory(
+    bundle: Path = typer.Option(
+        ...,
+        "--bundle",
+        exists=True,
+        file_okay=False,
+        readable=True,
+        help="Validated FEMIC LiDAR product bundle.",
+    ),
+    model: Path = typer.Option(
+        ...,
+        "--model",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="Pinned ABA model card (JSON).",
+    ),
+    output_dir: Path | None = typer.Option(
+        None,
+        "--output-dir",
+        help="Inventory output directory; defaults to `data/lidar/inventory`.",
+        show_default=False,
+    ),
+    plots: Path | None = typer.Option(
+        None,
+        "--plots",
+        help="Optional plot/observation table for prediction validation.",
+    ),
+    fragment_id_field: str = typer.Option(
+        DEFAULT_FRAGMENT_ID_FIELD,
+        "--fragment-id-field",
+        help="Canopy table field used as fragment_id.",
+    ),
+    generated_utc: str | None = typer.Option(
+        None,
+        "--generated-utc",
+        help="Fixed generation timestamp for reproducible output.",
+    ),
+    instance_root: Path | None = INSTANCE_ROOT_OPTION,
+) -> None:
+    """Apply a fitted area-based model to a FEMIC LiDAR bundle."""
+    instance_context = (
+        _resolve_cli_instance_context(instance_root=instance_root)
+        if instance_root is not None
+        else None
+    )
+    resolved_output = _resolve_cli_output_path(
+        output_dir or Path("data/lidar/inventory"),
+        instance_context=instance_context,
+    )
+    try:
+        result = build_inventory_als(
+            bundle,
+            model,
+            fragment_id_field=fragment_id_field,
+            plots_path=plots,
+            generated_utc=generated_utc,
+        )
+        paths = write_inventory_als(result, resolved_output)
+    except (LidarInventoryError, OSError) as exc:
+        console.print(f"[red]LiDAR inventory error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Inventory ALS predictions built[/green]")
+    console.print(f"output_dir: {resolved_output}")
+    console.print(f"table: {paths['table']}")
+    console.print(f"manifest: {paths['manifest']}")
+    console.print(f"rows: {len(result.rows)}")
+    console.print(f"model_id: {result.model.model_id}")
+    if result.validation is not None:
+        console.print(f"validation_matched: {result.validation.matched_rows}")
+        console.print(f"validation_rmse: {result.validation.rmse}")
 
 
 @lidar_app.command("bundle")
