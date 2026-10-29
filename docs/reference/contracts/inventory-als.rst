@@ -9,10 +9,10 @@ does not fit an ABA model in this layer.  It consumes a pinned model card,
 applies it to one pinned FEMIC LiDAR product bundle, and emits a long
 ``inventory.als`` table with provenance and model error.
 
-The first implementation uses the bundle's ``canopy`` table product.  A future
-producer can replace that table with fragment-level zonal statistics without
-changing the output contract; that spatial join is deliberately not hidden in
-this reader.
+The reader accepts the bundle's ``canopy`` table product or an explicit feature
+CSV (``--features``).  The ``inventory-features`` helper can derive a 25 m CHM
+grid feature table from a bundle ``chm`` product.  The spatial join is
+deliberately explicit: the reader does not silently invent fragments.
 
 Schemas
 -------
@@ -33,7 +33,8 @@ Output Table
 - ``rmse``
 
 The writer also carries ``model_version``, ``unit``, and ``source`` so the
-long table can be joined without guessing provenance.
+long table can be joined without guessing provenance.  When ``--features`` is
+used, the output manifest records the feature-table path and SHA-256.
 
 Model Card
 ----------
@@ -49,12 +50,19 @@ from the bundle being predicted.
      "model_version": "1.0.0",
      "attribute": "gross_volume_m3_per_ha",
      "unit": "m3/ha",
-     "intercept": 0.0,
-     "coefficients": {"chm_p95_m": 2.1, "canopy_cover_pct": 0.3},
+     "link": "log",
+     "output_scale": 16.0,
+     "intercept": -2.7,
+     "coefficients": {"chm_p95_m": 1.4, "canopy_cover_pct": 0.29},
      "rmse": 31.4,
      "sample_count": 120,
      "training_scope": "BEC and acquisition range you fitted for",
      "source": "publication or calibration report",
+     "applicability": {
+       "regions": ["BEC zone or training domain"],
+       "species": ["species group"],
+       "notes": "Do not apply outside this domain without a transfer test."
+     },
      "predictor_ranges": {
        "chm_p95_m": [2.0, 45.0],
        "canopy_cover_pct": [0.0, 100.0]
@@ -62,20 +70,44 @@ from the bundle being predicted.
      "caveats": ["Not validated outside the training range."]
    }
 
+``link`` is ``identity`` by default or ``log`` for equations of the form
+``exp(intercept + sum(coefficient * ln(predictor)))``.  ``output_scale``
+converts the published plot total to the declared attribute unit; it defaults
+to ``1.0``.  For example, the published boreal Wulder et al. (2012) basal-area
+and volume equations predict 25 x 25 m plot totals, so their cards use
+``output_scale: 16.0`` to report per hectare.
+
 ``predictor_ranges`` is optional but strongly recommended.  Predictions outside
-a declared range are refused rather than silently extrapolated.
+a declared range are refused rather than silently extrapolated.  An
+``applicability`` block is metadata only; the reader records a warning that the
+bundle region was not verified.
 
 The fixture model in ``tests/fixtures/lidar/inventory_model.json`` is a
 synthetic identity model used only to test the contract.  It is not an ABA
 model and must not be used for inventory.
 
+Published cards live under ``config/inventory/models/``.  The current boreal
+cards are a transfer benchmark, not a CWH/TSA 23 operational model:
+
+- ``als_boreal_lorey_height_2012.json``
+- ``als_boreal_basal_area_2012.json``
+- ``als_boreal_gross_volume_2012.json``
+
+They use the published equations in Wulder et al. (2012), *Canadian Journal of
+Remote Sensing* 38(5): 600-618, https://doi.org/10.5589/m12-049.  Their
+applicability domain is boreal Canada; applying them to the CWH TFL 6 pilot is
+a transfer test.  The CHM grid helper is also a proxy for the published
+first-return metrics, not an exact reconstruction.
+
 Bundle Prerequisite
 -------------------
 
-The bundle must validate against the LiDAR product-bundle contract and contain
-a table product named ``canopy``.  The reader uses the manifest's
-``relative_path``; it does not discover products or re-run materialization.
-The manifest's ``bundle_id`` and ``bundle_version`` are recorded in the output.
+The bundle must validate against the LiDAR product-bundle contract.  Without
+``--features`` it must contain a table product named ``canopy``.  With
+``--features`` the CSV supplies ``fragment_id`` and the model predictor columns;
+the bundle still supplies the pinned ``bundle_id`` and ``bundle_version``.
+The reader uses the manifest's ``relative_path``; it does not discover products
+or re-run materialization.
 
 Plot Validation
 ---------------
@@ -96,7 +128,8 @@ Limits
 
 - This is a **consumer** of a fitted model, not an ABA fitting implementation.
 - The fixture canopy table is one row per LiDAR tile, not a real fragment map.
-- No reprojection, resampling, or zonal-statistics step is implicit.
+- The CHM grid helper is a proxy for first-return point-cloud metrics.
+- No reprojection, resampling, or source-product rewrite is implicit.
 - A model card is only as credible as its documented training scope and error.
 - No WS4/FHOPS objective, constraint, growth, or solver code is changed.
 

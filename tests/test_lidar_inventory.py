@@ -9,6 +9,7 @@ from typer.testing import CliRunner
 from femic.cli.main import app
 from femic.lidar.inventory import (
     LidarInventoryError,
+    build_chm_grid_features,
     build_inventory_als,
     load_inventory_als_model,
     write_inventory_als,
@@ -137,3 +138,83 @@ def test_cli_inventory_outputs(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert (out / "inventory_als.csv").is_file()
     assert (out / "inventory_als.json").is_file()
+
+
+def test_chm_grid_features(tmp_path: Path) -> None:
+    bundle = _bundle(tmp_path)
+    output = tmp_path / "features.csv"
+    result = build_chm_grid_features(bundle, output, grid_size_m=2.0)
+
+    assert result["row_count"] == 1
+    assert output.is_file()
+    text = output.read_text(encoding="utf-8")
+    assert "fragment_id,x_center,y_center,Lhmean,Lhcv,Lhp95,CC2m" in text
+    assert "10.0" in text
+
+
+def test_log_link_and_external_features(tmp_path: Path) -> None:
+    bundle = _bundle(tmp_path)
+    features = tmp_path / "features.csv"
+    features.write_text(
+        "fragment_id,Lhp95\nfrag-a,10\nfrag-b,20\n",
+        encoding="utf-8",
+    )
+    model = {
+        "schema_version": "femic.inventory.als.model.v1",
+        "model_id": "fixture-log-height",
+        "model_version": "0.0.0-fixture",
+        "attribute": "lorey_height_m",
+        "unit": "m",
+        "link": "log",
+        "intercept": 0.7341,
+        "coefficients": {"Lhp95": 0.7215},
+        "output_scale": 1.0037,
+        "rmse": 1.34,
+        "sample_count": 201,
+        "training_scope": "synthetic log-link contract fixture",
+        "source": "test fixture",
+        "caveats": ["Synthetic fixture."],
+    }
+    model_path = tmp_path / "log-model.json"
+    model_path.write_text(json.dumps(model), encoding="utf-8")
+
+    result = build_inventory_als(bundle, model_path, features_path=features)
+
+    assert [row.fragment_id for row in result.rows] == ["frag-a", "frag-b"]
+    assert result.rows[0].value == pytest.approx(
+        __import__("math").exp(0.7341 + 0.7215 * __import__("math").log(10.0)) * 1.0037
+    )
+    assert result.model.link == "log"
+
+
+def test_cli_inventory_features(tmp_path: Path) -> None:
+    bundle = _bundle(tmp_path)
+    out = tmp_path / "features.csv"
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "lidar",
+            "inventory-features",
+            "--bundle",
+            str(bundle),
+            "--output",
+            str(out),
+            "--grid-size-m",
+            "2",
+        ],
+        prog_name="femic",
+    )
+
+    assert result.exit_code == 0, result.output
+    assert out.is_file()
+    assert "fragment_id" in out.read_text(encoding="utf-8")
+
+
+def test_published_model_cards_load() -> None:
+    model_root = Path(__file__).parents[1] / "config" / "inventory" / "models"
+    for path in sorted(model_root.glob("*.json")):
+        model = load_inventory_als_model(path)
+        assert model.link == "log"
+        assert model.output_scale > 0
+        assert model.rmse > 0
