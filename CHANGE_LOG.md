@@ -1,3 +1,21 @@
+# 2026-10-29 — INV-01 inventory.als contract and reader
+
+- Added `femic.inventory.als.v1` output and `femic.inventory.als.model.v1`
+  model-card contracts.
+- Added `femic lidar inventory` / `build_inventory_als`: apply a pinned model
+  card to a validated FEMIC LiDAR bundle's `canopy` table and write the long
+  `inventory_als.csv` plus provenance manifest.
+- Added optional plot/observation validation with bias, MAE, and RMSE; the
+  TSA/WS4 P48/P49 plot table is an external input, not bundled data.
+- Added `tests/test_lidar_inventory.py` and a synthetic identity model-card
+  fixture. The fixture is not an ABA model and is not operational.
+- No ABA fitting algorithm, coefficients, or report claim was invented.
+
+Verification:
+- `pytest -q tests/test_lidar_inventory.py` -> 7 passed.
+- `pytest -q tests/test_lidar_inventory.py tests/test_lidar_products.py` -> 32 passed.
+- `ruff` and `mypy` clean on the inventory module; Sphinx build succeeds with `-W`.
+
 # Change Log
 
 ## 2026-10-27

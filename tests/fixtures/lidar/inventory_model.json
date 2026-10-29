@@ -1,0 +1,22 @@
+{
+  "schema_version": "femic.inventory.als.model.v1",
+  "model_id": "fixture-identity-lorey-height",
+  "model_version": "0.0.0-fixture",
+  "attribute": "lorey_height_m",
+  "unit": "m",
+  "intercept": 0.0,
+  "coefficients": {
+    "lorey_height_m": 1.0
+  },
+  "rmse": 0.0,
+  "sample_count": 0,
+  "training_scope": "Synthetic contract fixture only; this model is not fitted or operational.",
+  "source": "FEMIC LiDAR product-bundle fixture",
+  "predictor_ranges": {
+    "lorey_height_m": [0.0, 100.0]
+  },
+  "caveats": [
+    "Synthetic identity model used only to verify the inventory.als contract.",
+    "Do not use this model as an area-based inventory estimate."
+  ]
+}

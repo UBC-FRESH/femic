@@ -49,6 +49,7 @@ Contract Pages
    lidar-stream-candidates
    lidar-canopy-products
    lidar-product-bundle
+   inventory-als
    climate-contract
    climate-consumer
    disturbance-contract
