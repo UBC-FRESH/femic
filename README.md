@@ -16,7 +16,7 @@ The two North Island instance datasets are deliberately related but
 independent. They live in separate public repositories:
 
 - [`external/femic-tsa48-instance`](https://github.com/UBC-FRESH/femic-tsa48-instance) — full TSA 48 AAC/THLB benchmark;
-- [`external/femic-tsa27-instance`](https://github.com/UBC-FRESH/femic-tsa27-instance) — TSA 27 Revelstoke public FEMIC + WS4 instance with the TSR/caribou evidence;
+- [`external/femic-tsa27-instance`](https://github.com/UBC-FRESH/femic-tsa27-instance) — TSA 27 Revelstoke public FEMIC + WS4 DataLad instance with the TSR/caribou evidence;
 - [`UBC-FRESH/femic-northisland-instance`](https://github.com/UBC-FRESH/femic-northisland-instance) — TSA 48 ∩ NICC + K3Z planning model (separate repository; currently a local worktree in this checkout).
 
 Either can be used alone. The full model carries the NICC overlap as a `part`
