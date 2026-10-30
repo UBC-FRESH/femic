@@ -266,8 +266,8 @@ def test_pointcloud_grid_features(tmp_path: Path) -> None:
 
     assert result["row_count"] == 1
     frame = output.read_text(encoding="utf-8")
-    assert "fragment_id,x_center,y_center,Lhmean,Lhcv,Lhp95,CC2m" in frame
-    assert ",10.0,0.0,10.05,100.0," in frame
+    assert "fragment_id,x_center,y_center,source_tile,Lhmean,Lhcv,Lhp95,CC2m" in frame
+    assert ",tile,10.0,0.0,10.05,100.0," in frame
 
 
 def test_horizontal_epsg_handles_compound_crs() -> None:
