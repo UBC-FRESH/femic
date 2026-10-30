@@ -153,4 +153,5 @@ current cards cannot be extended to high-biomass stands.
 - `notes/reports/inv01-tsa23-psp-holdout.csv`
 - `notes/reports/inv01-tsa23-psp-holdout.json`
 - `examples/inv01_tsa23_validation/psp_holdout.py`
+- `notes/reports/inv01-tsa23-high-biomass-targets.md` — next high-biomass data increment
 - FAIB archive cache: `/srv/shared-data/gep/ws4/tmp/inv01-data/psp/raw/` (not tracked)

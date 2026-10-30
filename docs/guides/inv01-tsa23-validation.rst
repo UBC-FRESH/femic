@@ -120,7 +120,47 @@ spatial validation, but it is enough to reject waiting as the next step.
 The fifth candidate, ``4025421``, has its plot support outside the actual point
 cloud extent and is excluded.  The full evidence, including the applicability
 flags and exploratory refit, is in
-``notes/reports/inv01-tsa23-psp-holdout.md``.
+``notes/reports/inv01-tsa23-psp-holdout.md``.  The high-biomass target set is
+recorded in ``notes/reports/inv01-tsa23-high-biomass-targets.md``.
+
+
+High-biomass domain extension
+-----------------------------
+
+The first high-biomass increment adds eight usable TSA 29 IDF plots with observed
+volume 177-383 m3/ha.  Fitting the same card forms on the 14 TSA 23 training
+plots plus those eight plots improves the four-plot TSA 23 holdout for BA and
+volume, but not height:
+
+.. list-table:: Candidate versus current cards on the four-plot holdout
+   :header-rows: 1
+
+   * - Attribute
+     - Current RMSE
+     - Candidate RMSE
+     - Current bias
+     - Candidate bias
+   * - Lorey height (m)
+     - 1.462
+     - 2.032
+     - +0.997
+     - +1.637
+   * - Basal area (m2/ha)
+     - 8.351
+     - 7.823
+     - +0.931
+     - -3.062
+   * - Gross volume (m3/ha)
+     - 118.207
+     - 79.984
+     - +89.267
+     - +53.365
+
+The candidate is experimental: TSA 29 is a different TSA, the TSA 23 holdout is
+one clustered tile, and the volume bias remains large.  Keep the published
+height card; do not publish the BA/volume candidate yet.  Add TSA 22 high-biomass
+plots (UTM 11) and, more importantly, high-biomass TSA 23 plots.  Details:
+``notes/reports/inv01-tsa23-high-biomass-refit.md``.
 
 Omitted-tile gap
 ----------------
@@ -182,6 +222,7 @@ The scripts are in ``examples/inv01_tsa23_validation``:
 - ``gap_priority.py``
 - ``make_validation_figures.py``
 - ``psp_holdout.py``
+- high-biomass refit runbook: ``notes/reports/inv01-tsa23-high-biomass-refit.md``
 
 See Also
 --------
