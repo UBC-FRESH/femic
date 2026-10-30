@@ -19,7 +19,8 @@ the published cards from this result.
   - 4024194 excluded: downloaded LAZ fails `lazrs` at read time
   - 4024290 excluded: published tile is 113 KB / 18,949 points and has no
     first returns in the plot support
-- TSA 22 high-biomass candidates are UTM 11 and not included in this increment.
+- TSA 22 high-biomass candidates are Okanagan TSA, not adjacent to TSA 23;
+  they are excluded from training and would be a separate transfer test only.
 
 All data and outputs are under
 `/srv/shared-data/gep/ws4/tmp/inv01-data` on the data drive.

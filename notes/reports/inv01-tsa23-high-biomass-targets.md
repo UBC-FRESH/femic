@@ -15,7 +15,9 @@ Nemora:
 - 7,341 PSP sites province-wide
 - 200 in TSA 23, 162 in IDF
 - 455 TSA 23 visits
-- nearby IDF sites in TSA 22 (89 with attributes) and TSA 29 (175 with attributes)
+- nearby IDF sites in TSA 22 (Okanagan; 89 with attributes) and TSA 29
+  (Williams Lake; 175 with attributes).  TSA 22 is **not** adjacent to TSA 23
+  and is excluded from training; it can only be an external transfer test.
 
 High-biomass candidates were restricted to:
 
@@ -25,8 +27,9 @@ High-biomass candidates were restricted to:
 - a LidarBC point-cloud tile containing the plot
 
 The result is 17 candidates: 14 in TSA 29 and 3 in TSA 22.  TSA 29 candidates
-are the current training increment; TSA 22 is UTM 11 and needs a separate
-projection path.
+are the exploratory training increment; TSA 22 is excluded from training because
+it is the Okanagan TSA, not an adjacent 100 Mile House IDF population.  TSA 22
+could be used only as a separate transfer test, not as model training.
 
 ## TSA 29 increment
 
