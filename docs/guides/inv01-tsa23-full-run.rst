@@ -122,3 +122,4 @@ See Also
 - :doc:`lidar-inventory`
 - :doc:`../reference/contracts/inventory-als`
 - :doc:`../reference/api/femic-lidar-inventory`
+- :doc:`inv01-tsa23-validation`
