@@ -1,3 +1,21 @@
+# 2026-10-30 — INV-01 TSA 23 IDF pilot cards
+
+- Confirmed public FAIB PSP feasibility for TSA 23: 190 plots, 25 measured
+  since 2018, 22 with LidarBC point-cloud coverage within +/-2 years, 19 IDF.
+- Fitted three local IDF cards from 14 plots using first-return point-cloud
+  metrics and exact FAIB plot support.
+- LOOCV RMSE: Lorey height 0.688 m, basal area 4.414 m2/ha, gross volume
+  20.666 m3/ha.
+- Added `config/inventory/models/als_tsa23_idf_*_2026.json`,
+  `notes/reports/inv01-tsa23-idf-pilot.md`, and
+  `notes/reports/inv01-tsa23-training-plots.csv`.
+- The cards are a 14-plot pilot: no spatial holdout and no P48/P49 validation.
+
+Verification:
+- Model cards load through `load_inventory_als_model`.
+- `pytest -q tests/test_lidar_inventory.py` -> 12 passed.
+- Sphinx `-W` build clean.
+
 # 2026-10-29 — INV-01 local CWH pilot fit
 
 - Fitted three local CWH model cards from 14 public FAIB PSP plots and
