@@ -27,6 +27,7 @@ import numpy as np  # type: ignore[import-untyped]
 import pandas as pd  # type: ignore[import-untyped]
 import rasterio  # type: ignore[import-untyped]
 from pyproj import CRS  # type: ignore[import-untyped]
+from pyproj.exceptions import CRSError  # type: ignore[import-untyped]
 
 from femic.lidar.products import (
     LIDAR_PRODUCT_MANIFEST_NAME,
@@ -607,7 +608,7 @@ def _horizontal_epsg(crs: object) -> int | None:
     """Return the horizontal EPSG code from a 2D or compound CRS."""
     try:
         parsed = CRS.from_user_input(crs)
-    except Exception:
+    except (TypeError, ValueError, CRSError):
         return None
     if parsed.is_compound and parsed.sub_crs_list:
         parsed = parsed.sub_crs_list[0]
@@ -622,6 +623,9 @@ def build_pointcloud_grid_features(
     height_threshold_m: float = 2.0,
     min_returns: int = 10,
     min_cover_pct: float = 0.0,
+    grid_origin_x: float | None = None,
+    grid_origin_y: float | None = None,
+    source_tile: str | None = None,
     batch_size: int = 5_000_000,
 ) -> dict[str, object]:
     """Derive first-return point-cloud metrics on a regular grid.
@@ -675,8 +679,16 @@ def build_pointcloud_grid_features(
     if resolution <= 0 or abs(transform.e) <= 0:
         raise LidarInventoryError("DEM has an invalid pixel size.")
 
-    ncols = math.ceil(width * resolution / grid_size_m)
-    nrows = math.ceil(height * resolution / grid_size_m)
+    x0 = float(transform.c)
+    y0 = float(transform.f)
+    origin_x = float(grid_origin_x) if grid_origin_x is not None else x0
+    origin_y = float(grid_origin_y) if grid_origin_y is not None else y0
+    global_col_min = math.floor((x0 - origin_x) / grid_size_m)
+    global_col_max = math.ceil((x0 + width * resolution - origin_x) / grid_size_m) - 1
+    global_row_min = math.floor((origin_y - y0) / grid_size_m)
+    global_row_max = math.ceil((origin_y - (y0 - height * resolution)) / grid_size_m) - 1
+    ncols = global_col_max - global_col_min + 1
+    nrows = global_row_max - global_row_min + 1
     n_cells = nrows * ncols
     if n_cells <= 0:
         raise LidarInventoryError("DEM does not define any grid cells.")
@@ -688,13 +700,17 @@ def build_pointcloud_grid_features(
     max_height_m = 100.0
     n_bins = int(max_height_m / bin_width) + 1
     hist = np.zeros((n_cells, n_bins), dtype="int64")
-    x0 = float(transform.c)
-    y0 = float(transform.f)
 
     for path in paths:
         try:
             with laspy.open(path) as reader:
-                las_crs = reader.header.parse_crs()
+                try:
+                    las_crs = reader.header.parse_crs()
+                except (CRSError, ValueError):
+                    # Some LidarBC 2021 files carry a vertical-first compound
+                    # CRS that PROJ rejects; the horizontal grid still matches
+                    # the paired DEM and is checked by the caller.
+                    las_crs = None
                 if (
                     las_crs is not None
                     and dem_crs is not None
@@ -740,8 +756,10 @@ def build_pointcloud_grid_features(
                     y = y[valid]
                     z = z[valid]
                     ground = ground[valid]
-                    cell_col = np.floor((x - x0) / grid_size_m).astype("int64")
-                    cell_row = np.floor((y0 - y) / grid_size_m).astype("int64")
+                    global_col = np.floor((x - origin_x) / grid_size_m).astype("int64")
+                    global_row = np.floor((origin_y - y) / grid_size_m).astype("int64")
+                    cell_col = global_col - global_col_min
+                    cell_row = global_row - global_row_min
                     cells = (
                         (cell_col >= 0)
                         & (cell_col < ncols)
@@ -798,13 +816,14 @@ def build_pointcloud_grid_features(
         target = 0.95 * above
         p95_bin = int(np.searchsorted(cumulative[cell], target, side="left"))
         p95 = min(max_height_m, (p95_bin + 0.5) * bin_width)
-        row = cell // ncols
-        col = cell % ncols
+        row = global_row_min + cell // ncols
+        col = global_col_min + cell % ncols
         rows.append(
             {
                 "fragment_id": f"cell_{row:05d}_{col:05d}",
-                "x_center": x0 + (col + 0.5) * grid_size_m,
-                "y_center": y0 - (row + 0.5) * grid_size_m,
+                "x_center": origin_x + (col + 0.5) * grid_size_m,
+                "y_center": origin_y - (row + 0.5) * grid_size_m,
+                "source_tile": source_tile or paths[0].stem,
                 "Lhmean": mean,
                 "Lhcv": cv,
                 "Lhp95": p95,
@@ -825,6 +844,8 @@ def build_pointcloud_grid_features(
         "pointcloud_paths": [str(path) for path in paths],
         "output_path": output,
         "grid_size_m": grid_size_m,
+        "grid_origin_x": origin_x,
+        "grid_origin_y": origin_y,
         "height_threshold_m": height_threshold_m,
         "min_returns": min_returns,
         "min_cover_pct": min_cover_pct,
