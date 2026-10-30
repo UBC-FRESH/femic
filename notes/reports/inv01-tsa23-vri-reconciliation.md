@@ -11,8 +11,9 @@ FEMIC model outputs.
 The operational conclusion is negative: the current 14-plot IDF cards disagree
 with VRI far more than their LOOCV errors suggest.  The surface remains a pilot
 and must not be used for operational TSA 23 decisions.  A later four-plot PSP
-holdout (see ``inv01-tsa23-psp-holdout.md``) confirms that the volume card is not
-ready; VRI is not the only reason for caution.
+holdout (see ``inv01-tsa23-psp-holdout.md``) is mostly outside the current
+BA/volume card range; it confirms that the high-biomass domain is not covered,
+not merely that the volume card is noisy.
 
 ## Inputs
 

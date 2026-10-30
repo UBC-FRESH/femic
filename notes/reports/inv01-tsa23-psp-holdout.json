@@ -36,5 +36,41 @@
       "mae": 97.63516904905961,
       "rmse": 118.20656667012294
     }
+  },
+  "applicability": {
+    "height_range": {
+      "Lhp95": [
+        9.508,
+        24.07
+      ]
+    },
+    "ba_volume_range": {
+      "Lhmean": [
+        5.8017,
+        14.1882
+      ],
+      "CC2m": [
+        56.3442,
+        86.3423
+      ]
+    },
+    "height_in_range": 3,
+    "height_out_of_range": 1,
+    "ba_volume_in_range": 1,
+    "ba_volume_out_of_range": 3,
+    "interpretation": "These four high-biomass plots are mostly outside the published card ranges; the holdout is an extrapolation stress test, not an in-domain validation."
+  },
+  "exploratory_refit": {
+    "note": "Leave-one-tile-out on 14 training + 4 holdout; candidate refit on same forms did not improve aggregate RMSE.",
+    "current": {
+      "height_rmse": 0.8556,
+      "ba_rmse": 5.0439,
+      "volume_rmse": 57.5646
+    },
+    "candidate": {
+      "height_rmse": 0.9409,
+      "ba_rmse": 5.2637,
+      "volume_rmse": 57.9153
+    }
   }
 }

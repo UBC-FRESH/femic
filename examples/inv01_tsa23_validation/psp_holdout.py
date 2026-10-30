@@ -165,6 +165,8 @@ def compute_features(raw_dir: Path, selection: Path, manifest: Path, pointcloud_
         frame["height_pred"] = 1.9441063309517714 + 0.8351084469592212 * frame.Lhp95
         frame["ba_pred"] = np.exp(-4.724750214946937 + 0.8686310009684395 * np.log(frame.Lhmean) + 1.3794686095244624 * np.log(frame.CC2m)) * 1.008780042159369
         frame["vol_pred"] = np.exp(-4.009416713953133 + 1.7395991112544076 * np.log(frame.Lhmean) + 1.1516782963514058 * np.log(frame.CC2m)) * 1.004526898452813
+        frame["height_in_range"] = frame.Lhp95.between(9.508, 24.07)
+        frame["ba_vol_in_range"] = frame.Lhmean.between(5.8017, 14.1882) & frame.CC2m.between(56.3442, 86.3423)
         frame.to_csv(out_dir / "psp_holdout.csv", index=False)
     return frame
 

@@ -76,6 +76,36 @@ The fifth candidate, `4025421`, is in tile `lidarbc:4:117009`; the actual point
 cloud begins about 66 m east of the plot, so no first returns fall in the plot
 support.  It is excluded rather than silently using an empty sample.
 
+
+## Applicability: this is an extrapolation test
+
+The four plots are high-biomass IDF stands.  The current cards have narrow
+ranges:
+
+- height: `Lhp95` 9.508-24.07 m
+- BA/volume: `Lhmean` 5.8017-14.1882 m and `CC2m` 56.3442-86.3423%
+
+Three of the four plots are outside the BA/volume `Lhmean` range, and one is
+outside the height range:
+
+| Site | Lhmean | Lhp95 | Height in range | BA/volume in range |
+| --- | ---: | ---: | :---: | :---: |
+| 4025090 | 21.30 | 28.51 | no | no |
+| 4025091 | 16.19 | 20.98 | yes | no |
+| 4025094 | 18.15 | 22.61 | yes | no |
+| 4025095 | 13.36 | 18.51 | yes | yes |
+
+Therefore the table above is **not an in-domain validation of the cards**.  It
+is a stress test of extrapolation.  The current full-run map already drops cells
+outside these ranges, so these high-biomass plots would be unmapped rather than
+predicted.  The result is still decisive for the programme: the cards do not
+cover a large part of the TSA's high-biomass IDF stands.
+
+A simple exploratory refit on all 18 plots did not improve leave-one-tile-out
+RMSE (height 0.94 vs 0.86 m; BA 5.26 vs 5.04 m2/ha; volume 57.9 vs 57.6 m3/ha).
+The next fit needs more high-biomass plots, not just a different line through the
+same 18.
+
 ## Current-card results
 
 Applying the published 14-plot cards to the four independent plots:
@@ -101,21 +131,22 @@ The holdout RMSEs are larger than the pilot LOOCV errors:
 - BA: 8.35 m2/ha vs 4.414 m2/ha
 - volume: 118.21 m3/ha vs 20.666 m3/ha
 
-The height and BA cards still have useful signal, but volume is clearly
-overpredicting in this cluster.  Four plots in one tile are not a spatial
-validation of the TSA; they are a real external test that the current volume
-card does not pass.
+The height and BA cards retain signal in the three in-range height plots, but the
+BA/volume predictions are extrapolations and volume is badly overpredicted.  Four
+plots in one tile are not a spatial validation of the TSA; they show that the
+current cards cannot be extended to high-biomass stands.
 
 ## What this means
 
 - The current surface is still not operational.
-- The 14-plot cartographic fit is a small subset; the full PSP archive should be
-  the basis for the next fit, not a reason to wait.
-- The next fit should use all 18 available IDF plots (14 training + 4 held-out)
-  with a **tile-level spatial holdout**, and should stratify or cap volume.
-- The four holdout plots are clustered in one 2019 tile; the next data task is
-  not “find more plots” but “use all PSP visits that have actual LidarBC support
-  and add a true spatial/temporal holdout.”
+- The full PSP archive is now the evidence base; waiting for “more validation”
+  is not the issue.  The issue is **domain coverage**: the cards stop at
+  `Lhmean` 14.19 m, while high-biomass IDF stands exceed it.
+- Refitting on the same 18 plots is not sufficient.  The next dataset increment
+  must add high-biomass IDF plots with LidarBC-supporting point clouds, ideally
+  in TSA 23 or adjacent IDF, plus a tile-level spatial holdout.
+- The four holdout plots are clustered in one 2019 tile; that is a limitation of
+  this check, not a reason to defer the next fit.
 
 ## Files
 
