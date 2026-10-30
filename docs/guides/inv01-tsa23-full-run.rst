@@ -90,10 +90,10 @@ Reduce locally:
 .. code-block:: bash
 
    python examples/inv01_tsa23_full/reduce_full.py \
-     --parts /tmp/inv01/parts \
+     --parts /srv/shared-data/gep/ws4/tmp/inv01-data/full-output/parts \
      --boundary tsa23_boundary.gpkg \
      --models config/inventory/models \
-     --out-dir /tmp/inv01 \
+     --out-dir /srv/shared-data/gep/ws4/tmp/inv01-data/full-output \
      --raster
 
 Results and limits

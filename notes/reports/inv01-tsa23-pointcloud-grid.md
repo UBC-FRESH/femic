@@ -29,7 +29,7 @@ Applying the TSA 23 IDF cards only inside their declared ranges:
 | Basal area (m2/ha) | 2,196 | 30.83 | 31.55 | 12.14 | 41.71 |
 | Gross volume (m3/ha) | 2,196 | 201.50 | 203.25 | 46.68 | 309.87 |
 
-Rows are in `/tmp/opencode/inv01_tsa23/inventory_als_bc092p063_3_4_3.csv`
+Rows are in `/srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/inventory_als_bc092p063_3_4_3.csv`
 (not tracked).
 
 ## Ten-tile mosaic pilot
@@ -49,7 +49,7 @@ In-domain means:
 | Gross volume (m3/ha) | 19,891 | 159.31 | 157.56 |
 
 Map layer:
-`/tmp/opencode/inv01_tsa23/tsa23_idf_mosaic_10tile.geojson`
+`/srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/tsa23_idf_mosaic_10tile.geojson`
 
 A leave-one-tile-out check gives height RMSE 0.690 m, BA 4.435 m2/ha, and
 volume 20.694 m3/ha. This is only a weak spatial test: 12 tile groups cover 14
