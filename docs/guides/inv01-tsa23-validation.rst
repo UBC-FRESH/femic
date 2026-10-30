@@ -64,6 +64,56 @@ errors (height 0.688 m, BA 4.414 m2/ha, volume 20.666 m3/ha).
 The full tables and method are in
 ``notes/reports/inv01-tsa23-vri-reconciliation.md``.
 
+
+PSP holdout: use the archive now
+--------------------------------
+
+The 14-plot calibration is a subset of the public FAIB PSP archive.  The archive
+contains 7,341 sites province-wide, 200 in TSA 23, 162 of them in IDF.  TSA 23
+has 455 visits; 22 visits since 2017 have a LidarBC point cloud, 18 are in the
+processed tiles, and four more are in the omitted tile ``lidarbc:4:117213``.
+
+Those four omitted IDF plots (2018 measurements, 2019 point cloud) are a real
+held-out set.  We processed them with the 2019 layer-6 1 m DEM and the same
+first-return protocol.  They were not used in the 14-plot fit:
+
+.. list-table:: Four-plot PSP holdout
+   :header-rows: 1
+
+   * - Attribute
+     - Observed mean
+     - Predicted mean
+     - Bias
+     - MAE
+     - RMSE
+   * - Lorey height (m)
+     - 19.87
+     - 20.87
+     - +1.00
+     - 1.07
+     - 1.46
+   * - Basal area (m2/ha)
+     - 36.61
+     - 37.55
+     - +0.93
+     - 6.97
+     - 8.35
+   * - Gross volume (m3/ha)
+     - 263.71
+     - 352.97
+     - +89.27
+     - 97.64
+     - 118.21
+
+The height and BA cards retain useful signal, but volume fails this small
+external test.  The four plots are clustered in one tile, so this is not a
+TSA-wide spatial validation; it is enough to reject "wait for data" as the next
+step and to require a refit before any operational claim.
+
+The fifth candidate, ``4025421``, has its plot support outside the actual point
+cloud extent and is excluded.  The full evidence is in
+``notes/reports/inv01-tsa23-psp-holdout.md``.
+
 Omitted-tile gap
 ----------------
 
@@ -123,6 +173,7 @@ The scripts are in ``examples/inv01_tsa23_validation``:
 - ``vri_reconcile.py``
 - ``gap_priority.py``
 - ``make_validation_figures.py``
+- ``psp_holdout.py``
 
 See Also
 --------

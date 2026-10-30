@@ -193,4 +193,6 @@ A VRI screening comparison and an omitted-tile priority analysis are recorded in
 `notes/reports/inv01-tsa23-vri-reconciliation.md` and
 `notes/reports/inv01-tsa23-gap-priority.md`.  They show that the current surface
 is not operationally validated and that the 907 omitted tiles cover 1,962 km2
-inside TSA 23.  The Sphinx guide is `docs/guides/inv01-tsa23-validation.rst`.
+inside TSA 23.  A four-plot external PSP holdout is recorded in
+`notes/reports/inv01-tsa23-psp-holdout.md`; it confirms that the volume card is
+not ready.  The Sphinx guide is `docs/guides/inv01-tsa23-validation.rst`.
