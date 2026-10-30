@@ -32,24 +32,29 @@ Applying the TSA 23 IDF cards only inside their declared ranges:
 Rows are in `/tmp/opencode/inv01_tsa23/inventory_als_bc092p063_3_4_3.csv`
 (not tracked).
 
-## Five-tile mosaic pilot
+## Ten-tile mosaic pilot
 
-A second run combined five non-overlapping LidarBC tiles:
+A second run combined ten non-overlapping LidarBC tiles:
 
-- 19,034 25 m cells
-- 17,709 cells inside the height-card range
-- 11,254 cells inside the BA/volume ranges
+- 36,433 25 m cells
+- 33,255 cells inside the height-card range
+- 19,891 cells inside the BA/volume ranges
 
 In-domain means:
 
 | Attribute | Cells | Mean | Median |
 | --- | ---: | ---: | ---: |
-| Lorey height (m) | 17,709 | 16.90 | 17.10 |
-| Basal area (m2/ha) | 11,254 | 26.19 | 26.27 |
-| Gross volume (m3/ha) | 11,254 | 161.34 | 159.22 |
+| Lorey height (m) | 33,255 | 16.59 | 16.77 |
+| Basal area (m2/ha) | 19,891 | 26.20 | 26.46 |
+| Gross volume (m3/ha) | 19,891 | 159.31 | 157.56 |
 
 Map layer:
-`/tmp/opencode/inv01_tsa23/tsa23_idf_mosaic_5tile.geojson`
+`/tmp/opencode/inv01_tsa23/tsa23_idf_mosaic_10tile.geojson`
+
+A leave-one-tile-out check gives height RMSE 0.690 m, BA 4.435 m2/ha, and
+volume 20.694 m3/ha. This is only a weak spatial test: 12 tile groups cover 14
+plots and only one tile contains more than one plot. It is not an independent
+spatial holdout.
 
 A VRI comparison was attempted but the available VRI fields are incomplete for
 several polygons (near-zero BA/volume), so it is not presented as validation.
