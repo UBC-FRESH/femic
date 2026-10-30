@@ -156,10 +156,11 @@ volume, but not height:
      - +89.267
      - +53.365
 
-The candidate is experimental: TSA 29 is a different TSA, the TSA 23 holdout is
-one clustered tile, and the volume bias remains large.  Keep the published
-height card; do not publish the BA/volume candidate yet.  Add TSA 22 high-biomass
-plots (UTM 11) and, more importantly, high-biomass TSA 23 plots.  Details:
+The candidate is experimental: TSA 29 is Williams Lake (adjacent but a different
+TSA), the TSA 23 holdout is one clustered tile, and the volume bias remains
+large.  TSA 22 is Okanagan and is excluded from TSA 23 training entirely.  Keep
+the published height card; do not publish the BA/volume candidate yet.  Add
+high-biomass **TSA 23** plots, not TSA 22, before the next fit.  Details:
 ``notes/reports/inv01-tsa23-high-biomass-refit.md``.
 
 Omitted-tile gap
