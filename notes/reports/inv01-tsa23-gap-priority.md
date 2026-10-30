@@ -108,9 +108,11 @@ Nearest-mill split: 332 tiles are closest to `MILL_733_LGH`, 297 to
 
 ## Recommendation
 
-Do not spend the full download/compute budget on all 907 until the model itself
-is validated.  The VRI reconciliation shows large compression and BEC-dependent
-bias; adding 16% more area to a biased surface does not make it operational.
+A four-plot PSP holdout now exists and does **not** validate the current volume
+card (RMSE 118.21 m3/ha).  Do not spend the full download/compute budget on all
+907 until the model is refit; adding 16% more area to a biased surface does not
+make it operational.  This is not a reason to wait for new plots: the full PSP
+archive and the four available external plots should drive the refit now.
 
 If a coverage expansion is required, the defensible next increment is:
 
