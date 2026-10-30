@@ -186,3 +186,11 @@ The full command sequence and environment variables are in
 - 907 no-DEM tiles and 24 no-return tiles were not filled.
 - S3 object reads remain blocked by policy; Globus and Sockeye scratch are the
   active path.
+
+## Follow-up checks
+
+A VRI screening comparison and an omitted-tile priority analysis are recorded in
+`notes/reports/inv01-tsa23-vri-reconciliation.md` and
+`notes/reports/inv01-tsa23-gap-priority.md`.  They show that the current surface
+is not operationally validated and that the 907 omitted tiles cover 1,962 km2
+inside TSA 23.  The Sphinx guide is `docs/guides/inv01-tsa23-validation.rst`.

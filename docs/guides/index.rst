@@ -37,6 +37,7 @@ and the GCBM bridge is separate in :doc:`gcbm-export`.
    lidar-product-bundles
    lidar-inventory
    inv01-tsa23-full-run
+   inv01-tsa23-validation
    lidar-instance-integration
    bc-data-catalogue-discovery
    tsr-intelligence-workflow

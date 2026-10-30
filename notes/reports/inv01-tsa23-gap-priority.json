@@ -1,0 +1,27 @@
+{
+  "tsa_area_km2": 12353.182359914728,
+  "tsa_point_tiles": 6806,
+  "matched_tiles": 5899,
+  "missing_tiles": 907,
+  "missing_tile_footprint_km2": 2139.506402757785,
+  "missing_tsa_km2": 1961.99734373905,
+  "missing_share_of_tsa": 0.15882525543422749,
+  "missing_forest_vri_km2": 1777.9751460323093,
+  "missing_thlb_km2": 861.2079910153075,
+  "missing_priority_A": 182,
+  "missing_priority_B": 272,
+  "missing_priority_C": 453,
+  "matched_tsa_km2": 7949.002117967266,
+  "all_point_tsa_km2": 9886.719409716516,
+  "tsa_without_any_point_km2": 2466.462950198212,
+  "tsa_without_matched_point_km2": 4404.180241947467,
+  "missing_with_same_maptile_dem": 0,
+  "missing_with_any_dem": 907,
+  "inputs": {
+    "selection_sha256": "621d4a02f213e72a2278ada7baeb81fa98bb55dd7a1af8f0cbce50a9d7a10eb7",
+    "manifest_sha256": "88c90d45c9e692569af3c5bec4719f9f395b9f10d6b7a938a062b1fea385888c",
+    "vri_sha256": "9cc1c4939c92bcbe6ec8c73a421293333c64b7cf80e68d97d47f0057ecde4099"
+  },
+  "method": "Omitted point tiles = TSA-intersecting point-cloud tiles not in the 5,899-row manifest. Forest/THLB from VRI checkpoint 8. Road distance to nearest c5 vertex; mill distance to three route destinations; score heuristic in report.",
+  "dem_note": "All 907 have a DEM candidate, but none is the same fine 2.5 km layer-5 1 m tile used by the run; 64 unique layer-6 1:20000 DEM tiles and 19 layer-5 tiles are candidates."
+}
