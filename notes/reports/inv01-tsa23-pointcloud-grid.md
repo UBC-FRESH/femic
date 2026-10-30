@@ -32,6 +32,28 @@ Applying the TSA 23 IDF cards only inside their declared ranges:
 Rows are in `/tmp/opencode/inv01_tsa23/inventory_als_bc092p063_3_4_3.csv`
 (not tracked).
 
+## Five-tile mosaic pilot
+
+A second run combined five non-overlapping LidarBC tiles:
+
+- 19,034 25 m cells
+- 17,709 cells inside the height-card range
+- 11,254 cells inside the BA/volume ranges
+
+In-domain means:
+
+| Attribute | Cells | Mean | Median |
+| --- | ---: | ---: | ---: |
+| Lorey height (m) | 17,709 | 16.90 | 17.10 |
+| Basal area (m2/ha) | 11,254 | 26.19 | 26.27 |
+| Gross volume (m3/ha) | 11,254 | 161.34 | 159.22 |
+
+Map layer:
+`/tmp/opencode/inv01_tsa23/tsa23_idf_mosaic_5tile.geojson`
+
+A VRI comparison was attempted but the available VRI fields are incomplete for
+several polygons (near-zero BA/volume), so it is not presented as validation.
+
 ## Limits
 
 - One point-cloud tile, not the full TSA 23.
