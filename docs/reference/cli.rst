@@ -518,9 +518,13 @@ model. It writes CHM proxies, not first-return point-cloud metrics. See
 - ``--height-threshold-m FLOAT`` (default: ``2.0``)
 - ``--min-returns INTEGER`` (default: ``10``)
 - ``--min-cover-pct FLOAT`` (default: ``0.0``)
+- ``--grid-origin-x FLOAT`` (optional; defaults to the DEM origin)
+- ``--grid-origin-y FLOAT`` (optional; defaults to the DEM origin)
+- ``--source-tile TEXT`` (optional label written to every row)
 
 ``femic lidar inventory-pointcloud-features`` derives first-return point-cloud
 metrics on a regular grid. It requires the optional ``laspy[lazrs]`` dependency.
+Use the same global origin for every tile of a mosaic.
 
 ``femic lidar materialize`` downloads selected tiles into
 ``<output-root>/lidarbc/<product>/layer_<id>/<year>/<filename>`` and records

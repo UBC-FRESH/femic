@@ -21,7 +21,8 @@ Key Entry Surfaces
   ``chm`` product.
 - :func:`build_pointcloud_grid_features`
   Derive first-return grid metrics (mean, CV, p95, cover) from LAS/LAZ tiles
-  and a co-registered DEM.
+  and a co-registered DEM.  Optional ``grid_origin_x``/``grid_origin_y`` make
+  adjacent tiles share a global cell grid.
 - :func:`write_inventory_als`
   Write ``inventory_als.csv`` and ``inventory_als.json``.
 - :class:`InventoryAlsResult`

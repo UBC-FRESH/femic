@@ -1,0 +1,143 @@
+{
+  "run_id": "inv01-tsa23-20261030",
+  "date_utc": "2026-10-30",
+  "code": {
+    "repository": "UBC-FRESH/femic",
+    "commit": "cc3c8ce",
+    "pull_request": 474
+  },
+  "inputs": {
+    "tsa_area_km2": 12353.182359914728,
+    "point_cloud_tiles_selected": 9568,
+    "dem_tiles_selected": 4693,
+    "matched_tile_pairs": 5899,
+    "point_tiles_without_dem": 907,
+    "grid_size_m": 25,
+    "grid_crs": "EPSG:3157",
+    "grid_origin": [
+      549275.0,
+      5784675.0
+    ],
+    "min_returns": 10,
+    "min_cover_pct": 10.0,
+    "download_http416_complete_part": 24
+  },
+  "compute": {
+    "allocation": "st-gep-1",
+    "partition": "skylake",
+    "slurm_array_job": "13794758",
+    "array_tasks": 93,
+    "concurrency": 8,
+    "cpus_per_task": 32,
+    "submit_pdt": "2026-10-30T02:28:07-07:00",
+    "last_task_end_pdt": "2026-10-30T02:57:52-07:00",
+    "wall_seconds": 1785,
+    "failed_tiles": 24,
+    "missing_batch_parts": 0,
+    "failed_batch_tasks": 11,
+    "successful_tiles": 5875,
+    "bad_tiles": [
+      "bc_092p006_3_2_4_xyes_8_utm10_20171022.laz",
+      "bc_092p006_3_2_4_xyes_8_utm10_2019.laz",
+      "bc_092p006_4_1_3_xyes_8_utm10_20171022.laz",
+      "bc_092p006_4_1_3_xyes_8_utm10_2019.laz",
+      "bc_092p012_4_3_2_xyes_8_utm10_2019.laz",
+      "bc_092p012_4_4_2_xyes_8_utm10_20171024.laz",
+      "bc_092p013_3_3_1_xyes_8_utm10_20171024.laz",
+      "bc_092p013_3_3_2_xyes_8_utm10_2019.laz",
+      "bc_092p013_4_3_1_xyes_8_utm10_2019.laz",
+      "bc_092p016_1_2_2_xyes_8_utm10_2019.laz",
+      "bc_092p021_2_4_2_xyes_8_utm10_2019.laz",
+      "bc_092p021_2_4_4_xyes_8_utm10_20171024.laz",
+      "bc_092p022_4_4_1_xyes_8_utm10_2019.laz",
+      "bc_092p022_4_4_2_xyes_8_utm10_20171024.laz",
+      "bc_092p025_3_2_4_xyes_8_utm10_201701024.laz",
+      "bc_092p025_4_1_4_xyes_8_utm10_2019.laz",
+      "bc_092p025_4_2_3_xyes_8_utm10_2019.laz",
+      "bc_092p025_4_2_4_xyes_8_utm10_201701024.laz",
+      "bc_092p025_4_3_2_xyes_8_utm10_2019.laz",
+      "bc_092p026_2_2_4_xyes_8_utm10_2019.laz",
+      "bc_092p077_2_3_2_xyes_8_utm10_2021.laz",
+      "bc_092p078_1_3_4_xyes_8_utm10_2021.laz",
+      "bc_092p078_3_1_2_xyes_8_utm10_2021.laz",
+      "bc_092p083_2_1_2_xyes_8_utm10_2019.laz"
+    ]
+  },
+  "outputs": {
+    "feature_cells": 9523476,
+    "height_domain_cells": 6573196,
+    "ba_volume_domain_cells": 2942755,
+    "covering_km2": 5952.1725,
+    "tile_footprint_km2": 7949.002117967266,
+    "tile_footprint_fraction": 0.6435,
+    "modelled_area_fraction": 0.4818,
+    "means": {
+      "lorey_height_m": 16.093222674940737,
+      "ba_m2_ha": 23.867607932811104,
+      "vol_m3_ha": 139.3309164323451
+    }
+  },
+  "artifacts": {
+    "features_full.parquet": {
+      "bytes": 334514970,
+      "sha256": "296c31f60d51438d459d7f2d4ad7a20796f04e3dd8548260daae543804183a22"
+    },
+    "inventory_full.parquet": {
+      "bytes": 114518458,
+      "sha256": "19be051c05e839bebca9b252ba733a1300c138452a354e096892cc69182aaf03"
+    },
+    "tsa23_idf_full_25m.tif": {
+      "bytes": 38592390,
+      "sha256": "0d4dabe9a896cbaffaedfeeb804922150ae9bb6e4a835d673a558c352481512a"
+    },
+    "summary_full.json": {
+      "bytes": 600,
+      "sha256": "cd85c850b91834c44764c065c52738381081817aa3075904214b327ad809910c"
+    }
+  },
+  "chinook": {
+    "endpoint": "https://chinook.arc.ubc.ca",
+    "allocation": "ch-gep-1",
+    "raw_laz": {
+      "files": 5899,
+      "bytes": 2162599779082,
+      "globus_task": "ca0a93ab-d443-11f1-b9dd-0effda64b40f",
+      "seconds": 3021
+    },
+    "raw_dem": {
+      "files": 3167,
+      "bytes": 20578123602,
+      "globus_task": "d00e29a2-d443-11f1-a172-0effda64b40f"
+    },
+    "parts": {
+      "scratch_files": 93,
+      "scratch_bytes": 652286074,
+      "archived_files": 95,
+      "archived_bytes": 652592957,
+      "globus_task": "2ed341b0-d44a-11f1-81c3-02ffc7f41b19"
+    },
+    "products": {
+      "files": 4,
+      "bytes": 487626418,
+      "globus_task": "4e94bc74-d44b-11f1-aa21-0effda64b40f"
+    }
+  },
+  "software": {
+    "sockeye_python": "3.12.7",
+    "numpy": "2.5.4",
+    "pandas": "3.1.0",
+    "rasterio": "1.5.2",
+    "laspy": "2.7.0",
+    "pyarrow": "26.0.0",
+    "geopandas": "1.2.0",
+    "shapely": "2.2.0",
+    "pyproj": "3.8.0",
+    "fiona": "1.10.1"
+  },
+  "limits": {
+    "s3_object_reads": "AccessDenied from local and Sockeye; Globus/scratch used",
+    "validation": "no independent P48/P49 or full VRI reconciliation",
+    "model": "14-plot TSA 23 IDF pilot cards; not operational",
+    "coverage": "64% tile footprint; 48% modelled cell area"
+  }
+}
