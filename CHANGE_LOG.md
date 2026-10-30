@@ -1,3 +1,67 @@
+# 2026-10-29 — INV-01 local CWH pilot fit
+
+- Fitted three local CWH model cards from 14 public FAIB PSP plots and
+  LidarBC 2023/2024 1 m CHMs: Lorey height, basal area, and gross volume.
+- Held out 9 plots with 4-6 year ground/LiDAR offsets; LOOCV RMSE 2.14 m,
+  9.27 m2/ha, and 62.22 m3/ha respectively.
+- Added `--min-cover-pct` to `femic lidar inventory-features` for a model-domain
+  forest mask.
+- Applied the local cards to 1,289 TFL 6 forest cells: mean height 22.08 m,
+  basal area 37.27 m2/ha, gross volume 309.08 m3/ha. A conventional VRI
+  comparison is closer than the boreal transfer but still shows low basal area.
+- Added `notes/reports/inv01-cwh-local-model-tfl6.md` and
+  `notes/reports/inv01-cwh-training-plots.csv`.
+- The cards are CWH northern Vancouver Island pilots, not TSA 23 operational
+  models. No P48/P49 independent field validation is available.
+
+Verification:
+- `pytest -q tests/test_lidar_inventory.py` -> 11 passed.
+- Local cards load through `femic lidar inventory` on the TFL 6 bundle.
+- Sphinx `-W` build remains clean.
+
+# 2026-10-29 — INV-01 published transfer benchmark and CHM grid features
+
+- Added `link: log`, `output_scale`, and `applicability` to
+  `femic.inventory.als.model.v1` cards.
+- Added `--features` to `femic lidar inventory` for explicit fragment/predictor
+  tables while retaining bundle provenance.
+- Added `femic lidar inventory-features` / `build_chm_grid_features`: a 25 m CHM
+  grid feature helper (mean, CV, p95, cover above 2 m). It is a proxy for
+  first-return point-cloud metrics, not an exact reconstruction.
+- Added three published Wulder et al. (2012) boreal model cards under
+  `config/inventory/models/`. They are transfer-benchmark inputs, not
+  operational CWH/TSA 23 models.
+- Ran the cards on the TFL 6 pilot bundle: 1,459 25 m cells; mean Lorey's height
+  18.14 m, basal area 18.92 m2/ha, gross volume 85.39 m3/ha. A conventional
+  VRI comparison shows strong underprediction; the transfer is rejected as an
+  operational planning input.
+- Added `notes/reports/inv01-als-transfer-tfl6.md` and updated the contract,
+  guide, API, CLI, and model-card docs.
+
+Verification:
+- `pytest -q tests/test_lidar_inventory.py` -> 11 passed.
+- `ruff` and `mypy` clean on the inventory module.
+- `femic lidar inventory-features` and three `femic lidar inventory` runs
+  succeeded on the TFL 6 pilot bundle.
+
+# 2026-10-29 — INV-01 inventory.als contract and reader
+
+- Added `femic.inventory.als.v1` output and `femic.inventory.als.model.v1`
+  model-card contracts.
+- Added `femic lidar inventory` / `build_inventory_als`: apply a pinned model
+  card to a validated FEMIC LiDAR bundle's `canopy` table and write the long
+  `inventory_als.csv` plus provenance manifest.
+- Added optional plot/observation validation with bias, MAE, and RMSE; the
+  TSA/WS4 P48/P49 plot table is an external input, not bundled data.
+- Added `tests/test_lidar_inventory.py` and a synthetic identity model-card
+  fixture. The fixture is not an ABA model and is not operational.
+- No ABA fitting algorithm, coefficients, or report claim was invented.
+
+Verification:
+- `pytest -q tests/test_lidar_inventory.py` -> 7 passed.
+- `pytest -q tests/test_lidar_inventory.py tests/test_lidar_products.py` -> 32 passed.
+- `ruff` and `mypy` clean on the inventory module; Sphinx build succeeds with `-W`.
+
 # Change Log
 
 ## 2026-10-27

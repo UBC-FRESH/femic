@@ -1,0 +1,42 @@
+{
+  "schema_version": "femic.inventory.als.model.v1",
+  "model_id": "cwh-basal-area-psp-lidarbc-2026",
+  "model_version": "2026.1",
+  "attribute": "ba_m2_ha",
+  "unit": "m2/ha",
+  "link": "log",
+  "output_scale": 1.0108146442235835,
+  "intercept": -2.64411365,
+  "coefficients": {
+    "Lhmean": 0.66319612,
+    "CC2m": 1.03354289
+  },
+  "rmse": 9.266,
+  "sample_count": 14,
+  "training_scope": "14 FAIB PSP plots in CWH northern Vancouver Island, with LidarBC CHM acquisition within 2 years of the plot visit. Responses use live trees DBH >= 9.1 cm; predictors are 11.28 m circular CHM metrics.",
+  "source": "FAIB Forest Inventory Ground Plots (public PSP data, OGL-BC) and LidarBC 2023/2024 DEM+DSM CHM (OGL-BC); FEMIC fit 2026-10-29. Response definitions follow FEMIC INV-01 pilot; not a published model.",
+  "applicability": {
+    "regions": [
+      "CWH, northern Vancouver Island"
+    ],
+    "species": [],
+    "notes": "Local CWH pilot fit. Nine additional plots with 4-6 year ground/LiDAR offsets were held out for a temporal stress test. Not calibrated for TSA 23 or operational use."
+  },
+  "predictor_ranges": {
+    "Lhmean": [
+      2.941,
+      42.0214
+    ],
+    "CC2m": [
+      34.4388,
+      100.0
+    ]
+  },
+  "caveats": [
+    "Local FEMIC pilot fit from 14 public FAIB PSP plots; this is not a province-wide ABA model.",
+    "The predictors are CHM proxies for first-return point-cloud metrics.",
+    "The 14 training plots and 9 temporal-offset plots are too few for an operational accuracy claim.",
+    "No independent P48/P49 field-plot validation was available.",
+    "Do not use outside CWH northern Vancouver Island without new calibration and validation."
+  ]
+}

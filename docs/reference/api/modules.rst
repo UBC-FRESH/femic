@@ -62,6 +62,7 @@ Current curated pages in this section include ``femic.instance_context``,
 ``femic.lidar.materialization``,
 ``femic.lidar.terrain``,
 ``femic.lidar.products``,
+``femic.lidar.inventory``,
 ``femic.document_figures``,
 ``femic.freshforge``,
 ``femic.freshforge_materialization``,
@@ -96,6 +97,7 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-lidar-materialization
    femic-lidar-terrain
    femic-lidar-products
+   femic-lidar-inventory
    femic-document-figures
    femic-freshforge
    femic-freshforge-materialization
