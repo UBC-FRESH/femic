@@ -1,5 +1,9 @@
 # INV-01 TSA 23 full-mosaic runbook
 
+**Data-root rule:** project data and caches belong under
+`/srv/shared-data/gep/ws4/tmp/inv01-data` on the data drive.  Do not write
+INV-01 data or outputs under `/tmp` or the root drive.
+
 This directory preserves the exact workflow used for the 2026-10-30 TSA 23
 point-cloud run.  It is a research runbook, not a production scheduler.
 
@@ -133,10 +137,10 @@ A batch job writes one Parquet part.  Existing parts are skipped.
 
 ```bash
 python examples/inv01_tsa23_full/reduce_full.py \
-  --parts /tmp/inv01/parts \
+  --parts /srv/shared-data/gep/ws4/tmp/inv01-data/full-output/parts \
   --boundary /srv/shared-data/gep/iversen-jamie-msc-thesis/femic-tsa23-instance/data/tsa_boundaries.feather \
   --models femic/config/inventory/models \
-  --out-dir /tmp/inv01
+  --out-dir /srv/shared-data/gep/ws4/tmp/inv01-data/full-output
 ```
 
 The reducer:

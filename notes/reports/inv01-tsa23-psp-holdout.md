@@ -27,7 +27,7 @@ The PSP archive was fetched with Nemora's FAIB helpers:
 ```python
 from nemora.ingest.faib import download_faib_csvs
 download_faib_csvs(
-    "/tmp/opencode/psp/raw",
+    "/srv/shared-data/gep/ws4/tmp/inv01-data/psp/raw",
     dataset="psp",
     filenames=[
         "faib_header.csv",
@@ -153,4 +153,4 @@ current cards cannot be extended to high-biomass stands.
 - `notes/reports/inv01-tsa23-psp-holdout.csv`
 - `notes/reports/inv01-tsa23-psp-holdout.json`
 - `examples/inv01_tsa23_validation/psp_holdout.py`
-- FAIB archive cache: `/tmp/opencode/psp/raw/` (not tracked)
+- FAIB archive cache: `/srv/shared-data/gep/ws4/tmp/inv01-data/psp/raw/` (not tracked)

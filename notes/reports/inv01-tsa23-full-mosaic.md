@@ -116,7 +116,7 @@ Local reducer output was produced on 2026-10-30 between 10:09 and 10:12 UTC:
 
 The three-band raster has bands `lorey_height_m`, `ba_m2_ha`, and `vol_m3_ha`,
 with `-9999` nodata.  The local copies used for this record were under
-`/tmp/opencode/inv01_tsa23/`; they are not tracked in git.  The canonical copies
+`/srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/`; they are not tracked in git.  The canonical copies
 are in `inv01/products/` on Chinook.
 
 ## Results

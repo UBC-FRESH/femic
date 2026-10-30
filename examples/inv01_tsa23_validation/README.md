@@ -1,5 +1,9 @@
 # INV-01 TSA 23 validation and gap analysis
 
+**Data-root rule:** all project data lives under
+`/srv/shared-data/gep/ws4/tmp/inv01-data` on the data drive.  Do not write
+INV-01 data, caches, or outputs under `/tmp` or the root drive.
+
 This directory reproduces the VRI screening and omitted-tile priority analysis.
 Both outputs are **not** independent field validation.
 
@@ -7,11 +11,11 @@ Both outputs are **not** independent field validation.
 
 ```bash
 python examples/inv01_tsa23_validation/vri_reconcile.py \
-  --features /tmp/opencode/inv01_tsa23/features_full.parquet \
-  --inventory /tmp/opencode/inv01_tsa23/inventory_full.parquet \
+  --features /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/features_full.parquet \
+  --inventory /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/inventory_full.parquet \
   --vri /srv/shared-data/gep/iversen-jamie-msc-thesis/femic-tsa23-instance/data/ria_vri_vclr1p_checkpoint8.feather \
   --boundary /srv/shared-data/gep/iversen-jamie-msc-thesis/femic-tsa23-instance/data/tsa_boundaries.feather \
-  --out-dir /tmp/inv01-validation \
+  --out-dir /srv/shared-data/gep/ws4/tmp/inv01-data/validation-output \
   --write-cells
 ```
 
@@ -23,13 +27,13 @@ metrics-only run.  Outputs are `vri_metrics.json` and, if requested,
 
 ```bash
 python examples/inv01_tsa23_validation/gap_priority.py \
-  --selection /tmp/opencode/inv01_tsa23/lidarbc_selection_full.json \
-  --manifest /tmp/opencode/inv01_tsa23/tile_manifest_full.csv \
+  --selection /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/lidarbc_selection_full.json \
+  --manifest /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/tile_manifest_full.csv \
   --boundary /srv/shared-data/gep/iversen-jamie-msc-thesis/femic-tsa23-instance/data/tsa_boundaries.feather \
   --vri /srv/shared-data/gep/iversen-jamie-msc-thesis/femic-tsa23-instance/data/ria_vri_vclr1p_checkpoint8.feather \
   --vertices /srv/shared-data/gep/ws4/fresh-road/examples/tsa23_c5_network/route_fixture/vertices.csv \
   --destinations /srv/shared-data/gep/ws4/fresh-road/examples/tsa23_c5_network/route_fixture/destinations.csv \
-  --out-dir /tmp/inv01-validation
+  --out-dir /srv/shared-data/gep/ws4/tmp/inv01-data/validation-output
 ```
 
 Outputs are `inv01-tsa23-gap-priority.csv`, `.gpkg`, and `.json`.  The score is a
@@ -41,12 +45,12 @@ Fetch the public FAIB PSP archive with Nemora first, then run the holdout script
 
 ```bash
 python examples/inv01_tsa23_validation/psp_holdout.py \
-  --raw-dir /tmp/opencode/psp/raw \
-  --selection /tmp/opencode/inv01_tsa23/lidarbc_selection_full.json \
-  --manifest /tmp/opencode/inv01_tsa23/tile_manifest_full.csv \
-  --pointcloud-dir /tmp/opencode/inv01_tsa23/pointcloud \
-  --dem-dir /tmp/opencode/inv01_tsa23/lidar_tiles \
-  --out-dir /tmp/inv01-validation \
+  --raw-dir /srv/shared-data/gep/ws4/tmp/inv01-data/psp/raw \
+  --selection /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/lidarbc_selection_full.json \
+  --manifest /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/tile_manifest_full.csv \
+  --pointcloud-dir /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/pointcloud \
+  --dem-dir /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/lidar_tiles \
+  --out-dir /srv/shared-data/gep/ws4/tmp/inv01-data/validation-output \
   --sites 4025090 4025091 4025094 4025095
 ```
 
@@ -58,14 +62,14 @@ the two directories.  The script writes `psp_holdout.csv` and
 
 ```bash
 python examples/inv01_tsa23_validation/make_validation_figures.py \
-  --cells-vri /tmp/inv01-validation/cells_vri.parquet \
-  --gap-gpkg /tmp/inv01-validation/inv01-tsa23-gap-priority.gpkg \
-  --selection /tmp/opencode/inv01_tsa23/lidarbc_selection_full.json \
-  --manifest /tmp/opencode/inv01_tsa23/tile_manifest_full.csv \
+  --cells-vri /srv/shared-data/gep/ws4/tmp/inv01-data/validation-output/cells_vri.parquet \
+  --gap-gpkg /srv/shared-data/gep/ws4/tmp/inv01-data/validation-output/inv01-tsa23-gap-priority.gpkg \
+  --selection /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/lidarbc_selection_full.json \
+  --manifest /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/tile_manifest_full.csv \
   --boundary /srv/shared-data/gep/iversen-jamie-msc-thesis/femic-tsa23-instance/data/tsa_boundaries.feather \
   --vertices /srv/shared-data/gep/ws4/fresh-road/examples/tsa23_c5_network/route_fixture/vertices.csv \
   --destinations /srv/shared-data/gep/ws4/fresh-road/examples/tsa23_c5_network/route_fixture/destinations.csv \
-  --out-dir /tmp/inv01-validation/figures
+  --out-dir /srv/shared-data/gep/ws4/tmp/inv01-data/validation-output/figures
 ```
 
 ## Results
