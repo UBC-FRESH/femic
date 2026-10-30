@@ -54,6 +54,26 @@ The command writes:
 
 The CLI prints the row count, model id, and validation RMSE when available.
 
+Point-cloud grid features
+-------------------------
+
+For a first-return model, derive metrics directly from LAS/LAZ tiles instead of
+using CHM proxies:
+
+.. code-block:: bash
+
+   femic lidar inventory-pointcloud-features \
+     --pointcloud tile_a.laz \
+     --pointcloud tile_b.laz \
+     --dem dem.tif \
+     --output features_25m.csv \
+     --grid-size-m 25
+
+The point clouds and DEM must share a CRS. The command needs the optional
+``laspy[lazrs]`` dependency. It samples the DEM, normalizes first returns, and
+writes ``Lhmean``, ``Lhcv``, ``Lhp95``, ``CC2m``, and return counts. Tiles must
+not overlap; overlapping tiles would double-count cells.
+
 Local CWH pilot
 ---------------
 
@@ -119,8 +139,10 @@ Limits
 - The default reader consumes the bundle's ``canopy`` table; ``--features``
   accepts an explicit fragment table.
 - ``inventory-features`` derives CHM proxies, not first-return point-cloud
-  metrics.
+  metrics; use ``inventory-pointcloud-features`` for first-return metrics.
 - ``--min-cover-pct`` filters non-forest grid cells before model application.
 - The model card must carry its own training scope, RMSE, and predictor ranges.
 - The reader refuses out-of-range predictors.
 - The TSA/WS4 P48/P49 validation tables are not bundled in this repository.
+- Point-cloud tiles must be non-overlapping; the extractor aggregates by grid
+  cell and does not deduplicate overlapping acquisitions.

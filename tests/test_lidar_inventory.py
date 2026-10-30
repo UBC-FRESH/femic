@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import pytest
 from typer.testing import CliRunner
 
@@ -11,6 +12,7 @@ from femic.lidar.inventory import (
     LidarInventoryError,
     build_chm_grid_features,
     build_inventory_als,
+    build_pointcloud_grid_features,
     load_inventory_als_model,
     write_inventory_als,
 )
@@ -225,3 +227,43 @@ def test_chm_grid_cover_filter(tmp_path: Path) -> None:
     output = tmp_path / "features.csv"
     with pytest.raises(LidarInventoryError, match="min_cover_pct"):
         build_chm_grid_features(bundle, output, grid_size_m=2.0, min_cover_pct=101.0)
+
+
+def test_pointcloud_grid_features(tmp_path: Path) -> None:
+    laspy = pytest.importorskip("laspy")
+    rasterio = pytest.importorskip("rasterio")
+    from rasterio.transform import from_origin
+
+    lazy = tmp_path / "tile.laz"
+    header = laspy.LasHeader(point_format=3, version="1.2")
+    cloud = laspy.LasData(header)
+    cloud.x = [0.5, 1.5, 0.5, 1.5]
+    cloud.y = [0.5, 0.5, 1.5, 1.5]
+    cloud.z = [110.0, 110.0, 110.0, 110.0]
+    cloud.return_number = [1, 1, 1, 1]
+    cloud.write(lazy)
+
+    dem = tmp_path / "dem.tif"
+    with rasterio.open(
+        dem,
+        "w",
+        driver="GTiff",
+        width=2,
+        height=2,
+        count=1,
+        dtype="float32",
+        crs="EPSG:3157",
+        transform=from_origin(0.0, 2.0, 1.0, 1.0),
+        nodata=-9999.0,
+    ) as dataset:
+        dataset.write(np.full((2, 2), 100.0, dtype="float32"), 1)
+
+    output = tmp_path / "features.csv"
+    result = build_pointcloud_grid_features(
+        [lazy], dem, output, grid_size_m=2.0, min_returns=1
+    )
+
+    assert result["row_count"] == 1
+    frame = output.read_text(encoding="utf-8")
+    assert "fragment_id,x_center,y_center,Lhmean,Lhcv,Lhp95,CC2m" in frame
+    assert ",10.0,0.0,10.05,100.0," in frame

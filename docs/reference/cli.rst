@@ -395,6 +395,7 @@ Subcommands
 - ``trees``: ``python -m femic lidar trees [OPTIONS]``
 - ``inventory``: ``python -m femic lidar inventory [OPTIONS]``
 - ``inventory-features``: ``python -m femic lidar inventory-features [OPTIONS]``
+- ``inventory-pointcloud-features``: ``python -m femic lidar inventory-pointcloud-features [OPTIONS]``
 - ``bundle``: ``python -m femic lidar bundle [OPTIONS]``
 - ``inspect``: ``python -m femic lidar inspect [OPTIONS] BUNDLE_DIR``
 
@@ -507,6 +508,19 @@ provenance manifest; it does not fit a model or invent coefficients.
 model. It writes CHM proxies, not first-return point-cloud metrics. See
 ``docs/guides/lidar-inventory.rst`` and
 ``docs/reference/contracts/inventory-als.rst``.
+
+``lidar inventory-pointcloud-features`` options
+
+- ``--pointcloud PATH`` (required; repeat for each non-overlapping LAS/LAZ tile)
+- ``--dem PATH`` (required; DEM in the same CRS as the point clouds)
+- ``--output PATH`` (required; destination CSV)
+- ``--grid-size-m FLOAT`` (default: ``25.0``)
+- ``--height-threshold-m FLOAT`` (default: ``2.0``)
+- ``--min-returns INTEGER`` (default: ``10``)
+- ``--min-cover-pct FLOAT`` (default: ``0.0``)
+
+``femic lidar inventory-pointcloud-features`` derives first-return point-cloud
+metrics on a regular grid. It requires the optional ``laspy[lazrs]`` dependency.
 
 ``femic lidar materialize`` downloads selected tiles into
 ``<output-root>/lidarbc/<product>/layer_<id>/<year>/<filename>`` and records

@@ -1,3 +1,21 @@
+# 2026-10-30 — INV-01 TSA 23 point-cloud grid extractor
+
+- Added `build_pointcloud_grid_features` / `femic lidar
+  inventory-pointcloud-features`: first-return metrics from non-overlapping
+  LAS/LAZ tiles and a co-registered DEM.
+- Added optional `laspy[lazrs]` dependency (`femic[lidar]`).
+- Ran one TSA 23 IDF tile: 3,857 25 m cells; 3,328 inside the height-card
+  range and 2,196 inside the BA/volume ranges. Mean in-domain height 18.13 m,
+  BA 30.83 m2/ha, volume 201.50 m3/ha.
+- Added `notes/reports/inv01-tsa23-pointcloud-grid.md`.
+- This is a partial, one-tile pilot; no independent validation or full TSA 23
+  grid exists yet.
+
+Verification:
+- `PYTHONPATH=src pytest -q tests/test_lidar_inventory.py` -> 13 passed.
+- `ruff`/`mypy` clean on the inventory module.
+- Sphinx `-W` clean.
+
 # 2026-10-30 — INV-01 TSA 23 IDF pilot cards
 
 - Confirmed public FAIB PSP feasibility for TSA 23: 190 plots, 25 measured

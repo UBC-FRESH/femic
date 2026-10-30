@@ -19,6 +19,9 @@ Key Entry Surfaces
 - :func:`build_chm_grid_features`
   Derive a CHM grid feature table (mean, CV, p95, percent cover) from a bundle
   ``chm`` product.
+- :func:`build_pointcloud_grid_features`
+  Derive first-return grid metrics (mean, CV, p95, cover) from LAS/LAZ tiles
+  and a co-registered DEM.
 - :func:`write_inventory_als`
   Write ``inventory_als.csv`` and ``inventory_als.json``.
 - :class:`InventoryAlsResult`

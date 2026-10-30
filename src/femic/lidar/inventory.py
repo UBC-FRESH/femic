@@ -18,7 +18,7 @@ import csv
 import hashlib
 import json
 import math
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -595,6 +595,226 @@ def build_chm_grid_features(
         "chm_path": chm_path,
         "output_path": output,
         "grid_size_m": grid_size_m,
+        "min_cover_pct": min_cover_pct,
+        "row_count": len(rows),
+        "columns": list(frame.columns),
+    }
+
+
+def build_pointcloud_grid_features(
+    pointcloud_paths: Sequence[Path],
+    dem_path: Path,
+    output_path: Path,
+    *,
+    grid_size_m: float = 25.0,
+    height_threshold_m: float = 2.0,
+    min_returns: int = 10,
+    min_cover_pct: float = 0.0,
+    batch_size: int = 5_000_000,
+) -> dict[str, object]:
+    """Derive first-return point-cloud metrics on a regular grid.
+
+    The point clouds and the DEM must share a CRS.  The function samples the
+    DEM, normalizes first returns to height above ground, and aggregates by
+    grid cell.  It is the point-cloud counterpart to
+    :func:`build_chm_grid_features`; it does not fit an ABA model.
+
+    The optional ``laspy[lazrs]`` dependency is imported lazily because FEMIC
+    does not make point-cloud processing mandatory for every installation.
+    """
+    try:
+        import laspy  # type: ignore[import-untyped]
+    except ImportError as exc:
+        raise LidarInventoryError(
+            "Point-cloud grid features require the optional `laspy[lazrs]` "
+            "dependency; install `femic[lidar]`."
+        ) from exc
+
+    paths = [path.expanduser().resolve() for path in pointcloud_paths]
+    if not paths:
+        raise LidarInventoryError("At least one point-cloud path is required.")
+    for path in paths:
+        if not path.is_file():
+            raise LidarInventoryError(f"Point-cloud file does not exist: {path}")
+    dem = dem_path.expanduser().resolve()
+    if not dem.is_file():
+        raise LidarInventoryError(f"DEM file does not exist: {dem}")
+    if grid_size_m <= 0:
+        raise LidarInventoryError("grid_size_m must be positive.")
+    if height_threshold_m <= 0:
+        raise LidarInventoryError("height_threshold_m must be positive.")
+    if min_returns < 0:
+        raise LidarInventoryError("min_returns must be non-negative.")
+    if not 0.0 <= min_cover_pct <= 100.0:
+        raise LidarInventoryError("min_cover_pct must be between 0 and 100.")
+
+    try:
+        with rasterio.open(dem) as dataset:
+            dem_data = dataset.read(1, masked=True).astype("float64")
+            dem_array = dem_data.filled(float("nan"))
+            transform = dataset.transform
+            dem_crs = dataset.crs
+            width = dataset.width
+            height = dataset.height
+            nodata = dataset.nodata
+    except OSError as exc:
+        raise LidarInventoryError(f"Unable to read DEM: {dem}: {exc}") from exc
+    resolution = abs(transform.a)
+    if resolution <= 0 or abs(transform.e) <= 0:
+        raise LidarInventoryError("DEM has an invalid pixel size.")
+
+    ncols = math.ceil(width * resolution / grid_size_m)
+    nrows = math.ceil(height * resolution / grid_size_m)
+    n_cells = nrows * ncols
+    if n_cells <= 0:
+        raise LidarInventoryError("DEM does not define any grid cells.")
+    all_count = np.zeros(n_cells, dtype="int64")
+    above_count = np.zeros(n_cells, dtype="int64")
+    above_sum = np.zeros(n_cells, dtype="float64")
+    above_sumsq = np.zeros(n_cells, dtype="float64")
+    bin_width = 0.1
+    max_height_m = 100.0
+    n_bins = int(max_height_m / bin_width) + 1
+    hist = np.zeros((n_cells, n_bins), dtype="int64")
+    x0 = float(transform.c)
+    y0 = float(transform.f)
+
+    for path in paths:
+        try:
+            with laspy.open(path) as reader:
+                las_crs = reader.header.parse_crs()
+                if (
+                    las_crs is not None
+                    and dem_crs is not None
+                    and las_crs.to_epsg() != dem_crs.to_epsg()
+                ):
+                    raise LidarInventoryError(
+                        f"Point cloud CRS {las_crs.to_string()!r} does not match "
+                        f"DEM CRS {dem_crs.to_string()!r}; silent reprojection is "
+                        "not allowed."
+                    )
+                for chunk in reader.chunk_iterator(batch_size):
+                    x = np.asarray(chunk.x, dtype="float64")
+                    y = np.asarray(chunk.y, dtype="float64")
+                    z = np.asarray(chunk.z, dtype="float64")
+                    first = np.asarray(chunk.return_number) == 1
+                    if not first.any():
+                        continue
+                    x = x[first]
+                    y = y[first]
+                    z = z[first]
+                    pixel_col = np.floor((x - x0) / resolution).astype("int64")
+                    pixel_row = np.floor((y0 - y) / resolution).astype("int64")
+                    inside = (
+                        (pixel_col >= 0)
+                        & (pixel_col < width)
+                        & (pixel_row >= 0)
+                        & (pixel_row < height)
+                    )
+                    if not inside.any():
+                        continue
+                    x = x[inside]
+                    y = y[inside]
+                    z = z[inside]
+                    pixel_col = pixel_col[inside]
+                    pixel_row = pixel_row[inside]
+                    ground = dem_array[pixel_row, pixel_col]
+                    valid = np.isfinite(ground)
+                    if nodata is not None:
+                        valid &= ground != nodata
+                    if not valid.any():
+                        continue
+                    x = x[valid]
+                    y = y[valid]
+                    z = z[valid]
+                    ground = ground[valid]
+                    cell_col = np.floor((x - x0) / grid_size_m).astype("int64")
+                    cell_row = np.floor((y0 - y) / grid_size_m).astype("int64")
+                    cells = (
+                        (cell_col >= 0)
+                        & (cell_col < ncols)
+                        & (cell_row >= 0)
+                        & (cell_row < nrows)
+                    )
+                    if not cells.any():
+                        continue
+                    cell_idx = cell_row[cells] * ncols + cell_col[cells]
+                    heights = z[cells] - ground[cells]
+                    valid_height = np.isfinite(heights) & (heights >= 0.0)
+                    if not valid_height.any():
+                        continue
+                    cell_idx = cell_idx[valid_height]
+                    heights = heights[valid_height]
+                    all_count += np.bincount(cell_idx, minlength=n_cells)
+                    above = heights > height_threshold_m
+                    if not above.any():
+                        continue
+                    above_cells = cell_idx[above]
+                    above_heights = heights[above]
+                    above_count += np.bincount(above_cells, minlength=n_cells)
+                    above_sum += np.bincount(
+                        above_cells, weights=above_heights, minlength=n_cells
+                    )
+                    above_sumsq += np.bincount(
+                        above_cells, weights=above_heights * above_heights, minlength=n_cells
+                    )
+                    bins = np.clip(
+                        np.floor(above_heights / bin_width).astype("int64"),
+                        0,
+                        n_bins - 1,
+                    )
+                    flat = above_cells * n_bins + bins
+                    hist += np.bincount(
+                        flat, minlength=n_cells * n_bins
+                    ).reshape(n_cells, n_bins)
+        except OSError as exc:
+            raise LidarInventoryError(f"Unable to read point cloud: {path}: {exc}") from exc
+
+    rows: list[dict[str, object]] = []
+    cumulative = np.cumsum(hist, axis=1)
+    for cell in np.flatnonzero(above_count >= min_returns):
+        total = int(all_count[cell])
+        above = int(above_count[cell])
+        if total == 0:
+            continue
+        cover = 100.0 * above / total
+        if cover < min_cover_pct:
+            continue
+        mean = float(above_sum[cell] / above)
+        variance = max(0.0, float(above_sumsq[cell] / above - mean * mean))
+        cv = math.sqrt(variance) / mean if mean > 0 else float("nan")
+        target = 0.95 * above
+        p95_bin = int(np.searchsorted(cumulative[cell], target, side="left"))
+        p95 = min(max_height_m, (p95_bin + 0.5) * bin_width)
+        row = cell // ncols
+        col = cell % ncols
+        rows.append(
+            {
+                "fragment_id": f"cell_{row:05d}_{col:05d}",
+                "x_center": x0 + (col + 0.5) * grid_size_m,
+                "y_center": y0 - (row + 0.5) * grid_size_m,
+                "Lhmean": mean,
+                "Lhcv": cv,
+                "Lhp95": p95,
+                "CC2m": cover,
+                "all_first_returns": total,
+                "above2m_returns": above,
+                "grid_size_m": grid_size_m,
+            }
+        )
+    if not rows:
+        raise LidarInventoryError("No grid cells had enough first returns.")
+    output = output_path.expanduser().resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    frame = pd.DataFrame(rows)
+    frame.to_csv(output, index=False)
+    return {
+        "dem_path": dem,
+        "pointcloud_paths": [str(path) for path in paths],
+        "output_path": output,
+        "grid_size_m": grid_size_m,
+        "height_threshold_m": height_threshold_m,
+        "min_returns": min_returns,
         "min_cover_pct": min_cover_pct,
         "row_count": len(rows),
         "columns": list(frame.columns),
