@@ -161,7 +161,9 @@ TSA), the TSA 23 holdout is one clustered tile, and the volume bias remains
 large.  TSA 22 is Okanagan and is excluded from TSA 23 training entirely.  Keep
 the published height card; do not publish the BA/volume candidate yet.  Add
 high-biomass **TSA 23** plots, not TSA 22, before the next fit.  Details:
-``notes/reports/inv01-tsa23-high-biomass-refit.md``.
+``notes/reports/inv01-tsa23-high-biomass-refit.md``.  The archive audit and
+acquisition shortlist are in
+``notes/reports/inv01-tsa23-high-biomass-acquisition-targets.md``.
 
 Omitted-tile gap
 ----------------
