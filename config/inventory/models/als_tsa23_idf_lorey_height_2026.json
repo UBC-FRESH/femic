@@ -19,7 +19,7 @@
       "100 Mile House TSA, IDF"
     ],
     "species": [],
-    "notes": "14-plot TSA 23 IDF pilot. LOOCV only; no independent spatial holdout. Not an operational inventory."
+    "notes": "14-plot TSA 23 IDF pilot. LOOCV only; no independent spatial holdout. Not an operational inventory. High-biomass IDF stands above the published predictor range are unsupported; three of four external TSA 23 high-biomass plots are outside the BA/volume range, and one is outside the height range. Do not extrapolate."
   },
   "predictor_ranges": {
     "Lhp95": [
@@ -32,6 +32,7 @@
     "First-return point-cloud metrics, not CHM proxies.",
     "Plot support matched to FAIB plot area/radius.",
     "No independent P48/P49 field validation or spatial holdout.",
-    "Do not use for operational TSA 23 planning without more plots and independent validation."
+    "Do not use for operational TSA 23 planning without more plots and independent validation.",
+    "High-biomass IDF stands above the published predictor range are unsupported; the external TSA 23 PSP check was largely out of range."
   ]
 }
