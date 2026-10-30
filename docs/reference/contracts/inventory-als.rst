@@ -122,6 +122,12 @@ first-return point clouds, and exact FAIB plot support:
 They are still pilot cards: LOOCV only, no spatial holdout, and no P48/P49
 validation.  See ``notes/reports/inv01-tsa23-idf-pilot.md``.
 
+The point-cloud grid helper accepts optional ``grid_origin_x`` and
+``grid_origin_y``.  Pass the same global UTM origin to every tile when building
+a multi-tile mosaic; otherwise each DEM supplies its own origin and cell IDs
+will not align.  See :doc:`../../guides/inv01-tsa23-full-run` and
+``notes/reports/inv01-tsa23-full-mosaic.md``.
+
 Bundle Prerequisite
 -------------------
 

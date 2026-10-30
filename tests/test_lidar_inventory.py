@@ -270,6 +270,66 @@ def test_pointcloud_grid_features(tmp_path: Path) -> None:
     assert ",tile,10.0,0.0,10.05,100.0," in frame
 
 
+def test_cli_pointcloud_global_origin(tmp_path: Path) -> None:
+    laspy = pytest.importorskip("laspy")
+    rasterio = pytest.importorskip("rasterio")
+    from rasterio.transform import from_origin
+
+    lazy = tmp_path / "tile.laz"
+    header = laspy.LasHeader(point_format=3, version="1.2")
+    cloud = laspy.LasData(header)
+    cloud.x = [0.5, 1.5, 0.5, 1.5]
+    cloud.y = [0.5, 0.5, 1.5, 1.5]
+    cloud.z = [110.0, 110.0, 110.0, 110.0]
+    cloud.return_number = [1, 1, 1, 1]
+    cloud.write(lazy)
+
+    dem = tmp_path / "dem.tif"
+    with rasterio.open(
+        dem,
+        "w",
+        driver="GTiff",
+        width=2,
+        height=2,
+        count=1,
+        dtype="float32",
+        crs="EPSG:3157",
+        transform=from_origin(0.0, 2.0, 1.0, 1.0),
+        nodata=-9999.0,
+    ) as dataset:
+        dataset.write(np.full((2, 2), 100.0, dtype="float32"), 1)
+
+    output = tmp_path / "features.csv"
+    result = CliRunner().invoke(
+        app,
+        [
+            "lidar",
+            "inventory-pointcloud-features",
+            "--pointcloud",
+            str(lazy),
+            "--dem",
+            str(dem),
+            "--output",
+            str(output),
+            "--grid-size-m",
+            "2",
+            "--min-returns",
+            "1",
+            "--grid-origin-x",
+            "0",
+            "--grid-origin-y",
+            "2",
+            "--source-tile",
+            "tileA",
+        ],
+        prog_name="femic",
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "grid_origin: 0.0, 2.0" in result.output
+    assert ",tileA," in output.read_text(encoding="utf-8")
+
+
 def test_horizontal_epsg_handles_compound_crs() -> None:
     assert _horizontal_epsg("EPSG:6653") == 3157
     assert _horizontal_epsg("EPSG:3157") == 3157

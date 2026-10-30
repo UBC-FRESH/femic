@@ -99,7 +99,8 @@ the card's predictor ranges; for the TFL 6 pilot the forest mask used
      --fragment-id-field fragment_id
 
 See ``notes/reports/inv01-cwh-local-model-tfl6.md`` for the fit diagnostics and
-the VRI comparison.
+the VRI comparison, and :doc:`inv01-tsa23-full-run` for the full TSA 23
+Globus/Sockeye runbook.
 
 Published transfer benchmark
 -----------------------------

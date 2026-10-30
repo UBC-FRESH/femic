@@ -5115,6 +5115,21 @@ def lidar_inventory_pointcloud_features(
         max=100.0,
         help="Drop cells below this first-return cover percentage.",
     ),
+    grid_origin_x: float | None = typer.Option(
+        None,
+        "--grid-origin-x",
+        help="Global grid origin x; defaults to the DEM origin.",
+    ),
+    grid_origin_y: float | None = typer.Option(
+        None,
+        "--grid-origin-y",
+        help="Global grid origin y; defaults to the DEM origin.",
+    ),
+    source_tile: str | None = typer.Option(
+        None,
+        "--source-tile",
+        help="Optional source-tile label recorded on every output row.",
+    ),
 ) -> None:
     """Derive first-return point-cloud grid features for an ALS model."""
     try:
@@ -5126,6 +5141,9 @@ def lidar_inventory_pointcloud_features(
             height_threshold_m=height_threshold_m,
             min_returns=min_returns,
             min_cover_pct=min_cover_pct,
+            grid_origin_x=grid_origin_x,
+            grid_origin_y=grid_origin_y,
+            source_tile=source_tile,
         )
     except (LidarInventoryError, OSError) as exc:
         console.print(f"[red]LiDAR point-cloud feature error:[/red] {exc}")
@@ -5134,6 +5152,7 @@ def lidar_inventory_pointcloud_features(
     console.print("[green]Inventory ALS point-cloud grid features built[/green]")
     console.print(f"output: {result['output_path']}")
     console.print(f"grid_size_m: {result['grid_size_m']}")
+    console.print(f"grid_origin: {result['grid_origin_x']}, {result['grid_origin_y']}")
     console.print(f"rows: {result['row_count']}")
 
 
