@@ -111,6 +111,16 @@ They are CWH northern Vancouver Island pilots, not TSA 23 operational models.
 See ``notes/reports/inv01-cwh-local-model-tfl6.md`` and
 ``notes/reports/inv01-als-transfer-tfl6.md``.
 
+The TSA 23 IDF pilot cards use 14 public FAIB plots, LidarBC 2019/2024
+first-return point clouds, and exact FAIB plot support:
+
+- ``als_tsa23_idf_lorey_height_2026.json``
+- ``als_tsa23_idf_basal_area_2026.json``
+- ``als_tsa23_idf_gross_volume_2026.json``
+
+They are still pilot cards: LOOCV only, no spatial holdout, and no P48/P49
+validation.  See ``notes/reports/inv01-tsa23-idf-pilot.md``.
+
 Bundle Prerequisite
 -------------------
 

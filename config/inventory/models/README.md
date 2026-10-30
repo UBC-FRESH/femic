@@ -35,6 +35,19 @@ PSP ground plots and LidarBC 2023/2024 1 m CHMs, with a 0-2 year plot/LiDAR
 offset and 11.28 m circular CHM metrics.  Nine additional plots with a 4-6 year
 offset were held out as a temporal stress test.
 
-The local cards are **CWH northern Vancouver Island** only.  They have 14
+The CWH cards are **CWH northern Vancouver Island** only.  They have 14
 training plots and CHM proxies; they are not TSA 23 operational models.  See
 `notes/reports/inv01-cwh-local-model-tfl6.md`.
+
+## TSA 23 IDF pilot cards
+
+| Card | Attribute | Link | Output | Fit |
+| --- | --- | --- | --- | --- |
+| `als_tsa23_idf_lorey_height_2026.json` | Lorey height | identity | m | 14 FAIB PSP plots, 100 Mile House IDF |
+| `als_tsa23_idf_basal_area_2026.json` | Basal area | log | m2/ha | same |
+| `als_tsa23_idf_gross_volume_2026.json` | Gross volume | log | m3/ha | same |
+
+These use first-return point-cloud metrics and the actual FAIB plot support,
+not CHM proxies.  LOOCV RMSE is 0.688 m height, 4.414 m2/ha basal area, and
+20.666 m3/ha volume.  They are pilot cards: 14 plots, no spatial holdout, and
+no P48/P49 validation.  See `notes/reports/inv01-tsa23-idf-pilot.md`.

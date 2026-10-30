@@ -1,0 +1,42 @@
+{
+  "schema_version": "femic.inventory.als.model.v1",
+  "model_id": "tsa23-idf-ba-2026",
+  "model_version": "2026.1",
+  "attribute": "ba_m2_ha",
+  "unit": "m2/ha",
+  "link": "log",
+  "output_scale": 1.008780042159369,
+  "intercept": -4.724750214946937,
+  "coefficients": {
+    "Lhmean": 0.8686310009684395,
+    "CC2m": 1.3794686095244624
+  },
+  "rmse": 4.414,
+  "sample_count": 14,
+  "training_scope": "14 FAIB PSP plots in the 100 Mile House TSA (IDF), with LidarBC 2019/2024 point clouds and plot radius/area matched to FAIB plot headers. First-return metrics above 2 m; live trees DBH >= 9.1 cm.",
+  "source": "FAIB Forest Inventory Ground Plots (public PSP data, OGL-BC) and LidarBC point clouds (OGL-BC); FEMIC INV-01 pilot fit 2026-10-30.",
+  "applicability": {
+    "regions": [
+      "100 Mile House TSA, IDF"
+    ],
+    "species": [],
+    "notes": "14-plot TSA 23 IDF pilot. LOOCV only; no independent spatial holdout. Not an operational inventory."
+  },
+  "predictor_ranges": {
+    "Lhmean": [
+      5.8017,
+      14.1882
+    ],
+    "CC2m": [
+      56.3442,
+      86.3423
+    ]
+  },
+  "caveats": [
+    "Only 14 TSA 23 IDF plots; all used in LOOCV.",
+    "First-return point-cloud metrics, not CHM proxies.",
+    "Plot support matched to FAIB plot area/radius.",
+    "No independent P48/P49 field validation or spatial holdout.",
+    "Do not use for operational TSA 23 planning without more plots and independent validation."
+  ]
+}
