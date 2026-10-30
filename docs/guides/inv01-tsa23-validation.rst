@@ -165,6 +165,55 @@ high-biomass **TSA 23** plots, not TSA 22, before the next fit.  Details:
 acquisition shortlist are in
 ``notes/reports/inv01-tsa23-high-biomass-acquisition-targets.md``.
 
+
+Model-status mask
+-----------------
+
+The current 25 m products are only valid on part of the TSA.  The companion
+status raster separates coverage gaps from model-domain gaps:
+
+.. list-table:: TSA 23 model status
+   :header-rows: 1
+
+   * - Class
+     - Area km2
+     - Share
+   * - No public point cloud
+     - 2,465.7
+     - 20.0%
+   * - Omitted / no fine 1 m DEM
+     - 1,936.7
+     - 15.7%
+   * - Processed, no model cell
+     - 1,993.5
+     - 16.1%
+   * - Height only
+     - 4,113.0
+     - 33.3%
+   * - BA/volume valid
+     - 1,839.2
+     - 14.9%
+
+Only 14.9% of TSA 23 has BA/volume predictions; 48.2% has height.  Do not read
+classes 0-3 as zero biomass.  The three-band status raster is described in
+``notes/reports/inv01-tsa23-model-status.md``.
+
+.. figure:: /_static/inv01-tsa23-model-status.png
+   :alt: TSA 23 model status mask
+   :width: 100%
+
+   Current pilot model-status mask.  BA/volume are valid on 14.9% of the TSA.
+
+High-biomass acquisition request
+--------------------------------
+
+The archive has no additional TSA 23 high-biomass plots with LidarBC support.
+The concrete acquisition request is in
+``notes/reports/inv01-tsa23-acquisition-request.md``: current remeasurement plus
+co-located lidar for `4033798`, the ten older high-biomass sites, and a target of
+20-30 high-biomass TSA 23 plots.  TSA 22 remains transfer-test-only; TSA 29 is
+an exploratory comparison.
+
 Omitted-tile gap
 ----------------
 
@@ -225,6 +274,7 @@ The scripts are in ``examples/inv01_tsa23_validation``:
 - ``gap_priority.py``
 - ``make_validation_figures.py``
 - ``psp_holdout.py``
+- ``build_status_mask.py``
 - high-biomass refit runbook: ``notes/reports/inv01-tsa23-high-biomass-refit.md``
 
 See Also

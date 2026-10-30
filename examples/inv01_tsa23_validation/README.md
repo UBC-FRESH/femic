@@ -75,6 +75,22 @@ The scripts expect the high-biomass candidate/download tables and the FAIB PSP
 archive under that data root.  The candidate is experimental and does not
 replace the published model cards.
 
+## Model-status mask
+
+```bash
+python examples/inv01_tsa23_validation/build_status_mask.py \
+  --features /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/features_full.parquet \
+  --inventory /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/inventory_full.parquet \
+  --selection /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/lidarbc_selection_full.json \
+  --manifest /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/tile_manifest_full.csv \
+  --boundary /srv/shared-data/gep/iversen-jamie-msc-thesis/femic-tsa23-instance/data/tsa_boundaries.feather \
+  --reference-raster /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/tsa23_idf_full_25m.tif \
+  --out /srv/shared-data/gep/ws4/tmp/inv01-data/inv01_tsa23/tsa23_model_status_25m.tif
+```
+
+See `notes/reports/inv01-tsa23-model-status.md` and
+`notes/reports/inv01-tsa23-acquisition-request.md`.
+
 ## Figures
 
 ```bash
