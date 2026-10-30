@@ -52,6 +52,19 @@ not CHM proxies.  LOOCV RMSE is 0.688 m height, 4.414 m2/ha basal area, and
 20.666 m3/ha volume.  They are pilot cards: 14 plots, no spatial holdout, and
 no P48/P49 validation.  See `notes/reports/inv01-tsa23-idf-pilot.md`.
 
+## Applicability limits
+
+The TSA 23 IDF cards are fitted to 14 plots and stop at `Lhmean` 14.1882 m for
+BA/volume and `Lhp95` 24.07 m for height.  High-biomass IDF stands above those
+ranges are **unsupported**.  In the external TSA 23 PSP check, three of four
+high-biomass plots were outside the BA/volume range and one was outside the
+height range.  The full-run map drops out-of-range cells rather than
+extrapolating.  See `notes/reports/inv01-tsa23-psp-holdout.md` and
+`notes/reports/inv01-tsa23-high-biomass-refit.md` in the parent FEMIC repo.
+
+The TSA 29 high-biomass increment is an exploratory transfer experiment, not a
+published TSA 23 card.  TSA 22 is Okanagan and is not used for TSA 23 training.
+
 ## Feature extraction
 
 `femic lidar inventory-pointcloud-features` produces first-return metrics for
