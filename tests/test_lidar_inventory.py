@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 from femic.cli.main import app
 from femic.lidar.inventory import (
     LidarInventoryError,
+    _horizontal_epsg,
     build_chm_grid_features,
     build_inventory_als,
     build_pointcloud_grid_features,
@@ -267,3 +268,8 @@ def test_pointcloud_grid_features(tmp_path: Path) -> None:
     frame = output.read_text(encoding="utf-8")
     assert "fragment_id,x_center,y_center,Lhmean,Lhcv,Lhp95,CC2m" in frame
     assert ",10.0,0.0,10.05,100.0," in frame
+
+
+def test_horizontal_epsg_handles_compound_crs() -> None:
+    assert _horizontal_epsg("EPSG:6653") == 3157
+    assert _horizontal_epsg("EPSG:3157") == 3157

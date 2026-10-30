@@ -26,6 +26,7 @@ from pathlib import Path
 import numpy as np  # type: ignore[import-untyped]
 import pandas as pd  # type: ignore[import-untyped]
 import rasterio  # type: ignore[import-untyped]
+from pyproj import CRS  # type: ignore[import-untyped]
 
 from femic.lidar.products import (
     LIDAR_PRODUCT_MANIFEST_NAME,
@@ -601,6 +602,17 @@ def build_chm_grid_features(
     }
 
 
+
+def _horizontal_epsg(crs: object) -> int | None:
+    """Return the horizontal EPSG code from a 2D or compound CRS."""
+    try:
+        parsed = CRS.from_user_input(crs)
+    except Exception:
+        return None
+    if parsed.is_compound and parsed.sub_crs_list:
+        parsed = parsed.sub_crs_list[0]
+    return parsed.to_epsg()
+
 def build_pointcloud_grid_features(
     pointcloud_paths: Sequence[Path],
     dem_path: Path,
@@ -686,7 +698,7 @@ def build_pointcloud_grid_features(
                 if (
                     las_crs is not None
                     and dem_crs is not None
-                    and las_crs.to_epsg() != dem_crs.to_epsg()
+                    and _horizontal_epsg(las_crs) != _horizontal_epsg(dem_crs)
                 ):
                     raise LidarInventoryError(
                         f"Point cloud CRS {las_crs.to_string()!r} does not match "
