@@ -108,11 +108,12 @@ Nearest-mill split: 332 tiles are closest to `MILL_733_LGH`, 297 to
 
 ## Recommendation
 
-A four-plot PSP holdout now exists and does **not** validate the current volume
-card (RMSE 118.21 m3/ha).  Do not spend the full download/compute budget on all
-907 until the model is refit; adding 16% more area to a biased surface does not
-make it operational.  This is not a reason to wait for new plots: the full PSP
-archive and the four available external plots should drive the refit now.
+A four-plot PSP holdout now exists.  It is mostly outside the current BA/volume
+card range, so it is an extrapolation stress test rather than an in-domain
+validation; volume overprediction is severe (RMSE 118.21 m3/ha).  Do not spend
+the full download/compute budget on all 907 until the model domain is expanded
+and refit.  This is not a reason to wait: use the full PSP archive to find
+high-biomass IDF plots with LidarBC support and widen the cards now.
 
 If a coverage expansion is required, the defensible next increment is:
 

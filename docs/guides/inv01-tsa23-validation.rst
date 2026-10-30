@@ -105,13 +105,21 @@ first-return protocol.  They were not used in the 14-plot fit:
      - 97.64
      - 118.21
 
-The height and BA cards retain useful signal, but volume fails this small
-external test.  The four plots are clustered in one tile, so this is not a
-TSA-wide spatial validation; it is enough to reject "wait for data" as the next
-step and to require a refit before any operational claim.
+The four plots are high-biomass IDF stands.  Three of four are outside the
+BA/volume `Lhmean` range (5.8017-14.1882 m), and one is outside the height
+`Lhp95` range (9.508-24.07 m), so these are **extrapolations**, not an in-domain
+validation.  The full-run map already drops cells outside those ranges, so these
+plots would be unmapped.  The result still matters: the cards do not cover a
+large part of the high-biomass IDF.
+
+A simple refit on the same 18 plots did not improve tile-level CV.  More
+high-biomass IDF plots with LidarBC support are needed before replacing the
+cards.  The four plots are clustered in one tile, so this is not a TSA-wide
+spatial validation, but it is enough to reject waiting as the next step.
 
 The fifth candidate, ``4025421``, has its plot support outside the actual point
-cloud extent and is excluded.  The full evidence is in
+cloud extent and is excluded.  The full evidence, including the applicability
+flags and exploratory refit, is in
 ``notes/reports/inv01-tsa23-psp-holdout.md``.
 
 Omitted-tile gap
