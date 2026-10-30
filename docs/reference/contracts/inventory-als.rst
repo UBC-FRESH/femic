@@ -10,9 +10,10 @@ applies it to one pinned FEMIC LiDAR product bundle, and emits a long
 ``inventory.als`` table with provenance and model error.
 
 The reader accepts the bundle's ``canopy`` table product or an explicit feature
-CSV (``--features``).  The ``inventory-features`` helper can derive a 25 m CHM
-grid feature table from a bundle ``chm`` product.  The spatial join is
-deliberately explicit: the reader does not silently invent fragments.
+CSV (``--features``).  ``inventory-features`` derives a CHM grid table from a
+bundle ``chm`` product; ``inventory-pointcloud-features`` derives first-return
+metrics from non-overlapping LAS/LAZ tiles and a co-registered DEM.  The spatial
+join is deliberately explicit: the reader does not silently invent fragments.
 
 Schemas
 -------
@@ -151,6 +152,8 @@ Limits
 - This is a **consumer** of a fitted model, not an ABA fitting implementation.
 - The fixture canopy table is one row per LiDAR tile, not a real fragment map.
 - The CHM grid helper is a proxy for first-return point-cloud metrics.
+- ``inventory-pointcloud-features`` requires the optional ``laspy[lazrs]``
+  dependency and does not deduplicate overlapping point-cloud tiles.
 - No reprojection, resampling, or source-product rewrite is implicit.
 - A model card is only as credible as its documented training scope and error.
 - No WS4/FHOPS objective, constraint, growth, or solver code is changed.

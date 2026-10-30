@@ -51,3 +51,10 @@ These use first-return point-cloud metrics and the actual FAIB plot support,
 not CHM proxies.  LOOCV RMSE is 0.688 m height, 4.414 m2/ha basal area, and
 20.666 m3/ha volume.  They are pilot cards: 14 plots, no spatial holdout, and
 no P48/P49 validation.  See `notes/reports/inv01-tsa23-idf-pilot.md`.
+
+## Feature extraction
+
+`femic lidar inventory-pointcloud-features` produces first-return metrics for
+these cards. It requires non-overlapping LAS/LAZ tiles and a co-registered DEM,
+plus the optional `laspy[lazrs]` dependency. `femic lidar inventory-features`
+produces CHM proxies and is intended for CHM-based cards.

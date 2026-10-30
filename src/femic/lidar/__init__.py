@@ -82,6 +82,7 @@ from femic.lidar.inventory import (
     LidarInventoryError,
     build_chm_grid_features,
     build_inventory_als,
+    build_pointcloud_grid_features,
     load_inventory_als_model,
     write_inventory_als,
 )
@@ -269,6 +270,7 @@ __all__ = [
     "build_inventory_als",
     "build_lidar_product_bundle",
     "build_lidarbc_tile_query_url",
+    "build_pointcloud_grid_features",
     "build_terrain_products",
     "compare_canopy_to_vri",
     "compare_stream_candidates",

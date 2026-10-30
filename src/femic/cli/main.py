@@ -157,6 +157,7 @@ from femic.lidar.inventory import (
     LidarInventoryError,
     build_chm_grid_features,
     build_inventory_als,
+    build_pointcloud_grid_features,
     write_inventory_als,
 )
 from femic.lidar.materialization import (
@@ -5063,6 +5064,76 @@ def lidar_inventory_features(
     console.print(f"output: {result['output_path']}")
     console.print(f"grid_size_m: {result['grid_size_m']}")
     console.print(f"min_cover_pct: {result['min_cover_pct']}")
+    console.print(f"rows: {result['row_count']}")
+
+
+@lidar_app.command("inventory-pointcloud-features")
+def lidar_inventory_pointcloud_features(
+    pointcloud: list[Path] = typer.Option(
+        ...,
+        "--pointcloud",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="One or more LAS/LAZ tiles in the DEM CRS; repeat for multiple tiles.",
+    ),
+    dem: Path = typer.Option(
+        ...,
+        "--dem",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        help="DEM raster in the same CRS as the point clouds.",
+    ),
+    output: Path = typer.Option(
+        ...,
+        "--output",
+        help="Destination CSV for the grid feature table.",
+    ),
+    grid_size_m: float = typer.Option(
+        25.0,
+        "--grid-size-m",
+        min=1.0,
+        help="Grid cell size in metres.",
+    ),
+    height_threshold_m: float = typer.Option(
+        2.0,
+        "--height-threshold-m",
+        min=0.1,
+        help="Height threshold for canopy returns.",
+    ),
+    min_returns: int = typer.Option(
+        10,
+        "--min-returns",
+        min=0,
+        help="Minimum above-threshold first returns per cell.",
+    ),
+    min_cover_pct: float = typer.Option(
+        0.0,
+        "--min-cover-pct",
+        min=0.0,
+        max=100.0,
+        help="Drop cells below this first-return cover percentage.",
+    ),
+) -> None:
+    """Derive first-return point-cloud grid features for an ALS model."""
+    try:
+        result = build_pointcloud_grid_features(
+            pointcloud,
+            dem,
+            output,
+            grid_size_m=grid_size_m,
+            height_threshold_m=height_threshold_m,
+            min_returns=min_returns,
+            min_cover_pct=min_cover_pct,
+        )
+    except (LidarInventoryError, OSError) as exc:
+        console.print(f"[red]LiDAR point-cloud feature error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    console.print("[green]Inventory ALS point-cloud grid features built[/green]")
+    console.print(f"output: {result['output_path']}")
+    console.print(f"grid_size_m: {result['grid_size_m']}")
     console.print(f"rows: {result['row_count']}")
 
 
