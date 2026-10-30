@@ -251,6 +251,29 @@ Refresh the TSA29 example submodule to latest upstream commit:
 
    git submodule update --remote external/femic-tsa29-instance
 
+Canonical TSA23 Example Instance Repository
+-------------------------------------------
+
+FEMIC publishes the TSA23 / 100 Mile House research and teaching instance at:
+
+- ``https://github.com/UBC-FRESH/femic-tsa23-instance``
+
+The same repository is linked back into FEMIC via git submodule:
+
+- ``external/femic-tsa23-instance``
+
+This instance is the intended public home for TSA23 WS4/FEMIC demo content and
+case-specific model artifacts.  The INV-01 TSA23 inventory work is documented in
+the parent FEMIC repository under ``notes/reports/inv01-tsa23-*`` and
+``docs/guides/inv01-tsa23-*``; model cards remain explicitly marked as pilot
+cards until independently validated.
+
+Refresh the TSA23 example submodule to its latest upstream commit:
+
+.. code-block:: bash
+
+   git submodule update --remote external/femic-tsa23-instance
+
 AFRF Block Instance Repositories
 --------------------------------
 
