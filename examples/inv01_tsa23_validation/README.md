@@ -58,6 +58,23 @@ The 2019 point-cloud/DEM files for the four held-out plots must be present in
 the two directories.  The script writes `psp_holdout.csv` and
 `psp_recent_candidates.csv`.
 
+## High-biomass domain extension
+
+The high-biomass target and refit experiment are documented in
+`notes/reports/inv01-tsa23-high-biomass-refit.md`.  The data root must remain
+`/srv/shared-data/gep/ws4/tmp/inv01-data`.
+
+After staging the TSA 29 point clouds/DEMs:
+
+```bash
+python examples/inv01_tsa23_validation/compute_high_features.py
+python examples/inv01_tsa23_validation/fit_high_biomass_candidate.py
+```
+
+The scripts expect the high-biomass candidate/download tables and the FAIB PSP
+archive under that data root.  The candidate is experimental and does not
+replace the published model cards.
+
 ## Figures
 
 ```bash
