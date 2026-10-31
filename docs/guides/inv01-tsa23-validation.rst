@@ -216,6 +216,25 @@ map, and checksums is in
 ``notes/reports/inv01-tsa23-acquisition-bundle/``.  TSA 22 remains
 transfer-test-only; TSA 29 is an exploratory comparison.
 
+Regional calibration using the full open-data stack
+----------------------------------------------------
+
+The full open-data audit found 46 high-biomass IDF PSP plots across BC with
+matching LidarBC point clouds, not just TSA 23/29.  Twenty-four produced usable
+features; 19 non-TSA-23 plots supplement the 14 TSA 23 training plots.
+
+| Attribute | Current holdout RMSE | Regional candidate RMSE | Current bias | Regional bias |
+| --- | ---: | ---: | ---: | ---: |
+| Lorey height | 1.462 | 1.659 | +0.997 | +1.247 |
+| Basal area | 8.351 | 10.029 | +0.931 | -7.920 |
+| Gross volume | 118.207 | 42.484 | +89.267 | -3.370 |
+
+The regional high-biomass set fixes the volume extrapolation on the four TSA 23
+plots, but worsens height and BA.  The volume candidate is experimental; the
+current height and BA cards stay.  This is an open-data model-development path,
+not an acquisition gate.  Details:
+``notes/reports/inv01-tsa23-regional-calibration.md``.
+
 Omitted-tile gap
 ----------------
 
@@ -277,6 +296,8 @@ The scripts are in ``examples/inv01_tsa23_validation``:
 - ``make_validation_figures.py``
 - ``psp_holdout.py``
 - ``build_status_mask.py``
+- ``compute_regional_features.py``
+- ``fit_regional_candidate.py``
 - high-biomass refit runbook: ``notes/reports/inv01-tsa23-high-biomass-refit.md``
 
 See Also
