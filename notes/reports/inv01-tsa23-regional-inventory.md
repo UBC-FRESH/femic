@@ -51,3 +51,9 @@ also improves BA, but it still has a narrow spatial holdout.
 - `experiments/inv01-regional-calibration/candidate_cards.json`
 - data root: `inventory_regional_full.parquet`,
   `tsa23_model_status_regional_25m.tif`
+
+## Nonlinear volume variant
+
+The experimental polynomial volume model keeps the same coverage:
+4,745,557 volume cells, joint BA/volume 4,660,847 cells, 23.6% of the TSA.  Mean
+volume is 170.84 m3/ha.  It does not change the status mask.
