@@ -1,0 +1,13 @@
+{
+  "schema_version": "femic.inventory.regional.model_bundle.v1",
+  "bundle_id": "inv01-tsa23-hybrid-regional-2026c",
+  "bundle_version": "2026.1-exp",
+  "status": "experimental; not operational",
+  "height_model": "current als_tsa23_idf_lorey_height_2026",
+  "ba_model": "models/als_tsa23_idf_basal_area_regional_2026c.json",
+  "volume_model": "nonlinear/MODEL_SPEC.json",
+  "training_rows": 33,
+  "external": {"n": 4, "ba_rmse_m2_ha": 6.670113943696672, "volume_rmse_m3_ha": 42.091687986591204},
+  "full_grid": {"joint_ba_volume_share": 0.2359, "volume_cells": 4745557, "volume_mean_m3_ha": 170.8414407369314},
+  "caveats": ["Experimental hybrid bundle.", "External holdout is four clustered TSA23 plots.", "Volume nonlinear spec is not a standard FEMIC model card."]
+}

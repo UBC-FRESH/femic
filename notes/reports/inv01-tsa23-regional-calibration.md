@@ -105,3 +105,26 @@ unchanged.
 The nonlinear spec is experimental and not a standard `femic.inventory.als`
 card because FEMIC's current reader only supports linear predictors.  It is
 packaged under `experiments/inv01-regional-calibration/nonlinear_volume/`.
+
+## Hybrid bundle
+
+The best combined package is:
+
+- BA: linear regional card (`Lhmean`, `Lhp95`)
+- volume: second-order polynomial log-volume spec
+- height: current published card
+
+Paired results:
+
+| Check | BA RMSE | Volume RMSE |
+| --- | ---: | ---: |
+| TSA 23 external (n=4) | 6.670 | 42.092 |
+| TSA 2 leave-out (n=9) | 9.420 | 47.100 |
+| TSA 5 leave-out (n=1) | 2.138 | 25.776 |
+| TSA 18 leave-out (n=3) | 5.692 | 67.114 |
+| TSA 22 leave-out (n=1) | 12.289 | 3.623 |
+| TSA 29 leave-out (n=5) | 7.613 | 33.974 |
+
+The hybrid bundle is under
+`experiments/inv01-regional-calibration/hybrid_bundle/`.  It is experimental,
+not a published operational model.
