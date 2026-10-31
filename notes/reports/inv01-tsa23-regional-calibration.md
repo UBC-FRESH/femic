@@ -8,7 +8,7 @@ clouds** (TSAs 2, 5, 9, 18, 22, 23, 29).  Of those, 24 produced usable
 first-return features; 19 non-TSA-23 plots supplement the 14 TSA 23 training
 plots.  The four TSA 23 high-biomass plots remain the external check.
 
-No new field data and no acquisition gate were used.
+Uses the existing open PSP and LidarBC data.
 
 ## Data
 
@@ -80,7 +80,7 @@ in ``examples/inv01_tsa23_validation/apply_regional_inventory.py``.
 - Keep the current height card; the regional height fit is worse.
 - Treat the regional **BA and volume** candidates as experimental; both improve
 the four-plot external check but are selected on a small clustered test.
-- The data are sufficient to continue model development now; no acquisition gate.
+- The data support continued model development.
 - Next: refit/evaluate BA and volume on more TSA 23 high-biomass tiles and publish
   the candidate cards as experimental, not operational.
 
