@@ -65,3 +65,7 @@
 	path = external/femic-tsa27-instance
 	url = https://github.com/UBC-FRESH/femic-tsa27-instance
 	branch = main
+[submodule "external/private/femic-c5-parity-instance"]
+	path = external/private/femic-c5-parity-instance
+	url = https://github.com/UBC-FRESH/femic-c5-parity-instance.git
+	branch = master
