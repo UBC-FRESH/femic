@@ -1,0 +1,59 @@
+{
+  "run_id": "inv01-tsa23-hybrid-vs-current",
+  "current": {
+    "height_cells": 6573196,
+    "ba_cells": 2942755,
+    "volume_cells": 2942755,
+    "ba_mean": 23.87,
+    "volume_mean": 139.33,
+    "joint_ba_volume_km2": 1839.2,
+    "joint_share": 0.149
+  },
+  "hybrid": {
+    "height_cells": 6573196,
+    "ba_cells": 7479672,
+    "volume_cells": 4745557,
+    "ba_mean": 23.83,
+    "volume_mean": 170.84,
+    "joint_ba_volume_km2": 2913.0,
+    "joint_share": 0.236
+  },
+  "overlap": {
+    "ba": {
+      "cells": 2909489,
+      "mean_diff": -1.2429,
+      "mae": 3.755,
+      "rmse": 4.6558,
+      "min": -15.6499,
+      "max": 8.2884
+    },
+    "volume": {
+      "cells": 2942755,
+      "mean_diff": -1.2017,
+      "mae": 9.7387,
+      "rmse": 12.4483,
+      "min": -48.8192,
+      "max": 20.5993
+    }
+  },
+  "new_cells": {
+    "ba": {
+      "cells": 4570183,
+      "mean": 24.5548
+    },
+    "volume": {
+      "cells": 1802802,
+      "mean": 224.2384
+    }
+  },
+  "lost_cells": {
+    "ba": {
+      "cells": 33266,
+      "mean": 17.354
+    },
+    "volume": {
+      "cells": 0
+    }
+  },
+  "decision": "hybrid is the default experimental inventory root; published cards unchanged; not operational"
+}

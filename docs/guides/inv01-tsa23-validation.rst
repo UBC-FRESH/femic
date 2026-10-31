@@ -220,7 +220,12 @@ term-based nonlinear volume card plus the current height card.  Its paired
 external check is BA RMSE 6.670 and volume RMSE 42.092; cross-region volume RMSE
 ranges from 3.6 to 67.1 m3/ha.  The standard ``femic lidar inventory`` path
 reproduces the script-generated BA and volume surfaces; see
-``notes/reports/inv01-tsa23-cli-parity.md``.
+``notes/reports/inv01-tsa23-cli-parity.md``.  The hybrid surface is now the
+instance's default experimental inventory root.  It raises joint BA/volume
+coverage from 14.9% to 23.6%; current/hybrid overlap differences are BA RMSE
+4.66 m2/ha and volume RMSE 12.45 m3/ha.  Published cards stay unchanged and the
+hybrid remains non-operational.  See
+``notes/reports/inv01-tsa23-hybrid-vs-current.md``.
 
 Omitted-tile gap
 ----------------
