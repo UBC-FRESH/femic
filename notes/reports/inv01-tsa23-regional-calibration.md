@@ -27,13 +27,14 @@ bad LAZ payload; they were excluded rather than filled with an empty sample.
 | Attribute | Current holdout RMSE | Regional candidate RMSE | Current bias | Regional bias |
 | --- | ---: | ---: | ---: | ---: |
 | Lorey height | 1.462 | 1.659 | +0.997 | +1.247 |
-| Basal area | 8.351 | 10.029 | +0.931 | -7.920 |
+| Basal area | 8.351 | 6.670 | +0.931 | -3.807 |
 | Gross volume | 118.207 | 42.484 | +89.267 | -3.370 |
 
 The regional high-biomass data **fixes the volume extrapolation** on the four
-TSA 23 plots: bias drops from +89 to -3 m3/ha and RMSE from 118 to 42.  It does
-not improve height or BA; those should keep the current cards or be refit
-separately.
+TSA 23 plots: bias drops from +89 to -3 m3/ha and RMSE from 118 to 42.  The BA
+candidate also improves: RMSE 8.351 to 6.670 and bias +0.93 to -3.81, using
+`Lhmean` and `Lhp95` instead of `Lhmean` and `CC2m`.  Height does not improve and
+keeps the current card.
 
 ## Candidate coefficients
 
@@ -42,7 +43,7 @@ Experimental only; not published as model cards.
 | Attribute | Intercept | `Lhp95` | `Lhmean` | `CC2m` |
 | --- | ---: | ---: | ---: | ---: |
 | Height (identity) | 1.633212 | 0.859860 | — | — |
-| BA (log link) | -2.526970 | — | 0.386795 | 1.124657 |
+| BA (log link) | 2.059838 | — | 0.747222 | — |
 | Volume (log link) | -1.081158 | — | 1.183467 | 0.768613 |
 
 The volume candidate is the first version that covers the high-biomass test
@@ -51,12 +52,12 @@ before becoming a published card.
 
 ## Decision
 
-- Keep current height and BA cards.
-- Treat the regional **volume** candidate as an experimental candidate, not a
-  replacement card.
+- Keep the current height card; the regional height fit is worse.
+- Treat the regional **BA and volume** candidates as experimental; both improve
+the four-plot external check but are selected on a small clustered test.
 - The data are sufficient to continue model development now; no acquisition gate.
-- Next: improve BA with the regional high set and test the volume candidate on
-  more than one TSA 23 tile.
+- Next: refit/evaluate BA and volume on more TSA 23 high-biomass tiles and publish
+  the candidate cards as experimental, not operational.
 
 ## Files
 
