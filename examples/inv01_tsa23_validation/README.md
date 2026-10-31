@@ -89,7 +89,9 @@ python examples/inv01_tsa23_validation/build_status_mask.py \
 ```
 
 See `notes/reports/inv01-tsa23-model-status.md` and
-`notes/reports/inv01-tsa23-acquisition-request.md`.
+`notes/reports/inv01-tsa23-regional-inventory.md`.  Apply the experimental
+regional BA/volume cards with `apply_regional_inventory.py` and build the
+regional status mask with `build_status_mask_regional.py`.
 
 ## Figures
 
