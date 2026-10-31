@@ -1,0 +1,22 @@
+{
+  "run_id": "inv01-tsa23-cli-config-parity",
+  "features": {
+    "ba_rows": 7479672,
+    "volume_rows": 4745557
+  },
+  "config": {
+    "instance_root": "https://github.com/UBC-FRESH/femic-tsa23-instance",
+    "path": "config/inventory/experimental.yaml"
+  },
+  "sha256": {
+    "config_ba": "d7f7a8a40f8426144de6ffb79e027d09369859e5443f2e42ea578f800096ce07",
+    "explicit_ba": "d7f7a8a40f8426144de6ffb79e027d09369859e5443f2e42ea578f800096ce07",
+    "config_volume": "fd9bf1df240025e0c2777fae6efdfd084c89827833d5330a402f4f95d8d0dab0",
+    "explicit_volume": "fd9bf1df240025e0c2777fae6efdfd084c89827833d5330a402f4f95d8d0dab0"
+  },
+  "byte_identical": {
+    "ba": true,
+    "volume": true
+  },
+  "generated_utc": "2026-10-31T00:00:00Z"
+}
