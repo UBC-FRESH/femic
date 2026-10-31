@@ -50,6 +50,31 @@ The volume candidate is the first version that covers the high-biomass test
 without the old +90 m3/ha bias.  It still needs a larger TSA 23 spatial holdout
 before becoming a published card.
 
+## Cross-region holdout
+
+Leave-one-TSA-out CV on the 24 regional high-biomass plots (fit 14 TSA 23 +
+all other regional high plots):
+
+| Held-out region | BA RMSE | BA bias | Volume RMSE | Volume bias |
+| --- | ---: | ---: | ---: | ---: |
+| TSA 2 (n=9) | 9.42 | +6.92 | 100.61 | +74.58 |
+| TSA 5 (n=1) | 2.14 | +2.14 | 16.11 | -16.11 |
+| TSA 18 (n=3) | 5.69 | +4.72 | 62.15 | +12.10 |
+| TSA 22 (n=1) | 12.29 | -12.29 | 32.66 | -32.66 |
+| TSA 29 (n=5) | 7.61 | -6.35 | 46.95 | -36.46 |
+
+The regional cards are not uniformly transferable; volume is especially
+region-sensitive.  The four-plot TSA 23 check is better than the TSA 2/18
+regions, so the candidate is a real step, not a finished operational model.
+
+## Model bundle
+
+The experimental cards are packaged at
+``experiments/inv01-regional-calibration/model_bundle/`` with a manifest,
+checksums, candidate metrics, and the cross-region CV.  They load through
+``femic.lidar.inventory.load_inventory_als_model``.  The full-grid application is
+in ``examples/inv01_tsa23_validation/apply_regional_inventory.py``.
+
 ## Decision
 
 - Keep the current height card; the regional height fit is worse.

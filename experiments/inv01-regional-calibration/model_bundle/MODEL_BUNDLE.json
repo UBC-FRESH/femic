@@ -1,0 +1,24 @@
+{
+  "schema_version": "femic.inventory.regional.model_bundle.v1",
+  "bundle_id": "inv01-tsa23-regional-2026c",
+  "bundle_version": "2026.1-exp",
+  "status": "experimental; not operational",
+  "models": [
+    "models/als_tsa23_idf_basal_area_regional_2026c.json",
+    "models/als_tsa23_idf_gross_volume_regional_2026c.json"
+  ],
+  "height_model": "als_tsa23_idf_lorey_height_2026",
+  "training_rows": 33,
+  "external_holdout": "4 TSA23 high-biomass plots in one 2019 tile",
+  "external_metrics": {
+    "ba_rmse_m2_ha": 6.670113943696672,
+    "ba_bias_m2_ha": -3.8071308503999335,
+    "volume_rmse_m3_ha": 42.484139127608564,
+    "volume_bias_m3_ha": -3.3704894265215444
+  },
+  "caveats": [
+    "Experimental; not a published operational card.",
+    "External holdout is clustered.",
+    "Leave-one-TSA-out cross-region CV is mixed."
+  ]
+}
