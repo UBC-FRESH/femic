@@ -226,13 +226,13 @@ features; 19 non-TSA-23 plots supplement the 14 TSA 23 training plots.
 | Attribute | Current holdout RMSE | Regional candidate RMSE | Current bias | Regional bias |
 | --- | ---: | ---: | ---: | ---: |
 | Lorey height | 1.462 | 1.659 | +0.997 | +1.247 |
-| Basal area | 8.351 | 10.029 | +0.931 | -7.920 |
+| Basal area | 8.351 | 6.670 | +0.931 | -3.807 |
 | Gross volume | 118.207 | 42.484 | +89.267 | -3.370 |
 
 The regional high-biomass set fixes the volume extrapolation on the four TSA 23
-plots, but worsens height and BA.  The volume candidate is experimental; the
-current height and BA cards stay.  This is an open-data model-development path,
-not an acquisition gate.  Details:
+plots and improves BA (RMSE 8.351 -> 6.670), but height gets worse.  The BA and
+volume candidates are experimental; the current height card stays.  This is an
+open-data model-development path, not an acquisition gate.  Details:
 ``notes/reports/inv01-tsa23-regional-calibration.md``.
 
 Omitted-tile gap
