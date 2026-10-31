@@ -26,6 +26,7 @@ from pathlib import Path
 import numpy as np  # type: ignore[import-untyped]
 import pandas as pd  # type: ignore[import-untyped]
 import rasterio  # type: ignore[import-untyped]
+import yaml  # type: ignore[import-untyped]
 from pyproj import CRS  # type: ignore[import-untyped]
 from pyproj.exceptions import CRSError  # type: ignore[import-untyped]
 
@@ -291,6 +292,56 @@ def _term_features(terms: tuple[InventoryAlsTerm, ...]) -> tuple[str, ...]:
             if name is not None and name not in names:
                 names.append(name)
     return tuple(names)
+
+
+INVENTORY_MODEL_CONFIG_SCHEMA = "femic.inventory.experimental.v1"
+INVENTORY_MODEL_KEYS: dict[str, str] = {
+    "height": "height_model",
+    "ba": "ba_model",
+    "volume": "volume_model",
+}
+
+
+def resolve_inventory_model_path(config_path: Path, model_key: str) -> Path:
+    """Resolve a model path from an experimental inventory config.
+
+    Paths in the config are relative to the instance root when the config lives
+    under ``config/inventory/``.  Absolute paths are preserved.
+    """
+    key = model_key.strip().lower()
+    if key not in INVENTORY_MODEL_KEYS:
+        raise LidarInventoryError(
+            f"Unknown inventory model key {model_key!r}; expected one of "
+            + ", ".join(sorted(INVENTORY_MODEL_KEYS))
+            + "."
+        )
+    resolved = config_path.expanduser().resolve()
+    try:
+        payload = yaml.safe_load(resolved.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise LidarInventoryError(f"Unable to read inventory model config: {resolved}: {exc}") from exc
+    except yaml.YAMLError as exc:
+        raise LidarInventoryError(f"Invalid inventory model config: {resolved}: {exc}") from exc
+    if not isinstance(payload, Mapping):
+        raise LidarInventoryError("Inventory model config must be a mapping.")
+    schema = str(payload.get("schema_version", "")).strip()
+    if schema != INVENTORY_MODEL_CONFIG_SCHEMA:
+        raise LidarInventoryError(
+            f"Unsupported inventory model config schema {schema!r}; expected "
+            f"{INVENTORY_MODEL_CONFIG_SCHEMA!r}."
+        )
+    field = INVENTORY_MODEL_KEYS[key]
+    raw_path = payload.get(field)
+    if not isinstance(raw_path, str) or not raw_path.strip():
+        raise LidarInventoryError(f"Inventory model config has no {field!r}.")
+    candidate = Path(raw_path).expanduser()
+    if not candidate.is_absolute():
+        # config/inventory/experimental.yaml -> instance root
+        candidate = resolved.parents[2] / candidate
+    candidate = candidate.resolve()
+    if not candidate.is_file():
+        raise LidarInventoryError(f"Inventory model {key!r} does not exist: {candidate}")
+    return candidate
 
 
 def load_inventory_als_model(path: Path) -> InventoryAlsModel:

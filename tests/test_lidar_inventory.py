@@ -16,6 +16,7 @@ from femic.lidar.inventory import (
     build_inventory_als,
     build_pointcloud_grid_features,
     load_inventory_als_model,
+    resolve_inventory_model_path,
     write_inventory_als,
 )
 from femic.lidar.products import build_lidar_product_bundle
@@ -418,6 +419,52 @@ def test_cli_inventory_log_terms(tmp_path: Path) -> None:
     result = CliRunner().invoke(
         app,
         ["lidar", "inventory", "--bundle", str(bundle), "--model", str(model_path), "--features", str(features), "--output-dir", str(out)],
+        prog_name="femic",
+    )
+    assert result.exit_code == 0, result.output
+    assert (out / "inventory_als.csv").is_file()
+
+
+def test_resolve_inventory_model_from_config(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config" / "inventory"
+    config_dir.mkdir(parents=True)
+    config = config_dir / "experimental.yaml"
+    config.write_text(
+        "schema_version: femic.inventory.experimental.v1\n"
+        f"height_model: {MODEL_CARD.as_posix()}\n"
+        f"ba_model: {MODEL_CARD.as_posix()}\n"
+        f"volume_model: {MODEL_CARD.as_posix()}\n",
+        encoding="utf-8",
+    )
+    assert resolve_inventory_model_path(config, "height") == MODEL_CARD.resolve()
+    with pytest.raises(LidarInventoryError, match="Unknown inventory model key"):
+        resolve_inventory_model_path(config, "unknown")
+
+
+def test_cli_inventory_model_config(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config" / "inventory"
+    config_dir.mkdir(parents=True)
+    config = config_dir / "experimental.yaml"
+    config.write_text(
+        "schema_version: femic.inventory.experimental.v1\n"
+        f"height_model: {MODEL_CARD.as_posix()}\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "inventory"
+    result = CliRunner().invoke(
+        app,
+        [
+            "lidar",
+            "inventory",
+            "--bundle",
+            str(_bundle(tmp_path)),
+            "--model-key",
+            "height",
+            "--model-config",
+            str(config),
+            "--output-dir",
+            str(out),
+        ],
         prog_name="femic",
     )
     assert result.exit_code == 0, result.output
