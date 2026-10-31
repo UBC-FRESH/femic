@@ -52,6 +52,27 @@ class LidarInventoryError(RuntimeError):
 
 
 @dataclass(frozen=True)
+class InventoryAlsTerm:
+    """One term in a log-space model card."""
+
+    kind: str
+    coefficient: float
+    feature: str | None = None
+    feature2: str | None = None
+
+    def to_dict(self) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "kind": self.kind,
+            "coefficient": self.coefficient,
+        }
+        if self.feature is not None:
+            payload["feature"] = self.feature
+        if self.feature2 is not None:
+            payload["feature2"] = self.feature2
+        return payload
+
+
+@dataclass(frozen=True)
 class InventoryAlsModel:
     """A validated, pinned area-based model card."""
 
@@ -71,12 +92,21 @@ class InventoryAlsModel:
     output_scale: float = 1.0
     applicability: Mapping[str, object] = field(default_factory=dict)
     predictor_ranges: Mapping[str, tuple[float, float]] = field(default_factory=dict)
+    model_type: str = "linear"
+    terms: tuple[InventoryAlsTerm, ...] = ()
     sha256: str = ""
     schema_version: str = INVENTORY_ALS_MODEL_SCHEMA_VERSION
 
     @property
     def features(self) -> tuple[str, ...]:
-        """Return the predictor names in stable model-card order."""
+        """Return the raw predictor names in stable model-card order."""
+        if self.terms:
+            names: list[str] = []
+            for term in self.terms:
+                for name in (term.feature, term.feature2):
+                    if name is not None and name not in names:
+                        names.append(name)
+            return tuple(names)
         return tuple(self.coefficients)
 
     def to_dict(self) -> dict[str, object]:
@@ -89,6 +119,8 @@ class InventoryAlsModel:
             "unit": self.unit,
             "intercept": self.intercept,
             "coefficients": dict(self.coefficients),
+            "model_type": self.model_type,
+            "terms": [term.to_dict() for term in self.terms],
             "rmse": self.rmse,
             "link": self.link,
             "output_scale": self.output_scale,
@@ -215,6 +247,52 @@ class InventoryAlsResult:
         }
 
 
+TERM_KINDS: tuple[str, ...] = ("constant", "log", "log_square", "log_product")
+
+
+def _parse_terms(raw: object) -> tuple[InventoryAlsTerm, ...]:
+    if not isinstance(raw, list) or not raw:
+        raise LidarInventoryError("Model card `terms` must be a non-empty list.")
+    terms: list[InventoryAlsTerm] = []
+    for index, item in enumerate(raw):
+        if not isinstance(item, Mapping):
+            raise LidarInventoryError(f"Term {index} must be an object.")
+        kind = _required_text(item, "kind")
+        if kind not in TERM_KINDS:
+            raise LidarInventoryError(
+                f"Term {index} kind must be one of {', '.join(TERM_KINDS)}."
+            )
+        coefficient = _finite_float(item.get("coefficient"), f"term {index} coefficient")
+        feature = item.get("feature")
+        feature2 = item.get("feature2")
+        if kind != "constant" and (not isinstance(feature, str) or not feature.strip()):
+            raise LidarInventoryError(f"Term {index} requires a non-empty `feature`.")
+        if kind == "log_product" and (
+            not isinstance(feature2, str) or not feature2.strip()
+        ):
+            raise LidarInventoryError(f"Term {index} requires a non-empty `feature2`.")
+        if kind != "log_product" and feature2 is not None:
+            raise LidarInventoryError(f"Term {index} does not accept `feature2`.")
+        terms.append(
+            InventoryAlsTerm(
+                kind=kind,
+                coefficient=coefficient,
+                feature=str(feature).strip() if isinstance(feature, str) else None,
+                feature2=str(feature2).strip() if isinstance(feature2, str) else None,
+            )
+        )
+    return tuple(terms)
+
+
+def _term_features(terms: tuple[InventoryAlsTerm, ...]) -> tuple[str, ...]:
+    names: list[str] = []
+    for term in terms:
+        for name in (term.feature, term.feature2):
+            if name is not None and name not in names:
+                names.append(name)
+    return tuple(names)
+
+
 def load_inventory_als_model(path: Path) -> InventoryAlsModel:
     """Load and validate a fitted ABA model card.
 
@@ -238,15 +316,30 @@ def load_inventory_als_model(path: Path) -> InventoryAlsModel:
             f"Unsupported model schema {schema_version!r}; expected "
             f"{INVENTORY_ALS_MODEL_SCHEMA_VERSION!r}."
         )
-    coefficients_raw = payload.get("coefficients")
-    if not isinstance(coefficients_raw, Mapping) or not coefficients_raw:
-        raise LidarInventoryError("Model card `coefficients` must be a non-empty object.")
+    terms_raw = payload.get("terms")
+    terms: tuple[InventoryAlsTerm, ...] = ()
     coefficients: dict[str, float] = {}
-    for key, value in coefficients_raw.items():
-        name = str(key).strip()
-        if not name:
-            raise LidarInventoryError("Model card coefficient names must be non-empty.")
-        coefficients[name] = _finite_float(value, f"coefficient {name!r}")
+    if terms_raw is not None:
+        terms = _parse_terms(terms_raw)
+        model_type = str(payload.get("model_type", "log_terms")).strip()
+        if model_type != "log_terms":
+            raise LidarInventoryError("Term-based cards must declare model_type `log_terms`.")
+        feature_names = _term_features(terms)
+        if not feature_names:
+            raise LidarInventoryError("Term-based cards must reference at least one predictor.")
+    else:
+        model_type = str(payload.get("model_type", "linear")).strip()
+        if model_type != "linear":
+            raise LidarInventoryError("Linear cards must declare model_type `linear`.")
+        coefficients_raw = payload.get("coefficients")
+        if not isinstance(coefficients_raw, Mapping) or not coefficients_raw:
+            raise LidarInventoryError("Model card `coefficients` must be a non-empty object.")
+        for key, value in coefficients_raw.items():
+            name = str(key).strip()
+            if not name:
+                raise LidarInventoryError("Model card coefficient names must be non-empty.")
+            coefficients[name] = _finite_float(value, f"coefficient {name!r}")
+        feature_names = tuple(coefficients)
     predictor_ranges: dict[str, tuple[float, float]] = {}
     ranges_raw = payload.get("predictor_ranges", {})
     if ranges_raw is not None and not isinstance(ranges_raw, Mapping):
@@ -254,9 +347,9 @@ def load_inventory_als_model(path: Path) -> InventoryAlsModel:
     if isinstance(ranges_raw, Mapping):
         for key, bounds in ranges_raw.items():
             name = str(key).strip()
-            if name not in coefficients:
+            if name not in feature_names:
                 raise LidarInventoryError(
-                    f"Predictor range {name!r} has no matching coefficient."
+                    f"Predictor range {name!r} has no matching model feature."
                 )
             if not isinstance(bounds, list | tuple) or len(bounds) != 2:
                 raise LidarInventoryError(
@@ -316,6 +409,8 @@ def load_inventory_als_model(path: Path) -> InventoryAlsModel:
         output_scale=output_scale,
         applicability=applicability,
         predictor_ranges=predictor_ranges,
+        model_type=model_type,
+        terms=terms,
         sha256=hashlib.sha256(resolved.read_bytes()).hexdigest(),
     )
 
@@ -413,7 +508,24 @@ def build_inventory_als(
     rows: list[InventoryAlsRow] = []
     for record in table.itertuples(index=False):
         predictors = {name: float(getattr(record, name)) for name in model.features}
-        if model.link == "log":
+        if model.model_type == "log_terms":
+            non_positive = [name for name, value in predictors.items() if value <= 0]
+            if non_positive:
+                raise LidarInventoryError(
+                    "Log-term predictor(s) must be positive: " + ", ".join(non_positive)
+                )
+            linear = 0.0
+            for term in model.terms:
+                if term.kind == "constant":
+                    linear += term.coefficient
+                elif term.kind == "log":
+                    linear += term.coefficient * math.log(predictors[term.feature])  # type: ignore[index]
+                elif term.kind == "log_square":
+                    linear += term.coefficient * math.log(predictors[term.feature]) ** 2  # type: ignore[index]
+                elif term.kind == "log_product":
+                    linear += term.coefficient * math.log(predictors[term.feature]) * math.log(predictors[term.feature2])  # type: ignore[index]
+            value = math.exp(linear) * model.output_scale
+        elif model.link == "log":
             non_positive = [name for name, value in predictors.items() if value <= 0]
             if non_positive:
                 raise LidarInventoryError(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -333,3 +334,91 @@ def test_cli_pointcloud_global_origin(tmp_path: Path) -> None:
 def test_horizontal_epsg_handles_compound_crs() -> None:
     assert _horizontal_epsg("EPSG:6653") == 3157
     assert _horizontal_epsg("EPSG:3157") == 3157
+
+
+def test_log_terms_model_card(tmp_path: Path) -> None:
+    bundle = _bundle(tmp_path)
+    features = tmp_path / "features.csv"
+    features.write_text(
+        "fragment_id,Lhmean,CC2m\nfrag-a,10,50\n",
+        encoding="utf-8",
+    )
+    model = {
+        "schema_version": "femic.inventory.als.model.v1",
+        "model_id": "fixture-log-terms",
+        "model_version": "0.0.0-fixture",
+        "model_type": "log_terms",
+        "attribute": "gross_volume_m3_ha",
+        "unit": "m3/ha",
+        "terms": [
+            {"kind": "constant", "coefficient": 0.1},
+            {"kind": "log", "feature": "Lhmean", "coefficient": 1.0},
+            {"kind": "log", "feature": "CC2m", "coefficient": 0.0},
+        ],
+        "predictor_ranges": {"Lhmean": [0.1, 100.0], "CC2m": [0.1, 100.0]},
+        "rmse": 1.0,
+        "sample_count": 1,
+        "training_scope": "synthetic term fixture",
+        "source": "test fixture",
+        "caveats": ["Synthetic fixture."],
+    }
+    model_path = tmp_path / "terms-model.json"
+    model_path.write_text(json.dumps(model), encoding="utf-8")
+
+    result = build_inventory_als(bundle, model_path, features_path=features)
+
+    assert result.model.model_type == "log_terms"
+    assert result.model.features == ("Lhmean", "CC2m")
+    assert result.rows[0].value == pytest.approx(math.exp(0.1 + math.log(10.0)))
+
+
+def test_log_terms_model_rejects_bad_kind(tmp_path: Path) -> None:
+    model = {
+        "schema_version": "femic.inventory.als.model.v1",
+        "model_id": "bad-terms",
+        "model_version": "0.0.0",
+        "model_type": "log_terms",
+        "attribute": "x",
+        "unit": "x",
+        "terms": [{"kind": "not-a-term", "feature": "x", "coefficient": 1.0}],
+        "rmse": 1.0,
+        "sample_count": 1,
+        "training_scope": "fixture",
+        "source": "fixture",
+        "caveats": ["fixture"],
+    }
+    path = tmp_path / "bad-terms.json"
+    path.write_text(json.dumps(model), encoding="utf-8")
+    with pytest.raises(LidarInventoryError, match="kind must be one of"):
+        load_inventory_als_model(path)
+
+
+def test_cli_inventory_log_terms(tmp_path: Path) -> None:
+    bundle = _bundle(tmp_path)
+    features = tmp_path / "features.csv"
+    features.write_text("fragment_id,Lhmean,CC2m\nfrag-a,10,50\n", encoding="utf-8")
+    model = {
+        "schema_version": "femic.inventory.als.model.v1",
+        "model_id": "fixture-log-terms-cli",
+        "model_version": "0.0.0-fixture",
+        "model_type": "log_terms",
+        "attribute": "gross_volume_m3_ha",
+        "unit": "m3/ha",
+        "terms": [{"kind": "constant", "coefficient": 0.1}, {"kind": "log", "feature": "Lhmean", "coefficient": 1.0}],
+        "predictor_ranges": {"Lhmean": [0.1, 100.0]},
+        "rmse": 1.0,
+        "sample_count": 1,
+        "training_scope": "synthetic term fixture",
+        "source": "test fixture",
+        "caveats": ["Synthetic fixture."],
+    }
+    model_path = tmp_path / "terms-cli-model.json"
+    model_path.write_text(json.dumps(model), encoding="utf-8")
+    out = tmp_path / "inventory"
+    result = CliRunner().invoke(
+        app,
+        ["lidar", "inventory", "--bundle", str(bundle), "--model", str(model_path), "--features", str(features), "--output-dir", str(out)],
+        prog_name="femic",
+    )
+    assert result.exit_code == 0, result.output
+    assert (out / "inventory_als.csv").is_file()

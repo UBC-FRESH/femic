@@ -1,0 +1,69 @@
+{
+  "schema_version": "femic.inventory.als.model.v1",
+  "model_id": "tsa23-idf-gross_volume-regional-poly2-2026c",
+  "model_version": "2026.1-exp",
+  "model_type": "log_terms",
+  "attribute": "vol_m3_ha",
+  "unit": "m3/ha",
+  "output_scale": 1.0,
+  "terms": [
+    {
+      "kind": "constant",
+      "coefficient": 0.07429605201666298
+    },
+    {
+      "kind": "log",
+      "feature": "Lhmean",
+      "coefficient": 1.7832630159186456
+    },
+    {
+      "kind": "log",
+      "feature": "CC2m",
+      "coefficient": -0.08540645303668166
+    },
+    {
+      "kind": "log_square",
+      "feature": "Lhmean",
+      "coefficient": -0.8288729364991914
+    },
+    {
+      "kind": "log_square",
+      "feature": "CC2m",
+      "coefficient": -0.1521328079684274
+    },
+    {
+      "kind": "log_product",
+      "feature": "Lhmean",
+      "feature2": "CC2m",
+      "coefficient": 0.8461051735697148
+    }
+  ],
+  "predictor_ranges": {
+    "Lhmean": [
+      5.801686747716177,
+      25.317137829501903
+    ],
+    "CC2m": [
+      52.03292933912646,
+      94.42973465436738
+    ]
+  },
+  "rmse": 42.091687986591204,
+  "sample_count": 33,
+  "training_scope": "14 TSA 23 IDF training plots plus 19 regional high-biomass IDF plots; second-order log-volume terms.",
+  "source": "FAIB PSP (OGL-BC) and LidarBC (OGL-BC); FEMIC regional nonlinear fit 2026-10-31.",
+  "applicability": {
+    "regions": [
+      "100 Mile House TSA, IDF",
+      "regional IDF high-biomass calibration"
+    ],
+    "species": [],
+    "notes": "Experimental nonlinear volume candidate; TSA23 external check four clustered plots."
+  },
+  "caveats": [
+    "Experimental nonlinear model; not operational.",
+    "External RMSE is four clustered TSA23 plots.",
+    "Cross-region volume transfer is mixed.",
+    "Do not extrapolate outside predictor ranges."
+  ]
+}
