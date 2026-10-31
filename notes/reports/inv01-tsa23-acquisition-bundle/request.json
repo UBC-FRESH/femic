@@ -1,0 +1,39 @@
+{
+  "request_id": "inv01-tsa23-high-biomass-20261031",
+  "generated_utc": "2026-10-31T00:00:00Z",
+  "purpose": "Extend and independently validate TSA 23 IDF high-biomass inventory cards",
+  "target_count": 11,
+  "priority_1_sites": [
+    4033798
+  ],
+  "priority_2_sites": [
+    4024694,
+    4024445,
+    4024439,
+    4025001,
+    4025098,
+    4024440,
+    4024627,
+    4024695,
+    4025376,
+    4025377
+  ],
+  "target_plot_count_recommended": "20-30",
+  "required_delivery": [
+    "current remeasurement",
+    "tree detail with PHF/BA/volume",
+    "plot centre and support",
+    "co-located LidarBC point cloud",
+    "1 m DEM/DSM",
+    "acquisition metadata and CRS"
+  ],
+  "acceptance": [
+    "measurement within 2 years of lidar",
+    "at least half above Lhmean 14.1882 m or volume 220 m3/ha",
+    "tile-level spatial holdout independent of existing 14 training plots"
+  ],
+  "exclusions": {
+    "TSA22": "Okanagan; transfer test only",
+    "TSA29": "Williams Lake; exploratory comparison only"
+  }
+}
