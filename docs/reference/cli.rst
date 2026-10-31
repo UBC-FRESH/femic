@@ -484,7 +484,9 @@ block. Neither command segments individual trees.
 ``lidar inventory`` options
 
 - ``--bundle PATH`` (required; validated FEMIC LiDAR product bundle)
-- ``--model PATH`` (required; JSON model card)
+- ``--model PATH`` (optional; explicit JSON model card)
+- ``--model-key height|ba|volume`` (resolve a model from the instance config)
+- ``--model-config PATH`` (default: ``config/inventory/experimental.yaml``)
 - ``--output-dir PATH`` (default: ``data/lidar/inventory``)
 - ``--features PATH`` (optional explicit fragment/predictor CSV)
 - ``--plots PATH`` (optional plot/observation validation table)
@@ -494,7 +496,9 @@ block. Neither command segments individual trees.
 
 ``femic lidar inventory`` applies a pinned area-based model card to the bundle's
 ``canopy`` table or ``--features`` CSV and writes ``inventory_als.csv`` plus its
-provenance manifest; it does not fit a model or invent coefficients.
+provenance manifest; it does not fit a model or invent coefficients.  When
+``--model`` is omitted, ``--model-key`` resolves the card from the instance
+experimental config; paths are relative to the instance root.
 
 ``lidar inventory-features`` options
 

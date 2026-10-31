@@ -158,6 +158,7 @@ from femic.lidar.inventory import (
     build_chm_grid_features,
     build_inventory_als,
     build_pointcloud_grid_features,
+    resolve_inventory_model_path,
     write_inventory_als,
 )
 from femic.lidar.materialization import (
@@ -4939,13 +4940,21 @@ def lidar_inventory(
         readable=True,
         help="Validated FEMIC LiDAR product bundle.",
     ),
-    model: Path = typer.Option(
-        ...,
+    model: Path | None = typer.Option(
+        None,
         "--model",
-        exists=True,
         dir_okay=False,
-        readable=True,
         help="Pinned ABA model card (JSON).",
+    ),
+    model_key: str | None = typer.Option(
+        None,
+        "--model-key",
+        help="Resolve height, ba, or volume from the instance model config.",
+    ),
+    model_config: Path | None = typer.Option(
+        None,
+        "--model-config",
+        help="Experimental inventory model config; defaults to config/inventory/experimental.yaml.",
     ),
     output_dir: Path | None = typer.Option(
         None,
@@ -4989,9 +4998,22 @@ def lidar_inventory(
         instance_context=instance_context,
     )
     try:
+        if model is not None and (model_key is not None or model_config is not None):
+            raise LidarInventoryError("Pass either --model or --model-key/--model-config, not both.")
+        if model is None:
+            if model_key is None:
+                raise LidarInventoryError("Pass --model or --model-key for an instance model config.")
+            config_path = model_config or Path("config/inventory/experimental.yaml")
+            if instance_context is not None:
+                config_path = instance_context.resolve_path(config_path)
+            elif not config_path.is_absolute():
+                config_path = (Path.cwd() / config_path).resolve()
+            resolved_model = resolve_inventory_model_path(config_path, model_key)
+        else:
+            resolved_model = model
         result = build_inventory_als(
             bundle,
-            model,
+            resolved_model,
             features_path=features,
             fragment_id_field=fragment_id_field,
             plots_path=plots,

@@ -78,6 +78,20 @@ to ``1.0``.  For example, the published boreal Wulder et al. (2012) basal-area
 and volume equations predict 25 x 25 m plot totals, so their cards use
 ``output_scale: 16.0`` to report per hectare.
 
+Term-based cards
+^^^^^^^^^^^^^^^^
+
+A card may instead declare ``model_type: log_terms`` and a list of terms:
+
+- ``{"kind": "constant", "coefficient": ...}``
+- ``{"kind": "log", "feature": "Lhmean", "coefficient": ...}``
+- ``{"kind": "log_square", "feature": "Lhmean", "coefficient": ...}``
+- ``{"kind": "log_product", "feature": "Lhmean", "feature2": "CC2m", "coefficient": ...}``
+
+The reader sums the terms and applies ``exp``.  ``predictor_ranges`` still
+refers to the raw predictor columns.  This supports nonlinear regional cards
+without a separate application script.
+
 ``predictor_ranges`` is optional but strongly recommended.  Predictions outside
 a declared range are refused rather than silently extrapolated.  An
 ``applicability`` block is metadata only; the reader records a warning that the
