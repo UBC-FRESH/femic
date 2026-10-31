@@ -124,48 +124,6 @@ flags and exploratory refit, is in
 recorded in ``notes/reports/inv01-tsa23-high-biomass-targets.md``.
 
 
-High-biomass domain extension
------------------------------
-
-The first high-biomass increment adds eight usable TSA 29 IDF plots with observed
-volume 177-383 m3/ha.  Fitting the same card forms on the 14 TSA 23 training
-plots plus those eight plots improves the four-plot TSA 23 holdout for BA and
-volume, but not height:
-
-.. list-table:: Candidate versus current cards on the four-plot holdout
-   :header-rows: 1
-
-   * - Attribute
-     - Current RMSE
-     - Candidate RMSE
-     - Current bias
-     - Candidate bias
-   * - Lorey height (m)
-     - 1.462
-     - 2.032
-     - +0.997
-     - +1.637
-   * - Basal area (m2/ha)
-     - 8.351
-     - 7.823
-     - +0.931
-     - -3.062
-   * - Gross volume (m3/ha)
-     - 118.207
-     - 79.984
-     - +89.267
-     - +53.365
-
-The candidate is experimental: TSA 29 is Williams Lake (adjacent but a different
-TSA), the TSA 23 holdout is one clustered tile, and the volume bias remains
-large.  TSA 22 is Okanagan and is excluded from TSA 23 training entirely.  Keep
-the published height card; do not publish the BA/volume candidate yet.  Add
-high-biomass **TSA 23** plots, not TSA 22, before the next fit.  Details:
-``notes/reports/inv01-tsa23-high-biomass-refit.md``.  The archive audit and
-acquisition shortlist are in
-``notes/reports/inv01-tsa23-high-biomass-acquisition-targets.md``.
-
-
 Model-status mask
 -----------------
 
@@ -185,36 +143,51 @@ status raster separates coverage gaps from model-domain gaps:
      - 1,936.7
      - 15.7%
    * - Processed, no model cell
-     - 1,993.5
-     - 16.1%
+     - 3,643.0
+     - 29.5%
    * - Height only
-     - 4,113.0
-     - 33.3%
+     - 2,463.5
+     - 20.0%
    * - BA/volume valid
      - 1,839.2
      - 14.9%
 
-Only 14.9% of TSA 23 has BA/volume predictions; 48.2% has height.  Do not read
-classes 0-3 as zero biomass.  The three-band status raster is described in
+Only 14.9% of TSA 23 has BA/volume predictions; height covers 33.3%.  Do not
+read classes 0-3 as zero biomass.  The three-band status raster is described in
 ``notes/reports/inv01-tsa23-model-status.md``.
+
+Applying the experimental regional BA/volume cards raises joint BA/volume
+coverage to **23.6%**:
+
+.. list-table:: Regional candidate status
+   :header-rows: 1
+
+   * - Class
+     - Area km2
+     - Share
+   * - No public point cloud
+     - 2,465.7
+     - 20.0%
+   * - Omitted / no fine 1 m DEM
+     - 1,936.7
+     - 15.7%
+   * - Processed, no model cell
+     - 3,207.1
+     - 26.0%
+   * - Height only
+     - 1,825.5
+     - 14.8%
+   * - BA/volume valid
+     - 2,913.0
+     - 23.6%
+
+The candidate adds 1,074 km2 of BA/volume coverage but is still experimental.
 
 .. figure:: /_static/inv01-tsa23-model-status.png
    :alt: TSA 23 model status mask
    :width: 100%
 
    Current pilot model-status mask.  BA/volume are valid on 14.9% of the TSA.
-
-High-biomass acquisition request
---------------------------------
-
-The archive has no additional TSA 23 high-biomass plots with LidarBC support.
-The concrete acquisition request is in
-``notes/reports/inv01-tsa23-acquisition-request.md``: current remeasurement plus
-co-located lidar for `4033798`, the ten older high-biomass sites, and a target of
-20-30 high-biomass TSA 23 plots.  A sender-ready package with targets, GeoJSON,
-map, and checksums is in
-``notes/reports/inv01-tsa23-acquisition-bundle/``.  TSA 22 remains
-transfer-test-only; TSA 29 is an exploratory comparison.
 
 Regional calibration using the full open-data stack
 ----------------------------------------------------
@@ -232,7 +205,7 @@ features; 19 non-TSA-23 plots supplement the 14 TSA 23 training plots.
 The regional high-biomass set fixes the volume extrapolation on the four TSA 23
 plots and improves BA (RMSE 8.351 -> 6.670), but height gets worse.  The BA and
 volume candidates are experimental; the current height card stays.  This is an
-open-data model-development path, not an acquisition gate.  Details:
+open-data model-development path.  Details:
 ``notes/reports/inv01-tsa23-regional-calibration.md``.
 
 Omitted-tile gap
@@ -284,7 +257,7 @@ Do not operationalize the current surface.  Validate/refit with independent fiel
 plots and a true spatial holdout before spending the download/compute budget on
 the 907 tiles.  If a coverage increment is needed, start with the 182 A tiles
 (49,250 ha VRI forest, 30,333 ha THLB) as a separate experiment.  The 2,466 km2
-with no selected public point cloud cannot be filled without new acquisition.
+with no selected public point cloud has no model surface.
 
 Reproduction
 ------------

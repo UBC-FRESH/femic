@@ -50,7 +50,9 @@ def main():
     row=np.floor((bounds.top-feat.y_center.to_numpy())/25).astype(np.int32)
     ok=(col>=0)&(col<shape[1])&(row>=0)&(row<shape[0]); feat=feat.loc[ok].copy(); col=col[ok]; row=row[ok]
     # default processed cells with features are status 3; valid BA/volume status 4
-    status[row,col]=3
+    status[row,col]=2
+    has_height=feat.lorey_height_m.notna()
+    status[row[has_height],col[has_height]]=3
     valid=feat.ba_m2_ha.notna() & feat.vol_m3_ha.notna()
     status[row[valid],col[valid]]=4
     ba_out=(feat.Lhmean.notna() & (~feat.Lhmean.between(5.8017,14.1882))) | (feat.CC2m.notna() & (~feat.CC2m.between(56.3442,86.3423)))

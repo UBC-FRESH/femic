@@ -1,0 +1,32 @@
+{
+  "feature_cells": 9523476,
+  "attributes": {
+    "ba_m2_ha": {
+      "cells": 7479672,
+      "mean": 23.832982954178835,
+      "median": 23.249316951569835,
+      "min": 13.45186591702509,
+      "max": 44.29991047008669,
+      "rmse": 6.670113943696672,
+      "model_id": "tsa23-idf-basal_area-regional-2026c"
+    },
+    "lorey_height_m": {
+      "cells": 6573196,
+      "mean": 16.093222674940737,
+      "median": 16.182705351606494,
+      "min": 9.919391999412333,
+      "max": 22.02846448032104,
+      "rmse": 0.688,
+      "model_id": "tsa23-idf-lorey_height-2026"
+    },
+    "vol_m3_ha": {
+      "cells": 4745557,
+      "mean": 167.8135393828645,
+      "median": 153.43585102873453,
+      "min": 56.6616848207292,
+      "max": 511.54213684041537,
+      "rmse": 42.484139127608564,
+      "model_id": "tsa23-idf-gross_volume-regional-2026c"
+    }
+  }
+}
