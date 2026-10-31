@@ -89,9 +89,11 @@ python examples/inv01_tsa23_validation/build_status_mask.py \
 ```
 
 See `notes/reports/inv01-tsa23-model-status.md` and
-`notes/reports/inv01-tsa23-regional-inventory.md`.  Apply the experimental
-regional BA/volume cards with `apply_regional_inventory.py` and build the
-regional status mask with `build_status_mask_regional.py`.
+`notes/reports/inv01-tsa23-regional-inventory.md`.  The experimental regional
+BA/volume cards live in the public TSA23 instance at
+`config/inventory/models/experimental/`; apply them with the standard
+`femic lidar inventory` command using an explicit `--features` table.  Build
+the regional status mask with `build_status_mask_regional.py`.
 
 ## Figures
 
