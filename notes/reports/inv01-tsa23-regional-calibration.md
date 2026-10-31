@@ -8,7 +8,7 @@ clouds** (TSAs 2, 5, 9, 18, 22, 23, 29).  Of those, 24 produced usable
 first-return features; 19 non-TSA-23 plots supplement the 14 TSA 23 training
 plots.  The four TSA 23 high-biomass plots remain the external check.
 
-Uses the existing open PSP and LidarBC data.
+No new field data and no acquisition gate were used.
 
 ## Data
 
@@ -80,7 +80,7 @@ in ``examples/inv01_tsa23_validation/apply_regional_inventory.py``.
 - Keep the current height card; the regional height fit is worse.
 - Treat the regional **BA and volume** candidates as experimental; both improve
 the four-plot external check but are selected on a small clustered test.
-- The data support continued model development.
+- The data are sufficient to continue model development now; no acquisition gate.
 - Next: refit/evaluate BA and volume on more TSA 23 high-biomass tiles and publish
   the candidate cards as experimental, not operational.
 
@@ -90,3 +90,18 @@ the four-plot external check but are selected on a small clustered test.
 - `notes/reports/inv01-tsa23-regional-features.csv`
 - `notes/reports/inv01-tsa23-regional-refit.json`
 - data root: `/srv/shared-data/gep/ws4/tmp/inv01-data/psp/`
+
+## Nonlinear volume candidate
+
+A second-order polynomial in `log(Lhmean)` and `log(CC2m)` improves the
+leave-one-TSA-out average volume RMSE to about **35.5-40.3 m3/ha**, versus
+**51.7** for the linear volume candidate.  Its four-plot TSA 23 external RMSE is
+**42.09 m3/ha**, essentially flat versus the linear candidate's 42.48.
+
+The full grid uses the same 4,745,557 volume cells; mean volume is **170.84
+m3/ha** versus 167.81 for the linear candidate.  Coverage and status are
+unchanged.
+
+The nonlinear spec is experimental and not a standard `femic.inventory.als`
+card because FEMIC's current reader only supports linear predictors.  It is
+packaged under `experiments/inv01-regional-calibration/nonlinear_volume/`.

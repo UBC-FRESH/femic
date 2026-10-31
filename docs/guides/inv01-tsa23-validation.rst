@@ -210,6 +210,11 @@ the cards are packaged as an experimental model bundle, not operational cards.
 Details: ``notes/reports/inv01-tsa23-regional-calibration.md`` and
 ``experiments/inv01-regional-calibration/model_bundle/``.
 
+A second-order polynomial volume model improves leave-one-TSA-out average RMSE
+to about 35.5-40.3 m3/ha, but the four-plot TSA 23 external RMSE stays around
+42.  It is packaged as a non-standard experimental spec under
+``experiments/inv01-regional-calibration/nonlinear_volume/``.
+
 Omitted-tile gap
 ----------------
 
