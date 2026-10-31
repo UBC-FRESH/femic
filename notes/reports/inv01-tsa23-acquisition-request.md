@@ -73,5 +73,6 @@ can.
 
 ## Status
 
-Requested, not yet acquired.  Do not represent the current surface as an
-operational inventory in the meantime.
+Requested, not yet acquired.  The sender-ready package is in
+`notes/reports/inv01-tsa23-acquisition-bundle/`.  Do not represent the current
+surface as an operational inventory in the meantime.

@@ -211,8 +211,10 @@ The archive has no additional TSA 23 high-biomass plots with LidarBC support.
 The concrete acquisition request is in
 ``notes/reports/inv01-tsa23-acquisition-request.md``: current remeasurement plus
 co-located lidar for `4033798`, the ten older high-biomass sites, and a target of
-20-30 high-biomass TSA 23 plots.  TSA 22 remains transfer-test-only; TSA 29 is
-an exploratory comparison.
+20-30 high-biomass TSA 23 plots.  A sender-ready package with targets, GeoJSON,
+map, and checksums is in
+``notes/reports/inv01-tsa23-acquisition-bundle/``.  TSA 22 remains
+transfer-test-only; TSA 29 is an exploratory comparison.
 
 Omitted-tile gap
 ----------------
