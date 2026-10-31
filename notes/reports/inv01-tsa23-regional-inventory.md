@@ -57,3 +57,9 @@ also improves BA, but it still has a narrow spatial holdout.
 The experimental polynomial volume model keeps the same coverage:
 4,745,557 volume cells, joint BA/volume 4,660,847 cells, 23.6% of the TSA.  Mean
 volume is 170.84 m3/ha.  It does not change the status mask.
+
+## Hybrid bundle
+
+The paired hybrid (linear BA + nonlinear volume) keeps the same full-grid
+coverage: 4,745,557 volume cells, 4,660,847 joint BA/volume cells, 23.6% of TSA
+23.  Mean volume is 170.84 m3/ha.  Status is unchanged.

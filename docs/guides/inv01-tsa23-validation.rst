@@ -213,7 +213,11 @@ Details: ``notes/reports/inv01-tsa23-regional-calibration.md`` and
 A second-order polynomial volume model improves leave-one-TSA-out average RMSE
 to about 35.5-40.3 m3/ha, but the four-plot TSA 23 external RMSE stays around
 42.  It is packaged as a non-standard experimental spec under
-``experiments/inv01-regional-calibration/nonlinear_volume/``.
+``experiments/inv01-regional-calibration/nonlinear_volume/``.  The combined
+hybrid bundle is ``experiments/inv01-regional-calibration/hybrid_bundle/``:
+linear BA plus nonlinear volume plus the current height card.  Its paired
+external check is BA RMSE 6.670 and volume RMSE 42.092; cross-region volume RMSE
+ranges from 3.6 to 67.1 m3/ha.
 
 Omitted-tile gap
 ----------------

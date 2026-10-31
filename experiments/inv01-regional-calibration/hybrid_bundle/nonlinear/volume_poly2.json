@@ -1,0 +1,31 @@
+{
+  "form": "poly2 log-volume on log Lhmean/log CC2m with ridge alpha 0.01",
+  "coefficients": [
+    0.07429605201666298,
+    1.7832630159186456,
+    -0.08540645303668166,
+    -0.8288729364991914,
+    -0.1521328079684274,
+    0.8461051735697148
+  ],
+  "terms": [
+    "intercept",
+    "log_Lhmean",
+    "log_CC2m",
+    "log_Lhmean2",
+    "log_CC2m2",
+    "log_Lhmean_log_CC2m"
+  ],
+  "external_rmse": 42.091687986591204,
+  "external_bias": -9.648619326375531,
+  "range": {
+    "Lhmean": [
+      5.801686747716177,
+      25.317137829501903
+    ],
+    "CC2m": [
+      52.03292933912646,
+      94.42973465436738
+    ]
+  }
+}
