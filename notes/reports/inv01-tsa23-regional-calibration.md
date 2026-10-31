@@ -72,8 +72,10 @@ regions, so the candidate is a real step, not a finished operational model.
 The experimental cards are packaged at
 ``experiments/inv01-regional-calibration/model_bundle/`` with a manifest,
 checksums, candidate metrics, and the cross-region CV.  They load through
-``femic.lidar.inventory.load_inventory_als_model``.  The full-grid application is
-in ``examples/inv01_tsa23_validation/apply_regional_inventory.py``.
+``femic.lidar.inventory.load_inventory_als_model`` and run through the standard
+``femic lidar inventory`` command with an explicit feature table.  The public
+instance default experimental root is
+``config/inventory/models/experimental/``.
 
 ## Decision
 
