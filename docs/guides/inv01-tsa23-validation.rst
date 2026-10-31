@@ -204,9 +204,11 @@ features; 19 non-TSA-23 plots supplement the 14 TSA 23 training plots.
 
 The regional high-biomass set fixes the volume extrapolation on the four TSA 23
 plots and improves BA (RMSE 8.351 -> 6.670), but height gets worse.  The BA and
-volume candidates are experimental; the current height card stays.  This is an
-open-data model-development path.  Details:
-``notes/reports/inv01-tsa23-regional-calibration.md``.
+volume candidates are experimental; the current height card stays.  A
+leave-one-TSA-out check is mixed (volume RMSE 16-101 m3/ha across regions), so
+the cards are packaged as an experimental model bundle, not operational cards.
+Details: ``notes/reports/inv01-tsa23-regional-calibration.md`` and
+``experiments/inv01-regional-calibration/model_bundle/``.
 
 Omitted-tile gap
 ----------------

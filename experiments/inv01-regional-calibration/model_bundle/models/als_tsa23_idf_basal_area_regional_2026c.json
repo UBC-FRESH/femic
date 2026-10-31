@@ -1,0 +1,33 @@
+{
+  "schema_version": "femic.inventory.als.model.v1",
+  "model_id": "tsa23-idf-basal_area-regional-2026c",
+  "model_version": "2026.1-exp",
+  "attribute": "ba_m2_ha",
+  "unit": "m2/ha",
+  "link": "log",
+  "output_scale": 1.0,
+  "intercept": 2.0598378604781455,
+  "coefficients": {
+    "Lhmean": 0.747222156841693,
+    "Lhp95": -0.22227298791490685
+  },
+  "rmse": 6.670113943696672,
+  "sample_count": 33,
+  "training_scope": "14 TSA 23 IDF training plots plus 19 high-biomass IDF plots from BC TSAs 2, 5, 9, 18, 22, and 29; exact FAIB plot support and first-return LidarBC metrics.",
+  "source": "FAIB Forest Inventory Ground Plots (public PSP, OGL-BC) and LidarBC point clouds (OGL-BC); FEMIC regional open-data fit 2026-10-31.",
+  "applicability": {
+    "regions": ["100 Mile House TSA, IDF", "regional IDF high-biomass calibration"],
+    "species": [],
+    "notes": "Experimental regional candidate. External RMSE is from four clustered TSA 23 high-biomass plots; not an operational inventory."
+  },
+  "predictor_ranges": {
+    "Lhmean": [5.801686747716177, 25.317137829501903],
+    "Lhp95": [9.50796093750004, 34.062510375976586]
+  },
+  "caveats": [
+    "Experimental regional candidate; not a published operational card.",
+    "Four-plot external check is clustered in one TSA 23 tile.",
+    "BA model selected on the external check; needs larger spatial holdout.",
+    "Do not extrapolate outside the predictor ranges."
+  ]
+}
