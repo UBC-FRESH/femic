@@ -224,8 +224,10 @@ reproduces the script-generated BA and volume surfaces; see
 instance's default experimental inventory root.  It raises joint BA/volume
 coverage from 14.9% to 23.6%; current/hybrid overlap differences are BA RMSE
 4.66 m2/ha and volume RMSE 12.45 m3/ha.  Published cards stay unchanged and the
-hybrid remains non-operational.  See
-``notes/reports/inv01-tsa23-hybrid-vs-current.md``.
+hybrid remains non-operational.  A leave-one-TSA23-tile-out check gives BA RMSE
+6.188 m2/ha and volume RMSE 25.473 m3/ha across 18 plots; see
+``notes/reports/inv01-tsa23-hybrid-vs-current.md`` and
+``notes/reports/inv01-tsa23-spatial-holdout.md``.
 
 Omitted-tile gap
 ----------------
