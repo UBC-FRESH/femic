@@ -89,3 +89,4 @@ and intercept together and use a proper spatial holdout.
 - `notes/reports/inv01-tsa23-high-biomass-features.csv`
 - `notes/reports/inv01-tsa23-high-biomass-refit.json`
 - `notes/reports/inv01-tsa23-high-biomass-acquisition-targets.md`
+- `notes/reports/inv01-tsa23-regional-calibration.md`
