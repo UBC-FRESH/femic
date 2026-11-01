@@ -48,7 +48,7 @@
       94.42973465436738
     ]
   },
-  "rmse": 42.091687986591204,
+  "rmse": 62.92616900662224,
   "sample_count": 33,
   "training_scope": "14 TSA 23 IDF training plots plus 19 regional high-biomass IDF plots; second-order log-volume terms.",
   "source": "FAIB PSP (OGL-BC) and LidarBC (OGL-BC); FEMIC regional nonlinear fit 2026-10-31.",
@@ -58,12 +58,13 @@
       "regional IDF high-biomass calibration"
     ],
     "species": [],
-    "notes": "Experimental nonlinear volume candidate; TSA23 external check four clustered plots."
+    "notes": "Experimental nonlinear volume candidate. Independent BC IDF check: 44 in-range plots, volume RMSE 62.93 m3/ha. Four-plot TSA 23 high-biomass external check was 42.09. No independent TSA 23 plot falls inside the volume predictor range. Not operational."
   },
   "caveats": [
     "Experimental nonlinear model; not operational.",
-    "External RMSE is four clustered TSA23 plots.",
-    "Cross-region volume transfer is mixed.",
-    "Do not extrapolate outside predictor ranges."
+    "Four-plot high-biomass external check is not the full validation set.",
+    "Independent BC IDF check has 44 in-range plots, volume RMSE 62.93 m3/ha.",
+    "No independent TSA 23 volume plot is inside the predictor range; do not extrapolate.",
+    "Cross-region volume transfer is mixed."
   ]
 }
