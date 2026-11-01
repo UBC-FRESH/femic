@@ -4301,7 +4301,7 @@ compliant.
 
 Parent issue: #539
 Branch: `feature/p121-ba-only-release`
-Status: pr-open
+Status: complete
 
 Goal: package the BA-only TSA 23 pilot release from existing artifacts and
 correct the P120 closeout record.
