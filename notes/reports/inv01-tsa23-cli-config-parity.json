@@ -9,14 +9,17 @@
     "path": "config/inventory/experimental.yaml"
   },
   "sha256": {
-    "config_ba": "d7f7a8a40f8426144de6ffb79e027d09369859e5443f2e42ea578f800096ce07",
-    "explicit_ba": "d7f7a8a40f8426144de6ffb79e027d09369859e5443f2e42ea578f800096ce07",
-    "config_volume": "fd9bf1df240025e0c2777fae6efdfd084c89827833d5330a402f4f95d8d0dab0",
-    "explicit_volume": "fd9bf1df240025e0c2777fae6efdfd084c89827833d5330a402f4f95d8d0dab0"
+    "config_ba": "84926074aa5102b1a61c2eab75bb14991ed53b63fc46ba8752e5fb3769ef4e63",
+    "config_volume": "1f8f4894a5d1422f5c1d5337805dd3cbc75f077bede8d54b950ce0a24d7d09bb"
   },
   "byte_identical": {
+    "ba": false,
+    "volume": false
+  },
+  "generated_utc": "2026-10-31T00:00:00Z",
+  "prediction_columns_identical": {
     "ba": true,
     "volume": true
   },
-  "generated_utc": "2026-10-31T00:00:00Z"
+  "note": "RMSE metadata corrected after independent BC IDF validation; prediction values unchanged."
 }
