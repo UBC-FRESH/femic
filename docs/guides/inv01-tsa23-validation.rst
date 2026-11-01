@@ -240,6 +240,15 @@ independent TSA 23 volume plot is inside the predictor range.  The four-plot
 high-biomass check was therefore not representative.  See
 ``notes/reports/inv01-tsa23-bc-validation.md``.
 
+A refit experiment selected candidates by leave-one-TSA-out CV on 31
+development plots.  The selected BA form does not improve on the fixed hybrid
+(8.05 vs 7.93 all independent rows; 8.10 vs 8.02 in-domain).  The selected
+volume form improves independent in-domain RMSE from 62.93 to 52.06 m3/ha (42
+rows), but no independent TSA 23 volume plot is inside its range and 52 m3/ha is
+still too large for an operational product.  Neither refit is promoted; keep
+abstention outside the development ranges.  See
+``notes/reports/inv01-tsa23-refit-applicability.md``.
+
 Omitted-tile gap
 ----------------
 
