@@ -242,8 +242,11 @@ not representative.  See ``notes/reports/inv01-tsa23-bc-validation.md``.
 
 A 435-plot time-lag sensitivity adds the older covered plots.  Volume error
 rises from 67.02 m3/ha at 0-5 years to 99.06 at 21-30 years and 116.44 beyond
-30 years; this is sensitivity evidence, not current-condition validation.  See
-``notes/reports/inv01-tsa23-time-lag.md``.
+30 years; this is sensitivity evidence, not current-condition validation.  A
+time-aware refit on 431 development plots improves pooled strict-test error
+(BA 7.92, volume 62.67) but is worse on TSA 23 (BA 11.50, volume 93.86); it is
+not promoted.  See ``notes/reports/inv01-tsa23-time-lag.md`` and
+``notes/reports/inv01-tsa23-time-aware-refit.md``.
 
 A refit experiment selected candidates by leave-one-TSA-out CV on 31
 development plots.  The selected BA form does not improve on the fixed hybrid
