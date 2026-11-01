@@ -16353,3 +16353,15 @@ PYTHONPATH=src python -m femic.site_index \
 - Recorded row/pixel counts, 14.9% coverage, SHA-256, and source/config hashes in
   `metadata/inv01/tsa23_ba_pilot_manifest.json`.
 - The release remains a pilot; height and volume are research-only.
+
+## 2026-11-01 - P122.1 BA-only pilot acceptance
+
+- Verified the BA-only table and raster: 2,942,755 rows and valid pixels; 25 m
+  EPSG:3157; `-9999` nodata; BA mean 23.87 m2/ha; table/raster means match.
+- Accepted the product as experimental, not operational: 14.9% TSA coverage,
+  strict BA RMSE 8.86 m2/ha, and only 7 independent TSA 23 plots.
+- Recorded consumer rules and VRI/THLB status as not computed because the
+  instance annex geometry is not materialized.
+- Added `notes/reports/inv01-tsa23-ba-pilot-acceptance.md` and
+  `metadata/inv01/tsa23_ba_pilot_acceptance.json`.
+- No model fitting, height/volume release, or operational claim.

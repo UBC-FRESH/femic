@@ -241,7 +241,11 @@ config or an explicit card path.  See
 The BA-only pilot release is documented in
 ``notes/reports/inv01-tsa23-ba-pilot-release.md`` with the manifest at
 ``metadata/inv01/tsa23_ba_pilot_manifest.json``.  It has 2,942,755 rows and
-pixels, 14.9% TSA BA coverage, and is explicitly non-operational.
+pixels, 14.9% TSA BA coverage, and is explicitly non-operational.  The
+acceptance check is in
+``notes/reports/inv01-tsa23-ba-pilot-acceptance.md``: the product is accepted as
+experimental and rejected for operational use; VRI/THLB coverage is not inferred
+because those instance geometry layers are not materialized.
 
 A larger independent BC IDF check is less optimistic.  969 latest IDF PSP
 plots exist; 573 have LidarBC point-cloud and DEM coverage, and 111 have ground
