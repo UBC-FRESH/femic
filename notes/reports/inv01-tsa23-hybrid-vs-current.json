@@ -55,5 +55,6 @@
       "cells": 0
     }
   },
-  "decision": "hybrid is the default experimental inventory root; published cards unchanged; not operational"
+  "decision": "research-only; not the instance default; published cards remain published; not operational",
+  "superseded_by": "notes/reports/inv01-tsa23-bc-validation.md"
 }

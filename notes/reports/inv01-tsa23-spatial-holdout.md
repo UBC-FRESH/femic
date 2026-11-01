@@ -37,6 +37,6 @@ inventory, not an operational one.
 
 ## Decision
 
-Keep the hybrid as the instance experimental root.  Do not relabel it
-operational.  The next evidence needed is an independent multi-tile high-biomass
-set, not more refitting of the same 18 plots.
+Keep the hybrid as research-only.  It is not the instance default; the expanded
+independent BC IDF check supersedes this small holdout as the validation
+evidence.  See ``notes/reports/inv01-tsa23-bc-validation.md``.
