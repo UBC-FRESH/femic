@@ -1,0 +1,62 @@
+{
+  "schema_version": "femic.inventory.ba_pilot.acceptance.v1",
+  "product": "TSA23 IDF BA-only pilot",
+  "decision": "accept-experimental",
+  "operational": false,
+  "table": {
+    "path": "inv01_tsa23/inventory_ba_pilot.parquet",
+    "rows": 2942755,
+    "schema": ["fragment_id", "attribute", "value", "model_id", "rmse", "model_version", "unit", "source"],
+    "attribute": "ba_m2_ha",
+    "model_id": "tsa23-idf-ba-2026",
+    "min": 10.727730992400314,
+    "max": 42.01152455448009,
+    "mean": 23.867607932811104,
+    "sha256": "800692bb763a685b2b5107e17c8c77f1805e8fb4deb78da22f465b89609cd43f"
+  },
+  "raster": {
+    "path": "inv01_tsa23/tsa23_ba_pilot_25m.tif",
+    "bands": 1,
+    "description": "basal_area_m2_ha",
+    "crs": "EPSG:3157",
+    "resolution_m": 25,
+    "nodata": -9999.0,
+    "valid_pixels": 2942755,
+    "total_pixels": 31465158,
+    "min": 10.727730751037598,
+    "max": 42.01152420043945,
+    "mean": 23.867607055293423,
+    "sha256": "c0bb6905d2cb7448c30e0ee69d1964380677b8012d13bc471aed61c9b576e862"
+  },
+  "coverage": {
+    "tsa_area_km2": 12348.028125,
+    "tsa_ba_coverage_share": 0.14894863020892252,
+    "full_raster_coverage_share": 0.09352424036771086,
+    "note": "The raster extends outside TSA 23; the TSA share is the product coverage."
+  },
+  "validation": {
+    "strict_independent_plots": 38,
+    "ba_in_range_plots": 36,
+    "ba_rmse_m2_ha": 8.861986475491992,
+    "tsa23_independent_plots": 7,
+    "tsa23_ba_rmse_m2_ha": 15.024349406047058
+  },
+  "consumer_rules": [
+    "Use only valid raster pixels or BA table rows; -9999 is nodata/abstention.",
+    "Do not use height or volume from this product; they are not included.",
+    "Do not extrapolate outside the BA card predictor range.",
+    "Do not use for operational TSA 23 decisions.",
+    "Keep the 25 m EPSG:3157 native grid; do not silently reproject."
+  ],
+  "vri_thlb": {
+    "status": "not computed",
+    "reason": "VRI/THLB geometry is not materialized in the instance annex checkout; coverage of those masks is not inferred."
+  },
+  "manifest": "metadata/inv01/tsa23_ba_pilot_manifest.json",
+  "checked": {
+    "rows_equal_valid_pixels": true,
+    "table_and_raster_mean_match": true,
+    "hashes_match_manifest": true,
+    "default_config_is_ba_only": true
+  }
+}

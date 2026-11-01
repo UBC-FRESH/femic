@@ -4330,3 +4330,34 @@ issues; BA-only products have checksums, row/pixel counts, and 14.9% coverage;
 no extrapolation; tests and Sphinx pass; phase PR is open for approval.
 
 Detailed plan: `planning/phase121_ba_only_release.md`.
+
+## Phase 122: BA-only Pilot Acceptance
+
+Parent issue: #542
+Branch: `feature/p122-ba-pilot-acceptance`
+Status: complete
+
+Goal: verify that the BA-only pilot is consumer-ready and record an accept/reject
+decision with explicit limits.
+
+Scope: verify table/raster schema, CRS, nodata, row/pixel identity, values, and
+hashes; record the strict BA validation; write a consumer note; record VRI/THLB
+as unavailable rather than inferring it; recommend experimental acceptance or
+rejection.
+
+Out of scope: model fitting, height/volume release, operational claims,
+VRI/THLB acquisition, tags or releases.
+
+Tasks:
+
+- [x] P122.1 Verify consumer readiness and accept or reject (`#543`).
+  - [x] Verify table and raster readability and schema.
+  - [x] Verify row/pixel and value identity.
+  - [x] Write the consumer acceptance note and machine-readable summary.
+  - [x] Update docs, roadmap, changelog, and public instance.
+  - [x] Run gates and open the phase PR.
+
+Acceptance: reader checks pass; consumer note states coverage, error, and
+exclusions; decision is recorded; tests and Sphinx pass; phase PR is open.
+
+Detailed plan: `planning/phase122_ba_pilot_acceptance.md`.
