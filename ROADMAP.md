@@ -4259,7 +4259,7 @@ Detailed contract: `docs/reference/contracts/site-index-reconciliation.rst`.
 
 Parent issue: #536
 Branch: `feature/p120-inv01-inventory`
-Status: active
+Status: pr-open
 
 Goal: close the INV-01 TSA 23 LiDAR inventory work with a default product that
 only contains attributes supported by independent validation, and with an
@@ -4278,13 +4278,13 @@ configuration and documentation.
 
 Tasks:
 
-- [ ] P120.1 Validate height and finalize the default product (`#537`).
-  - [ ] Extract height observations.
-  - [ ] Evaluate the strict 38-plot and 435-plot time-lag sets.
-  - [ ] Set the default product to BA only.
-  - [ ] Update docs, roadmap, changelog, and public instance.
-  - [ ] Run the repository gates and default-config smoke test.
-  - [ ] Open the phase pull request for approval.
+- [x] P120.1 Validate height and finalize the default product (`#537`).
+  - [x] Extract height observations.
+  - [x] Evaluate the strict 38-plot and 435-plot time-lag sets.
+  - [x] Set the default product to BA only.
+  - [x] Update docs, roadmap, changelog, and public instance.
+  - [x] Run the repository gates and default-config smoke test.
+  - [x] Open the phase pull request for approval.
 
 Acceptance: height strict/time-lag evaluation is recorded with in-range counts;
 the default config is BA-only and resolves through `--model-key ba`; volume and
