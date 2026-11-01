@@ -230,10 +230,13 @@ BA RMSE 6.188 m2/ha and volume RMSE 25.473 m3/ha across 18 plots; see
 ``notes/reports/inv01-tsa23-hybrid-vs-current.md`` and
 ``notes/reports/inv01-tsa23-spatial-holdout.md``.
 
-The instance default config is height plus BA only.  Volume is withheld from
-the default product because the strict independent volume error is 67.02 m3/ha
-and the time-aware TSA 23 volume error is 93.86 m3/ha; it remains available
-through the experimental config or an explicit card path.
+The instance default config is BA only.  Height is withheld after independent
+validation gave strict RMSE 2.54 m (19 in-range plots) and TSA 23 strict RMSE
+4.18 m (6 plots), versus the 0.688 m pilot LOOCV.  Volume is withheld because
+the strict independent volume error is 67.02 m3/ha and the time-aware TSA 23
+volume error is 93.86 m3/ha.  Both remain available through the experimental
+config or an explicit card path.  See
+``notes/reports/inv01-tsa23-height-validation.md``.
 
 A larger independent BC IDF check is less optimistic.  969 latest IDF PSP
 plots exist; 573 have LidarBC point-cloud and DEM coverage, and 111 have ground
