@@ -74,8 +74,9 @@ The experimental cards are packaged at
 checksums, candidate metrics, and the cross-region CV.  They load through
 ``femic.lidar.inventory.load_inventory_als_model`` and run through the standard
 ``femic lidar inventory`` command with an explicit feature table.  The public
-instance default experimental root is
-``config/inventory/models/experimental/``.
+instance research-only experimental root is
+``config/inventory/models/experimental/``.  The instance default is
+``config/inventory/default.yaml``.
 
 ## Decision
 

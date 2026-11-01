@@ -30,8 +30,11 @@ mean is 17.35 m2/ha.  The volume candidate covers every current volume cell.
 
 ## Decision
 
-The hybrid bundle is now the **default experimental inventory root** for the
-TSA 23 instance:
+The hybrid bundle was initially promoted as the default experimental root.  The
+expanded independent BC IDF validation superseded that decision: it is now
+**research-only**, not the instance default.  The default is
+``config/inventory/default.yaml``, which points at the published TSA 23 pilot
+cards.  The research config is:
 
 ```text
 config/inventory/experimental.yaml
@@ -40,8 +43,9 @@ config/inventory/models/experimental/
 
 It materially expands BA/volume coverage and produces a higher mean volume on
 the newly covered high-biomass cells.  It does **not** replace the published
-cards or become an operational inventory: the external check is four clustered
-plots and cross-region volume RMSE remains 16-67 m3/ha.
+cards or become an operational inventory.  The independent 56-plot check gives
+BA RMSE 8.02 m2/ha and volume RMSE 62.93 m3/ha; see
+``notes/reports/inv01-tsa23-bc-validation.md``.
 
 Height remains on the current card.  The published TSA 23 cards remain
 unchanged.
