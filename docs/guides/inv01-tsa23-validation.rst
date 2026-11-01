@@ -232,13 +232,18 @@ BA RMSE 6.188 m2/ha and volume RMSE 25.473 m3/ha across 18 plots; see
 
 A larger independent BC IDF check is less optimistic.  969 latest IDF PSP
 plots exist; 573 have LidarBC point-cloud and DEM coverage, and 111 have ground
-measurements within five years.  88 plots yield usable features, of which 56
-are independent of training, high-biomass, and original external plots.  The
-fixed hybrid cards give BA RMSE 8.02 m2/ha (54 in range) and volume RMSE 62.93
-m3/ha (44 in range).  The seven independent TSA 23 plots give BA RMSE 15.02; no
-independent TSA 23 volume plot is inside the predictor range.  The four-plot
-high-biomass check was therefore not representative.  See
-``notes/reports/inv01-tsa23-bc-validation.md``.
+measurements within five years.  88 plots yield usable features; 70 stay within
+five years, while 18 used 6-11 year fallback tiles.  The strict independent set
+is 38 plots, with BA RMSE 8.86 m2/ha (36 in range) and volume RMSE 67.02 m3/ha
+(28 in range).  The 56-plot expanded set is 8.02 and 62.93.  The seven
+independent TSA 23 plots give BA RMSE 15.02; no independent TSA 23 volume plot
+is inside the predictor range.  The four-plot high-biomass check was therefore
+not representative.  See ``notes/reports/inv01-tsa23-bc-validation.md``.
+
+A 435-plot time-lag sensitivity adds the older covered plots.  Volume error
+rises from 67.02 m3/ha at 0-5 years to 99.06 at 21-30 years and 116.44 beyond
+30 years; this is sensitivity evidence, not current-condition validation.  See
+``notes/reports/inv01-tsa23-time-lag.md``.
 
 A refit experiment selected candidates by leave-one-TSA-out CV on 31
 development plots.  The selected BA form does not improve on the fixed hybrid

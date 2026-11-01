@@ -14,8 +14,11 @@ plot to the LidarBC point-cloud and DEM index gives:
 - **111** plots with the latest ground measurement within five years of the
   selected LiDAR
 - **88** plots with usable first-return metrics after DEM nodata screening
-- **56** of those are independent of the 14 TSA 23 training plots, the 24
-  regional high-biomass plots, and the four original external plots
+- **70** of those stayed within five years; **18** used fallback tiles at 6-11
+  years
+- **38** strict independent plots after removing training, high-biomass, and
+  external plots
+- **56** recent independent plots including the 18 fallback tiles
 - **25** TSA 23 plots are within five years; **7** are independent
 
 The remaining 462 covered plots have ground measurements 6-55 years away from
@@ -34,17 +37,25 @@ current-condition validation.
 
 ## Results
 
-### Independent plots
+### Strict independent plots (0-5 years)
 
-| Card | Attribute | In-range plots | Bias | MAE | RMSE | R2 |
-| --- | --- | ---: | ---: | ---: | ---: | ---: |
-| Experimental hybrid | BA | 54 | 1.29 m2/ha | 6.23 | **8.02** | 0.57 |
-| Experimental hybrid | Volume | 44 | -10.35 m3/ha | 50.81 | **62.93** | 0.58 |
-| Published TSA 23 | BA | 10 | 3.62 m2/ha | 8.28 | 9.89 | |
-| Published TSA 23 | Volume | 10 | 33.48 m3/ha | 60.61 | 74.74 | |
+| Card | Attribute | In-range plots | Bias | MAE | RMSE |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Experimental hybrid | BA | 36 | 2.69 m2/ha | 6.78 | **8.86** |
+| Experimental hybrid | Volume | 28 | -2.20 m3/ha | 53.26 | **67.02** |
+| Published TSA 23 | BA | 10 | 3.62 m2/ha | 8.28 | 9.89 |
+| Published TSA 23 | Volume | 10 | 33.48 m3/ha | 60.61 | 74.74 |
+
+### Recent expanded (56 plots, includes 6-11 year fallback)
+
+| Card | Attribute | In-range plots | RMSE |
+| --- | --- | ---: | ---: |
+| Experimental hybrid | BA | 54 | 8.02 |
+| Experimental hybrid | Volume | 44 | 62.93 |
 
 The original four-plot external check was BA RMSE 6.67 and volume RMSE 42.09.
-The larger independent set is materially worse, especially for volume.
+The strict set is worse than the expanded set, and both are worse than the four
+external plots.
 
 ### Independent errors by TSA
 
@@ -69,7 +80,9 @@ The 25 TSA 23 plots within five years, including training and external plots:
 - Published cards: BA RMSE 2.82 (11 in range), volume RMSE 22.76 (11 in range)
 
 The published cards look better on the small in-range TSA 23 subset.  The hybrid
-does not justify replacing them.
+does not justify replacing them.  The strict 0-5 year set is 38 plots; the
+56-plot expanded set and the 435-plot lag sensitivity are not current-condition
+validation.
 
 ## Decision
 
