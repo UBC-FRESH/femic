@@ -238,6 +238,11 @@ volume error is 93.86 m3/ha.  Both remain available through the experimental
 config or an explicit card path.  See
 ``notes/reports/inv01-tsa23-height-validation.md``.
 
+The BA-only pilot release is documented in
+``notes/reports/inv01-tsa23-ba-pilot-release.md`` with the manifest at
+``metadata/inv01/tsa23_ba_pilot_manifest.json``.  It has 2,942,755 rows and
+pixels, 14.9% TSA BA coverage, and is explicitly non-operational.
+
 A larger independent BC IDF check is less optimistic.  969 latest IDF PSP
 plots exist; 573 have LidarBC point-cloud and DEM coverage, and 111 have ground
 measurements within five years.  88 plots yield usable features; 70 stay within

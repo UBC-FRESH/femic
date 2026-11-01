@@ -16343,3 +16343,13 @@ PYTHONPATH=src python -m femic.site_index \
   explicit card or research config.
 - Prior INV-01 branches and merged PRs predate P120 and are recorded as a
   workflow deviation in the closeout.
+
+## 2026-11-01 - P121.1 BA-only TSA 23 pilot release
+
+- Corrected the P120 closeout to record the merged phase PR `98fe2c6`, instance
+  PR `3b4f58a`, green CI, and closed issues #536/#537.
+- Generated BA-only release artifacts from the existing full-grid run, without
+  refitting or extrapolating: a BA long table and a 25 m BA raster.
+- Recorded row/pixel counts, 14.9% coverage, SHA-256, and source/config hashes in
+  `metadata/inv01/tsa23_ba_pilot_manifest.json`.
+- The release remains a pilot; height and volume are research-only.

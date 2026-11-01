@@ -4,17 +4,18 @@
 
 Phase: P120
 Parent issue: #536
-Pull request: https://github.com/UBC-FRESH/femic/pull/538 (draft)
-Evidence head: `bc217d4` on `feature/p120-inv01-inventory` (report-only follow-ups may add commits)
+Pull request: https://github.com/UBC-FRESH/femic/pull/538 (merged)
+Evidence head: `f08d0b8` on `feature/p120-inv01-inventory`
+Merge commit: `98fe2c6`
 Report date: 2026-11-01
-Status: pr-open; CI green; awaiting maintainer approval
+Status: complete; merged after maintainer approval
 
 ## Recommendation
 
-1. Approve the BA-only default product.
-2. Keep height and volume as research-only attributes with explicit card/config paths.
-3. Do not merge the phase pull request until the full repository gates are green or the maintainer explicitly accepts a documented baseline exception.
-4. After approval, merge the parent and public-instance pull requests and advance the instance pointer.
+1. The BA-only default product was approved and merged.
+2. Height and volume remain research-only attributes with explicit card/config paths.
+3. The local baseline lint/type deviation is accepted and documented; CI is green.
+4. Parent #538 and instance #46 are merged; the instance pointer is advanced.
 
 ## Objectives and acceptance
 
@@ -24,7 +25,7 @@ Status: pr-open; CI green; awaiting maintainer approval
 | Default contains only supported attributes | `config/inventory/default.yaml` contains BA only | met |
 | Public docs state coverage and limits | instance and parent docs updated on branch | met |
 | Tests, lint, types, Sphinx pass | tests, Sphinx, and CI pass; local baseline ruff/mypy remain red | met with a stated baseline limit |
-| Pull request queued for approval | parent #538; instance #46; closeout posted | met |
+| Pull request queued for approval | parent #538 merged `98fe2c6`; instance #46 merged `3b4f58a` | met |
 
 ## Workflow compliance
 
@@ -58,8 +59,8 @@ Status: pr-open; CI green; awaiting maintainer approval
 ## CI evidence
 
 Parent PR #538: `build`, `guard`, and `package-release-checks` passed; `deploy`
-skipped. Instance PR #46 has no checks configured. CI is green on the parent
-head.
+skipped. Instance PR #46 has no checks configured. Both PRs merged and issues
+#536/#537 were closed.
 
 ## Deviations and risks
 
@@ -78,6 +79,5 @@ the two pull requests.
 
 ## Decision
 
-Approve the BA-only default. The local baseline lint/type gates remain red but
-CI is green; the closeout recommends an explicit baseline waiver rather than a
-merge on a claimed green local dashboard. Do not promote volume or height.
+Approved and merged. The BA-only default is live; height and volume remain
+research-only. The local baseline lint/type deviation remains documented.

@@ -4296,3 +4296,37 @@ Detailed plan: `planning/phase120_inv01_inventory.md`.
 Prior INV-01 work merged before this phase issue existed.  The phase closeout
 records that deviation and does not present the earlier branch/history as
 compliant.
+
+## Phase 121: BA-only TSA 23 Pilot Release
+
+Parent issue: #539
+Branch: `feature/p121-ba-only-release`
+Status: complete
+
+Goal: package the BA-only TSA 23 pilot release from existing artifacts and
+correct the P120 closeout record.
+
+Scope: correct the P120 closeout; derive a BA-only table and 25 m raster from the
+existing full-grid run; record checksums, coverage, row/pixel counts, and source
+hashes; publish the release note and manifest; run gates and open the phase
+pull request.
+
+Out of scope: height or volume release, new model fitting, operational claims,
+forest-level objectives/constraints/growth/solver changes, tags or releases,
+new acquisition, or a full point-cloud rerun.
+
+Tasks:
+
+- [x] P121.1 Correct the P120 closeout and package the BA-only release (`#540`).
+  - [x] Correct the P120 closeout.
+  - [x] Generate the BA-only table and raster.
+  - [x] Verify source/BA identities and coverage.
+  - [x] Write the release manifest and validation note.
+  - [x] Update the public instance.
+  - [x] Run gates and open the phase pull request.
+
+Acceptance: P120 closeout records `98fe2c6`, instance `3b4f58a`, CI, and closed
+issues; BA-only products have checksums, row/pixel counts, and 14.9% coverage;
+no extrapolation; tests and Sphinx pass; phase PR is open for approval.
+
+Detailed plan: `planning/phase121_ba_only_release.md`.
