@@ -1,0 +1,35 @@
+{
+  "schema_version": "femic.inventory.ba_pilot.manifest.v1",
+  "product": "TSA23 IDF BA-only pilot",
+  "status": "pilot; not operational",
+  "source_full_grid": "inv01_tsa23/inventory_full.parquet",
+  "source_raster": "inv01_tsa23/tsa23_idf_full_25m.tif",
+  "ba_table": "inv01_tsa23/inventory_ba_pilot.parquet",
+  "ba_raster": "inv01_tsa23/tsa23_ba_pilot_25m.tif",
+  "rows": 2942755,
+  "raster_valid_pixels": 2942755,
+  "raster_total_pixels": 31465158,
+  "ba_mean_m2_ha": 23.86760711669922,
+  "ba_model_id": "tsa23-idf-ba-2026",
+  "ba_model_rmse": 4.414,
+  "source_full_grid_sha256": "19be051c05e839bebca9b252ba733a1300c138452a354e096892cc69182aaf03",
+  "ba_table_sha256": "800692bb763a685b2b5107e17c8c77f1805e8fb4deb78da22f465b89609cd43f",
+  "ba_raster_sha256": "c0bb6905d2cb7448c30e0ee69d1964380677b8012d13bc471aed61c9b576e862",
+  "ba_model_card_sha256": "c9d2c8de369af5cceb7070531d0e924452cab52b50de39d31dad3e831d82e5a9",
+  "default_config_sha256": "fb1fa162f92ea04dc5ddd60baf57bae7f146ba41e789f2ac8fd08eadb161caa1",
+  "validation": {
+    "strict_independent_plots": 38,
+    "ba_in_range_plots": 36,
+    "ba_rmse_m2_ha": 8.861986475491992
+  },
+  "caveats": [
+    "Pilot only; not operational.",
+    "Height and volume are not part of this product.",
+    "TSA BA coverage is 14.9% of TSA area; the raster share is 9.35% of the full raster because the raster includes areas outside TSA 23.",
+    "No out-of-range or extrapolated cells."
+  ],
+  "raster_coverage_share_of_full_grid": 0.09352424036771086,
+  "tsa_area_km2": 12348.028125,
+  "tsa_ba_coverage_share": 0.14894863020892252,
+  "ba_table_mean_m2_ha": 23.86760711669922
+}
