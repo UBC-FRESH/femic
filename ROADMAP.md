@@ -4259,7 +4259,7 @@ Detailed contract: `docs/reference/contracts/site-index-reconciliation.rst`.
 
 Parent issue: #536
 Branch: `feature/p120-inv01-inventory`
-Status: pr-open
+Status: complete
 
 Goal: close the INV-01 TSA 23 LiDAR inventory work with a default product that
 only contains attributes supported by independent validation, and with an
