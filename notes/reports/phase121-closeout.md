@@ -4,7 +4,7 @@
 
 Phase: P121
 Parent issue: #539
-Pull request: TBD
+Pull request: https://github.com/UBC-FRESH/femic/pull/541
 Evidence head: `728f69a` on `feature/p121-ba-only-release`
 Report date: 2026-11-01
 Status: pr-open; CI pending
@@ -26,7 +26,7 @@ Status: pr-open; CI pending
 | Coverage documented | 14.9% TSA area; 9.35% of full raster | met |
 | Hashes recorded | source, table, raster, model card, default config | met |
 | Tests and docs pass | 21 tests; Sphinx `-W` | met |
-| Phase PR queued | TBD | pending |
+| Phase PR queued | #541; instance #47 | met |
 
 ## Workflow compliance
 
@@ -50,7 +50,7 @@ a rewrite of the P120 history.
 
 ## CI evidence
 
-To be recorded after the phase pull request is opened.
+Parent PR #541 and instance PR #47 are open; check CI on the final head.
 
 ## Deviations and risks
 

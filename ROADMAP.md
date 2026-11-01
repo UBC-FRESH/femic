@@ -4301,7 +4301,7 @@ compliant.
 
 Parent issue: #539
 Branch: `feature/p121-ba-only-release`
-Status: active
+Status: pr-open
 
 Goal: package the BA-only TSA 23 pilot release from existing artifacts and
 correct the P120 closeout record.
@@ -4317,13 +4317,13 @@ new acquisition, or a full point-cloud rerun.
 
 Tasks:
 
-- [ ] P121.1 Correct the P120 closeout and package the BA-only release (`#540`).
-  - [ ] Correct the P120 closeout.
-  - [ ] Generate the BA-only table and raster.
-  - [ ] Verify source/BA identities and coverage.
-  - [ ] Write the release manifest and validation note.
-  - [ ] Update the public instance.
-  - [ ] Run gates and open the phase pull request.
+- [x] P121.1 Correct the P120 closeout and package the BA-only release (`#540`).
+  - [x] Correct the P120 closeout.
+  - [x] Generate the BA-only table and raster.
+  - [x] Verify source/BA identities and coverage.
+  - [x] Write the release manifest and validation note.
+  - [x] Update the public instance.
+  - [x] Run gates and open the phase pull request.
 
 Acceptance: P120 closeout records `98fe2c6`, instance `3b4f58a`, CI, and closed
 issues; BA-only products have checksums, row/pixel counts, and 14.9% coverage;
