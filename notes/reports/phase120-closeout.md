@@ -4,10 +4,10 @@
 
 Phase: P120
 Parent issue: #536
-Pull request: draft, to be opened from `feature/p120-inv01-inventory`
-Evidence head: `P120.1` commit on `feature/p120-inv01-inventory`
+Pull request: https://github.com/UBC-FRESH/femic/pull/538 (draft)
+Evidence head: `6c84405` on `feature/p120-inv01-inventory`
 Report date: 2026-11-01
-Status: blocked by baseline repository gates; do not merge without maintainer approval
+Status: blocked by baseline repository gates and pending CI; do not merge without maintainer approval
 
 ## Recommendation
 
@@ -24,7 +24,7 @@ Status: blocked by baseline repository gates; do not merge without maintainer ap
 | Default contains only supported attributes | `config/inventory/default.yaml` contains BA only | met |
 | Public docs state coverage and limits | instance and parent docs updated on branch | met |
 | Tests, lint, types, Sphinx pass | tests and Sphinx pass; ruff/mypy have baseline failures | not met |
-| Pull request queued for approval | draft to be opened | pending |
+| Pull request queued for approval | parent #538 and instance #46 are drafts | pending |
 
 ## Workflow compliance
 
@@ -32,7 +32,7 @@ Status: blocked by baseline repository gates; do not merge without maintainer ap
 - The phase branch is `feature/p120-inv01-inventory`.
 - The P120 commit starts with the task ID.
 - The roadmap and changelog were updated in the same change set.
-- The public-instance change is on a separate branch and is not merged.
+- The public-instance change is on a separate branch and is not merged: https://github.com/UBC-FRESH/femic-tsa23-instance/pull/46.
 
 ### Deviations
 
@@ -57,8 +57,9 @@ Status: blocked by baseline repository gates; do not merge without maintainer ap
 
 ## CI evidence
 
-Not run. The draft pull requests carry the branch heads; CI must be checked
-before merge.
+Parent PR #538: `guard` passed; `build` and `package-release-checks` were pending
+at the last check. The instance PR has no checks configured. CI must be
+rechecked before merge.
 
 ## Deviations and risks
 
