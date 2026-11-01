@@ -5,9 +5,9 @@
 Phase: P120
 Parent issue: #536
 Pull request: https://github.com/UBC-FRESH/femic/pull/538 (draft)
-Evidence head: `6c84405` on `feature/p120-inv01-inventory`
+Evidence head: `bc217d4` on `feature/p120-inv01-inventory` (report-only follow-ups may add commits)
 Report date: 2026-11-01
-Status: blocked by baseline repository gates and pending CI; do not merge without maintainer approval
+Status: pr-open; CI green; awaiting maintainer approval
 
 ## Recommendation
 
@@ -23,8 +23,8 @@ Status: blocked by baseline repository gates and pending CI; do not merge withou
 | Height tested on strict and time-lag sets | strict 19 in range, RMSE 2.54 m; TSA 23 strict 6, RMSE 4.18 m | met |
 | Default contains only supported attributes | `config/inventory/default.yaml` contains BA only | met |
 | Public docs state coverage and limits | instance and parent docs updated on branch | met |
-| Tests, lint, types, Sphinx pass | tests and Sphinx pass; ruff/mypy have baseline failures | not met |
-| Pull request queued for approval | parent #538 and instance #46 are drafts | pending |
+| Tests, lint, types, Sphinx pass | tests, Sphinx, and CI pass; local baseline ruff/mypy remain red | met with a stated baseline limit |
+| Pull request queued for approval | parent #538; instance #46; closeout posted | met |
 
 ## Workflow compliance
 
@@ -57,9 +57,9 @@ Status: blocked by baseline repository gates and pending CI; do not merge withou
 
 ## CI evidence
 
-Parent PR #538: `guard` passed; `build` and `package-release-checks` were pending
-at the last check. The instance PR has no checks configured. CI must be
-rechecked before merge.
+Parent PR #538: `build`, `guard`, and `package-release-checks` passed; `deploy`
+skipped. Instance PR #46 has no checks configured. CI is green on the parent
+head.
 
 ## Deviations and risks
 
@@ -78,5 +78,6 @@ the two pull requests.
 
 ## Decision
 
-Approve the BA-only default and merge only after the gate deviation is resolved
-or explicitly waived. Do not promote volume or height.
+Approve the BA-only default. The local baseline lint/type gates remain red but
+CI is green; the closeout recommends an explicit baseline waiver rather than a
+merge on a claimed green local dashboard. Do not promote volume or height.
