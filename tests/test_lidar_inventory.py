@@ -428,9 +428,9 @@ def test_cli_inventory_log_terms(tmp_path: Path) -> None:
 def test_resolve_inventory_model_from_config(tmp_path: Path) -> None:
     config_dir = tmp_path / "config" / "inventory"
     config_dir.mkdir(parents=True)
-    config = config_dir / "experimental.yaml"
+    config = config_dir / "models.yaml"
     config.write_text(
-        "schema_version: femic.inventory.experimental.v1\n"
+        "schema_version: femic.inventory.models.v1\n"
         f"height_model: {MODEL_CARD.as_posix()}\n"
         f"ba_model: {MODEL_CARD.as_posix()}\n"
         f"volume_model: {MODEL_CARD.as_posix()}\n",
@@ -462,6 +462,36 @@ def test_cli_inventory_model_config(tmp_path: Path) -> None:
             "height",
             "--model-config",
             str(config),
+            "--output-dir",
+            str(out),
+        ],
+        prog_name="femic",
+    )
+    assert result.exit_code == 0, result.output
+    assert (out / "inventory_als.csv").is_file()
+
+
+def test_cli_inventory_default_model_config(tmp_path: Path) -> None:
+    config_dir = tmp_path / "config" / "inventory"
+    config_dir.mkdir(parents=True)
+    config = config_dir / "default.yaml"
+    config.write_text(
+        "schema_version: femic.inventory.models.v1\n"
+        f"height_model: {MODEL_CARD.as_posix()}\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "inventory"
+    result = CliRunner().invoke(
+        app,
+        [
+            "lidar",
+            "inventory",
+            "--bundle",
+            str(_bundle(tmp_path)),
+            "--model-key",
+            "height",
+            "--instance-root",
+            str(tmp_path),
             "--output-dir",
             str(out),
         ],

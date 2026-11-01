@@ -221,12 +221,12 @@ external check is BA RMSE 6.670 and volume RMSE 42.092; cross-region volume RMSE
 ranges from 3.6 to 67.1 m3/ha.  The standard ``femic lidar inventory`` path
 reproduces the script-generated BA and volume surfaces, and a config-driven
 rerun with ``--model-key`` is byte-identical; see
-``notes/reports/inv01-tsa23-cli-parity.md``.  The hybrid surface is now the
-instance's default experimental inventory root.  It raises joint BA/volume
-coverage from 14.9% to 23.6%; current/hybrid overlap differences are BA RMSE
-4.66 m2/ha and volume RMSE 12.45 m3/ha.  Published cards stay unchanged and the
-hybrid remains non-operational.  A leave-one-TSA23-tile-out check gives BA RMSE
-6.188 m2/ha and volume RMSE 25.473 m3/ha across 18 plots; see
+``notes/reports/inv01-tsa23-cli-parity.md``.  The hybrid surface is a
+research-only experimental root, not the instance default.  It raises joint
+BA/volume coverage from 14.9% to 23.6%; current/hybrid overlap differences are
+BA RMSE 4.66 m2/ha and volume RMSE 12.45 m3/ha.  Published cards stay unchanged
+and the hybrid remains non-operational.  A leave-one-TSA23-tile-out check gives
+BA RMSE 6.188 m2/ha and volume RMSE 25.473 m3/ha across 18 plots; see
 ``notes/reports/inv01-tsa23-hybrid-vs-current.md`` and
 ``notes/reports/inv01-tsa23-spatial-holdout.md``.
 
