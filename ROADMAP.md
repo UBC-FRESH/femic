@@ -4335,7 +4335,7 @@ Detailed plan: `planning/phase121_ba_only_release.md`.
 
 Parent issue: #542
 Branch: `feature/p122-ba-pilot-acceptance`
-Status: active
+Status: pr-open
 
 Goal: verify that the BA-only pilot is consumer-ready and record an accept/reject
 decision with explicit limits.
@@ -4350,12 +4350,12 @@ VRI/THLB acquisition, tags or releases.
 
 Tasks:
 
-- [ ] P122.1 Verify consumer readiness and accept or reject (`#543`).
-  - [ ] Verify table and raster readability and schema.
-  - [ ] Verify row/pixel and value identity.
-  - [ ] Write the consumer acceptance note and machine-readable summary.
-  - [ ] Update docs, roadmap, changelog, and public instance.
-  - [ ] Run gates and open the phase PR.
+- [x] P122.1 Verify consumer readiness and accept or reject (`#543`).
+  - [x] Verify table and raster readability and schema.
+  - [x] Verify row/pixel and value identity.
+  - [x] Write the consumer acceptance note and machine-readable summary.
+  - [x] Update docs, roadmap, changelog, and public instance.
+  - [x] Run gates and open the phase PR.
 
 Acceptance: reader checks pass; consumer note states coverage, error, and
 exclusions; decision is recorded; tests and Sphinx pass; phase PR is open.
