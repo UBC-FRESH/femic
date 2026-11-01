@@ -4335,7 +4335,7 @@ Detailed plan: `planning/phase121_ba_only_release.md`.
 
 Parent issue: #542
 Branch: `feature/p122-ba-pilot-acceptance`
-Status: pr-open
+Status: complete
 
 Goal: verify that the BA-only pilot is consumer-ready and record an accept/reject
 decision with explicit limits.
