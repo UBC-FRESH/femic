@@ -16325,3 +16325,21 @@ PYTHONPATH=src python -m femic.site_index \
 - No flood model or claim was produced.
 
 - P113.5: linked the public `femic-tsa27-instance` under `external/femic-tsa27-instance` and added it to the README instance list.
+
+## 2026-11-01 - P120.1 strict height validation and BA-only default
+
+- Added Phase 120 and task P120.1 (#536, #537) to close the INV-01 inventory
+  work with an explicit validation decision.
+- The strict current-condition set is 38 independent plots within five years;
+  the 56-plot recent set includes 18 fallback tiles at 6-11 years and is now
+  labeled expanded evidence only.
+- Height independent test: strict 19 in-range plots, RMSE 2.54 m; TSA 23 strict
+  6 plots, RMSE 4.18 m. Height fails the independent check and is removed from
+  the default product.
+- BA remains the only default attribute: strict 36 in-range plots, RMSE
+  8.86 m2/ha. Volume remains research-only; strict 28 in-range plots, RMSE
+  67.02 m3/ha, and no independent TSA 23 volume plot is in range.
+- The public TSA23 default config is BA-only; height and volume require an
+  explicit card or research config.
+- Prior INV-01 branches and merged PRs predate P120 and are recorded as a
+  workflow deviation in the closeout.

@@ -4254,3 +4254,45 @@ BEC-unit/species range because VRI has no site series. The 2014 addendum adds
 forced into the polygon table.
 
 Detailed contract: `docs/reference/contracts/site-index-reconciliation.rst`.
+
+## Phase 120: INV-01 TSA 23 LiDAR Inventory Closure
+
+Parent issue: #536
+Branch: `feature/p120-inv01-inventory`
+Status: complete
+
+Goal: close the INV-01 TSA 23 LiDAR inventory work with a default product that
+only contains attributes supported by independent validation, and with an
+auditable validation record.
+
+Scope: validate the published height card on the strict 38-plot set and the
+435-plot time-lag sensitivity set; remove height and volume from the default
+product when their independent validation does not support them; keep BA as the
+default only; update the public TSA23 instance; run the repository gates; open
+the phase pull request.
+
+Out of scope: new model fitting, operational inventory claims, changes to
+forest-level objectives, constraints, growth, or solver behavior, new field-data
+acquisition, or changes to the public instance beyond the default model
+configuration and documentation.
+
+Tasks:
+
+- [x] P120.1 Validate height and finalize the default product (`#537`).
+  - [x] Extract height observations.
+  - [x] Evaluate the strict 38-plot and 435-plot time-lag sets.
+  - [x] Set the default product to BA only.
+  - [x] Update docs, roadmap, changelog, and public instance.
+  - [x] Run the repository gates and default-config smoke test.
+  - [x] Open the phase pull request for approval.
+
+Acceptance: height strict/time-lag evaluation is recorded with in-range counts;
+the default config is BA-only and resolves through `--model-key ba`; volume and
+height require explicit research configuration or card paths; tests, lint,
+types, and Sphinx pass; the phase pull request is open for maintainer approval.
+
+Detailed plan: `planning/phase120_inv01_inventory.md`.
+
+Prior INV-01 work merged before this phase issue existed.  The phase closeout
+records that deviation and does not present the earlier branch/history as
+compliant.
