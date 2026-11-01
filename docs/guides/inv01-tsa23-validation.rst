@@ -230,6 +230,16 @@ hybrid remains non-operational.  A leave-one-TSA23-tile-out check gives BA RMSE
 ``notes/reports/inv01-tsa23-hybrid-vs-current.md`` and
 ``notes/reports/inv01-tsa23-spatial-holdout.md``.
 
+A larger independent BC IDF check is less optimistic.  969 latest IDF PSP
+plots exist; 573 have LidarBC point-cloud and DEM coverage, and 111 have ground
+measurements within five years.  88 plots yield usable features, of which 56
+are independent of training, high-biomass, and original external plots.  The
+fixed hybrid cards give BA RMSE 8.02 m2/ha (54 in range) and volume RMSE 62.93
+m3/ha (44 in range).  The seven independent TSA 23 plots give BA RMSE 15.02; no
+independent TSA 23 volume plot is inside the predictor range.  The four-plot
+high-biomass check was therefore not representative.  See
+``notes/reports/inv01-tsa23-bc-validation.md``.
+
 Omitted-tile gap
 ----------------
 

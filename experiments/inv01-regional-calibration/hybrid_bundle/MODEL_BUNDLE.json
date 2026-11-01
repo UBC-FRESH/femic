@@ -18,8 +18,31 @@
     "volume_mean_m3_ha": 170.8414407369314
   },
   "caveats": [
-    "Experimental hybrid bundle.",
-    "External holdout is four clustered TSA23 plots.",
-    "Term-based volume card is supported by the FEMIC model reader but remains experimental."
-  ]
+    "Experimental hybrid bundle; not operational.",
+    "The four-plot high-biomass external check is not the full validation set.",
+    "Independent BC IDF check: BA RMSE 8.02 m2/ha (54 in range), volume RMSE 62.93 m3/ha (44 in range).",
+    "No independent TSA 23 volume plot is inside the predictor range."
+  ],
+  "independent": {
+    "dataset": "independent BC IDF plots with ground measurements within five years",
+    "plots": 56,
+    "ba": {
+      "n": 54,
+      "rmse_m2_ha": 8.024556629811785,
+      "bias_m2_ha": 1.2919814615588994,
+      "mae_m2_ha": 6.229498720826957
+    },
+    "volume": {
+      "n": 44,
+      "rmse_m3_ha": 62.92616900662224,
+      "bias_m3_ha": -10.345473137289746,
+      "mae_m3_ha": 50.8085585769901
+    },
+    "tsa23": {
+      "plots": 7,
+      "ba_n": 7,
+      "ba_rmse_m2_ha": 15.024349406047058,
+      "volume_in_range": 0
+    }
+  }
 }
