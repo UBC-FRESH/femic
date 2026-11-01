@@ -294,7 +294,9 @@ def _term_features(terms: tuple[InventoryAlsTerm, ...]) -> tuple[str, ...]:
     return tuple(names)
 
 
-INVENTORY_MODEL_CONFIG_SCHEMA = "femic.inventory.experimental.v1"
+INVENTORY_MODEL_CONFIG_SCHEMAS = frozenset(
+    {"femic.inventory.experimental.v1", "femic.inventory.models.v1"}
+)
 INVENTORY_MODEL_KEYS: dict[str, str] = {
     "height": "height_model",
     "ba": "ba_model",
@@ -325,10 +327,11 @@ def resolve_inventory_model_path(config_path: Path, model_key: str) -> Path:
     if not isinstance(payload, Mapping):
         raise LidarInventoryError("Inventory model config must be a mapping.")
     schema = str(payload.get("schema_version", "")).strip()
-    if schema != INVENTORY_MODEL_CONFIG_SCHEMA:
+    if schema not in INVENTORY_MODEL_CONFIG_SCHEMAS:
+        expected = " or ".join(sorted(INVENTORY_MODEL_CONFIG_SCHEMAS))
         raise LidarInventoryError(
             f"Unsupported inventory model config schema {schema!r}; expected "
-            f"{INVENTORY_MODEL_CONFIG_SCHEMA!r}."
+            f"{expected}."
         )
     field = INVENTORY_MODEL_KEYS[key]
     raw_path = payload.get(field)
@@ -336,7 +339,7 @@ def resolve_inventory_model_path(config_path: Path, model_key: str) -> Path:
         raise LidarInventoryError(f"Inventory model config has no {field!r}.")
     candidate = Path(raw_path).expanduser()
     if not candidate.is_absolute():
-        # config/inventory/experimental.yaml -> instance root
+        # config/inventory/<config>.yaml -> instance root
         candidate = resolved.parents[2] / candidate
     candidate = candidate.resolve()
     if not candidate.is_file():

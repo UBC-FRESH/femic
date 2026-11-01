@@ -4954,7 +4954,7 @@ def lidar_inventory(
     model_config: Path | None = typer.Option(
         None,
         "--model-config",
-        help="Experimental inventory model config; defaults to config/inventory/experimental.yaml.",
+        help="Inventory model config; defaults to config/inventory/default.yaml.",
     ),
     output_dir: Path | None = typer.Option(
         None,
@@ -5003,7 +5003,7 @@ def lidar_inventory(
         if model is None:
             if model_key is None:
                 raise LidarInventoryError("Pass --model or --model-key for an instance model config.")
-            config_path = model_config or Path("config/inventory/experimental.yaml")
+            config_path = model_config or Path("config/inventory/default.yaml")
             if instance_context is not None:
                 config_path = instance_context.resolve_path(config_path)
             elif not config_path.is_absolute():
