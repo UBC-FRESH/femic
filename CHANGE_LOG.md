@@ -16425,3 +16425,10 @@ PYTHONPATH=src python -m femic.site_index \
 - Left TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged.
 - The new commit is the merged private LiDAR fit pipeline; no FEMIC source, test,
   contract, model, or instance content changed in this repository.
+
+## 2026-11-02 - P131.1 Refresh the GNN validation pin
+
+- Bumped `external/femic-gnn-instance` from `f7d9dfb` to `81a158d` (GNN PR #96).
+- Left TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged.
+- The new commit is the merged fit-pipeline validation; no FEMIC source, test,
+  contract, model, or instance content changed in this repository.
