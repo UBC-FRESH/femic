@@ -4500,3 +4500,30 @@ Tasks:
 
 Acceptance: GNN `fdc949b`; TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged; the
 commit matches GNN PR #73; no FEMIC source or model change is included.
+
+## Phase 128: Refresh the GNN ingest pin
+
+Parent issue: #560
+Branch: `feature/p128-gnn-ingest-pin`
+Status: active
+
+Goal: point the parent FEMIC GNN submodule pin at the merged private LiDAR ingest
+phase, without changing FEMIC code or model behavior.
+
+Scope: bump the GNN gitlink; leave TSA 27 and TSA 23 unchanged; update the roadmap
+and changelog.
+
+Out of scope: FEMIC code, tests, contracts, model behavior, new instance content,
+tags, releases, package publication, or settings changes.
+
+Tasks:
+
+- [x] P128.1 Bump the merged GNN ingest pin (`#561`).
+  - [x] Update the GNN gitlink to the merged head.
+  - [x] Record the old and new commit and the instance PR.
+  - [x] Run the available verification.
+  - [x] Update the roadmap and changelog.
+  - [x] Queue the phase pull request.
+
+Acceptance: GNN `e338821`; TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged; the
+commit matches GNN PR #86; no FEMIC source or model change is included.
