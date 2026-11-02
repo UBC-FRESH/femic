@@ -4418,3 +4418,31 @@ Tasks:
 Acceptance: `git submodule status` shows GNN `a65d62b` and TSA 27 `3aacbea`; the TSA
 23 pin stays at `4dc9c31`; the commits match GNN PR #79 and TSA 27 PR #42; no FEMIC
 source or model change is included.
+
+## Phase 125: Refresh the TSA 23 consumer-test pin
+
+Parent issue: #551
+Branch: `feature/p125-tsa23-consumer-pin`
+Status: active
+
+Goal: point the parent FEMIC TSA 23 submodule pin at the merged P124 consumer-test
+head, without changing FEMIC code or model behavior.
+
+Scope: bump the TSA 23 gitlink; leave GNN and TSA 27 unchanged; record the old and
+new commit and the instance PR; update the roadmap and changelog.
+
+Out of scope: FEMIC code, tests, contracts, model behavior, new instance content,
+tags, releases, package publication, or settings changes.
+
+Tasks:
+
+- [x] P125.1 Bump the merged TSA 23 consumer-test pin (`#552`).
+  - [x] Update the TSA 23 gitlink to the merged head.
+  - [x] Record the old and new commit and the instance PR.
+  - [x] Run the available verification.
+  - [x] Update the roadmap and changelog.
+  - [x] Queue the phase pull request.
+
+Acceptance: TSA 23 is at `83ddbfd`; GNN `a65d62b` and TSA 27 `3aacbea` are
+unchanged; the commit matches TSA 23 PR #54; no FEMIC source or model change is
+included.

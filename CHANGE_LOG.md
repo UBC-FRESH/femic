@@ -16382,3 +16382,10 @@ PYTHONPATH=src python -m femic.site_index \
 - Left `external/femic-tsa23-instance` at `4dc9c31`; no new TSA 23 commit was made.
 - The new commits are the merged, CI-green instance heads; no FEMIC source, test,
   contract, model, or instance content changed in this repository.
+
+## 2026-11-02 - P125.1 Refresh the TSA 23 consumer-test pin
+
+- Bumped `external/femic-tsa23-instance` from `4dc9c31` to `83ddbfd` (TSA 23 PR #54).
+- Left GNN `a65d62b` and TSA 27 `3aacbea` unchanged.
+- The new commit is the merged, CI-green TSA 23 consumer-test head; no FEMIC source,
+  test, contract, model, or instance content changed in this repository.
