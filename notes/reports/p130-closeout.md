@@ -71,7 +71,7 @@ The parent repository has no seeded `scripts/check_workflow.py` or
 
 | Run ID | Head commit | Conclusion | Notes |
 | --- | --- | --- | --- |
-| pending | report commit | pending | The report commit's `build`, `guard`, and `package-release-checks` runs are posted on pull request #568 before approval. |
+| 41419866961, 41419867017, 41419866957 | `7b1fd9c` | success | `build` passed in 3m34s; `guard` in 11s; `package-release-checks` in 1m18s. The only later change is this CI-table refresh. |
 
 ## 5. Deviations
 
