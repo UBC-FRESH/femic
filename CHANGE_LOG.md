@@ -16365,3 +16365,12 @@ PYTHONPATH=src python -m femic.site_index \
 - Added `notes/reports/inv01-tsa23-ba-pilot-acceptance.md` and
   `metadata/inv01/tsa23_ba_pilot_acceptance.json`.
 - No model fitting, height/volume release, or operational claim.
+
+## 2026-11-02 - P123.1 Refresh merged instance pins
+
+- Bumped `external/femic-gnn-instance` from `7103af5` to `316c7d0` (GNN PR #76).
+- Bumped `external/femic-tsa27-instance` from `ec81d0b` to `59c98e5` (TSA 27 PR #39).
+- Bumped `external/femic-tsa23-instance` from `4170451` to `4dc9c31` (TSA 23 PR #51).
+- The new commits are the merged, CI-green instance heads; no FEMIC source, test,
+  contract, model, or instance content changed in this repository.
+- The parent planning surfaces and the three gitlinks are the only changes.
