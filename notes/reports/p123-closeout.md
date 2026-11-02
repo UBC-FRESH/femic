@@ -77,7 +77,7 @@ the available CI jobs are `build`, `guard`, and `package-release-checks`.
 
 | Run ID | Head commit | Conclusion | Notes |
 | --- | --- | --- | --- |
-| pending | report commit | pending | The report commit's `build`, `guard`, and `package-release-checks` runs are posted on pull request #547 before approval. |
+| 41400594335, 41400594349, 41400594340 | `516b337` | success | `build` passed in 3m53s; `guard` passed in 9s; `package-release-checks` passed in 1m7s. The only later change is the CI-table refresh in this report. |
 
 ## 5. Deviations
 
