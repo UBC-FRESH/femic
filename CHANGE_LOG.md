@@ -16374,3 +16374,11 @@ PYTHONPATH=src python -m femic.site_index \
 - The new commits are the merged, CI-green instance heads; no FEMIC source, test,
   contract, model, or instance content changed in this repository.
 - The parent planning surfaces and the three gitlinks are the only changes.
+
+## 2026-11-02 - P124.1 Refresh pins after instance feasibility phases
+
+- Bumped `external/femic-gnn-instance` from `316c7d0` to `a65d62b` (GNN PR #79).
+- Bumped `external/femic-tsa27-instance` from `59c98e5` to `3aacbea` (TSA 27 PR #42).
+- Left `external/femic-tsa23-instance` at `4dc9c31`; no new TSA 23 commit was made.
+- The new commits are the merged, CI-green instance heads; no FEMIC source, test,
+  contract, model, or instance content changed in this repository.
