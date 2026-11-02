@@ -4527,3 +4527,30 @@ Tasks:
 
 Acceptance: GNN `e338821`; TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged; the
 commit matches GNN PR #86; no FEMIC source or model change is included.
+
+## Phase 129: Refresh the GNN pre-registration pin
+
+Parent issue: #563
+Branch: `feature/p129-gnn-preregistration-pin`
+Status: active
+
+Goal: point the parent FEMIC GNN submodule pin at the merged dry-run and
+fit-pre-registration phase, without changing FEMIC code or model behavior.
+
+Scope: bump the GNN gitlink; leave TSA 27 and TSA 23 unchanged; update the roadmap
+and changelog.
+
+Out of scope: FEMIC code, tests, contracts, model behavior, new instance content,
+tags, releases, package publication, or settings changes.
+
+Tasks:
+
+- [x] P129.1 Bump the GNN pre-registration pin (`#564`).
+  - [x] Update the GNN gitlink to the merged head.
+  - [x] Record the old and new commit and the instance PR.
+  - [x] Run the available verification.
+  - [x] Update the roadmap and changelog.
+  - [x] Queue the phase pull request.
+
+Acceptance: GNN `9402e12`; TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged; the
+commit matches GNN PR #90; no FEMIC source or model change is included.
