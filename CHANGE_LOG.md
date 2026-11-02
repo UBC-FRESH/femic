@@ -16411,3 +16411,10 @@ PYTHONPATH=src python -m femic.site_index \
 - Left TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged.
 - The new commit is the merged private LiDAR ingest phase; no FEMIC source, test,
   contract, model, or instance content changed in this repository.
+
+## 2026-11-02 - P129.1 Refresh the GNN pre-registration pin
+
+- Bumped `external/femic-gnn-instance` from `e338821` to `9402e12` (GNN PR #90).
+- Left TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged.
+- The new commit is the merged dry-run and fit-pre-registration phase; no FEMIC
+  source, test, contract, model, or instance content changed in this repository.
