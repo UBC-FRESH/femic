@@ -4473,3 +4473,30 @@ Tasks:
 
 Acceptance: GNN `f953f87`, TSA 27 `8961ab7`, TSA 23 `83ddbfd`; the commits match GNN
 PR #82 and TSA 27 PR #45; no FEMIC source or model change is included.
+
+## Phase 127: Refresh the GNN addendum pin
+
+Parent issue: #557
+Branch: `feature/p127-gnn-addendum-pin`
+Status: active
+
+Goal: point the parent FEMIC GNN submodule pin at the merged partner-data addendum,
+without changing FEMIC code or model behavior.
+
+Scope: bump the GNN gitlink; leave TSA 27 and TSA 23 unchanged; update the roadmap
+and changelog.
+
+Out of scope: FEMIC code, tests, contracts, model behavior, new instance content,
+tags, releases, package publication, or settings changes.
+
+Tasks:
+
+- [x] P127.1 Bump the merged GNN addendum pin (`#558`).
+  - [x] Update the GNN gitlink to the merged head.
+  - [x] Record the old and new commit and the instance PR.
+  - [x] Run the available verification.
+  - [x] Update the roadmap and changelog.
+  - [x] Queue the phase pull request.
+
+Acceptance: GNN `fdc949b`; TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged; the
+commit matches GNN PR #73; no FEMIC source or model change is included.
