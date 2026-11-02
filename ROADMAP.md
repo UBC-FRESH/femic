@@ -4554,3 +4554,30 @@ Tasks:
 
 Acceptance: GNN `9402e12`; TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged; the
 commit matches GNN PR #90; no FEMIC source or model change is included.
+
+## Phase 130: Refresh the GNN fit-pipeline pin
+
+Parent issue: #566
+Branch: `feature/p130-gnn-fit-pin`
+Status: active
+
+Goal: point the parent FEMIC GNN submodule pin at the merged private LiDAR fit
+pipeline, without changing FEMIC code or model behavior.
+
+Scope: bump the GNN gitlink; leave TSA 27 and TSA 23 unchanged; update the roadmap
+and changelog.
+
+Out of scope: FEMIC code, tests, contracts, model behavior, new instance content,
+tags, releases, package publication, or settings changes.
+
+Tasks:
+
+- [x] P130.1 Bump the GNN fit-pipeline pin (`#567`).
+  - [x] Update the GNN gitlink to the merged head.
+  - [x] Record the old and new commit and the instance PR.
+  - [x] Run the available verification.
+  - [x] Update the roadmap and changelog.
+  - [x] Queue the phase pull request.
+
+Acceptance: GNN `f7d9dfb`; TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged; the
+commit matches GNN PR #93; no FEMIC source or model change is included.
