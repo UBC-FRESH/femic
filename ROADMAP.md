@@ -4446,3 +4446,30 @@ Tasks:
 Acceptance: TSA 23 is at `83ddbfd`; GNN `a65d62b` and TSA 27 `3aacbea` are
 unchanged; the commit matches TSA 23 PR #54; no FEMIC source or model change is
 included.
+
+## Phase 126: Refresh acquisition-request instance pins
+
+Parent issue: #554
+Branch: `feature/p126-acquisition-request-pins`
+Status: active
+
+Goal: point the parent FEMIC GNN and TSA 27 submodule pins at the merged P13 and P8
+acquisition-request heads, without changing FEMIC code or model behavior.
+
+Scope: bump the GNN and TSA 27 gitlinks; leave TSA 23 unchanged; record the old and
+new commits and the instance PRs; update the roadmap and changelog.
+
+Out of scope: FEMIC code, tests, contracts, model behavior, new instance content,
+tags, releases, package publication, or settings changes.
+
+Tasks:
+
+- [x] P126.1 Bump the merged GNN and TSA 27 acquisition-request pins (`#555`).
+  - [x] Update the two gitlinks to the merged heads.
+  - [x] Record the old and new commits and the instance PRs.
+  - [x] Run the available verification.
+  - [x] Update the roadmap and changelog.
+  - [x] Queue the phase pull request.
+
+Acceptance: GNN `f953f87`, TSA 27 `8961ab7`, TSA 23 `83ddbfd`; the commits match GNN
+PR #82 and TSA 27 PR #45; no FEMIC source or model change is included.

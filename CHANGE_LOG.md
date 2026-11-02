@@ -16389,3 +16389,11 @@ PYTHONPATH=src python -m femic.site_index \
 - Left GNN `a65d62b` and TSA 27 `3aacbea` unchanged.
 - The new commit is the merged, CI-green TSA 23 consumer-test head; no FEMIC source,
   test, contract, model, or instance content changed in this repository.
+
+## 2026-11-02 - P126.1 Refresh acquisition-request instance pins
+
+- Bumped `external/femic-gnn-instance` from `a65d62b` to `f953f87` (GNN PR #82).
+- Bumped `external/femic-tsa27-instance` from `3aacbea` to `8961ab7` (TSA 27 PR #45).
+- Left `external/femic-tsa23-instance` at `83ddbfd` (PR #54).
+- The new commits are the merged, CI-green acquisition-request heads; no FEMIC source,
+  test, contract, model, or instance content changed in this repository.
