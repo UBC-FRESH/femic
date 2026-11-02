@@ -4361,3 +4361,32 @@ Acceptance: reader checks pass; consumer note states coverage, error, and
 exclusions; decision is recorded; tests and Sphinx pass; phase PR is open.
 
 Detailed plan: `planning/phase122_ba_pilot_acceptance.md`.
+
+## Phase 123: Refresh merged instance pins
+
+Parent issue: #545
+Branch: `feature/p123-instance-pin-refresh`
+Status: active
+
+Goal: point the parent FEMIC submodule pins at the reviewed, merged heads of the
+GNN, TSA 27, and TSA 23 instances, and record the pin refresh without changing
+FEMIC code, model behavior, or any instance content.
+
+Scope: bump the three gitlinks; record the old and new commits and the instance
+PRs; update the roadmap and changelog.
+
+Out of scope: FEMIC code, tests, contracts, model behavior, new instance content,
+tags, releases, package publication, or settings changes.
+
+Tasks:
+
+- [x] P123.1 Bump the three merged instance pins (`#546`).
+  - [x] Update the gitlinks to the merged instance heads.
+  - [x] Record the old and new commits and the instance PRs.
+  - [x] Run the available verification.
+  - [x] Update the roadmap and changelog.
+  - [x] Queue the phase pull request.
+
+Acceptance: `git submodule status` shows the three new commits; they match GNN PR
+#76, TSA 27 PR #39, and TSA 23 PR #51; no FEMIC source or model change is
+included; the available gates pass, or the limitation is recorded.
