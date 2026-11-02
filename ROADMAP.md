@@ -4390,3 +4390,31 @@ Tasks:
 Acceptance: `git submodule status` shows the three new commits; they match GNN PR
 #76, TSA 27 PR #39, and TSA 23 PR #51; no FEMIC source or model change is
 included; the available gates pass, or the limitation is recorded.
+
+## Phase 124: Refresh pins after instance feasibility phases
+
+Parent issue: #548
+Branch: `feature/p124-post-feasibility-pin-refresh`
+Status: active
+
+Goal: point the parent FEMIC submodule pins at the merged GNN P12 and TSA 27 P7
+heads, and record the refresh without changing FEMIC code or model behavior.
+
+Scope: bump the GNN and TSA 27 gitlinks; leave the TSA 23 pin unchanged; record the
+old and new commits and the instance PRs; update the roadmap and changelog.
+
+Out of scope: FEMIC code, tests, contracts, model behavior, new instance content,
+tags, releases, package publication, or settings changes.
+
+Tasks:
+
+- [x] P124.1 Bump the merged GNN and TSA 27 pins (`#549`).
+  - [x] Update the two gitlinks to the merged instance heads.
+  - [x] Record the old and new commits and the instance PRs.
+  - [x] Run the available verification.
+  - [x] Update the roadmap and changelog.
+  - [x] Queue the phase pull request.
+
+Acceptance: `git submodule status` shows GNN `a65d62b` and TSA 27 `3aacbea`; the TSA
+23 pin stays at `4dc9c31`; the commits match GNN PR #79 and TSA 27 PR #42; no FEMIC
+source or model change is included.
