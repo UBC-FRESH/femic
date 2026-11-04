@@ -16432,3 +16432,17 @@ PYTHONPATH=src python -m femic.site_index \
 - Left TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged.
 - The new commit is the merged fit-pipeline validation; no FEMIC source, test,
   contract, model, or instance content changed in this repository.
+
+## 2026-11-04 - P132.1 Optional ground-bundle reader
+
+- Added `femic.lidar.ground_bundle` with `read_ground_bundle`, `GroundBundle`,
+  `GroundBundlePointInspection`, and `GroundBundleError`.
+- Validates `femic.ground-bundle.v1`, `femic.ground-qa.v1`, output/QA SHA-256, parameter
+  hash, point counts, and required QA fields.
+- Added optional LAZ inspection behind `laspy`; without it, the reader records a warning and
+  still validates the manifest/QA.
+- Added `femic lidar ground-bundle PATH` with `--json` and `--no-inspect-points`.
+- Added `docs/guides/lidar-ground-bundle.rst`,
+  `docs/reference/contracts/lidar-ground-bundle.rst`, and a synthetic-bundle test suite.
+- The reader is read-only and does not change any default FEMIC product.
+- Close-out report: `notes/reports/p132-closeout.md`.

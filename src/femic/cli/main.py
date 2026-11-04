@@ -171,6 +171,7 @@ from femic.lidar.products import (
     build_lidar_product_bundle,
     validate_lidar_product_bundle,
 )
+from femic.lidar.ground_bundle import GroundBundleError, read_ground_bundle
 from femic.lidar.terrain import (
     TerrainProcessingError,
     build_terrain_products,
@@ -601,6 +602,18 @@ LIDAR_BUNDLE_DIR_ARGUMENT = typer.Argument(
     file_okay=False,
     readable=True,
     help="Existing FEMIC LiDAR product bundle directory.",
+)
+LIDAR_GROUND_BUNDLE_DIR_ARGUMENT = typer.Argument(
+    ...,
+    exists=True,
+    file_okay=False,
+    readable=True,
+    help="Existing sidecar ground-bundle directory.",
+)
+LIDAR_GROUND_INSPECT_POINTS_OPTION = typer.Option(
+    True,
+    "--inspect-points/--no-inspect-points",
+    help="Inspect the LAZ header and extra dimensions when laspy is installed.",
 )
 LIDAR_OUTPUT_ROOT_OPTION = typer.Option(
     None,
@@ -4999,10 +5012,14 @@ def lidar_inventory(
     )
     try:
         if model is not None and (model_key is not None or model_config is not None):
-            raise LidarInventoryError("Pass either --model or --model-key/--model-config, not both.")
+            raise LidarInventoryError(
+                "Pass either --model or --model-key/--model-config, not both."
+            )
         if model is None:
             if model_key is None:
-                raise LidarInventoryError("Pass --model or --model-key for an instance model config.")
+                raise LidarInventoryError(
+                    "Pass --model or --model-key for an instance model config."
+                )
             config_path = model_config or Path("config/inventory/default.yaml")
             if instance_context is not None:
                 config_path = instance_context.resolve_path(config_path)
@@ -5337,6 +5354,37 @@ def lidar_inspect(
         )
     if not validation.is_valid:
         raise typer.Exit(code=1)
+
+
+@lidar_app.command("ground-bundle")
+def lidar_ground_bundle(
+    bundle_dir: Path = LIDAR_GROUND_BUNDLE_DIR_ARGUMENT,
+    inspect_points: bool = LIDAR_GROUND_INSPECT_POINTS_OPTION,
+    json_output: bool = LIDAR_INSPECT_JSON_OPTION,
+) -> None:
+    """Validate a sidecar ground bundle and print its summary."""
+
+    try:
+        bundle = read_ground_bundle(bundle_dir, inspect_points=inspect_points)
+    except GroundBundleError as exc:
+        console.print(f"[red]Ground bundle error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    if json_output:
+        typer.echo(json.dumps(bundle.to_dict(), indent=2, sort_keys=True))
+        return
+    console.print("[bold]Ground bundle inspection[/bold]")
+    console.print(f"bundle_dir: {bundle.root}")
+    console.print(f"bundle_schema: {bundle.manifest.get('schema_version')}")
+    console.print(f"qa_schema: {bundle.qa.get('schema_version')}")
+    console.print(f"points: {bundle.point_count}")
+    console.print(f"ground: {bundle.ground_count}")
+    console.print(f"low_points: {bundle.low_point_count}")
+    if bundle.point_inspection is not None:
+        console.print("dimensions: " + ", ".join(bundle.point_inspection.dimensions))
+        console.print(f"crs: {bundle.point_inspection.crs}")
+    for warning in bundle.warnings:
+        console.print(f"[yellow]warning:[/yellow] {warning}")
+    console.print("[green]Ground bundle is valid[/green]")
 
 
 @data_app.command("bcdc-resolve")

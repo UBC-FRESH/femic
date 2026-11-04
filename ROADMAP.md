@@ -4608,3 +4608,34 @@ Tasks:
 
 Acceptance: GNN `81a158d`; TSA 27 `8961ab7` and TSA 23 `83ddbfd` unchanged; the
 commit matches GNN PR #96; no FEMIC source or model change is included.
+
+## Phase 132: Optional Ground-Bundle Reader
+
+Parent issue: #572
+Branch: `feature/p132-ground-reader`
+Status: complete
+
+Goal: add an optional read-only FEMIC reader for the sidecar ground bundle produced by
+`fresh-urban-forest-lab`, without adding a hard point-cloud dependency or changing any
+default FEMIC product.
+
+Scope: validate `femic.ground-bundle.v1` and `femic.ground-qa.v1`, file hashes, parameter
+hash, point counts, required QA fields, and optional LAZ dimensions; add a CLI command and
+docs.
+
+Out of scope: writing the bundle, a hard `laspy` dependency, default product changes,
+field/manual ground-label validation, tags, releases, or settings changes.
+
+Tasks:
+
+- [x] P132.1 Ground-bundle reader, CLI, tests, and docs (`#573`).
+  - [x] Add `femic.lidar.ground_bundle` with `read_ground_bundle`.
+  - [x] Validate schemas, hashes, parameter hash, counts, and required QA fields.
+  - [x] Add optional LAZ inspection behind `laspy`.
+  - [x] Add `femic lidar ground-bundle PATH`.
+  - [x] Add synthetic-bundle contract tests and CLI tests.
+  - [x] Add guide and contract pages.
+
+Acceptance: a valid bundle returns manifest, QA, paths, and optional point inspection;
+missing files, bad schemas, hash mismatches, count mismatches, and missing QA fields fail
+clearly; missing `laspy` degrades to a warning; no default FEMIC product changes.

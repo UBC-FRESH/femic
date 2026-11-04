@@ -46,6 +46,7 @@ figures = [
 dev = [
     "datalad[full]",
     "ipywidgets",
+    "laspy[lazrs]",
     "mypy",
     "pre-commit",
     "pytest",
