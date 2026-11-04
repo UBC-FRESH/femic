@@ -16460,3 +16460,16 @@ PYTHONPATH=src python -m femic.site_index \
 - Added synthetic-bundle tests, a real coastal-bundle summary, and guide/contract docs.
 - The command is opt-in and does not change any default FEMIC product.
 - Close-out report: `notes/reports/p133-closeout.md`.
+
+## 2026-11-04 - P134.1 Local LAZ bbox crop and large-tile policy
+
+- Added `femic.lidar.crop` with `LazCropResult`, `LazCropError`, and
+  `crop_laz_by_bbox`.
+- The crop streams the input in chunks, keeps only in-bbox points, preserves the source
+  header/CRS, and writes a `femic.laz_crop.v1` manifest.
+- Added `femic lidar crop --laz BIG --bbox minx,miny,maxx,maxy --out SMALL`.
+- Documented the large-tile policy: LidarBC LAZ is not COPC, so a range read does not avoid
+  the full download; acquire once and crop locally, or use a COPC source when available.
+- Added synthetic-LAZ tests and guide/contract docs.
+- The command is opt-in and does not change any default FEMIC product.
+- Close-out report: `notes/reports/p134-closeout.md`.

@@ -4667,3 +4667,25 @@ Tasks:
 Acceptance: a valid bundle and matching polygon layer write a CSV and manifest; CRS mismatch
 and missing id field fail clearly; the command is opt-in and does not modify default
 products.
+
+## Phase 134: Local LAZ Bbox Crop and Large-Tile Policy
+
+Parent issue: #578
+Branch: `feature/p134-laz-crop`
+Status: complete
+
+Goal: add an optional local LAZ bbox crop so a large LidarBC tile can be reduced to a block
+AOI after one materialization, and document why LAZ range reads do not avoid the full
+download.
+
+Tasks:
+
+- [x] P134.1 LAZ bbox crop, CLI, tests, and large-tile policy docs (`#579`).
+  - [x] Add `femic.lidar.crop` with `crop_laz_by_bbox`.
+  - [x] Stream input chunks and write only in-bbox points.
+  - [x] Write `femic.laz_crop.v1` manifest with hashes, bbox, counts, CRS, warnings.
+  - [x] Add `femic lidar crop --laz BIG --bbox ... --out SMALL`.
+  - [x] Add synthetic-LAZ tests and guide/contract docs.
+
+Acceptance: a synthetic LAZ crops correctly; empty crops and collisions fail clearly; the
+CLI is opt-in; docs state the LidarBC LAZ limitation.
