@@ -16473,3 +16473,19 @@ PYTHONPATH=src python -m femic.site_index \
 - Added synthetic-LAZ tests and guide/contract docs.
 - The command is opt-in and does not change any default FEMIC product.
 - Close-out report: `notes/reports/p134-closeout.md`.
+
+## 2026-11-04 - P135.1 TFL6 ground-bundle end-to-end
+
+- Materialized the 1.53 GB TFL6 tile `bc_092l062_4_1_2_xyes_8_utm9_20240316_20240317.laz`
+  once into `runtime/`.
+- Reprojected the seven FHOPS TFL6 blocks to the tile CRS and cropped with a 50 m margin:
+  137,428,675 points, 815 MB.
+- Ran the `fresh-urban-forest-lab` ground adapter: 36,662,162 predicted ground, 27,880,539
+  low-point flags, 6,025,777 SOR removals, HAG p95 21.42 m, 1,821.9 s, no warnings.
+- Ran the FEMIC seven-block summary; all seven blocks have ground/low fractions and HAG
+  statistics.
+- Added `notes/reports/p135-tfl6-ground-e2e.md` and `.json`.
+- The tile and bundle bytes stay in `runtime/` and are not tracked.
+- Limits: workstation-only, no field labels, and per-block ground fraction is point
+  composition, not an accuracy or area metric.
+- Close-out report: `notes/reports/p135-closeout.md`.

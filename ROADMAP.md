@@ -4689,3 +4689,24 @@ Tasks:
 
 Acceptance: a synthetic LAZ crops correctly; empty crops and collisions fail clearly; the
 CLI is opt-in; docs state the LidarBC LAZ limitation.
+
+## Phase 135: TFL6 Ground-Bundle End-to-End
+
+Parent issue: #581
+Branch: `feature/p135-tfl6-ground-e2e`
+Status: complete
+
+Goal: run the ground-bundle lane on a real TFL6 LidarBC tile and the seven FHOPS TFL6
+blocks.
+
+Tasks:
+
+- [x] P135.1 TFL6 materialization, crop, ground bundle, summary, and report (`#582`).
+  - [x] Materialize the 1.5 GB tile once.
+  - [x] Reproject the seven blocks to the tile CRS and crop with a 50 m margin.
+  - [x] Run the `fresh-urban-forest-lab` ground adapter on the crop.
+  - [x] Run the FEMIC seven-block ground summary.
+  - [x] Record the full evidence and limits.
+
+Acceptance: the crop contains the seven blocks; the bundle is schema-valid; the summary has
+seven rows; the tile and bundle bytes stay in `runtime/`.
