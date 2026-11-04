@@ -4639,3 +4639,31 @@ Tasks:
 Acceptance: a valid bundle returns manifest, QA, paths, and optional point inspection;
 missing files, bad schemas, hash mismatches, count mismatches, and missing QA fields fail
 clearly; missing `laspy` degrades to a warning; no default FEMIC product changes.
+
+## Phase 133: Ground-Bundle Block Summary
+
+Parent issue: #575
+Branch: `feature/p133-ground-summary`
+Status: complete
+
+Goal: add an optional FEMIC consumer that summarizes a validated ground bundle over planning
+polygons, without changing any default FEMIC product.
+
+Scope: read the bundle, join HAG to polygons with matching CRS, write a CSV and a
+`femic.ground-summary.v1` manifest, add a CLI command and tests.
+
+Out of scope: writing the bundle, a default product, reprojection/resampling, a ground
+classifier, field validation, tags, releases, or settings changes.
+
+Tasks:
+
+- [x] P133.1 Ground-bundle block summary, CLI, tests, and docs (`#576`).
+  - [x] Add `femic.lidar.ground_summary` with `summarize_ground_bundle`.
+  - [x] Compute count, ground/low fractions, and HAG mean/p50/p95/max per polygon.
+  - [x] Add `femic lidar ground-summary BUNDLE --polygons PATH --out CSV`.
+  - [x] Add synthetic-bundle tests and compound-CRS handling.
+  - [x] Add guide and contract docs.
+
+Acceptance: a valid bundle and matching polygon layer write a CSV and manifest; CRS mismatch
+and missing id field fail clearly; the command is opt-in and does not modify default
+products.

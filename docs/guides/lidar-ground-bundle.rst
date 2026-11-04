@@ -34,6 +34,20 @@ Install optional inspection
 ``laspy[lazrs]`` is optional. Without it, the reader still validates the bundle and records a
 warning that point inspection was skipped.
 
+Summarize by polygon
+--------------------
+
+.. code-block:: bash
+
+   femic lidar ground-summary data/lidar/ground/tile_001 \
+     --polygons blocks.gpkg \
+     --id-field block_id \
+     --out reports/ground_by_block.csv
+
+Each row reports point count, ground fraction, low-point fraction, and HAG mean/p50/p95/max.
+The command writes a sidecar ``ground_by_block.manifest.json``. Point and polygon CRS must
+match; there is no silent reprojection.
+
 Python
 ------
 

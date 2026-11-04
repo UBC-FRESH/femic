@@ -16446,3 +16446,17 @@ PYTHONPATH=src python -m femic.site_index \
   `docs/reference/contracts/lidar-ground-bundle.rst`, and a synthetic-bundle test suite.
 - The reader is read-only and does not change any default FEMIC product.
 - Close-out report: `notes/reports/p132-closeout.md`.
+
+## 2026-11-04 - P133.1 Ground-bundle block summary
+
+- Added `femic.lidar.ground_summary` with `GroundSummaryRow`, `GroundSummaryResult`,
+  `GroundSummaryError`, and `summarize_ground_bundle`.
+- The summary reads a validated bundle and polygons with matching horizontal CRS, then
+  writes per-polygon point count, ground/low fractions, and HAG mean/p50/p95/max.
+- Added `femic lidar ground-summary BUNDLE --polygons PATH --out CSV` with `--id-field`,
+  `--overwrite`, and `--json`.
+- Added compound-CRS handling so a point CRS with a vertical component compares against a
+  horizontal polygon CRS.
+- Added synthetic-bundle tests, a real coastal-bundle summary, and guide/contract docs.
+- The command is opt-in and does not change any default FEMIC product.
+- Close-out report: `notes/reports/p133-closeout.md`.
