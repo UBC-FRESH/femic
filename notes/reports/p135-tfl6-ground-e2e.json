@@ -1,0 +1,55 @@
+{
+  "schema_version": "femic.tfl6_ground_e2e.v1",
+  "date": "2026-11-04",
+  "input": {
+    "tile": "bc_092l062_4_1_2_xyes_8_utm9_20240316_20240317.laz",
+    "url": "https://nrs.objectstore.gov.bc.ca/gdwuts/092/092l/2024/pointcloud/bc_092l062_4_1_2_xyes_8_utm9_20240316_20240317.laz",
+    "licence": "OGL-BC",
+    "acquisition": "2024-03-16/17",
+    "crs": "EPSG:3156 + CGVD2013",
+    "points": 246658211,
+    "size_bytes": 1532787591,
+    "sha256": "0d45310118cf7d02d9e2c5cec1c8229ee098733a2a7316163db74aadfaa58b6e"
+  },
+  "crop": {
+    "bbox": [593648.9801435462, 5611680.891077768, 594790.0660234082, 5612820.533133638],
+    "points": 137428675,
+    "size_bytes": 815000000,
+    "sha256": "7391a3f7680118f57cb4b494f62df8225bf2761ae96a387b6290ba926db9a807",
+    "blocks": 7,
+    "block_area_ha": 100.0
+  },
+  "bundle": {
+    "point_count": 137428675,
+    "ground_count": 36662162,
+    "ground_fraction": 0.26678,
+    "low_point_count": 27880539,
+    "low_fraction": 0.20287,
+    "sor_removed": 6025777,
+    "sor_removed_fraction": 0.04385,
+    "seed_count": 1207358,
+    "iterations": 8,
+    "hag_p50_m": 6.7494,
+    "hag_p75_m": 13.9346,
+    "hag_p90_m": 18.793,
+    "hag_p95_m": 21.4207,
+    "hag_p99_m": 26.6657,
+    "hag_max_m": 54.2834,
+    "runtime_seconds": 1821.855,
+    "warnings": []
+  },
+  "blocks": [
+    {"block_id": "T6_23339490", "points": 6355770, "ground": 1352820, "ground_fraction": 0.212849, "low_fraction": 0.153015, "hag_mean_m": 8.1676, "hag_p95_m": 20.2014},
+    {"block_id": "T6_23339461", "points": 3052389, "ground": 411237, "ground_fraction": 0.134726, "low_fraction": 0.105614, "hag_mean_m": 14.4919, "hag_p95_m": 31.952},
+    {"block_id": "T6_23339462", "points": 3553655, "ground": 2776908, "ground_fraction": 0.781423, "low_fraction": 0.657352, "hag_mean_m": 1.7225, "hag_p95_m": 13.6628},
+    {"block_id": "T6_23339458", "points": 86743659, "ground": 21454139, "ground_fraction": 0.247328, "low_fraction": 0.184501, "hag_mean_m": 7.9533, "hag_p95_m": 20.6771},
+    {"block_id": "T6_16625195", "points": 7975110, "ground": 1316030, "ground_fraction": 0.165017, "low_fraction": 0.119307, "hag_mean_m": 11.0659, "hag_p95_m": 24.9667},
+    {"block_id": "T6_16624698", "points": 4967140, "ground": 3578509, "ground_fraction": 0.720437, "low_fraction": 0.601318, "hag_mean_m": 3.8012, "hag_p95_m": 23.4497},
+    {"block_id": "T6_19212607", "points": 1296633, "ground": 171426, "ground_fraction": 0.132209, "low_fraction": 0.09842, "hag_mean_m": 13.286, "hag_p95_m": 28.2037}
+  ],
+  "conclusion": {
+    "supported": "The full materialize-crop-bundle-summary lane runs on a real 246M-point TFL6 tile.",
+    "not_supported": "Ground accuracy, field validation, or a stand-level inventory claim.",
+    "limits": "Workstation-only; no field labels; per-block ground fraction is point composition."
+  }
+}
