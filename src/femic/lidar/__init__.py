@@ -46,6 +46,13 @@ from femic.lidar.catalog import (
     tile_from_arcgis_feature,
     write_lidar_selection_manifest,
 )
+from femic.lidar.ground_summary import (
+    GROUND_SUMMARY_SCHEMA_VERSION,
+    GroundSummaryError,
+    GroundSummaryResult,
+    GroundSummaryRow,
+    summarize_ground_bundle,
+)
 from femic.lidar.ground_bundle import (
     GROUND_BUNDLE_SCHEMA_VERSION,
     GROUND_EXTRA_DIMENSIONS,
@@ -249,9 +256,13 @@ __all__ = [
     "GROUND_MANIFEST_NAME",
     "GROUND_QA_NAME",
     "GROUND_QA_SCHEMA_VERSION",
+    "GROUND_SUMMARY_SCHEMA_VERSION",
     "GroundBundle",
     "GroundBundleError",
     "GroundBundlePointInspection",
+    "GroundSummaryError",
+    "GroundSummaryResult",
+    "GroundSummaryRow",
     "LidarMaterializationError",
     "LidarMaterializationManifest",
     "LidarMaterializationResult",
@@ -317,6 +328,7 @@ __all__ = [
     "require_projected_metre_grid",
     "resolve_lidar_materialization_manifest_path",
     "summarize_individual_trees_by_block",
+    "summarize_ground_bundle",
     "tile_from_arcgis_feature",
     "validate_lidar_materialization",
     "validate_lidar_product_bundle",

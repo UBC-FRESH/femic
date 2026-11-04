@@ -172,6 +172,7 @@ from femic.lidar.products import (
     validate_lidar_product_bundle,
 )
 from femic.lidar.ground_bundle import GroundBundleError, read_ground_bundle
+from femic.lidar.ground_summary import GroundSummaryError, summarize_ground_bundle
 from femic.lidar.terrain import (
     TerrainProcessingError,
     build_terrain_products,
@@ -614,6 +615,29 @@ LIDAR_GROUND_INSPECT_POINTS_OPTION = typer.Option(
     True,
     "--inspect-points/--no-inspect-points",
     help="Inspect the LAZ header and extra dimensions when laspy is installed.",
+)
+LIDAR_GROUND_SUMMARY_POLYGONS_OPTION = typer.Option(
+    ...,
+    "--polygons",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="Polygon layer readable by geopandas.",
+)
+LIDAR_GROUND_SUMMARY_OUT_OPTION = typer.Option(
+    ...,
+    "--out",
+    help="Destination CSV.",
+)
+LIDAR_GROUND_SUMMARY_ID_FIELD_OPTION = typer.Option(
+    "block_id",
+    "--id-field",
+    help="Polygon identifier field.",
+)
+LIDAR_GROUND_SUMMARY_OVERWRITE_OPTION = typer.Option(
+    False,
+    "--overwrite",
+    help="Replace an existing CSV and manifest.",
 )
 LIDAR_OUTPUT_ROOT_OPTION = typer.Option(
     None,
@@ -5385,6 +5409,39 @@ def lidar_ground_bundle(
     for warning in bundle.warnings:
         console.print(f"[yellow]warning:[/yellow] {warning}")
     console.print("[green]Ground bundle is valid[/green]")
+
+
+@lidar_app.command("ground-summary")
+def lidar_ground_summary(
+    bundle_dir: Path = LIDAR_GROUND_BUNDLE_DIR_ARGUMENT,
+    polygons: Path = LIDAR_GROUND_SUMMARY_POLYGONS_OPTION,
+    out: Path = LIDAR_GROUND_SUMMARY_OUT_OPTION,
+    id_field: str = LIDAR_GROUND_SUMMARY_ID_FIELD_OPTION,
+    overwrite: bool = LIDAR_GROUND_SUMMARY_OVERWRITE_OPTION,
+    json_output: bool = LIDAR_INSPECT_JSON_OPTION,
+) -> None:
+    """Summarize a ground bundle over polygon supports."""
+
+    try:
+        result = summarize_ground_bundle(
+            bundle_dir,
+            polygons,
+            out,
+            id_field=id_field,
+            overwrite=overwrite,
+        )
+    except GroundSummaryError as exc:
+        console.print(f"[red]Ground summary error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    if json_output:
+        typer.echo(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        return
+    console.print("[bold]Ground summary[/bold]")
+    console.print(f"rows: {len(result.rows)}")
+    console.print(f"csv: {result.csv_path}")
+    console.print(f"manifest: {result.manifest_path}")
+    for warning in result.warnings:
+        console.print(f"[yellow]warning:[/yellow] {warning}")
 
 
 @data_app.command("bcdc-resolve")

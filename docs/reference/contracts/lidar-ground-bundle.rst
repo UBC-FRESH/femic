@@ -76,3 +76,20 @@ inspection.
 
 The reader never imports ``fresh-urban-forest-lab`` and never changes a default FEMIC
 product.
+
+Ground summary
+--------------
+
+The optional ``femic lidar ground-summary`` command reads a valid bundle and a polygon layer
+with matching CRS. It writes a CSV and ``femic.ground-summary.v1`` manifest.
+
+CSV fields:
+
+- ``polygon_id``;
+- ``point_count``, ``ground_count``, ``ground_fraction``;
+- ``low_count``, ``low_fraction``;
+- ``hag_mean``, ``hag_p50``, ``hag_p95``, ``hag_max``.
+
+The manifest records the bundle schema/parameter/hash pin, polygon layer hash, id field,
+feature count, output CSV hash, row count, CRS, warnings, and a statement that HAG statistics
+describe the predicted surface, not field-validated ground accuracy.
