@@ -173,6 +173,7 @@ from femic.lidar.products import (
 )
 from femic.lidar.ground_bundle import GroundBundleError, read_ground_bundle
 from femic.lidar.ground_summary import GroundSummaryError, summarize_ground_bundle
+from femic.lidar.crop import LazCropError, crop_laz_by_bbox
 from femic.lidar.terrain import (
     TerrainProcessingError,
     build_terrain_products,
@@ -638,6 +639,29 @@ LIDAR_GROUND_SUMMARY_OVERWRITE_OPTION = typer.Option(
     False,
     "--overwrite",
     help="Replace an existing CSV and manifest.",
+)
+LIDAR_CROP_LAZ_OPTION = typer.Option(
+    ...,
+    "--laz",
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="Input LAZ tile.",
+)
+LIDAR_CROP_BBOX_OPTION = typer.Option(
+    ...,
+    "--bbox",
+    help="Crop bbox minx,miny,maxx,maxy in the source CRS.",
+)
+LIDAR_CROP_OUT_OPTION = typer.Option(
+    ...,
+    "--out",
+    help="Destination cropped LAZ.",
+)
+LIDAR_CROP_OVERWRITE_OPTION = typer.Option(
+    False,
+    "--overwrite",
+    help="Replace an existing cropped LAZ and manifest.",
 )
 LIDAR_OUTPUT_ROOT_OPTION = typer.Option(
     None,
@@ -5439,6 +5463,38 @@ def lidar_ground_summary(
     console.print("[bold]Ground summary[/bold]")
     console.print(f"rows: {len(result.rows)}")
     console.print(f"csv: {result.csv_path}")
+    console.print(f"manifest: {result.manifest_path}")
+    for warning in result.warnings:
+        console.print(f"[yellow]warning:[/yellow] {warning}")
+
+
+@lidar_app.command("crop")
+def lidar_crop(
+    laz: Path = LIDAR_CROP_LAZ_OPTION,
+    bbox: str = LIDAR_CROP_BBOX_OPTION,
+    out: Path = LIDAR_CROP_OUT_OPTION,
+    overwrite: bool = LIDAR_CROP_OVERWRITE_OPTION,
+    json_output: bool = LIDAR_INSPECT_JSON_OPTION,
+) -> None:
+    """Crop a local LAZ to a bounding box and write a manifest."""
+
+    try:
+        result = crop_laz_by_bbox(
+            laz,
+            out,
+            _parse_lidar_bbox(bbox),
+            overwrite=overwrite,
+        )
+    except (LazCropError, ValueError) as exc:
+        console.print(f"[red]LAZ crop error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    if json_output:
+        typer.echo(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        return
+    console.print("[bold]LAZ crop[/bold]")
+    console.print(f"input_points: {result.input_point_count}")
+    console.print(f"output_points: {result.output_point_count}")
+    console.print(f"output: {result.output_path}")
     console.print(f"manifest: {result.manifest_path}")
     for warning in result.warnings:
         console.print(f"[yellow]warning:[/yellow] {warning}")

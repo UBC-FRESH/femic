@@ -34,6 +34,26 @@ Install optional inspection
 ``laspy[lazrs]`` is optional. Without it, the reader still validates the bundle and records a
 warning that point inspection was skipped.
 
+Large tiles and local crop
+--------------------------
+
+LidarBC LAZ tiles can be much larger than a block AOI. LAZ is not COPC, so an HTTP range
+read does not avoid the full download. Acquire the tile once, then crop locally before
+running the ground adapter:
+
+.. code-block:: bash
+
+   femic lidar crop \
+     --laz data/lidar/bc_092l062_4_1_2.laz \
+     --bbox 881700,627500,882700,628500 \
+     --out data/lidar/crop/tfl6_blocks.laz
+
+The bbox is in the source CRS. The command writes the cropped LAZ and
+``tfl6_blocks.manifest.json`` with input/output hashes, counts, bbox, CRS, and warnings.
+
+Use a COPC source and a bounds-aware reader when one is available. Do not treat this crop as
+a range-read client.
+
 Summarize by polygon
 --------------------
 

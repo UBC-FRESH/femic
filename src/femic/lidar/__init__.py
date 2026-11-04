@@ -46,6 +46,12 @@ from femic.lidar.catalog import (
     tile_from_arcgis_feature,
     write_lidar_selection_manifest,
 )
+from femic.lidar.crop import (
+    LAZ_CROP_SCHEMA_VERSION,
+    LazCropError,
+    LazCropResult,
+    crop_laz_by_bbox,
+)
 from femic.lidar.ground_summary import (
     GROUND_SUMMARY_SCHEMA_VERSION,
     GroundSummaryError,
@@ -250,6 +256,7 @@ __all__ = [
     "InventoryAlsValidationRow",
     "LidarCatalogError",
     "LidarInventoryError",
+    "LAZ_CROP_SCHEMA_VERSION",
     "GROUND_BUNDLE_SCHEMA_VERSION",
     "GROUND_EXTRA_DIMENSIONS",
     "GROUND_LAZ_NAME",
@@ -260,6 +267,8 @@ __all__ = [
     "GroundBundle",
     "GroundBundleError",
     "GroundBundlePointInspection",
+    "LazCropError",
+    "LazCropResult",
     "GroundSummaryError",
     "GroundSummaryResult",
     "GroundSummaryRow",
@@ -306,6 +315,7 @@ __all__ = [
     "build_terrain_products",
     "compare_canopy_to_vri",
     "compare_stream_candidates",
+    "crop_laz_by_bbox",
     "compute_zonal_statistics",
     "derive_canopy_height_model",
     "derive_canopy_structure",

@@ -93,3 +93,11 @@ CSV fields:
 The manifest records the bundle schema/parameter/hash pin, polygon layer hash, id field,
 feature count, output CSV hash, row count, CRS, warnings, and a statement that HAG statistics
 describe the predicted surface, not field-validated ground accuracy.
+
+LAZ crop
+--------
+
+``femic lidar crop`` writes ``femic.laz_crop.v1``. It records input/output hashes, input and
+output point counts, bbox, source CRS, and warnings. It reads the source in chunks and writes
+only in-bbox points. It is a local workflow after one materialization, not a COPC range-read
+client.
