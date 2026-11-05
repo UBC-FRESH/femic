@@ -4715,7 +4715,7 @@ seven rows; the tile and bundle bytes stay in `runtime/`.
 
 Parent issue: #584
 Branch: `feature/p136-canonical-ground-lane`
-Status: active
+Status: complete
 
 Goal: make FEMIC the canonical owner of the ground-classification lane by porting the
 classifier and bundle writer from `fresh-urban-forest-lab`.
@@ -4728,8 +4728,9 @@ Tasks:
   - [x] Add `femic lidar ground-bundle-build`.
   - [x] Add classifier and writer tests.
   - [x] Update the guide/contract pages.
-- [ ] P136.2 Deprecate the fresh-urban-forest-lab writer and document the new owner.
-- [ ] P136.3 Close-out.
+- [x] P136.2 Remove the fresh-urban-forest-lab writer and document the new owner
+  (`UBC-FRESH/fresh-urban-forest-lab#145`).
+- [x] P136.3 Close-out (`notes/reports/p136-canonical-ground-lane.md`).
 
 Acceptance: FEMIC classifies a synthetic LAZ, writes a schema-valid bundle, and the reader
 reads it; the CLI is opt-in; the docs name FEMIC as canonical.

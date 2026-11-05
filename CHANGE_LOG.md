@@ -16501,3 +16501,11 @@ PYTHONPATH=src python -m femic.site_index \
 - Added 33 classifier/writer tests and updated the guide/contract.
 - FEMIC is now the canonical producer; the `fresh-urban-forest-lab` writer is legacy and
   will be deprecated in P136.2.
+
+## 2026-11-05 - P136.2/P136.3 canonical ground-lane close-out
+
+- Removed the legacy `ground_adapter` writer, `ground-adapter` CLI, tests, and API entry from
+  `fresh-urban-forest-lab` (UBC-FRESH/fresh-urban-forest-lab#145).
+- The urban lab keeps `classify_ground_ptd` only as a point-cloud prototype.
+- Added `notes/reports/p136-canonical-ground-lane.md`.
+- P136 is complete; no tag or release was created.
