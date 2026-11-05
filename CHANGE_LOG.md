@@ -16509,3 +16509,11 @@ PYTHONPATH=src python -m femic.site_index \
 - The urban lab keeps `classify_ground_ptd` only as a point-cloud prototype.
 - Added `notes/reports/p136-canonical-ground-lane.md`.
 - P136 is complete; no tag or release was created.
+
+## 2026-11-05 - P136 follow-up: urban-lab ground prototype removed
+
+- `fresh-urban-forest-lab` removed its remaining `classify_ground_ptd` prototype in P33
+  (UBC-FRESH/fresh-urban-forest-lab#148).
+- Updated `notes/reports/p136-canonical-ground-lane.md` so the close-out reflects the final
+  ownership boundary: FEMIC owns the ground lane; the urban lab keeps only generic
+  point-cloud conditioning primitives.
