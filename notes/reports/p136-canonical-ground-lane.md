@@ -15,8 +15,9 @@ FEMIC is now the canonical owner of the ground-classification lane.
   `femic.lidar`.
 - `femic lidar ground-bundle-build` writes the existing `femic.ground-bundle.v1` and
   `femic.ground-qa.v1` contract without changing any default LidarBC product.
-- `fresh-urban-forest-lab` no longer ships the bundle writer or `ground-adapter` CLI. It keeps
-  `classify_ground_ptd` only as a point-cloud prototype for urban ALS experiments.
+- `fresh-urban-forest-lab` no longer ships the bundle writer, `ground-adapter` CLI, or the
+  ground classifier. Its remaining prototype was removed in P33
+  (UBC-FRESH/fresh-urban-forest-lab#148).
 
 There was never a runtime import between the repositories. The confusing part was ownership:
 the writer lived in the urban-forest app while the schema and consumers were FEMIC/FHOPS.
@@ -28,7 +29,7 @@ the writer lived in the urban-forest app while the schema and consumers were FEM
 - The FEMIC reader reads the FEMIC-written bundle and sees `is_ground`, `hag`, `is_low`, and
   `ref_class`.
 - Sphinx docs build with warnings as errors.
-- The `fresh-urban-forest-lab` dashboard is green after the writer removal.
+- The `fresh-urban-forest-lab` dashboard is green after the writer and classifier removal.
 - The upstream cross-repo contract was already proven on the TFL6 tile in P135.
 
 ## Limits
@@ -36,8 +37,8 @@ the writer lived in the urban-forest app while the schema and consumers were FEM
 - No field or manual ground labels; the classifier output is not an accuracy estimate.
 - The writer is opt-in and workstation-capable; large tiles remain local.
 - No default FEMIC product, tag, release, or setting changed.
-- The urban-lab classifier prototype remains until a later cleanup decides whether to delete
-  it or keep it as a generic utility.
+- The urban-lab classifier prototype was removed in P33; only the generic point-cloud
+  conditioning primitives remain there.
 
 ## Verification
 
