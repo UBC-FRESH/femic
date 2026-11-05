@@ -16517,3 +16517,20 @@ PYTHONPATH=src python -m femic.site_index \
 - Updated `notes/reports/p136-canonical-ground-lane.md` so the close-out reflects the final
   ownership boundary: FEMIC owns the ground lane; the urban lab keeps only generic
   point-cloud conditioning primitives.
+
+## 2026-11-05 - P137 Squamish orthophoto control patch
+
+- Confirmed the TFL6 2012 0.5 m provincial orthophoto is Access Only and sold per BCGS
+  tile; the free 1/16 thumbnail is too coarse for point labels.
+- Built a zero-cost control patch from the Squamish 2024 7.5 cm OGL-Squamish orthophoto and
+  the LidarBC 2019 8 points/m2 OGL-BC tile.
+- Labelled open mudflat as ground and first returns of multiple in closed canopy as
+  non-ground.
+- PTD result: 5,461 ground and 9,284 non-ground labels; precision 0.9970, recall 0.9872,
+  16 false-positive ground points.
+- Added `notes/reports/p137-squamish-control-patch.md` and `.json`; raw orthophoto and LAZ
+  bytes stay under `runtime/`.
+- Limits: not TFL6-specific, open mudflat rather than forest floor, 2019 LiDAR vs 2024
+  orthophoto, and no field labels.
+- Fixed `GroundBundleResult.to_dict` so `femic lidar ground-bundle-build --json` returns
+  the written paths and counts; added a CLI JSON test.

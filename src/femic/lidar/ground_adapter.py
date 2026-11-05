@@ -146,6 +146,24 @@ class GroundBundleResult:
     low_point_count: int
     warnings: tuple[str, ...]
 
+    def to_dict(self) -> dict[str, object]:
+        """Return the result as a JSON-serializable mapping.
+
+        Returns
+        -------
+        dict
+            Written paths, counts, and warnings.
+        """
+        return {
+            "ground_laz": str(self.ground_laz),
+            "manifest_path": str(self.manifest_path),
+            "qa_path": str(self.qa_path),
+            "point_count": self.point_count,
+            "ground_count": self.ground_count,
+            "low_point_count": self.low_point_count,
+            "warnings": list(self.warnings),
+        }
+
 
 def _utc_now() -> str:
     """Return an ISO UTC timestamp.

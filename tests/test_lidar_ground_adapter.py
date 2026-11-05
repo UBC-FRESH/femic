@@ -173,3 +173,32 @@ def test_ground_adapter_cli(tmp_path: Path) -> None:
     assert (out / "ground.laz").exists()
     assert (out / "manifest.json").exists()
     assert (out / "qa.json").exists()
+
+
+def test_ground_adapter_cli_json(tmp_path: Path) -> None:
+    """The CLI JSON result includes the written paths and counts."""
+    source = tmp_path / "tile.laz"
+    _ground_fixture(source)
+    out = tmp_path / "bundle"
+    result = RUNNER.invoke(
+        app,
+        [
+            "lidar",
+            "ground-bundle-build",
+            str(source),
+            str(out),
+            "--crs",
+            "EPSG:3157",
+            "--vertical-datum",
+            "CGVD2013",
+            "--json",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.stdout)
+    assert payload["ground_laz"].endswith("ground.laz")
+    assert payload["manifest_path"].endswith("manifest.json")
+    assert payload["qa_path"].endswith("qa.json")
+    assert payload["point_count"] > 0
+    assert payload["ground_count"] >= 0
+    assert payload["low_point_count"] >= 0

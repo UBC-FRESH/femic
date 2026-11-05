@@ -1,0 +1,110 @@
+{
+  "phase": "P137",
+  "status": "complete",
+  "date": "2026-11-05",
+  "purpose": "Zero-cost public-data control patch for the FEMIC ground classifier",
+  "sources": {
+    "orthophoto": {
+      "producer": "District of Squamish",
+      "title": "Aerial Photo 2024",
+      "resolution_m": 0.075,
+      "licence": "Open Government Licence - Squamish",
+      "item_url": "https://www.arcgis.com/home/item.html?id=e86a2b42f49046918c0c0c1d13f000a2",
+      "service_url": "https://portal.squamish.ca/server/rest/services/Orthophoto_2024/ImageServer",
+      "ground_crop_bbox_epsg3857": [
+        -13713244.901985273,
+        6393348.354335499,
+        -13713089.7305535,
+        6393503.525767272
+      ],
+      "canopy_crop_bbox_epsg3857": [
+        -13713444.795561131,
+        6393285.934704034,
+        -13713290.835651558,
+        6393441.108679998
+      ],
+      "ground_crop_sha256": "eff669fb5ceb7da090dd4b53274b1aba81f4e3273f5f10de74ac57a81fbc0a51",
+      "canopy_crop_sha256": "fe3441b05c0b620d95ec615c3a159e5a9e7f183b1b3a4ed49212a6c5453bf879"
+    },
+    "point_cloud": {
+      "producer": "LidarBC",
+      "year": 2019,
+      "density_points_per_m2": 8,
+      "licence": "Open Government Licence - British Columbia",
+      "tile": "bc_092g065_3_3_3_xyes_8_utm10_2019.laz",
+      "tile_url": "https://nrs.objectstore.gov.bc.ca/gdwuts/092/092g/2019/pointcloud/bc_092g065_3_3_3_xyes_8_utm10_2019.laz",
+      "tile_sha256": "289b392677a5e0cfeca0b06f04a94a3232f4ffe8cf9c6900095e71ac84d66b14",
+      "classes": [
+        1,
+        2,
+        7
+      ]
+    }
+  },
+  "patch": {
+    "crs": "EPSG:3157",
+    "ground_box": {
+      "x_min": 486430.0,
+      "x_max": 486530.0,
+      "y_min": 5504560.0,
+      "y_max": 5504660.0
+    },
+    "canopy_box": {
+      "x_min": 486300.0,
+      "x_max": 486400.0,
+      "y_min": 5504520.0,
+      "y_max": 5504620.0
+    },
+    "ground_pixel_box": [
+      933,
+      1133,
+      1133,
+      1266
+    ],
+    "canopy_pixel_box": [
+      200,
+      300,
+      450,
+      600
+    ],
+    "labels": {
+      "ground": "Open estuarine mudflat with no canopy above the point",
+      "non_ground": "First return of a multiple-return pulse inside closed canopy"
+    }
+  },
+  "classifier": {
+    "sor_k": 10,
+    "sor_multiplier": 2.0,
+    "cell_size_m": 1.0,
+    "max_angle_deg": 15.0,
+    "max_distance_m": 0.5,
+    "max_iterations": 8,
+    "low_point_cut_m": 0.15
+  },
+  "result": {
+    "ground_points": 5461,
+    "ground_predicted_ground": 5391,
+    "ground_class2": 723,
+    "ground_hag_p50_m": 0.0,
+    "ground_hag_p95_m": 0.087328,
+    "non_ground_points": 9284,
+    "non_ground_predicted_ground": 16,
+    "non_ground_class2": 0,
+    "non_ground_hag_p50_m": 17.981016,
+    "non_ground_hag_p95_m": 27.747494,
+    "true_positive": 5391,
+    "false_negative": 70,
+    "false_positive": 16,
+    "true_negative": 9268,
+    "precision": 0.997040872942482,
+    "recall": 0.987181834828786
+  },
+  "limits": [
+    "Not TFL6-specific.",
+    "Open mudflat ground, not forest floor under canopy.",
+    "2019 LiDAR and 2024 orthophoto are five years apart.",
+    "Class 2 is incomplete in the ground zone.",
+    "No field labels and no paid TFL6 tile."
+  ],
+  "raw_data_tracked": false
+}
