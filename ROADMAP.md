@@ -4766,3 +4766,29 @@ Tasks:
 Acceptance: the labels have clear public provenance; the report records 5,461 ground and
 9,284 non-ground labels; the report records precision and recall; the caveats distinguish
 this from forest-floor validation; raw data is not tracked.
+
+## Phase 138: PTD parameter sensitivity on the Squamish control zones
+
+Parent issue: #591
+Branch: `feature/p138-ptd-sensitivity`
+Status: complete
+
+Goal: test how sensitive the canonical PTD classifier is to its main parameters on the
+P137 Squamish control zones. Do not change the default classifier or product.
+
+The P137 control has 5,461 open-mudflat ground points and 9,284 closed-canopy first-return
+non-ground points. This phase runs a bounded grid over SOR, cell size, maximum angle, and
+maximum distance, then reports ground recall and canopy false-positive ground.
+
+Tasks:
+
+- [x] P138.1 Run the parameter grid on the two P137 patches
+  - [x] Reuse the P137 raw crops and labels under `runtime/p137/`.
+  - [x] Grid: SOR on/off, cell 0.5/1.0/2.0 m, angle 10/15/30 degrees, distance
+    0.3/0.5/1.0 m, iterations 8.
+  - [x] Report ground recall and canopy false-positive ground.
+  - [x] Identify the Pareto front and whether the P135 defaults are robust.
+  - [x] Record the limits of tuning on a small public control patch.
+
+Acceptance: every grid setting has both metrics; dominant settings are identified; the
+defaults are not changed; raw data is not tracked.

@@ -16534,3 +16534,14 @@ PYTHONPATH=src python -m femic.site_index \
   orthophoto, and no field labels.
 - Fixed `GroundBundleResult.to_dict` so `femic lidar ground-bundle-build --json` returns
   the written paths and counts; added a CLI JSON test.
+
+## 2026-11-05 - P138 PTD parameter sensitivity on the Squamish control zones
+
+- Ran a 54-setting grid over the P137 ground and canopy zones.
+- P135 defaults: ground recall 0.9742, canopy false ground 0.00141, balanced 0.9864.
+- Best balanced setting: SOR on, 2 m cells, 30 degree angle, 0.3 m distance; ground recall
+  0.9998, canopy false ground 0.00011.
+- Angle dominates; cell size has a smaller effect; SOR is mixed, not a free win.
+- Did not change default parameters; the best setting is a candidate for TFL6 and steep
+  terrain testing.
+- Added `notes/reports/p138-ptd-sensitivity.md`, `.json`, and the full grid CSV.

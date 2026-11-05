@@ -1,0 +1,242 @@
+{
+  "phase": "P138",
+  "status": "complete",
+  "date": "2026-11-05",
+  "purpose": "PTD parameter sensitivity on the P137 Squamish control zones",
+  "control_zones": {
+    "ground_points": 5461,
+    "canopy_points": 9284,
+    "ground_zone": "open estuarine mudflat",
+    "canopy_zone": "first returns of multiple in closed canopy"
+  },
+  "grid": {
+    "sor": [
+      true,
+      false
+    ],
+    "cell_m": [
+      0.5,
+      1.0,
+      2.0
+    ],
+    "angle_deg": [
+      10.0,
+      15.0,
+      30.0
+    ],
+    "distance_m": [
+      0.3,
+      0.5,
+      1.0
+    ],
+    "max_iterations": 8,
+    "settings": 54
+  },
+  "default_P135": {
+    "sor": true,
+    "cell_m": 1.0,
+    "angle_deg": 15.0,
+    "distance_m": 0.5,
+    "ground_points": 5461,
+    "ground_recall": 0.9741805530122688,
+    "canopy_points": 9234,
+    "canopy_false_ground": 0.0014078405891271,
+    "balanced_accuracy": 0.9863863562115708
+  },
+  "best_balanced": {
+    "sor": true,
+    "cell_m": 2.0,
+    "angle_deg": 30.0,
+    "distance_m": 0.3,
+    "ground_points": 5461,
+    "ground_recall": 0.999816883354697,
+    "canopy_points": 9234,
+    "canopy_false_ground": 0.0001082954299328,
+    "balanced_accuracy": 0.999854293962382
+  },
+  "top_10": [
+    {
+      "sor": true,
+      "cell_m": 2.0,
+      "angle_deg": 30.0,
+      "distance_m": 0.3,
+      "ground_points": 5461,
+      "ground_recall": 0.999816883354697,
+      "canopy_points": 9234,
+      "canopy_false_ground": 0.0001082954299328,
+      "balanced_accuracy": 0.999854293962382
+    },
+    {
+      "sor": false,
+      "cell_m": 2.0,
+      "angle_deg": 30.0,
+      "distance_m": 0.3,
+      "ground_points": 5461,
+      "ground_recall": 0.9994506500640908,
+      "canopy_points": 9284,
+      "canopy_false_ground": 0.0,
+      "balanced_accuracy": 0.9997253250320456
+    },
+    {
+      "sor": true,
+      "cell_m": 2.0,
+      "angle_deg": 30.0,
+      "distance_m": 0.5,
+      "ground_points": 5461,
+      "ground_recall": 0.9990844167734848,
+      "canopy_points": 9234,
+      "canopy_false_ground": 0.0004331817197314,
+      "balanced_accuracy": 0.9993256175268768
+    },
+    {
+      "sor": false,
+      "cell_m": 2.0,
+      "angle_deg": 30.0,
+      "distance_m": 0.5,
+      "ground_points": 5461,
+      "ground_recall": 0.9989013001281816,
+      "canopy_points": 9284,
+      "canopy_false_ground": 0.0005385609651012,
+      "balanced_accuracy": 0.99918136958154
+    },
+    {
+      "sor": true,
+      "cell_m": 2.0,
+      "angle_deg": 30.0,
+      "distance_m": 1.0,
+      "ground_points": 5461,
+      "ground_recall": 1.0,
+      "canopy_points": 9234,
+      "canopy_false_ground": 0.0018410223088585,
+      "balanced_accuracy": 0.9990794888455709
+    },
+    {
+      "sor": false,
+      "cell_m": 2.0,
+      "angle_deg": 30.0,
+      "distance_m": 1.0,
+      "ground_points": 5461,
+      "ground_recall": 1.0,
+      "canopy_points": 9284,
+      "canopy_false_ground": 0.0019388194743644,
+      "balanced_accuracy": 0.9990305902628178
+    },
+    {
+      "sor": false,
+      "cell_m": 1.0,
+      "angle_deg": 30.0,
+      "distance_m": 0.3,
+      "ground_points": 5461,
+      "ground_recall": 0.9970701336751512,
+      "canopy_points": 9284,
+      "canopy_false_ground": 0.0002154243860404,
+      "balanced_accuracy": 0.9984273546445552
+    },
+    {
+      "sor": false,
+      "cell_m": 1.0,
+      "angle_deg": 30.0,
+      "distance_m": 1.0,
+      "ground_points": 5461,
+      "ground_recall": 0.9983519501922724,
+      "canopy_points": 9284,
+      "canopy_false_ground": 0.0016156828953037,
+      "balanced_accuracy": 0.9983681336484844
+    },
+    {
+      "sor": false,
+      "cell_m": 1.0,
+      "angle_deg": 30.0,
+      "distance_m": 0.5,
+      "ground_points": 5461,
+      "ground_recall": 0.997253250320454,
+      "canopy_points": 9284,
+      "canopy_false_ground": 0.0005385609651012,
+      "balanced_accuracy": 0.9983573446776765
+    },
+    {
+      "sor": true,
+      "cell_m": 1.0,
+      "angle_deg": 30.0,
+      "distance_m": 0.3,
+      "ground_points": 5461,
+      "ground_recall": 0.9974363669657572,
+      "canopy_points": 9234,
+      "canopy_false_ground": 0.0015161360190599,
+      "balanced_accuracy": 0.9979601154733486
+    }
+  ],
+  "parameter_means": {
+    "sor": {
+      "False": {
+        "ground_recall": 0.9618778272870929,
+        "canopy_false_ground": 0.002876314487688844,
+        "balanced_accuracy": 0.979500756399702
+      },
+      "True": {
+        "ground_recall": 0.9601890848915203,
+        "canopy_false_ground": 0.005575209170617392,
+        "balanced_accuracy": 0.9773069378604515
+      }
+    },
+    "cell_m": {
+      "0.5": {
+        "ground_recall": 0.9582087122830577,
+        "canopy_false_ground": 0.011132946723469844,
+        "balanced_accuracy": 0.9735378827797939
+      },
+      "1.0": {
+        "ground_recall": 0.9604569777615006,
+        "canopy_false_ground": 0.0012382469596792277,
+        "balanced_accuracy": 0.9796093654009107
+      },
+      "2.0": {
+        "ground_recall": 0.9644346782233616,
+        "canopy_false_ground": 0.00030609180431028334,
+        "balanced_accuracy": 0.9820642932095256
+      }
+    },
+    "angle_deg": {
+      "10.0": {
+        "ground_recall": 0.9108221937374107,
+        "canopy_false_ground": 0.0036689321558396504,
+        "balanced_accuracy": 0.9535766307907855
+      },
+      "15.0": {
+        "ground_recall": 0.9732547966387922,
+        "canopy_false_ground": 0.0038133260624167945,
+        "balanced_accuracy": 0.9847207352881876
+      },
+      "30.0": {
+        "ground_recall": 0.999023377891717,
+        "canopy_false_ground": 0.005195027269202911,
+        "balanced_accuracy": 0.9969141753112569
+      }
+    },
+    "distance_m": {
+      "0.3": {
+        "ground_recall": 0.9597652037681337,
+        "canopy_false_ground": 0.0032008832373905498,
+        "balanced_accuracy": 0.9782821602653714
+      },
+      "0.5": {
+        "ground_recall": 0.9615455044863579,
+        "canopy_false_ground": 0.0037953740302467498,
+        "balanced_accuracy": 0.9788750652280555
+      },
+      "1.0": {
+        "ground_recall": 0.9617896600134286,
+        "canopy_false_ground": 0.005681028219822056,
+        "balanced_accuracy": 0.9780543158968033
+      }
+    }
+  },
+  "limits": [
+    "One small coastal control patch; not a general tuning set.",
+    "No ground under closed canopy; open mudflat plus canopy first returns.",
+    "2019 LiDAR vs 2024 orthophoto.",
+    "Higher angle and larger cell may not transfer to steep TFL6 terrain.",
+    "No default parameter change in this phase."
+  ],
+  "raw_data_tracked": false
+}
