@@ -4734,3 +4734,35 @@ Tasks:
 
 Acceptance: FEMIC classifies a synthetic LAZ, writes a schema-valid bundle, and the reader
 reads it; the CLI is opt-in; the docs name FEMIC as canonical.
+
+## Phase 137: Squamish orthophoto control patch
+
+Parent issue: #589
+Branch: `feature/p137-squamish-control-patch`
+Status: complete
+
+Goal: create a zero-cost, publicly licensed control patch for the ground classifier using
+Squamish open orthophoto and LidarBC, without new field data.
+
+The TFL6 provincial orthophoto is 2012 0.5 m imagery that is Access Only and sold per BCGS
+tile, with only a 1/16-scale free thumbnail. That is not usable for point-level labels
+without funding. The District of Squamish publishes open orthophoto under OGL-Squamish, and
+LidarBC publishes the matching 2019 point cloud under OGL-BC.
+
+Tasks:
+
+- [x] P137.1 Build the Squamish open-ground and canopy control zones
+  - [x] Use the Squamish 2024 7.5 cm orthophoto and LidarBC 2019 8 points/m2 tile
+    `bc_092g065_3_3_3_xyes_8_utm10_2019.laz`.
+  - [x] Label open mudflat as ground and first returns of multiple in closed canopy as
+    non-ground.
+  - [x] Run the PTD classifier with the P135 parameters.
+  - [x] Record precision, recall, HAG, provenance, and caveats.
+  - [x] Keep raw orthophoto and LAZ bytes under `runtime/`.
+- [x] P137.2 Fix the ground-bundle CLI JSON result
+  - [x] Add `GroundBundleResult.to_dict`.
+  - [x] Cover `ground-bundle-build --json`.
+
+Acceptance: the labels have clear public provenance; the report records 5,461 ground and
+9,284 non-ground labels; the report records precision and recall; the caveats distinguish
+this from forest-floor validation; raw data is not tracked.
