@@ -1,9 +1,9 @@
 LiDAR ground-bundle contract
 ============================
 
-The optional ground bundle is a sidecar produced by ``fresh-urban-forest-lab``. FEMIC reads
-it but does not produce it. The bundle is independent of FEMIC's default LidarBC product
-path.
+The optional ground bundle is a sidecar product. FEMIC is the canonical producer through
+``femic lidar ground-bundle-build``; the earlier ``fresh-urban-forest-lab`` writer proved the
+contract and is legacy. The bundle is independent of FEMIC's default LidarBC product path.
 
 Layout
 ------

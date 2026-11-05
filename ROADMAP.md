@@ -4710,3 +4710,26 @@ Tasks:
 
 Acceptance: the crop contains the seven blocks; the bundle is schema-valid; the summary has
 seven rows; the tile and bundle bytes stay in `runtime/`.
+
+## Phase 136: Canonical Ground Lane in FEMIC
+
+Parent issue: #584
+Branch: `feature/p136-canonical-ground-lane`
+Status: active
+
+Goal: make FEMIC the canonical owner of the ground-classification lane by porting the
+classifier and bundle writer from `fresh-urban-forest-lab`.
+
+Tasks:
+
+- [x] P136.1 Port the classifier, writer, CLI, tests, and docs (`#585`).
+  - [x] Add `femic.lidar.ground_classification`.
+  - [x] Add `femic.lidar.ground_adapter`.
+  - [x] Add `femic lidar ground-bundle-build`.
+  - [x] Add classifier and writer tests.
+  - [x] Update the guide/contract pages.
+- [ ] P136.2 Deprecate the fresh-urban-forest-lab writer and document the new owner.
+- [ ] P136.3 Close-out.
+
+Acceptance: FEMIC classifies a synthetic LAZ, writes a schema-valid bundle, and the reader
+reads it; the CLI is opt-in; the docs name FEMIC as canonical.
