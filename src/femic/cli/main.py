@@ -173,6 +173,11 @@ from femic.lidar.products import (
 )
 from femic.lidar.ground_bundle import GroundBundleError, read_ground_bundle
 from femic.lidar.ground_summary import GroundSummaryError, summarize_ground_bundle
+from femic.lidar.ground_adapter import (
+    GroundAdapterError,
+    GroundAdapterParameters,
+    write_ground_bundle,
+)
 from femic.lidar.crop import LazCropError, crop_laz_by_bbox
 from femic.lidar.terrain import (
     TerrainProcessingError,
@@ -662,6 +667,37 @@ LIDAR_CROP_OVERWRITE_OPTION = typer.Option(
     False,
     "--overwrite",
     help="Replace an existing cropped LAZ and manifest.",
+)
+LIDAR_GROUND_BUILD_LAZ_ARGUMENT = typer.Argument(
+    ...,
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="Input LAS/LAZ tile.",
+)
+LIDAR_GROUND_BUILD_OUT_ARGUMENT = typer.Argument(
+    ...,
+    help="Output ground-bundle directory.",
+)
+LIDAR_GROUND_BUILD_CRS_OPTION = typer.Option(
+    None,
+    "--crs",
+    help="Explicit CRS label; otherwise use the LAZ header.",
+)
+LIDAR_GROUND_BUILD_VERTICAL_DATUM_OPTION = typer.Option(
+    None,
+    "--vertical-datum",
+    help="Explicit vertical datum label.",
+)
+LIDAR_GROUND_BUILD_SOR_OPTION = typer.Option(
+    True,
+    "--sor/--no-sor",
+    help="Run statistical outlier removal before PTD.",
+)
+LIDAR_GROUND_BUILD_OVERWRITE_OPTION = typer.Option(
+    False,
+    "--overwrite",
+    help="Replace an existing ground bundle.",
 )
 LIDAR_OUTPUT_ROOT_OPTION = typer.Option(
     None,
@@ -5496,6 +5532,43 @@ def lidar_crop(
     console.print(f"output_points: {result.output_point_count}")
     console.print(f"output: {result.output_path}")
     console.print(f"manifest: {result.manifest_path}")
+    for warning in result.warnings:
+        console.print(f"[yellow]warning:[/yellow] {warning}")
+
+
+@lidar_app.command("ground-bundle-build")
+def lidar_ground_bundle_build(
+    laz: Path = LIDAR_GROUND_BUILD_LAZ_ARGUMENT,
+    out: Path = LIDAR_GROUND_BUILD_OUT_ARGUMENT,
+    crs: str | None = LIDAR_GROUND_BUILD_CRS_OPTION,
+    vertical_datum: str | None = LIDAR_GROUND_BUILD_VERTICAL_DATUM_OPTION,
+    sor: bool = LIDAR_GROUND_BUILD_SOR_OPTION,
+    overwrite: bool = LIDAR_GROUND_BUILD_OVERWRITE_OPTION,
+    json_output: bool = LIDAR_INSPECT_JSON_OPTION,
+) -> None:
+    """Write a canonical FEMIC ground bundle for one LAS/LAZ tile."""
+
+    parameters = GroundAdapterParameters(sor_enabled=sor)
+    try:
+        result = write_ground_bundle(
+            laz,
+            out,
+            crs=crs,
+            vertical_datum=vertical_datum,
+            parameters=parameters,
+            overwrite=overwrite,
+        )
+    except (GroundAdapterError, FileExistsError, ValueError) as exc:
+        console.print(f"[red]Ground bundle error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    if json_output:
+        typer.echo(json.dumps(result.to_dict(), indent=2, sort_keys=True))
+        return
+    console.print("[bold]Ground bundle written[/bold]")
+    console.print(f"points: {result.point_count}")
+    console.print(f"ground: {result.ground_count}")
+    console.print(f"low_points: {result.low_point_count}")
+    console.print(f"bundle: {result.ground_laz.parent}")
     for warning in result.warnings:
         console.print(f"[yellow]warning:[/yellow] {warning}")
 

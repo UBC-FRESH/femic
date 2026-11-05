@@ -1,8 +1,20 @@
 LiDAR ground-bundle reader
 ==========================
 
-The optional ground bundle is a sidecar from ``fresh-urban-forest-lab``. FEMIC can validate
-and inspect it without changing any default LidarBC product.
+The optional ground bundle is a sidecar product. FEMIC is now the canonical producer; the
+earlier ``fresh-urban-forest-lab`` writer proved the same contract and is legacy.
+
+Build a bundle
+--------------
+
+.. code-block:: bash
+
+   femic lidar ground-bundle-build data/lidar/crop/tfl6_blocks.laz \
+     output/ground/tfl6_blocks \
+     --crs EPSG:3156 --vertical-datum CGVD2013
+
+The command writes ``ground.laz``, ``manifest.json``, and ``qa.json`` and is opt-in. Without
+``laspy``, install ``femic[lidar]``.
 
 Validate a bundle
 -----------------

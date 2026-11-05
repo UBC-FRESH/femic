@@ -16489,3 +16489,15 @@ PYTHONPATH=src python -m femic.site_index \
 - Limits: workstation-only, no field labels, and per-block ground fraction is point
   composition, not an accuracy or area metric.
 - Close-out report: `notes/reports/p135-closeout.md`.
+
+## 2026-11-04 - P136.1 Canonical ground classifier and writer in FEMIC
+
+- Ported `GroundClassification`, `classify_ground_ptd`, `low_point_mask`, and
+  `statistical_outlier_mask` into `femic.lidar.ground_classification`.
+- Ported `GroundAdapterParameters`, `GroundBundleResult`, and `write_ground_bundle` into
+  `femic.lidar.ground_adapter`.
+- Added `femic lidar ground-bundle-build`.
+- Kept `femic.ground-bundle.v1` and `femic.ground-qa.v1` unchanged.
+- Added 33 classifier/writer tests and updated the guide/contract.
+- FEMIC is now the canonical producer; the `fresh-urban-forest-lab` writer is legacy and
+  will be deprecated in P136.2.
