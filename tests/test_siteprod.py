@@ -344,3 +344,25 @@ def test_load_siteprod_bandmap_falls_back_to_ordered_species(tmp_path: Path) -> 
     layer_species, species_layer = load_siteprod_bandmap(bandmap_path=path)
     assert layer_species == {0: "AT", 1: "BL", 2: "CW"}
     assert species_layer == {"AT": 0, "BL": 1, "CW": 2}
+
+
+def test_assign_siteprod_from_raster_empty_frame_returns_typed_column() -> None:
+    """An empty frame returns an empty float column without opening the raster."""
+    import pandas as pd
+
+    class _FakeRio:
+        def open(self, path: Path) -> object:
+            raise AssertionError(f"raster should not be opened for empty frame: {path}")
+
+    table = pd.DataFrame({"SPECIES_CD_1": pd.Series(dtype="object")})
+    out = assign_siteprod_from_raster(
+        f_table=table,
+        siteprod_tif_path=Path("siteprod.tif"),
+        siteprod_specieslayer={"FD": 1},
+        rio_module=_FakeRio(),
+        mask_fn=lambda *_args, **_kwargs: None,
+        np_module=np,
+        row_apply_fn=lambda *_args, **_kwargs: None,
+    )
+    assert out.empty
+    assert out["siteprod"].dtype == float
