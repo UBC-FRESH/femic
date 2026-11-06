@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence
-
+from collections.abc import Sequence
+from typing import Any
 
 _BEC_KEY_LEVELS = {"zone", "subzone", "variant", "phase"}
 
@@ -390,6 +390,29 @@ def initialize_aflb_land_base_records(
     if excluded_bec_zones:
         table = table[~table.BEC_ZONE_CODE.isin(list(excluded_bec_zones))]
     return table
+
+
+def limit_debug_rows(f_table: Any, limit: int) -> Any:
+    """Return a debug slice of an already-filtered table.
+
+    The caller must apply this after TSA/treed filtering. ``head`` before the
+    filter can produce an empty working set from non-treed leading rows.
+
+    Parameters
+    ----------
+    f_table : Any
+        Table to limit.
+    limit : int
+        Positive row count.
+
+    Returns
+    -------
+    Any
+        Copy of the first ``limit`` rows.
+    """
+    if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1:
+        raise ValueError("debug row limit must be a positive integer")
+    return f_table.head(limit).copy()
 
 
 def filter_post_thlb_stands(
