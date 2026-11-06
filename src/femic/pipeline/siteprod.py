@@ -164,8 +164,14 @@ def assign_siteprod_from_raster(
     species_lookup_fn: Callable[[str], str] = siteprod_species_lookup,
     out_col: str = "siteprod",
 ) -> Any:
-    """Assign siteprod column by masking the stacked siteprod raster per stand row."""
+    """Assign siteprod column by masking the stacked siteprod raster per stand row.
+
+    An empty input frame returns an empty float column without opening the raster.
+    """
     table = f_table.copy()
+    if getattr(table, "empty", False):
+        table[out_col] = np_module.array([], dtype=float)
+        return table
     readable_path = resolve_windows_annex_pointer_payload_path(Path(siteprod_tif_path))
     with rio_module.open(readable_path) as src:
 
