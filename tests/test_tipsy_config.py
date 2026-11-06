@@ -5,13 +5,13 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+import femic.pipeline.tipsy_config as tipsy_config_module
 from femic.pipeline.tipsy_config import (
     build_tipsy_params_from_config,
     load_tipsy_tsa_config,
-    resolve_tipsy_runtime_options,
     resolve_tipsy_param_builder,
+    resolve_tipsy_runtime_options,
 )
-import femic.pipeline.tipsy_config as tipsy_config_module
 
 
 def test_load_tipsy_tsa_config_returns_none_when_missing(tmp_path: Path) -> None:
@@ -1053,3 +1053,61 @@ def test_config_rule_falls_back_to_stratum_bec_zone() -> None:
         build_tipsy_params_from_config(
             au_id=2000, au_data=no_fallback, vdyp_out={}, config=config
         )
+
+
+def test_finalize_species_mix_keeps_gw_with_species() -> None:
+    """GW/GW_age travel with species through strip and descending sort."""
+    cfg = {
+        "schema_version": 1,
+        "tsa_code": "08",
+        "defaults": {"e": {"Regen_Method": "P"}, "f": {"Regen_Method": "P"}},
+        "rules": [
+            {
+                "id": "gw_alignment",
+                "when": {},
+                "assign": {
+                    "e": {"Density": 1000, "SPP_1": "PLI", "PCT_1": 100},
+                    "f": {
+                        "Density": 1000,
+                        "SPP_1": "PLI",
+                        "PCT_1": 75,
+                        "SPP_2": "AT",
+                        "PCT_2": 9,
+                        "SPP_3": "FDI",
+                        "PCT_3": 9,
+                        "SPP_4": "SX",
+                        "PCT_4": 6,
+                        "SPP_5": "BL",
+                        "PCT_5": 2,
+                        "GW_1": 0.1,
+                        "GW_age_1": 12,
+                        "GW_3": 0.2,
+                        "GW_age_3": 12,
+                        "GW_4": 0.6,
+                        "GW_age_4": 12,
+                    },
+                },
+            }
+        ],
+    }
+    au_data = {
+        "ss": pd.DataFrame({"SITE_INDEX": [16.0], "BEC_ZONE_CODE": ["SBS"]}),
+        "species": {"PLI": {"pct": 75.0}, "FDI": {"pct": 9.0}, "SX": {"pct": 6.0}},
+    }
+    vdyp_out = {1: pd.DataFrame({"SI": [16.0], "% Stk": [90.0]})}
+    out = build_tipsy_params_from_config(
+        au_id=9999,
+        au_data=au_data,
+        vdyp_out=vdyp_out,
+        config=cfg,
+    )
+    assert out["f"]["SPP_1"] == "PLI"
+    assert out["f"]["SPP_2"] == "FDI"
+    assert out["f"]["SPP_3"] == "SW"
+    assert out["f"]["GW_1"] == 0.1
+    assert out["f"]["GW_2"] == 0.2
+    assert out["f"]["GW_3"] == 0.6
+    assert out["f"]["GW_age_1"] == 12
+    assert out["f"]["GW_age_2"] == 12
+    assert out["f"]["GW_age_3"] == 12
+    assert out["f"]["GW_4"] is None
