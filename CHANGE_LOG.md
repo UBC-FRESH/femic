@@ -16557,3 +16557,14 @@ PYTHONPATH=src python -m femic.site_index \
   degree angle raises recall but also raises false ground at 1 m cells.
 - **Decision: reject the candidate as a default change; keep the P135 defaults.**
 - Added `notes/reports/p139-candidate-settings.md`, `.json`, and `.csv`.
+
+## 2026-11-06 - P140 ground-classifier public-control guard
+
+- Added compact Squamish ground/canopy fixtures (944 KB total) under
+  `tests/fixtures/lidar/ground_control/`.
+- Added `tests/test_lidar_ground_control_fixture.py`: ground recall >= 0.95 and canopy
+  false-ground <= 0.005 under the P135 settings.
+- Current metrics: ground recall 0.9742; canopy false-ground 0.0014.
+- Added `.github/workflows/ground-classifier-guard.yml` to run the guard on PRs and `main`.
+- Added fixture provenance, OGL attribution, and `notes/reports/p140-ground-control-guard.md`.
+- Local guard: 2 passed.
