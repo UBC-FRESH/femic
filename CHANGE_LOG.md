@@ -16568,3 +16568,17 @@ PYTHONPATH=src python -m femic.site_index \
 - Added `.github/workflows/ground-classifier-guard.yml` to run the guard on PRs and `main`.
 - Added fixture provenance, OGL attribution, and `notes/reports/p140-ground-control-guard.md`.
 - Local guard: 2 passed.
+
+## 2026-11-06 - P141 TFL6 steep-block false-negative audit
+
+- Audited `T6_23339461`: 14,171 class-2 false negatives under the P135 default.
+- 7,516 of 14,171 (53%) were SOR-removed; classifier-only recall on kept class-2 points is
+  0.9049, not 0.8171.
+- Of 6,655 kept false negatives, 99.4% have HAG <= 0.15 m and 99.99% are last returns:
+  the final PTD surface passes through them, but `is_ground` excludes them.
+- SOR off: class-2 recall 0.9343, high-confidence false ground 0.54%.
+- SOR off + diagnostic final low-HAG pass: class-2 recall 0.9990, false ground 0.63%.
+- Golden shows the same direction: SOR off + final pass recall 0.9995.
+- No default change. Opened a follow-up to make SOR optional and add an opt-in
+  final-surface consistency pass.
+- Added `notes/reports/p141-tfl6-false-negative-audit.md` and `.json`.

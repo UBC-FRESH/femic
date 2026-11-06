@@ -4838,3 +4838,26 @@ Tasks:
 
 Acceptance: fixtures are compact and tracked; the test passes locally; the workflow runs on
 PRs and `main`; no default parameter or product change.
+
+## Phase 141: TFL6 steep-block false-negative audit
+
+Parent issue: #597
+Branch: `feature/p141-tfl6-false-negatives`
+Status: complete
+
+Goal: explain the TFL6 steep-block class-2 recall gap. P139 reported class-2 recall 0.8171
+but class-2 HAG p99 0.065 m under the P135 defaults, suggesting many class-2 points lie on
+the final PTD surface but are not in `is_ground`.
+
+Tasks:
+
+- [x] P141.1 Audit class-2 false negatives on `T6_23339461`
+  - [x] Re-run the P135 default and keep predictions for analysis.
+  - [x] Compare true positives and false negatives by HAG, low flag, return type, SOR,
+    edge distance, and elevation.
+  - [x] Decide whether the gap is a final-mask inconsistency, a class-2 reference
+    limitation, or a real classifier miss.
+  - [x] Keep raw points under `runtime/` and the Squamish guard green.
+
+Acceptance: false-negative counts and HAG bands are reported; the report states whether most
+false negatives lie on the final surface; one recommendation is made.
