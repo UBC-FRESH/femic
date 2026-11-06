@@ -109,6 +109,13 @@ Python
    print(bundle.point_count, bundle.ground_count, bundle.low_point_count)
    print(bundle.to_dict())
 
+Validation evidence
+-------------------
+
+:doc:`../reference/lidar-ground-validation` summarizes the TFL6 end-to-end run, the
+Squamish public control, the parameter sensitivity, the rejected candidate, the CI guard,
+the false-negative audit, and the opt-in near-surface pass.
+
 Limits
 ------
 

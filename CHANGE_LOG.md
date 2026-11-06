@@ -16598,3 +16598,12 @@ PYTHONPATH=src python -m femic.site_index \
   0.54% -> 0.63%.
 - End-to-end Golden bundle added 1,807 near-surface points; reader validation passed.
 - Added `notes/reports/p142-near-surface-ground.md` and `.json`; updated guide/contract.
+
+## 2026-11-06 - P143 ground-validation documentation close-out
+
+- Added `docs/reference/lidar-ground-validation.rst` with the P135-P142 evidence,
+  strict-vs-near-surface semantics, limits, public sources, and reproduction commands.
+- Added the page to the root Reference toctree and linked it from the ground-bundle
+  guide/contract.
+- Sphinx with warnings as errors passed.
+- No code, default product, tag, or release change.

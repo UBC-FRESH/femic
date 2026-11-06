@@ -81,6 +81,12 @@ inspection.
 The reader never imports ``fresh-urban-forest-lab`` and never changes a default FEMIC
 product.
 
+Validation evidence
+-------------------
+
+See :doc:`../lidar-ground-validation` for the public control, sensitivity, TFL6/Golden
+tests, false-negative audit, and strict-vs-near-surface semantics.
+
 Ground summary
 --------------
 

@@ -39,6 +39,7 @@ task paths; the contracts are the shortest source of truth.
    :caption: Reference
 
    reference/contracts/index
+   reference/lidar-ground-validation
    reference/api/index
    reference/cli
    reference/patchworks-export

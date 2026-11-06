@@ -4888,3 +4888,23 @@ Tasks:
 
 Acceptance: default output unchanged; opt-in adds near-surface points; manifest records the
 option; Squamish, Golden, and TFL6 results are reported; targeted checks pass.
+
+## Phase 143: Ground-validation documentation close-out
+
+Parent issue: #601
+Branch: `docs/p143-ground-validation`
+Status: complete
+
+Goal: make the P135-P142 ground-classifier evidence discoverable from the public Sphinx
+docs, with one validation page and clear strict-vs-near-surface semantics.
+
+Tasks:
+
+- [x] P143.1 Add the validation page, toctree, and cross-links
+  - [x] Summarize the TFL6 end-to-end run and the P137 public control.
+  - [x] Summarize sensitivity, rejected candidate, CI guard, audit, and near-surface pass.
+  - [x] Link from the root toctree and ground-bundle guide/contract.
+  - [x] Record limits and semantics.
+
+Acceptance: Sphinx builds with warnings as errors; the page is reachable; the evidence and
+limits are accurate; no machine-specific paths are published.
