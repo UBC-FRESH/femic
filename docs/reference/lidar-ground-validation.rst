@@ -125,3 +125,11 @@ Licence and attribution
 
 The public control uses OGL-Squamish orthophoto and OGL-BC LidarBC point clouds. Retain the
 source attribution and licence notices when reusing derived labels or metrics.
+
+Arbor provenance
+----------------
+
+This lane is a clean-room reimplementation of cited Arbor methods. No Arbor package,
+R code, C++ code, model object, or GPL source is imported or vendored. The scope close-out,
+including what was and was not taken, is in
+``notes/reports/arbor-mining-closeout.md``.
