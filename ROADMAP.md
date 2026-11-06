@@ -4792,3 +4792,26 @@ Tasks:
 
 Acceptance: every grid setting has both metrics; dominant settings are identified; the
 defaults are not changed; raw data is not tracked.
+
+## Phase 139: Candidate PTD settings on TFL6 and Golden terrain
+
+Parent issue: #593
+Branch: `feature/p139-candidate-settings`
+Status: complete
+
+Goal: test the P138 candidate PTD setting against the P135 default on two real terrains:
+the P135 TFL6 block crop and the P14 Golden 2021 tile. Do not change the default classifier
+or product.
+
+Tasks:
+
+- [x] P139.1 Run both settings on TFL6 blocks and Golden
+  - [x] Crop `T6_23339461` (steep) and `T6_23339462` (78% ground) from the P135 crop.
+  - [x] Run P135 default and P138 candidate on each TFL6 block.
+  - [x] Run both settings on the Golden 2021 tile.
+  - [x] Compare runtime, ground fraction, HAG, class-2 recall, and TFL6 agreement.
+  - [x] Record whether the candidate is safe to adopt, defer, or reject.
+
+Acceptance: both settings run on both TFL6 blocks and Golden; Golden class-2 recall and
+false ground are reported; TFL6 ground fraction, HAG, runtime, and agreement are reported;
+raw data is not tracked.

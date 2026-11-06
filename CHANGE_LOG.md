@@ -16545,3 +16545,15 @@ PYTHONPATH=src python -m femic.site_index \
 - Did not change default parameters; the best setting is a candidate for TFL6 and steep
   terrain testing.
 - Added `notes/reports/p138-ptd-sensitivity.md`, `.json`, and the full grid CSV.
+
+## 2026-11-06 - P139 candidate PTD settings on TFL6 and Golden terrain
+
+- Ran P135 defaults and the P138 candidate on two TFL6 blocks and the Golden 2021 tile.
+- Candidate improved TFL6 class-2 recall and high-confidence false ground, and was faster
+  on the TFL6 blocks.
+- Candidate degraded Golden class-2 HAG p99 from 0.044 m to 0.340 m and changed 10-32% of
+  TFL6 ground points.
+- Golden ablations show the 2 m cell is the main cause of the HAG degradation; the 30
+  degree angle raises recall but also raises false ground at 1 m cells.
+- **Decision: reject the candidate as a default change; keep the P135 defaults.**
+- Added `notes/reports/p139-candidate-settings.md`, `.json`, and `.csv`.
