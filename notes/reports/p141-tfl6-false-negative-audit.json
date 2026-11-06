@@ -1,0 +1,72 @@
+{
+  "phase": "P141",
+  "status": "complete",
+  "date": "2026-11-06",
+  "case": "T6_23339461 (steep TFL6 block)",
+  "default_P135": {
+    "class2_points": 77461,
+    "class2_true_positive": 63290,
+    "class2_false_negative": 14171,
+    "class2_recall_all": 0.8170563251184467,
+    "class2_sor_removed": 7516,
+    "class2_kept": 69945,
+    "class2_recall_kept": 0.9048538137107728,
+    "high_conf_false_ground_rate": 0.015449,
+    "class2_hag_p99_m": 0.065292
+  },
+  "false_negatives": {
+    "total": 14171,
+    "sor_removed": 7516,
+    "kept": 6655,
+    "kept_hag_p50_m": 0.0,
+    "kept_hag_p95_m": 0.0,
+    "kept_hag_p99_m": 0.04558159,
+    "kept_hag_max_m": 1.20261246,
+    "kept_hag_le_0_15": 0.9939894815927873,
+    "kept_hag_le_0_5": 0.999549211119459,
+    "kept_hag_gt_2": 0.0,
+    "kept_low_flag_fraction": 0.9939894815927873,
+    "kept_last_return_fraction": 0.9998497370398197,
+    "kept_first_of_many_fraction": 0.0,
+    "kept_edge_le_10_fraction": 0.2009015777610819,
+    "tp_edge_le_10_fraction": 0.21025438457892243
+  },
+  "sor_off_default": {
+    "ground_count": 451424,
+    "class2_recall": 0.9343282425995016,
+    "high_conf_false_ground_rate": 0.005436161754008042,
+    "class2_hag_p99_m": 0.08183647475769881,
+    "runtime_s": 276.9
+  },
+  "sor_off_final_surface_pass": {
+    "definition": "is_ground OR (kept AND HAG <= 0.15 m)",
+    "ground_count": 485532,
+    "class2_recall": 0.998980131937362,
+    "high_conf_false_ground_rate": 0.0062805664572735875,
+    "class2_hag_p99_m": 0.08183647475769881
+  },
+  "golden_comparison": {
+    "sor_on_default": {
+      "recall": 0.9590308083110792,
+      "high_conf_false_ground_rate": 0.03720670391061452,
+      "class2_hag_p99_m": 0.044054670767418494
+    },
+    "sor_off_default": {
+      "recall": 0.9624177685142968,
+      "high_conf_false_ground_rate": 0.030949720670391062,
+      "class2_hag_p99_m": 0.04985965785665022
+    },
+    "sor_off_final_pass": {
+      "recall": 0.9995440630495669,
+      "high_conf_false_ground_rate": 0.033072625698324025,
+      "class2_hag_p99_m": 0.04985965785665022
+    }
+  },
+  "recommendation": "No default change in P141. Open a follow-up to make SOR optional and add an opt-in final-surface consistency pass, then validate on the Squamish guard, Golden, and TFL6.",
+  "limits": [
+    "Class-2 reference is incomplete and includes SOR-removed points in the all-point denominator.",
+    "No manual labels for TFL6.",
+    "The final-surface pass is simulated, not implemented.",
+    "The 0.15 m threshold is a diagnostic, not a validated default."
+  ]
+}

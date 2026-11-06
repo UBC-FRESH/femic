@@ -7,6 +7,10 @@ Pull request: the P139 PR
 Date: 2026-11-06
 Status: complete; candidate rejected as a default change
 
+> **P141 update:** the TFL6 class-2 recall below uses all class-2 points as the denominator.
+> SOR removes 7,516 of 77,461 class-2 points on `T6_23339461`; the kept-point recall is
+> 0.9049, not 0.8171. See `p141-tfl6-false-negative-audit.md`.
+
 ## Question
 
 P138 found a strong Squamish setting: SOR on, 2 m cells, 30 degree maximum angle, 0.3 m
