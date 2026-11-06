@@ -1,0 +1,59 @@
+{
+  "schema_version": "femic.ground_control_fixture.v1",
+  "purpose": "Regression guard for the canonical ground classifier",
+  "source": {
+    "orthophoto": {
+      "producer": "District of Squamish",
+      "product": "Aerial Photo 2024",
+      "resolution_m": 0.075,
+      "licence": "Open Government Licence - Squamish",
+      "item_url": "https://www.arcgis.com/home/item.html?id=e86a2b42f49046918c0c0c1d13f000a2"
+    },
+    "point_cloud": {
+      "producer": "LidarBC",
+      "year": 2019,
+      "density_points_per_m2": 8,
+      "tile": "bc_092g065_3_3_3_xyes_8_utm10_2019.laz",
+      "licence": "Open Government Licence - British Columbia",
+      "url": "https://nrs.objectstore.gov.bc.ca/gdwuts/092/092g/2019/pointcloud/bc_092g065_3_3_3_xyes_8_utm10_2019.laz"
+    }
+  },
+  "crs": "EPSG:3157",
+  "fixtures": {
+    "squamish_ground_patch.npz": {
+      "points": 30932,
+      "labelled_ground": 5461,
+      "sha256": "e60a6cfb30c3abd1998536ffe5c02718c78e3e6e6ad5eee7ffd6b772f60110f5"
+    },
+    "squamish_canopy_patch.npz": {
+      "points": 113389,
+      "labelled_non_ground": 9284,
+      "sha256": "6bad1cdb2ad6b9d945910f831ed3ac9025bd5d841b95164627204316f0a4af14"
+    }
+  },
+  "labels": {
+    "ground": "Open estuarine mudflat visible in the 2024 orthophoto",
+    "non_ground": "First return of a multiple-return pulse in closed canopy"
+  },
+  "classifier": {
+    "sor_k": 10,
+    "sor_multiplier": 2.0,
+    "cell_size_m": 1.0,
+    "max_angle_deg": 15.0,
+    "max_distance_m": 0.5,
+    "max_iterations": 8
+  },
+  "thresholds": {
+    "ground_recall_min": 0.95,
+    "canopy_false_ground_max": 0.005
+  },
+  "current_metrics": {
+    "ground_recall": 0.9741805530122688,
+    "canopy_false_ground": 0.0014078405891271388
+  },
+  "limits": [
+    "Not field labels.",
+    "Open mudflat plus canopy first returns, not forest floor.",
+    "2019 LiDAR vs 2024 orthophoto."
+  ]
+}

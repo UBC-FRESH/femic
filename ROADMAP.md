@@ -4815,3 +4815,26 @@ Tasks:
 Acceptance: both settings run on both TFL6 blocks and Golden; Golden class-2 recall and
 false ground are reported; TFL6 ground fraction, HAG, runtime, and agreement are reported;
 raw data is not tracked.
+
+## Phase 140: Ground-classifier public-control guard
+
+Parent issue: #595
+Branch: `feature/p140-ground-control-guard`
+Status: complete
+
+Goal: turn the P137/P138 Squamish public control patch into a compact tracked fixture and a
+CI regression guard, so future classifier changes cannot silently lose ground recall or start
+calling canopy points ground.
+
+Tasks:
+
+- [x] P140.1 Add compact fixtures, test, workflow, and provenance
+  - [x] Save the ground and canopy NPZ fixtures under
+    `tests/fixtures/lidar/ground_control/`.
+  - [x] Add a test for ground recall >= 0.95 and canopy false-ground <= 0.005.
+  - [x] Add fixture provenance and OGL attribution.
+  - [x] Add a lightweight GitHub workflow for the guard.
+  - [x] Record the thresholds and limits.
+
+Acceptance: fixtures are compact and tracked; the test passes locally; the workflow runs on
+PRs and `main`; no default parameter or product change.
