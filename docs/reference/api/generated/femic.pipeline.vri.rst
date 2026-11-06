@@ -17,6 +17,7 @@
       initialize_aflb_land_base_records
       is_conifer_species_code
       is_deciduous_species_code
+      limit_debug_rows
       normalize_and_filter_checkpoint2_records
       normalize_vri_problem_values
       pconif

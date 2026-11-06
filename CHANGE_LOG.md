@@ -16654,3 +16654,12 @@ PYTHONPATH=src python -m femic.site_index \
   and SX after finalization.
 - Targeted tests: 170 passed; one unrelated pre-existing planted-density rounding test
   still reports 703 vs 702.
+
+## 2026-11-06 - Arbor method-mining scope close-out
+
+- Added `notes/reports/arbor-mining-closeout.md`.
+- Recorded that FEMIC has no Arbor code integration; Arbor is a cited method source.
+- Listed the ported methods and locations, the FEMIC near-surface extension, and the
+  MLS/TLS methods deliberately not ported.
+- Clarified that general FEMIC maintenance is not Arbor work.
+- Linked the note from the ground-validation page.
