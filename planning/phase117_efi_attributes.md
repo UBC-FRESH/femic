@@ -3,7 +3,7 @@
 Parent issue: `#374`
 Branch: `feature/p117-efi-attributes`; P117.1 split PR:
 `feature/p117.1-efi-application`
-Status: active (P117.1 application engine; real coefficients/backtest pending)
+Status: active (P117.1 data-blocked; P117.2 remains)
 
 ## Purpose
 
@@ -21,12 +21,14 @@ Implemented:
 - Synthetic site-index pilot card and coefficients.
 - Contract/API docs and 13 focused tests.
 
-Open:
+Data-blocked close-out:
 
-- a published or project site-index coefficient set;
-- mapping the selected FEMIC LiDAR metrics;
-- adding `si_als` to the fragment attribute pipeline;
-- running the instance backtest with the P48/P49 ground-plot surfaces.
+- no defensible BC CWH/TSA site-index coefficient set is available;
+- no plot-level site-index/ALS backtest surface exists in P48/P49;
+- `si_als` was not added and no curve assignment changed;
+- the application engine and synthetic fixture remain reusable infrastructure.
+
+See `notes/reports/p117.1-site-index-feasibility.md`.
 
 ## P117.2 biomass curves
 

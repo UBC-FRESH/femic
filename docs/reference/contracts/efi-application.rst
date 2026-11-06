@@ -95,8 +95,9 @@ Out of Scope
 - Fitting or calibrating coefficients.
 - A non-linear or mixed-effects model.
 - A universal site-index equation.
-- The final ``si_als`` fragment attribute and instance backtest; P117 is
-  cancelled and this application engine is not a site-index model.
+- The final ``si_als`` fragment attribute and instance backtest; P117.1 is
+  data-blocked because no defensible BC coefficient set or plot-level ALS
+  backtest surface exists. This application engine is not a site-index model.
 - A replacement for the P48/P49 validation surfaces.
 
 Cross-References

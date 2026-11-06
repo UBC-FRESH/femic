@@ -16607,3 +16607,15 @@ PYTHONPATH=src python -m femic.site_index \
   guide/contract.
 - Sphinx with warnings as errors passed.
 - No code, default product, tag, or release change.
+
+## 2026-11-06 - P117.1 ALS site-index feasibility close-out
+
+- Audited the available model cards, P117.1 sources, and ws4 P48/P49 surfaces.
+- No defensible BC CWH/TSA site-index coefficient set is available; the checked-in CWH card is
+  Random-Forest height, and the SI card is southeastern USA loblolly pine.
+- P48/P49 provide volume/DBH/height/stems validation, not plot-level site index or ALS metrics.
+- Closed P117.1 as data-blocked; did not invent coefficients or add `si_als`.
+- Retained the EFI application engine, model-card contract, synthetic fixture, and tests as
+  reusable infrastructure.
+- Added `notes/reports/p117.1-site-index-feasibility.md`; updated roadmap, planning, and the EFI
+  application contract wording.
