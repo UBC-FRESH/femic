@@ -1,0 +1,84 @@
+{
+  "phase": "P117.2",
+  "status": "complete",
+  "date": "2026-11-06",
+  "source": {
+    "source_id": "tompalski-et-al-2025-rsyc-national",
+    "source_url": "https://doi.org/10.1093/forestry/cpaf067",
+    "secondary_url": "https://doi.org/10.1016/j.foreco.2024.121894",
+    "licence_id": "CC-BY-4.0",
+    "r_package_licence": "GPL-3; no R code copied",
+    "pilot_file": "config/efi/biomass/rsyc_cariboo_pilot.json"
+  },
+  "equation": "AGB = b1 * exp(-b4 * age) * (1 - exp(-b2 * age)) ** b3",
+  "carbon_conversion": {
+    "fraction": 0.47,
+    "source": "IPCC 2006 Guidelines, Vol. 4, Ch. 4, Table 4.3",
+    "boundary": "aboveground live biomass only"
+  },
+  "pilot": {
+    "region": "Montane Cordillera",
+    "ecodistrict": "Cariboo Basin",
+    "species": [
+      "PSEU.MEN",
+      "PINU.CON"
+    ],
+    "age_min": 1,
+    "age_max": 300
+  },
+  "examples": [
+    {
+      "species": "PSEU.MEN",
+      "age": 20,
+      "agb_t_ha": 59.2,
+      "volume_m3_ha": 125.18,
+      "carbon_t_c_ha": 27.83
+    },
+    {
+      "species": "PSEU.MEN",
+      "age": 50,
+      "agb_t_ha": 103.38,
+      "volume_m3_ha": 223.98,
+      "carbon_t_c_ha": 48.59
+    },
+    {
+      "species": "PSEU.MEN",
+      "age": 100,
+      "agb_t_ha": 118.44,
+      "volume_m3_ha": 255.31,
+      "carbon_t_c_ha": 55.67
+    },
+    {
+      "species": "PINU.CON",
+      "age": 20,
+      "agb_t_ha": 43.81,
+      "volume_m3_ha": 87.45,
+      "carbon_t_c_ha": 20.59
+    },
+    {
+      "species": "PINU.CON",
+      "age": 50,
+      "agb_t_ha": 70.75,
+      "volume_m3_ha": 146.91,
+      "carbon_t_c_ha": 33.25
+    },
+    {
+      "species": "PINU.CON",
+      "age": 100,
+      "agb_t_ha": 81.63,
+      "volume_m3_ha": 170.35,
+      "carbon_t_c_ha": 38.37
+    }
+  ],
+  "tests": {
+    "new": 8,
+    "targeted_total": 28
+  },
+  "limits": [
+    "One ecodistrict and two species; not a BC-wide biomass map.",
+    "Published RSYC curves, not local FEMIC validation.",
+    "Biomass and volume are separate response families and are not additive.",
+    "Carbon fraction is a declared planning value, not species-specific measurement.",
+    "No P115 carbon package or CBM runtime change."
+  ]
+}

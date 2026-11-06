@@ -3,7 +3,7 @@
 Parent issue: `#374`
 Branch: `feature/p117-efi-attributes`; P117.1 split PR:
 `feature/p117.1-efi-application`
-Status: active (P117.1 data-blocked; P117.2 remains)
+Status: complete (P117.1 data-blocked; P117.2 complete)
 
 ## Purpose
 

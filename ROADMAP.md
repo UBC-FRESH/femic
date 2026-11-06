@@ -4086,7 +4086,7 @@ Detailed plan: `planning/phase116_shared_contracts.md`.
 
 ## Phase 117: EFI Inventory Attributes and Biomass Curves (`#374`)
 
-Status: **active** (P117.1 data-blocked; P117.2 remains).
+Status: **complete** (P117.1 data-blocked; P117.2 complete).
 
 Branch: `feature/p117-efi-attributes`; P117.1 split PR:
 `feature/p117.1-efi-application`.
@@ -4110,7 +4110,13 @@ Tasks:
     - P48/P49 do not carry site index or ALS metrics.
   - [x] P117.1 feasibility audit and data-blocked close-out
     (`notes/reports/p117.1-site-index-feasibility.md`).
-- [ ] P117.2 Add a biomass curve family and carbon conversion (`#376`).
+- [x] P117.2 Add a biomass curve family and carbon conversion (`#376`).
+  - [x] Select the published RSYC biomass/volume curves and document the domain.
+  - [x] Add the curve table, loader, independent selection, and carbon conversion.
+  - [x] Add CLI and JSON output.
+  - [x] Compare the biomass and volume curves at the pilot ages.
+  - [x] Add tests for units, non-negative curves, carbon fraction, and missing source.
+  - [x] Document the source, species, conversion boundary, and double-counting rule.
 
 Acceptance: the site-index layer covers the pilot AOI and reports its gaps; a
 backtest reports bias, RMSE, and the fragments whose curve assignment changes;

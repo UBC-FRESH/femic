@@ -13,6 +13,14 @@ from femic.efi.application import (
     backtest_linear_model,
     load_linear_efi_model,
 )
+from femic.efi.biomass import (
+    BIOMASS_CURVE_SCHEMA_VERSION,
+    BiomassCurve,
+    BiomassCurveError,
+    BiomassCurveFamily,
+    RSYCCurve,
+    load_biomass_curves,
+)
 from femic.efi.pipeline import (
     EFI_ATTRIBUTE_TABLE_SCHEMA_VERSION,
     EFIAttributeAnnotationResult,
@@ -20,13 +28,19 @@ from femic.efi.pipeline import (
 )
 
 __all__ = [
+    "BIOMASS_CURVE_SCHEMA_VERSION",
     "EFI_ATTRIBUTE_TABLE_SCHEMA_VERSION",
     "EFI_COEFFICIENTS_SCHEMA_VERSION",
+    "BiomassCurve",
+    "BiomassCurveError",
+    "BiomassCurveFamily",
     "EFIApplicationError",
     "EFIAttributeAnnotationResult",
     "LinearEFIModel",
+    "RSYCCurve",
     "annotate_attribute_table",
     "apply_linear_model",
     "backtest_linear_model",
+    "load_biomass_curves",
     "load_linear_efi_model",
 ]

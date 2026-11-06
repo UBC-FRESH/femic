@@ -88,6 +88,7 @@ from femic.document_figures import (
 )
 from femic.efi import annotate_attribute_table
 from femic.efi.application import EFIApplicationError
+from femic.efi.biomass import BiomassCurveError, load_biomass_curves
 from femic.fansier_reporting import (
     DEFAULT_FANSIER_PARSED_OUTPUT_DIR,
     FansierReportParseError,
@@ -12644,6 +12645,71 @@ EFI_ANNOTATE_AGE_COLUMN_OPTION = typer.Option("age", "--age-column", show_defaul
 EFI_ANNOTATE_HEIGHT_COLUMN_OPTION = typer.Option(
     "height", "--height-column", show_default=True
 )
+EFI_BIOMASS_CURVES_ARGUMENT = typer.Argument(
+    ...,
+    exists=True,
+    dir_okay=False,
+    readable=True,
+    help="femic.efi.biomass_curve.v1 JSON document.",
+)
+EFI_BIOMASS_SPECIES_OPTION = typer.Option(None, "--species", help="Species code.")
+EFI_BIOMASS_REGION_OPTION = typer.Option(None, "--region", help="Region name.")
+EFI_BIOMASS_ECODISTRICT_OPTION = typer.Option(
+    None, "--ecodistrict", help="Ecodistrict name."
+)
+EFI_BIOMASS_AGE_OPTION = typer.Option(..., "--age", help="Stand age in years.")
+EFI_BIOMASS_JSON_OPTION = typer.Option(
+    False, "--json", help="Print JSON instead of a summary."
+)
+
+
+@efi_app.command("biomass-curve")
+def efi_biomass_curve(
+    curves: Path = EFI_BIOMASS_CURVES_ARGUMENT,
+    species: str | None = EFI_BIOMASS_SPECIES_OPTION,
+    region: str | None = EFI_BIOMASS_REGION_OPTION,
+    ecodistrict: str | None = EFI_BIOMASS_ECODISTRICT_OPTION,
+    age: float = EFI_BIOMASS_AGE_OPTION,
+    json_output: bool = EFI_BIOMASS_JSON_OPTION,
+) -> None:
+    """Evaluate one published biomass curve and its declared carbon conversion."""
+    try:
+        family = load_biomass_curves(curves)
+        curve = family.select_one(
+            species=species,
+            region=region,
+            ecodistrict=ecodistrict,
+        )
+        agb = curve.agb_t_ha(age)
+        volume = curve.volume_m3_ha(age)
+        carbon = curve.carbon_t_c_ha(age)
+    except BiomassCurveError as exc:
+        console.print(f"[red]Biomass curve error:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    payload = {
+        "curve": curve.to_dict(),
+        "age_years": age,
+        "agb_t_ha": agb,
+        "volume_m3_ha": volume,
+        "carbon_t_c_ha": carbon,
+        "carbon_fraction": curve.carbon_fraction,
+        "carbon_fraction_source": curve.carbon_fraction_source,
+        "source_id": curve.source_id,
+        "source_url": curve.source_url,
+        "licence_id": curve.licence_id,
+    }
+    if json_output:
+        typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    console.print(
+        f"[bold]{curve.species}[/bold] {curve.region} / {curve.ecodistrict} "
+        f"at age {age:g}"
+    )
+    console.print(f"AGB: {agb:.2f} t/ha")
+    console.print("Volume: " + ("—" if volume is None else f"{volume:.2f} m3/ha"))
+    console.print(f"Carbon: {carbon:.2f} tC/ha (fraction {curve.carbon_fraction:g})")
+    console.print(f"Carbon fraction source: {curve.carbon_fraction_source}")
+    console.print(f"Source: {curve.source_id} ({curve.licence_id})")
 
 
 @efi_app.command("annotate")

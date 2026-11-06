@@ -16619,3 +16619,15 @@ PYTHONPATH=src python -m femic.site_index \
   reusable infrastructure.
 - Added `notes/reports/p117.1-site-index-feasibility.md`; updated roadmap, planning, and the EFI
   application contract wording.
+
+## 2026-11-06 - P117.2 biomass curve family and carbon conversion
+
+- Added `femic.efi.biomass` with RSYC curve loading, age-domain checks, independent
+  biomass/volume evaluation, and declared carbon conversion.
+- Added the Cariboo Basin pilot curves for Douglas-fir (`PSEU.MEN`) and lodgepole pine
+  (`PINU.CON`) from Tompalski et al. (2025), CC BY 4.0.
+- Carbon uses a declared 0.47 aboveground biomass fraction from IPCC (2006); boundary is
+  aboveground live biomass only.
+- Added `femic efi biomass-curve`, contract/API docs, and 8 tests.
+- Biomass and volume are separate response families and are not additive.
+- No P115 carbon package, CBM runtime, tag, or release change.

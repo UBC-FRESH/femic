@@ -56,4 +56,5 @@ Contract Pages
    disturbance-contract
    efi-model-card
    efi-application
+   efi-biomass-curve
    site-index-reconciliation
