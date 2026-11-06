@@ -12,6 +12,7 @@ from femic.lidar.ground_classification import (
     hybrid_homogenize,
     local_anisotropy,
     low_point_mask,
+    near_surface_mask,
     statistical_outlier_mask,
     voxel_connected_components,
 )
@@ -56,7 +57,9 @@ def test_hybrid_homogenize_handles_empty_and_single_points() -> None:
 def test_statistical_outlier_mask_flags_a_far_point() -> None:
     """A point far from a dense cluster is flagged and the cluster is kept."""
     axis = np.linspace(0.0, 0.4, 5)
-    grid = np.stack(np.meshgrid(axis, axis, axis, indexing="ij"), axis=-1).reshape(-1, 3)
+    grid = np.stack(np.meshgrid(axis, axis, axis, indexing="ij"), axis=-1).reshape(
+        -1, 3
+    )
     points = np.vstack([grid, np.array([[100.0, 100.0, 100.0]])])
     mask = statistical_outlier_mask(points, k=5, multiplier=2.0)
     assert mask.dtype == np.bool_
@@ -289,3 +292,19 @@ def test_low_point_mask_validates_inputs() -> None:
         low_point_mask(np.zeros((2, 2)), cut_m=0.15)
     with pytest.raises(ValueError, match="non-negative"):
         low_point_mask(np.zeros(3), cut_m=-0.1)
+
+
+def test_near_surface_mask_flags_the_tolerance_band() -> None:
+    """The near-surface flag uses an inclusive HAG tolerance."""
+    hag = np.array([0.0, 0.1, 0.15, 0.2], dtype=np.float64)
+    mask = near_surface_mask(hag, tolerance_m=0.15)
+    assert mask.dtype == np.bool_
+    assert np.array_equal(mask, np.array([True, True, True, False]))
+
+
+def test_near_surface_mask_validates_inputs() -> None:
+    """Negative tolerances and non-vector HAG arrays fail."""
+    with pytest.raises(ValueError, match="one-dimensional"):
+        near_surface_mask(np.zeros((2, 2)), tolerance_m=0.15)
+    with pytest.raises(ValueError, match="non-negative"):
+        near_surface_mask(np.zeros(3), tolerance_m=-0.1)

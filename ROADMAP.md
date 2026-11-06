@@ -4861,3 +4861,30 @@ Tasks:
 
 Acceptance: false-negative counts and HAG bands are reported; the report states whether most
 false negatives lie on the final surface; one recommendation is made.
+
+## Phase 142: Opt-in near-surface ground labels
+
+Parent issue: #599
+Branch: `feature/p142-near-surface-ground`
+Status: complete
+
+Goal: add an opt-in final-surface consistency pass to the ground bundle, so callers can
+label near-surface points as terrain-surface ground without changing the strict default.
+
+The P141 audit found that on steep TFL6, 99.4% of kept class-2 false negatives have HAG
+<= 0.15 m and 99.99% are last returns. The final PTD surface passes through them, but
+`is_ground` excludes them.
+
+Tasks:
+
+- [x] P142.1 Add the near-surface helper, adapter option, CLI, tests, and docs
+  - [x] Add `near_surface_mask`.
+  - [x] Add `include_near_surface` and `near_surface_tolerance_m` to
+    `GroundAdapterParameters`.
+  - [x] Add `--include-near-surface` and `--near-surface-tolerance-m`.
+  - [x] Keep the default strict.
+  - [x] Add helper, adapter, and CLI tests.
+  - [x] Update the guide/contract and add a validation report.
+
+Acceptance: default output unchanged; opt-in adds near-surface points; manifest records the
+option; Squamish, Golden, and TFL6 results are reported; targeted checks pass.

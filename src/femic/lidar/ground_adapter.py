@@ -28,6 +28,7 @@ from numpy.typing import NDArray
 from femic.lidar.ground_classification import (
     classify_ground_ptd,
     low_point_mask,
+    near_surface_mask,
     statistical_outlier_mask,
 )
 
@@ -83,6 +84,11 @@ class GroundAdapterParameters:
         Maximum PTD densification iterations.
     low_point_cut_m : float
         Height-above-ground cut for the low-point flag.
+    include_near_surface : bool
+        Whether to add points within ``near_surface_tolerance_m`` of the final surface to
+        ``is_ground``. The default is strict ground only.
+    near_surface_tolerance_m : float
+        Near-surface tolerance in metres when ``include_near_surface`` is true.
     """
 
     sor_enabled: bool = True
@@ -93,6 +99,8 @@ class GroundAdapterParameters:
     max_distance_m: float = 0.5
     max_iterations: int = 8
     low_point_cut_m: float = 0.15
+    include_near_surface: bool = False
+    near_surface_tolerance_m: float = 0.15
 
     def to_dict(self) -> dict[str, object]:
         """Return the parameter block as a JSON-serializable mapping.
@@ -380,6 +388,8 @@ def write_ground_bundle(
     else:
         removed_fraction = 0.0
 
+    if active.near_surface_tolerance_m < 0:
+        raise ValueError("near_surface_tolerance_m must be non-negative")
     ptd = classify_ground_ptd(
         points[keep],
         cell_size_m=active.cell_size_m,
@@ -392,6 +402,17 @@ def write_ground_bundle(
 
     is_ground = np.zeros(point_count, dtype=np.bool_)
     is_ground[keep] = ptd.is_ground
+    strict_ground_count = int(np.count_nonzero(is_ground))
+    near_surface_added = 0
+    if active.include_near_surface:
+        near = near_surface_mask(
+            ptd.height_above_ground,
+            tolerance_m=active.near_surface_tolerance_m,
+        )
+        near_full = np.zeros(point_count, dtype=np.bool_)
+        near_full[keep] = near & ~ptd.is_ground
+        near_surface_added = int(np.count_nonzero(near_full))
+        is_ground |= near_full
     hag = np.full(point_count, np.nan, dtype=np.float64)
     hag[keep] = ptd.height_above_ground
     is_low = np.zeros(point_count, dtype=np.bool_)
@@ -412,6 +433,10 @@ def write_ground_bundle(
         "created_utc": _utc_now(),
         "point_count": point_count,
         "ground_count": int(np.count_nonzero(is_ground)),
+        "strict_ground_count": strict_ground_count,
+        "near_surface_added": near_surface_added,
+        "include_near_surface": active.include_near_surface,
+        "near_surface_tolerance_m": active.near_surface_tolerance_m,
         "low_point_count": int(np.count_nonzero(is_low)),
         "sor_removed": int(np.count_nonzero(~keep)),
         "sor_removed_fraction": round(removed_fraction, 6),

@@ -202,3 +202,64 @@ def test_ground_adapter_cli_json(tmp_path: Path) -> None:
     assert payload["point_count"] > 0
     assert payload["ground_count"] >= 0
     assert payload["low_point_count"] >= 0
+
+
+def test_near_surface_parameters_are_recorded(tmp_path: Path) -> None:
+    """The opt-in near-surface pass is recorded without changing the default."""
+    source = tmp_path / "tile.laz"
+    _ground_fixture(source)
+    strict = write_ground_bundle(
+        source,
+        tmp_path / "strict",
+        crs="EPSG:3157",
+        vertical_datum="CGVD2013",
+    )
+    expanded = write_ground_bundle(
+        source,
+        tmp_path / "expanded",
+        crs="EPSG:3157",
+        vertical_datum="CGVD2013",
+        parameters=GroundAdapterParameters(
+            include_near_surface=True,
+            near_surface_tolerance_m=0.2,
+        ),
+    )
+    strict_manifest = json.loads(strict.manifest_path.read_text())
+    expanded_manifest = json.loads(expanded.manifest_path.read_text())
+    expanded_qa = json.loads(expanded.qa_path.read_text())
+    assert strict_manifest["parameters"]["include_near_surface"] is False
+    assert expanded_manifest["parameters"]["include_near_surface"] is True
+    assert expanded_manifest["parameters"]["near_surface_tolerance_m"] == 0.2
+    assert expanded.ground_count >= strict.ground_count
+    assert expanded_qa["include_near_surface"] is True
+    assert expanded_qa["near_surface_tolerance_m"] == 0.2
+    assert expanded_qa["near_surface_added"] >= 0
+    assert expanded_qa["strict_ground_count"] <= expanded_qa["ground_count"]
+
+
+def test_ground_adapter_cli_near_surface(tmp_path: Path) -> None:
+    """The CLI exposes the opt-in near-surface pass."""
+    source = tmp_path / "tile.laz"
+    _ground_fixture(source)
+    out = tmp_path / "bundle"
+    result = RUNNER.invoke(
+        app,
+        [
+            "lidar",
+            "ground-bundle-build",
+            str(source),
+            str(out),
+            "--crs",
+            "EPSG:3157",
+            "--vertical-datum",
+            "CGVD2013",
+            "--include-near-surface",
+            "--near-surface-tolerance-m",
+            "0.2",
+            "--json",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    manifest = json.loads((out / "manifest.json").read_text())
+    assert manifest["parameters"]["include_near_surface"] is True
+    assert manifest["parameters"]["near_surface_tolerance_m"] == 0.2

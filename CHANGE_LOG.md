@@ -16582,3 +16582,19 @@ PYTHONPATH=src python -m femic.site_index \
 - No default change. Opened a follow-up to make SOR optional and add an opt-in
   final-surface consistency pass.
 - Added `notes/reports/p141-tfl6-false-negative-audit.md` and `.json`.
+
+## 2026-11-06 - P142 opt-in near-surface ground labels
+
+- Added `near_surface_mask` and the opt-in `include_near_surface` ground-adapter parameter.
+- Added `--include-near-surface/--strict-ground` and `--near-surface-tolerance-m`.
+- When enabled, points within tolerance of the final PTD surface join `is_ground`; `hag` and
+  `is_low` are unchanged. Defaults remain strict.
+- Manifest/QA record `strict_ground_count`, `near_surface_added`, and the tolerance.
+- Squamish ground recall: 0.9742 strict -> 0.9903 near-surface; canopy false ground 0.0014
+  -> 0.0017.
+- Golden SOR off: class-2 recall 0.9624 strict -> 0.9995 near-surface; false ground 3.09%
+  -> 3.31%.
+- TFL6 steep SOR off: class-2 recall 0.9343 strict -> 0.9990 near-surface; false ground
+  0.54% -> 0.63%.
+- End-to-end Golden bundle added 1,807 near-surface points; reader validation passed.
+- Added `notes/reports/p142-near-surface-ground.md` and `.json`; updated guide/contract.
