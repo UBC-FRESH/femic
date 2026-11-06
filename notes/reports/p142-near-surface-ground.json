@@ -1,0 +1,55 @@
+{
+  "phase": "P142",
+  "status": "complete",
+  "date": "2026-11-06",
+  "option": {
+    "include_near_surface": false,
+    "near_surface_tolerance_m": 0.15,
+    "default": "strict ground"
+  },
+  "results": {
+    "squamish_guard": {
+      "ground_recall_strict": 0.9741805530122688,
+      "ground_recall_near": 0.9902948177989379,
+      "canopy_false_ground_strict": 0.0014078405891271388,
+      "canopy_false_ground_near": 0.0017327268789257093
+    },
+    "golden_2021": {
+      "sor_on": {
+        "recall_strict": 0.9590308083110792,
+        "recall_near": 0.9949846935452354,
+        "false_ground_strict": 0.03720670391061452,
+        "false_ground_near": 0.04083798882681564
+      },
+      "sor_off": {
+        "recall_strict": 0.9624177685142968,
+        "recall_near": 0.9995440630495669,
+        "false_ground_strict": 0.030949720670391062,
+        "false_ground_near": 0.033072625698324025
+      }
+    },
+    "tfl6_steep_T6_23339461": {
+      "sor_off": {
+        "recall_strict": 0.9343282425995016,
+        "recall_near": 0.998980131937362,
+        "false_ground_strict": 0.005436161754008042,
+        "false_ground_near": 0.0062805664572735875
+      }
+    },
+    "golden_cli_bundle": {
+      "point_count": 113775,
+      "strict_ground_count": 82240,
+      "ground_count": 84047,
+      "near_surface_added": 1807,
+      "sor_removed": 0
+    }
+  },
+  "semantics": "Near-surface mode labels terrain-surface points; it can include low vegetation and is not mineral-ground-only.",
+  "default_changed": false,
+  "limits": [
+    "Opt-in only.",
+    "Photointerpreted/class-2 reference, not field labels.",
+    "Near-surface tolerance 0.15 m is a diagnostic default, not field-validated.",
+    "Golden and TFL6 class-2 references are incomplete."
+  ]
+}

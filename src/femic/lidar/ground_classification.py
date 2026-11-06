@@ -735,12 +735,53 @@ def low_point_mask(
     return np.asarray(values < cut_m, dtype=np.bool_)
 
 
+def near_surface_mask(
+    height_above_ground: NDArray[np.float64],
+    *,
+    tolerance_m: float = 0.15,
+) -> BoolMask:
+    """Flag points within a tolerance of the final ground surface.
+
+    The canonical PTD label mask can exclude points that the final surface passes through.
+    This helper exposes that near-surface band without changing the strict classifier.
+
+    Parameters
+    ----------
+    height_above_ground : ndarray
+        Height above ground in metres, with shape ``(N,)``.
+    tolerance_m : float, optional
+        Non-negative tolerance in metres. The default is ``0.15``.
+
+    Returns
+    -------
+    ndarray of bool
+        ``True`` where ``height_above_ground <= tolerance_m``.
+
+    Raises
+    ------
+    ValueError
+        When the HAG array is not one-dimensional or ``tolerance_m`` is negative.
+
+    Notes
+    -----
+    HAG is clipped at zero, so points below the interpolated surface are included. This is
+    a terrain-surface convenience flag, not a new ground classification.
+    """
+    values = np.asarray(height_above_ground, dtype=np.float64)
+    if values.ndim != 1:
+        raise ValueError("height_above_ground must be one-dimensional")
+    if tolerance_m < 0:
+        raise ValueError("tolerance_m must be non-negative")
+    return np.asarray(values <= tolerance_m, dtype=np.bool_)
+
+
 __all__ = (
     "GroundClassification",
     "classify_ground_ptd",
     "hybrid_homogenize",
     "local_anisotropy",
     "low_point_mask",
+    "near_surface_mask",
     "statistical_outlier_mask",
     "voxel_connected_components",
 )

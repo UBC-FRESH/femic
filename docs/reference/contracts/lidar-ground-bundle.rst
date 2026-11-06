@@ -26,7 +26,8 @@ Ground LAZ dimensions
 
 ``ground.laz`` is a copy of the input LAZ with these extra dimensions:
 
-- ``is_ground`` — uint8 predicted ground;
+- ``is_ground`` — uint8 predicted ground; strict by default, optionally includes the
+  near-surface tolerance band;
 - ``hag`` — float32 height above the predicted surface;
 - ``is_low`` — uint8 low-point flag;
 - ``ref_class`` — uint8 original classification.
@@ -39,7 +40,8 @@ Required:
 - ``schema_version``;
 - ``source``: path, SHA-256, CRS, vertical datum, point count;
 - ``output``: relative path ``ground.laz``, SHA-256, point count;
-- ``parameters`` and ``parameter_sha256``;
+- ``parameters`` and ``parameter_sha256``; parameters include ``sor_enabled``,
+  ``include_near_surface``, and ``near_surface_tolerance_m``;
 - ``method``: name, version, reference, clean-room statement;
 - ``qa``: relative path ``qa.json`` and SHA-256;
 - ``warnings``.
@@ -51,6 +53,8 @@ Required:
 
 - ``schema_version``;
 - ``point_count``, ``ground_count``, ``low_point_count``;
+- ``strict_ground_count``, ``near_surface_added``, ``include_near_surface``,
+  ``near_surface_tolerance_m``;
 - ``sor_removed``, ``sor_removed_fraction``;
 - ``seed_count``, ``iterations``, ``tin_warning``;
 - ``hag_percentiles_m``;

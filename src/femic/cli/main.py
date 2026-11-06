@@ -694,6 +694,16 @@ LIDAR_GROUND_BUILD_SOR_OPTION = typer.Option(
     "--sor/--no-sor",
     help="Run statistical outlier removal before PTD.",
 )
+LIDAR_GROUND_BUILD_NEAR_SURFACE_OPTION = typer.Option(
+    False,
+    "--include-near-surface/--strict-ground",
+    help="Add points within the near-surface tolerance of the final PTD surface to is_ground.",
+)
+LIDAR_GROUND_BUILD_NEAR_SURFACE_TOLERANCE_OPTION = typer.Option(
+    0.15,
+    "--near-surface-tolerance-m",
+    help="Near-surface tolerance in metres when --include-near-surface is set.",
+)
 LIDAR_GROUND_BUILD_OVERWRITE_OPTION = typer.Option(
     False,
     "--overwrite",
@@ -5543,12 +5553,18 @@ def lidar_ground_bundle_build(
     crs: str | None = LIDAR_GROUND_BUILD_CRS_OPTION,
     vertical_datum: str | None = LIDAR_GROUND_BUILD_VERTICAL_DATUM_OPTION,
     sor: bool = LIDAR_GROUND_BUILD_SOR_OPTION,
+    include_near_surface: bool = LIDAR_GROUND_BUILD_NEAR_SURFACE_OPTION,
+    near_surface_tolerance_m: float = LIDAR_GROUND_BUILD_NEAR_SURFACE_TOLERANCE_OPTION,
     overwrite: bool = LIDAR_GROUND_BUILD_OVERWRITE_OPTION,
     json_output: bool = LIDAR_INSPECT_JSON_OPTION,
 ) -> None:
     """Write a canonical FEMIC ground bundle for one LAS/LAZ tile."""
 
-    parameters = GroundAdapterParameters(sor_enabled=sor)
+    parameters = GroundAdapterParameters(
+        sor_enabled=sor,
+        include_near_surface=include_near_surface,
+        near_surface_tolerance_m=near_surface_tolerance_m,
+    )
     try:
         result = write_ground_bundle(
             laz,

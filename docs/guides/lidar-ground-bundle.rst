@@ -16,6 +16,22 @@ Build a bundle
 The command writes ``ground.laz``, ``manifest.json``, and ``qa.json`` and is opt-in. Without
 ``laspy``, install ``femic[lidar]``.
 
+Near-surface ground
+-------------------
+
+The default ``is_ground`` mask is strict. On steep terrain, some terrain returns can lie on
+the final PTD surface but remain outside the strict mask. Use the opt-in near-surface pass to
+add points within a height tolerance of the final surface::
+
+   femic lidar ground-bundle-build data/lidar/crop/tfl6_blocks.laz \
+     output/ground/tfl6_blocks \
+     --crs EPSG:3156 --vertical-datum CGVD2013 \
+     --no-sor --include-near-surface --near-surface-tolerance-m 0.15
+
+The pass changes only ``is_ground``. ``hag`` and ``is_low`` are unchanged. The manifest
+records ``include_near_surface`` and ``near_surface_tolerance_m``; the QA file adds
+``strict_ground_count`` and ``near_surface_added``. The default remains strict.
+
 Validate a bundle
 -----------------
 

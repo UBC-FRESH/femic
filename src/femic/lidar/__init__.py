@@ -56,6 +56,7 @@ from femic.lidar.ground_classification import (
     GroundClassification,
     classify_ground_ptd,
     low_point_mask,
+    near_surface_mask,
     statistical_outlier_mask,
 )
 from femic.lidar.crop import (
@@ -333,6 +334,7 @@ __all__ = [
     "compare_stream_candidates",
     "classify_ground_ptd",
     "low_point_mask",
+    "near_surface_mask",
     "statistical_outlier_mask",
     "write_ground_bundle",
     "crop_laz_by_bbox",
