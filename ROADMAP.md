@@ -4086,7 +4086,7 @@ Detailed plan: `planning/phase116_shared_contracts.md`.
 
 ## Phase 117: EFI Inventory Attributes and Biomass Curves (`#374`)
 
-Status: **active** (P117.1 application engine; real coefficients/backtest pending).
+Status: **active** (P117.1 data-blocked; P117.2 remains).
 
 Branch: `feature/p117-efi-attributes`; P117.1 split PR:
 `feature/p117.1-efi-application`.
@@ -4101,9 +4101,15 @@ Tasks:
   - [x] Add the `femic.efi.coefficients.v1` contract, linear application
     engine, domain checks, backtest harness, synthetic pilot card, and docs.
   - [ ] Supply a published or project site-index coefficient set.
+    - Data-blocked: no defensible BC CWH/TSA coefficient set is available.
   - [ ] Map the selected FEMIC LiDAR metrics.
+    - Data-blocked: no plot-level site-index/ALS backtest surface.
   - [ ] Add `si_als` to the fragment attribute pipeline.
+    - Not started; would invent evidence without a calibration.
   - [ ] Run the instance backtest with the P48/P49 ground-plot surfaces.
+    - P48/P49 do not carry site index or ALS metrics.
+  - [x] P117.1 feasibility audit and data-blocked close-out
+    (`notes/reports/p117.1-site-index-feasibility.md`).
 - [ ] P117.2 Add a biomass curve family and carbon conversion (`#376`).
 
 Acceptance: the site-index layer covers the pilot AOI and reports its gaps; a
