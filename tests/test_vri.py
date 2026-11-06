@@ -3,8 +3,8 @@ from __future__ import annotations
 import pandas as pd
 
 from femic.pipeline.vri import (
-    assign_stratum_codes_with_lexmatch,
     assign_forest_type_from_species_pct,
+    assign_stratum_codes_with_lexmatch,
     classify_stand_cdm,
     classify_stand_forest_type,
     derive_species_list_from_slots,
@@ -12,6 +12,7 @@ from femic.pipeline.vri import (
     initialize_aflb_land_base_records,
     is_conifer_species_code,
     is_deciduous_species_code,
+    limit_debug_rows,
     normalize_and_filter_checkpoint2_records,
     pconif,
     pdecid,
@@ -391,3 +392,33 @@ def test_derive_species_list_from_slots_excludes_none() -> None:
     )
     out = derive_species_list_from_slots(f_table=frame)
     assert set(out) == {"SW", "PL", "AT"}
+
+
+def test_limit_debug_rows_runs_after_treed_filter() -> None:
+    """The debug slice contains valid treed rows, not leading non-treed rows."""
+    frame = pd.DataFrame(
+        {
+            "BCLCS_LEVEL_2": ["N", "T", "T"],
+            "NON_PRODUCTIVE_CD": [None, None, None],
+            "FOR_MGMT_LAND_BASE_IND": ["Y", "Y", "Y"],
+            "BEC_ZONE_CODE": ["CWH", "CWH", "CWH"],
+            "PROJ_AGE_1": [100, 100, 100],
+            "BASAL_AREA": [10.0, 10.0, 10.0],
+            "LIVE_STAND_VOLUME_125": [10.0, 10.0, 10.0],
+        }
+    )
+    filtered = normalize_and_filter_checkpoint2_records(f_table=frame)
+    limited = limit_debug_rows(filtered, 2)
+    assert len(limited) == 2
+    assert set(limited["BCLCS_LEVEL_2"]) == {"T"}
+
+
+def test_limit_debug_rows_rejects_non_positive_limit() -> None:
+    """A non-positive limit is a caller error."""
+    frame = pd.DataFrame({"x": [1, 2]})
+    try:
+        limit_debug_rows(frame, 0)
+    except ValueError as exc:
+        assert "positive integer" in str(exc)
+    else:
+        raise AssertionError("expected ValueError")

@@ -56,6 +56,7 @@ try:
         assign_forest_type_from_species_pct,
         derive_species_list_from_slots,
         filter_post_thlb_stands,
+        limit_debug_rows,
         normalize_and_filter_checkpoint2_records,
     )
     from femic.pipeline.siteprod import (
@@ -124,6 +125,7 @@ except ModuleNotFoundError:
         assign_forest_type_from_species_pct,
         derive_species_list_from_slots,
         filter_post_thlb_stands,
+        limit_debug_rows,
         normalize_and_filter_checkpoint2_records,
     )
     from femic.pipeline.siteprod import (
@@ -441,7 +443,7 @@ def _apply_debug_rows(_df, _label=None):
         print(f"debug: limiting VRI input rows to {_femic_debug_rows} ({_label})")
     else:
         print(f"debug: limiting VRI input rows to {_femic_debug_rows}")
-    return _df.head(_femic_debug_rows).copy()
+    return limit_debug_rows(_df, _femic_debug_rows)
 
 
 if _femic_no_cache:
@@ -590,7 +592,6 @@ if import_vri_vclr1p_data:
 else:
     print("loading VRI data from checkpoint1 feather")
     vri_vclr1p = gpd.read_feather(vri_vclr1p_checkpoint1_feather_path)
-    vri_vclr1p = _apply_debug_rows(vri_vclr1p, "checkpoint1")
 
 f = vri_vclr1p
 
@@ -606,7 +607,8 @@ def _normalize_tsa_code(_value):
 if "tsa_code" in f.columns:
     f["tsa_code"] = f["tsa_code"].apply(_normalize_tsa_code)
 
-f = _apply_debug_rows(f, "checkpoint1")
+# Debug rows are applied after the TSA/treed filter below, not here: a head slice
+# of the province-wide VRI can contain only non-treed polygons and empty the run.
 
 # --- cell 19 ---
 # map layer indices to layer species codes
@@ -645,6 +647,7 @@ species_list = derive_species_list_from_slots(f_table=vri_vclr1p)
 process_checkpoint2 = 1 if _femic_no_cache else 0
 if process_checkpoint2:
     f = normalize_and_filter_checkpoint2_records(f_table=f)
+    f = _apply_debug_rows(f, "checkpoint2-prefilter")
     # implies f.BCLCS_LEVEL_1 == 'V'
     # f = f[f.BCLCS_LEVEL_5 != 'OP']
     # vri_vclr1p_categorical_columns = open(vri_vclr1p_categorical_columns_path).read().split('\n')
@@ -926,7 +929,6 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
         f_ = f_.reset_index("tsa_code")
     if not femic_no_cache:
         f_ = gpd.read_feather(checkpoint1_path)
-        f_ = apply_debug_rows_fn(f_, "checkpoint1-reload")
 
     f_ = assign_thlb_raw_from_raster(
         f_table=f_,
@@ -938,6 +940,7 @@ def _run_post_01b_bundle_and_curve_assignment_stage(
         out_col="thlb_raw",
     )
     f_ = filter_post_thlb_stands(f_table=f_)
+    f_ = apply_debug_rows_fn(f_, "post-thlb-filter")
     f_ = assign_stratum_codes_with_lexmatch(
         f_table=f_,
         row_apply_fn=_row_apply,

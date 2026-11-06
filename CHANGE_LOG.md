@@ -16631,3 +16631,13 @@ PYTHONPATH=src python -m femic.site_index \
 - Added `femic efi biomass-curve`, contract/API docs, and 8 tests.
 - Biomass and volume are separate response families and are not additive.
 - No P115 carbon package, CBM runtime, tag, or release change.
+
+## 2026-11-06 - Fix `--debug-rows` order before treed filtering
+
+- `--debug-rows` no longer takes `head(N)` of the province-wide VRI before TSA/treed
+  filtering.
+- The limit now runs after checkpoint2 treed/productive filtering, and after the post-THLB
+  stand filter in the checkpoint1-reload path.
+- Added `limit_debug_rows` with a positive-limit guard and tests.
+- Fixed #325; small debug slices now contain valid treed records instead of leading
+  non-treed rows.
