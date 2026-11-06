@@ -112,6 +112,7 @@ Current curated pages in this section include ``femic.instance_context``,
    femic-contracts-disturbance
    femic-contracts-efi
    femic-efi-application
+   femic-efi-biomass
    femic-efi-pipeline
    femic-site-index
 

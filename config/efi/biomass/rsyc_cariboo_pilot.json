@@ -1,0 +1,71 @@
+{
+  "schema_version": "femic.efi.biomass_curve.v1",
+  "source_id": "tompalski-et-al-2025-rsyc-national",
+  "source_url": "https://doi.org/10.1093/forestry/cpaf067",
+  "licence_id": "CC-BY-4.0",
+  "notes": "Published RSYC national model parameters for a bounded BC pilot. Parameter values are from the published model table; no R package code is copied. The RSYC R package is GPL-3. This file is data, not a model-training result. Use only inside the stated species/ecodistrict/age domain.",
+  "curves": [
+    {
+      "curve_id": "rsyc-pseu-men-cariboo-basin",
+      "species": "PSEU.MEN",
+      "region": "Montane Cordillera",
+      "ecodistrict": "Cariboo Basin",
+      "age_min": 1,
+      "age_max": 300,
+      "carbon_fraction": 0.47,
+      "carbon_fraction_source": "IPCC 2006 Guidelines for National Greenhouse Gas Inventories, Vol. 4, Ch. 4, Table 4.3",
+      "validation_note": "Published RSYC regional curve; see the source for validation. Not a local FEMIC accuracy estimate.",
+      "agb": {
+        "model_id": "rsyc_agb_regional_ecodistrict_pseu_men_montane_cordillera_montane_cordillera_central_montane_cordillera_fraser_plateau_cariboo_basin",
+        "model_version": "2025.1",
+        "response": "agb",
+        "unit": "t_ha",
+        "b1": 135.742,
+        "b2": 0.035627,
+        "b3": 1.200684,
+        "b4": 0.001018
+      },
+      "volume": {
+        "model_id": "rsyc_volume_regional_ecodistrict_pseu_men_montane_cordillera_montane_cordillera_central_montane_cordillera_fraser_plateau_cariboo_basin",
+        "model_version": "2025.1",
+        "response": "volume",
+        "unit": "m3_ha",
+        "b1": 299.0254,
+        "b2": 0.036353,
+        "b3": 1.281213,
+        "b4": 0.001238
+      }
+    },
+    {
+      "curve_id": "rsyc-pinu-con-cariboo-basin",
+      "species": "PINU.CON",
+      "region": "Montane Cordillera",
+      "ecodistrict": "Cariboo Basin",
+      "age_min": 1,
+      "age_max": 300,
+      "carbon_fraction": 0.47,
+      "carbon_fraction_source": "IPCC 2006 Guidelines for National Greenhouse Gas Inventories, Vol. 4, Ch. 4, Table 4.3",
+      "validation_note": "Published RSYC regional curve; see the source for validation. Not a local FEMIC accuracy estimate.",
+      "agb": {
+        "model_id": "rsyc_agb_regional_ecodistrict_pinu_con_montane_cordillera_montane_cordillera_central_montane_cordillera_fraser_plateau_cariboo_basin",
+        "model_version": "2025.1",
+        "response": "agb",
+        "unit": "t_ha",
+        "b1": 96.63014,
+        "b2": 0.028225,
+        "b3": 0.913911,
+        "b4": 0.001127
+      },
+      "volume": {
+        "model_id": "rsyc_volume_regional_ecodistrict_pinu_con_montane_cordillera_montane_cordillera_central_montane_cordillera_fraser_plateau_cariboo_basin",
+        "model_version": "2025.1",
+        "response": "volume",
+        "unit": "m3_ha",
+        "b1": 205.2052,
+        "b2": 0.028952,
+        "b3": 1.006334,
+        "b4": 0.001289
+      }
+    }
+  ]
+}
