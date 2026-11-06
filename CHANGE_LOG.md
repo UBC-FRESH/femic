@@ -16641,3 +16641,16 @@ PYTHONPATH=src python -m femic.site_index \
 - Added `limit_debug_rows` with a positive-limit guard and tests.
 - Fixed #325; small debug slices now contain valid treed records instead of leading
   non-treed rows.
+
+## 2026-11-06 - Fix TIPSY genetic-worth alignment through species finalization
+
+- `_finalize_species_mix` now carries `GW_i` and `GW_age_i` with their species through
+  broadleaf stripping, descending percentage sort, five-species merge, and percentage
+  rounding.
+- Updated three TSA29 rules where `GW_1`/`GW_age_1` were written on a non-leading conifer
+  because the old finalizer reordered the mix: `tsa29_fir_idf`, `tsa29_fir_allzone_proxy`,
+  and `tsa29_balsam_essf`.
+- Added a regression test for the reported PLI/AT/FDI/SX/BL mix; GW now lands on PLI, FDI,
+  and SX after finalization.
+- Targeted tests: 170 passed; one unrelated pre-existing planted-density rounding test
+  still reports 703 vs 702.

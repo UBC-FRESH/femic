@@ -426,7 +426,7 @@ def _finalize_species_mix(
     leading_species: str,
     species_code_overrides: Mapping[str, str],
 ) -> None:
-    entries: list[tuple[str, float]] = []
+    entries: list[tuple[str, float, Any, Any]] = []
     for idx in range(1, 6):
         spp_key = f"SPP_{idx}"
         pct_key = f"PCT_{idx}"
@@ -449,6 +449,8 @@ def _finalize_species_mix(
                     species_code_overrides=species_code_overrides,
                 ),
                 pct,
+                side_map.get(f"GW_{idx}"),
+                side_map.get(f"GW_age_{idx}"),
             )
         )
 
@@ -460,6 +462,8 @@ def _finalize_species_mix(
                     species_code_overrides=species_code_overrides,
                 ),
                 100.0,
+                None,
+                None,
             )
         ]
 
@@ -467,11 +471,13 @@ def _finalize_species_mix(
     # conifer species to avoid BatchTIPSY treated-curve/mapping failures.
     if str(side_map.get("Regen_Method", "P")).upper() == "P":
         broadleaf_pct = sum(
-            pct for spp, pct in entries if spp.upper() in BROADLEAF_SPECIES_CODES
+            pct
+            for spp, pct, _gw, _gw_age in entries
+            if spp.upper() in BROADLEAF_SPECIES_CODES
         )
         entries = [
-            (spp, pct)
-            for spp, pct in entries
+            (spp, pct, gw, gw_age)
+            for spp, pct, gw, gw_age in entries
             if spp.upper() not in BROADLEAF_SPECIES_CODES
         ]
         if not entries:
@@ -482,28 +488,36 @@ def _finalize_species_mix(
                         species_code_overrides=species_code_overrides,
                     ),
                     broadleaf_pct,
+                    None,
+                    None,
                 )
             ]
         elif broadleaf_pct > 0:
-            spp0, pct0 = entries[0]
-            entries[0] = (spp0, pct0 + broadleaf_pct)
+            spp0, pct0, gw0, gw_age0 = entries[0]
+            entries[0] = (spp0, pct0 + broadleaf_pct, gw0, gw_age0)
 
     entries.sort(key=lambda item: item[1], reverse=True)
 
     if len(entries) > 5:
-        spp5, pct5 = entries[4]
-        pct5 += sum(pct for _spp, pct in entries[5:])
-        entries = entries[:4] + [(spp5, pct5)]
+        spp5, pct5, gw5, gw_age5 = entries[4]
+        pct5 += sum(pct for _spp, pct, _gw, _gw_age in entries[5:])
+        entries = entries[:4] + [(spp5, pct5, gw5, gw_age5)]
 
-    rounded = _round_percentages_to_100([pct for _spp, pct in entries])
-    entries = [(spp, pct) for (spp, _pct), pct in zip(entries, rounded)]
+    rounded = _round_percentages_to_100([pct for _spp, pct, _gw, _gw_age in entries])
+    entries = [
+        (spp, pct, gw, gw_age) for (spp, _pct, gw, gw_age), pct in zip(entries, rounded)
+    ]
 
     for idx in range(1, 6):
         side_map[f"SPP_{idx}"] = None
         side_map[f"PCT_{idx}"] = None
-    for idx, (spp, pct) in enumerate(entries, start=1):
+        side_map[f"GW_{idx}"] = None
+        side_map[f"GW_age_{idx}"] = None
+    for idx, (spp, pct, gw, gw_age) in enumerate(entries, start=1):
         side_map[f"SPP_{idx}"] = spp
         side_map[f"PCT_{idx}"] = int(pct)
+        side_map[f"GW_{idx}"] = gw
+        side_map[f"GW_age_{idx}"] = gw_age
 
 
 def build_tipsy_params_from_config(
