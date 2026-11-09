@@ -38,6 +38,9 @@ dependencies = [
 freshforge = [
     "freshforge==0.1.0a5",
 ]
+fresh-vdyp = [
+    "fresh-vdyp>=0.1.0",
+]
 lidar = [
     "laspy[lazrs]",
 ]
