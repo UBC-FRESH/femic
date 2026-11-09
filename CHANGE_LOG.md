@@ -1,3 +1,14 @@
+# 2026-11-09 — Optional fresh-tipsy integration
+
+- Added the optional `fresh-tipsy` extra (`femic[fresh-tipsy]`) with
+  `fresh-tipsy>=0.1.0`.
+- Documented the provenance-preserving adapter in
+  `docs/guides/fresh-tipsy-integration.rst`.
+- FEMIC keeps its existing path when the optional package is absent.
+- The adapter provides growth, product, economics, and asset-provenance calls
+  with package version and data-manifest SHA-256.
+- No `fresh-tipsy` code is vendored and no raw TIPSY table is added.
+
 # 2026-10-30 — INV-01 TSA 23 point-cloud grid extractor
 
 - Added `build_pointcloud_grid_features` / `femic lidar

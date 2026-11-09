@@ -41,6 +41,9 @@ freshforge = [
 fresh-vdyp = [
     "fresh-vdyp>=0.1.0",
 ]
+fresh-tipsy = [
+    "fresh-tipsy>=0.1.0",
+]
 lidar = [
     "laspy[lazrs]",
 ]
