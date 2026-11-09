@@ -46,6 +46,7 @@ and the GCBM bridge is separate in :doc:`gcbm-export`.
    document-figure-recovery
    freshforge-provider-integration
    fresh-vdyp-integration
+   fresh-tipsy-integration
    tsr-thlb-reconstruction-ladder
    github-datalad-arbutus-pattern
    windows-arbutus-auth-workflow
